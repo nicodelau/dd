@@ -1,0 +1,198 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Character {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Basic Info
+  name        String
+  playerName  String?
+  race        String
+  class       String
+  level       Int      @default(1)
+  background  String?
+  alignment   String?
+
+  // Core Stats
+  hitPoints      Int @default(0)
+  maxHitPoints   Int @default(0)
+  tempHitPoints  Int @default(0)
+  armorClass     Int @default(10)
+  proficiencyBonus Int @default(2)
+  speed          Int @default(30)
+
+  // Ability Scores
+  strength       Int @default(10)
+  dexterity      Int @default(10)
+  constitution   Int @default(10)
+  intelligence   Int @default(10)
+  wisdom         Int @default(10)
+  charisma       Int @default(10)
+
+  // Experience and Currency
+  experiencePoints Int @default(0)
+  copper          Int @default(0)
+  silver          Int @default(0)
+  electrum        Int @default(0)
+  gold            Int @default(0)
+  platinum        Int @default(0)
+
+  // Character Details
+  inspiration     Boolean @default(false)
+  personality     String?
+  ideals          String?
+  bonds           String?
+  flaws           String?
+  backstory       String?
+  notes           String?
+
+  // Death Saves
+  deathSaveSuccesses Int @default(0)
+  deathSaveFailures  Int @default(0)
+
+  // Relationships
+  savingThrows    SavingThrow[]
+  skills          Skill[]
+  spells          CharacterSpell[]
+  spellSlots      SpellSlot[]
+  inventory       InventoryItem[]
+  attacks         Attack[]
+  features        Feature[]
+  cantrips        Cantrip[]
+
+  @@map("characters")
+}
+
+model SavingThrow {
+  id           String    @id @default(cuid())
+  characterId  String
+  ability      String    // "strength", "dexterity", etc.
+  proficient   Boolean   @default(false)
+  
+  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, ability])
+  @@map("saving_throws")
+}
+
+model Skill {
+  id           String    @id @default(cuid())
+  characterId  String
+  name         String    // "Acrobatics", "Animal Handling", etc.
+  ability      String    // "dexterity", "wisdom", etc.
+  proficient   Boolean   @default(false)
+  expertise    Boolean   @default(false)
+  
+  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, name])
+  @@map("skills")
+}
+
+model Spell {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  level       Int
+  school      String?
+  castingTime String?
+  range       String?
+  components  String?
+  duration    String?
+  description String?
+  
+  characters  CharacterSpell[]
+
+  @@map("spells")
+}
+
+model CharacterSpell {
+  id          String    @id @default(cuid())
+  characterId String
+  spellId     String
+  prepared    Boolean   @default(false)
+  known       Boolean   @default(true)
+  
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  spell       Spell     @relation(fields: [spellId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, spellId])
+  @@map("character_spells")
+}
+
+model SpellSlot {
+  id           String    @id @default(cuid())
+  characterId  String
+  level        Int       // 1-9
+  total        Int       @default(0)
+  used         Int       @default(0)
+  
+  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, level])
+  @@map("spell_slots")
+}
+
+model InventoryItem {
+  id          String    @id @default(cuid())
+  characterId String
+  name        String
+  description String?
+  quantity    Int       @default(1)
+  weight      Float?
+  value       Float?
+  equipped    Boolean   @default(false)
+  
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("inventory_items")
+}
+
+model Attack {
+  id            String    @id @default(cuid())
+  characterId   String
+  name          String
+  attackBonus   Int?
+  damageType    String?
+  damageDice    String?
+  damageBonus   Int?
+  range         String?
+  description   String?
+  
+  character     Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("attacks")
+}
+
+model Feature {
+  id          String    @id @default(cuid())
+  characterId String
+  name        String
+  source      String?   // "Race", "Class", "Background", "Feat"
+  description String?
+  
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("features")
+}
+
+model Cantrip {
+  id          String    @id @default(cuid())
+  characterId String
+  name        String
+  description String?
+  
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("cantrips")
+}
