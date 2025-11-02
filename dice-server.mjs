@@ -14,8 +14,19 @@ const httpServer = createServer((req, res) => {
 // Create Socket.IO server
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
-    methods: ["GET", "POST"]
+    origin: [
+      // Development URLs
+      "http://localhost:3000", 
+      "http://localhost:3001", 
+      "http://localhost:3002",
+      // Production URLs (add your Vercel deployment URL here)
+      "https://dd-tau-rosy.vercel.app",
+      // Allow additional production domains
+      /^https:\/\/.*\.vercel\.app$/,
+      /^https:\/\/.*\.netlify\.app$/
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   },
   path: '/socket.io/',
   serveClient: false

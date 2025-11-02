@@ -24,15 +24,15 @@
           
           <div class="flex items-center space-x-3">
             <div class="flex items-center space-x-2">
-              <div class="h-3 w-3 rounded-full" :class="isConnected ? 'bg-green-500' : 'bg-red-500'"></div>
+              <div class="h-3 w-3 rounded-full" :class="isConnected ? 'bg-green-500' : isOfflineMode ? 'bg-yellow-500' : 'bg-red-500'"></div>
               <span class="text-sm text-gray-600 dark:text-gray-300">
-                {{ isConnected ? 'Connected' : 'Disconnected' }}
+                {{ isConnected ? 'Connected' : isOfflineMode ? 'Offline Mode' : 'Disconnected' }}
               </span>
             </div>
             
             <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
               <UIcon name="i-heroicons-users" class="h-4 w-4" />
-              <span>{{ connectedUsers }} online</span>
+              <span>{{ connectedUsers }} {{ isOfflineMode ? '(offline)' : 'online' }}</span>
             </div>
           </div>
         </div>
@@ -41,6 +41,22 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Offline Mode Banner -->
+      <div v-if="isOfflineMode" class="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+        <div class="flex items-start space-x-3">
+          <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+          <div>
+            <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Offline Mode Active
+            </h3>
+            <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+              You're currently using the dice room in offline mode. Your rolls are saved locally and won't be shared with other players. 
+              This happens automatically in production environments where the WebSocket server isn't available.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Left Column - Dice Rolling -->
         <div class="lg:col-span-2 space-y-6">
@@ -69,7 +85,10 @@
             </div>
             
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Your name will be visible to other players when you roll dice.
+              {{ isOfflineMode 
+                ? 'You\'re in offline mode. Your rolls are only visible to you.' 
+                : 'Your name will be visible to other players when you roll dice.' 
+              }}
             </p>
           </UCard>
           
@@ -396,6 +415,7 @@ interface QuickRoll {
 // Reactive state
 const userName = ref('Anonymous')
 const isConnected = ref(false)
+const isOfflineMode = ref(false)
 const connectedUsers = ref(1)
 const isRolling = ref(false)
 const socket = ref<Socket | null>(null)
@@ -614,8 +634,8 @@ function rollDice() {
     // Add to history (newest first)
     rollHistory.value.unshift(roll)
     
-    // Emit to WebSocket for other users
-    if (socket.value?.connected) {
+    // Emit to WebSocket for other users (only if connected and not in offline mode)
+    if (socket.value?.connected && !isOfflineMode.value) {
       socket.value.emit('dice:roll', {
         ...roll,
         isOwn: false // Server will set this properly
@@ -643,9 +663,13 @@ function performQuickRoll(quickRoll: QuickRoll) {
 }
 
 function updateUserName() {
-  if (userName.value.trim() && socket.value?.connected) {
-    socket.value.emit('user:update', { name: userName.value })
-    console.log('Updated user name to:', userName.value)
+  if (userName.value.trim()) {
+    if (socket.value?.connected && !isOfflineMode.value) {
+      socket.value.emit('user:update', { name: userName.value })
+      console.log('Updated user name to:', userName.value)
+    } else {
+      console.log('Updated user name to:', userName.value, '(offline mode)')
+    }
   }
 }
 
@@ -670,9 +694,21 @@ function getCriticalClass(roll: DiceRoll): string {
   return 'text-gray-900 dark:text-white'
 }
 
+// Environment detection
+const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+
 // WebSocket functions
 function initializeWebSocket() {
-  // Initialize Socket.IO connection
+  // Skip WebSocket in production for now (offline mode)
+  if (isProduction) {
+    console.log('🎲 Running in production mode - using offline dice rolling')
+    isOfflineMode.value = true
+    isConnected.value = false
+    connectedUsers.value = 1
+    return
+  }
+
+  // Initialize Socket.IO connection (development only)
   socket.value = io('http://localhost:3003', {
     path: '/socket.io/',
     autoConnect: true
@@ -682,6 +718,7 @@ function initializeWebSocket() {
   socket.value.on('connect', () => {
     console.log('🎲 Connected to dice room server')
     isConnected.value = true
+    isOfflineMode.value = false
     
     // Join the room with current user name
     socket.value?.emit('user:join', { name: userName.value })
@@ -694,7 +731,10 @@ function initializeWebSocket() {
 
   socket.value.on('connect_error', (error) => {
     console.error('🎲 Connection error:', error)
+    console.log('🎲 Falling back to offline mode')
     isConnected.value = false
+    isOfflineMode.value = true
+    connectedUsers.value = 1
   })
 
   // Game events
