@@ -30,10 +30,10 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Update user's last seen time
+    // Update user's last seen time (activity tracking)
     const user = diceRoomStore.getUser(body.userId)
     if (user) {
-      diceRoomStore.updateUser(body.userId, body.userName)
+      diceRoomStore.updateUserActivity(body.userId)
     } else {
       diceRoomStore.addUser(body.userId, body.userName)
     }

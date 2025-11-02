@@ -22,7 +22,13 @@ export default defineEventHandler(async (event) => {
     }
 
     // Add or update user
-    const user = diceRoomStore.addUser(body.userId, body.userName)
+    const existingUser = diceRoomStore.getUser(body.userId)
+    const user = existingUser 
+      ? diceRoomStore.updateUser(body.userId, body.userName)
+      : diceRoomStore.addUser(body.userId, body.userName)
+    
+    // Update activity tracking
+    diceRoomStore.updateUserActivity(body.userId)
 
     return {
       success: true,

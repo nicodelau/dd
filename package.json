@@ -7,25 +7,20 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "dice-server": "node dice-server.mjs"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxt/eslint": "^0.5.7",
     "@nuxt/ui": "^2.18.7",
     "@prisma/client": "^6.18.0",
     "@types/pg": "^8.15.6",
-    "@types/ws": "^8.18.1",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.0",
     "nuxt": "^3.13.2",
     "pg": "^8.16.3",
     "prisma": "^6.18.0",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
     "typescript": "^5.9.3",
     "vue": "^3.5.22",
-    "vue-router": "^4.6.3",
-    "ws": "^8.18.3"
+    "vue-router": "^4.6.3"
   }
 }

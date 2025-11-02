@@ -58,6 +58,9 @@ export default defineEventHandler(async (event) => {
   // Keep connection alive with periodic heartbeat
   const heartbeatInterval = setInterval(() => {
     try {
+      // Update user activity on heartbeat
+      diceRoomStore.updateUserActivity(userId)
+      
       response.write(`event: heartbeat\ndata: ${JSON.stringify({ 
         timestamp: new Date().toISOString(),
         userCount: diceRoomStore.getUserCount()

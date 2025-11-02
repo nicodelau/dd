@@ -81,6 +81,15 @@ class DiceRoomStore {
     return this.room.users.get(userId) || null
   }
 
+  // Update user activity (called on any user action)
+  updateUserActivity(userId: string): void {
+    const user = this.room.users.get(userId)
+    if (user) {
+      user.lastSeen = new Date()
+      this.room.users.set(userId, user)
+    }
+  }
+
   getUserCount(): number {
     return this.room.users.size
   }
@@ -181,7 +190,7 @@ class DiceRoomStore {
     this.broadcastEvent('users:count', { count: this.getUserCount() })
   }
 
-  // Cleanup inactive connections
+  // Cleanup inactive connections and users
   cleanup(): void {
     const now = new Date()
     const deadConnections: string[] = []
@@ -198,12 +207,20 @@ class DiceRoomStore {
 
     deadConnections.forEach(id => this.removeSSEConnection(id))
 
-    // Remove users who haven't been seen in 10 minutes
-    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000)
+    // Remove users who haven't been seen in 5 minutes (300 seconds)
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000)
+    const removedUsers: string[] = []
+    
     for (const [userId, user] of this.room.users) {
-      if (user.lastSeen < tenMinutesAgo) {
+      if (user.lastSeen < fiveMinutesAgo) {
         this.removeUser(userId)
+        removedUsers.push(user.name)
       }
+    }
+
+    // Log timeout activity
+    if (removedUsers.length > 0) {
+      console.log(`🎲 Auto-removed ${removedUsers.length} inactive users: ${removedUsers.join(', ')}`)
     }
   }
 
@@ -225,7 +242,7 @@ class DiceRoomStore {
 // Singleton instance
 export const diceRoomStore = new DiceRoomStore()
 
-// Cleanup interval - run every 2 minutes
+// Cleanup interval - run every 1 minute to check for timeouts
 setInterval(() => {
   diceRoomStore.cleanup()
-}, 2 * 60 * 1000)
+}, 1 * 60 * 1000)
