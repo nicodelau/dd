@@ -379,7 +379,7 @@
 </template>
 
 <script setup lang="ts">
-import { io, type Socket } from 'socket.io-client'
+// SSE-based dice room implementation (replaces Socket.IO)
 
 interface DiceType {
   type: string
@@ -418,7 +418,8 @@ const isConnected = ref(false)
 const isOfflineMode = ref(false)
 const connectedUsers = ref(1)
 const isRolling = ref(false)
-const socket = ref<Socket | null>(null)
+const eventSource = ref<EventSource | null>(null)
+const userId = ref(`user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`)
 const animatingDice = ref<Set<string>>(new Set())
 
 // Dice selection
@@ -515,7 +516,7 @@ function rollSingleDie(sides: number): number {
   return Math.floor(Math.random() * sides) + 1
 }
 
-function rollDice() {
+async function rollDice() {
   if (totalDiceSelected.value === 0) return
   
   isRolling.value = true
@@ -528,7 +529,7 @@ function rollDice() {
   })
   
   // Simulate rolling animation delay with staggered effects
-  setTimeout(() => {
+  setTimeout(async () => {
     const diceRolled: { type: string; count: number; results: number[] }[] = []
     let total = 0
     const details: (string | number)[] = []
@@ -634,12 +635,25 @@ function rollDice() {
     // Add to history (newest first)
     rollHistory.value.unshift(roll)
     
-    // Emit to WebSocket for other users (only if connected and not in offline mode)
-    if (socket.value?.connected && !isOfflineMode.value) {
-      socket.value.emit('dice:roll', {
-        ...roll,
-        isOwn: false // Server will set this properly
-      })
+    // Submit to server for other users (only if connected and not in offline mode)
+    if (isConnected.value && !isOfflineMode.value) {
+      try {
+        await submitDiceRoll({
+          userName: roll.userName,
+          userId: roll.userId,
+          description: roll.description,
+          total: roll.total,
+          details: roll.details,
+          diceRolled: roll.diceRolled,
+          modifier: roll.modifier,
+          rollType: roll.rollType,
+          isCritical: roll.isCritical,
+          criticalType: roll.criticalType
+        })
+      } catch (error) {
+        console.error('🎲 Failed to submit roll to server:', error)
+        // Roll still works locally even if server submission fails
+      }
     }
     
     // Clear animations
@@ -662,11 +676,16 @@ function performQuickRoll(quickRoll: QuickRoll) {
   rollDice()
 }
 
-function updateUserName() {
+async function updateUserName() {
   if (userName.value.trim()) {
-    if (socket.value?.connected && !isOfflineMode.value) {
-      socket.value.emit('user:update', { name: userName.value })
-      console.log('Updated user name to:', userName.value)
+    if (isConnected.value && !isOfflineMode.value) {
+      try {
+        await joinRoom() // Re-join with updated name
+        console.log('Updated user name to:', userName.value)
+      } catch (error) {
+        console.error('Failed to update user name:', error)
+        console.log('Updated user name to:', userName.value, '(locally only)')
+      }
     } else {
       console.log('Updated user name to:', userName.value, '(offline mode)')
     }
@@ -697,94 +716,148 @@ function getCriticalClass(roll: DiceRoll): string {
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 'undefined' && window.location.hostname !== 'localhost'
 
-// WebSocket functions
-function initializeWebSocket() {
-  // Skip WebSocket in production for now (offline mode)
-  if (isProduction) {
-    console.log('🎲 Running in production mode - using offline dice rolling')
-    isOfflineMode.value = true
-    isConnected.value = false
-    connectedUsers.value = 1
-    return
-  }
+// SSE Functions - Server-Sent Events for real-time updates
+function initializeSSE() {
+  // Always try SSE first (works in all environments)
+  console.log('🎲 Initializing SSE connection for real-time dice room')
+  
+  try {
+    // Create SSE connection
+    const sseUrl = `/api/dice/events?userId=${encodeURIComponent(userId.value)}&userName=${encodeURIComponent(userName.value)}`
+    eventSource.value = new EventSource(sseUrl)
 
-  // Initialize Socket.IO connection (development only)
-  socket.value = io('http://localhost:3003', {
-    path: '/socket.io/',
-    autoConnect: true
-  })
-
-  // Connection events
-  socket.value.on('connect', () => {
-    console.log('🎲 Connected to dice room server')
-    isConnected.value = true
-    isOfflineMode.value = false
-    
-    // Join the room with current user name
-    socket.value?.emit('user:join', { name: userName.value })
-  })
-
-  socket.value.on('disconnect', () => {
-    console.log('🎲 Disconnected from dice room server')
-    isConnected.value = false
-  })
-
-  socket.value.on('connect_error', (error) => {
-    console.error('🎲 Connection error:', error)
-    console.log('🎲 Falling back to offline mode')
-    isConnected.value = false
-    isOfflineMode.value = true
-    connectedUsers.value = 1
-  })
-
-  // Game events
-  socket.value.on('users:count', (count: number) => {
-    connectedUsers.value = count
-  })
-
-  socket.value.on('dice:history', (history: DiceRoll[]) => {
-    // Merge with existing history, avoiding duplicates
-    const existingIds = new Set(rollHistory.value.map(r => r.id))
-    const newRolls = history
-      .filter(r => !existingIds.has(r.id))
-      .map(r => ({
-        ...r,
-        timestamp: new Date(r.timestamp),
-        isOwn: false
-      }))
-    
-    rollHistory.value = [...rollHistory.value, ...newRolls]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  })
-
-  socket.value.on('dice:roll', (roll: DiceRoll) => {
-    // Don't add our own rolls (they're already in the history)
-    if (roll.userId !== socket.value?.id) {
-      const processedRoll = {
-        ...roll,
-        timestamp: new Date(roll.timestamp),
-        isOwn: false
-      }
+    // Connection events
+    eventSource.value.onopen = () => {
+      console.log('🎲 SSE connection established')
+      isConnected.value = true
+      isOfflineMode.value = false
       
-      rollHistory.value.unshift(processedRoll)
+      // Send join request via HTTP
+      joinRoom()
     }
-  })
-}
 
-function disconnectWebSocket() {
-  if (socket.value) {
-    socket.value.disconnect()
-    socket.value = null
+    eventSource.value.onerror = (error) => {
+      console.error('🎲 SSE connection error:', error)
+      console.log('🎲 Falling back to offline mode')
+      isConnected.value = false
+      isOfflineMode.value = true
+      connectedUsers.value = 1
+    }
+
+    // Handle specific events
+    eventSource.value.addEventListener('connected', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🎲 SSE connected with ID:', data.connectionId)
+    })
+
+    eventSource.value.addEventListener('users:count', (event) => {
+      const data = JSON.parse(event.data)
+      connectedUsers.value = data.count
+    })
+
+    eventSource.value.addEventListener('dice:history', (event) => {
+      const data = JSON.parse(event.data)
+      // Merge with existing history, avoiding duplicates
+      const existingIds = new Set(rollHistory.value.map(r => r.id))
+      const newRolls = data.history
+        .filter((r: DiceRoll) => !existingIds.has(r.id))
+        .map((r: DiceRoll) => ({
+          ...r,
+          timestamp: new Date(r.timestamp),
+          isOwn: r.userId === userId.value
+        }))
+      
+      rollHistory.value = [...rollHistory.value, ...newRolls]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    })
+
+    eventSource.value.addEventListener('dice:roll', (event) => {
+      const data = JSON.parse(event.data)
+      const roll = data as DiceRoll
+      
+      // Only add rolls from other users
+      if (roll.userId !== userId.value) {
+        const processedRoll = {
+          ...roll,
+          timestamp: new Date(roll.timestamp),
+          isOwn: false
+        }
+        
+        rollHistory.value.unshift(processedRoll)
+      }
+    })
+
+    eventSource.value.addEventListener('heartbeat', (event) => {
+      const data = JSON.parse(event.data)
+      // Optional: Update user count from heartbeat
+      if (data.userCount) {
+        connectedUsers.value = data.userCount
+      }
+    })
+
+  } catch (error) {
+    console.error('🎲 Failed to initialize SSE:', error)
+    console.log('🎲 Using offline mode')
+    isOfflineMode.value = true
+    isConnected.value = false
+    connectedUsers.value = 1
   }
 }
 
-// Initialize with WebSocket connection
+async function joinRoom() {
+  try {
+    const response = await $fetch('/api/dice/join', {
+      method: 'POST',
+      body: {
+        userId: userId.value,
+        userName: userName.value
+      }
+    })
+    
+    if (response.success) {
+      console.log('🎲 Successfully joined room')
+    }
+  } catch (error) {
+    console.error('🎲 Failed to join room:', error)
+  }
+}
+
+async function submitDiceRoll(roll: Omit<DiceRoll, 'id' | 'timestamp' | 'isOwn'>) {
+  try {
+    const response = await $fetch('/api/dice/roll', {
+      method: 'POST',
+      body: {
+        ...roll,
+        userId: userId.value,
+        userName: userName.value
+      }
+    })
+    
+    if (response.success) {
+      console.log('🎲 Roll submitted successfully')
+      return response.roll
+    }
+  } catch (error) {
+    console.error('🎲 Failed to submit roll:', error)
+    throw error
+  }
+}
+
+function disconnectSSE() {
+  if (eventSource.value) {
+    eventSource.value.close()
+    eventSource.value = null
+    console.log('🎲 SSE connection closed')
+  }
+}
+
+// Initialize with SSE connection
 onMounted(() => {
-  initializeWebSocket()
+  initializeSSE()
 })
 
 onUnmounted(() => {
-  disconnectWebSocket()
+  disconnectSSE()
 })
 
 // SEO
