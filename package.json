@@ -12,15 +12,25 @@
   "dependencies": {
     "@nuxt/eslint": "^0.5.7",
     "@nuxt/ui": "^2.18.7",
+    "@nuxtjs/supabase": "^2.0.1",
     "@prisma/client": "^6.18.0",
+    "@supabase/supabase-js": "^2.78.0",
     "@types/pg": "^8.15.6",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "nuxt": "^3.13.2",
     "pg": "^8.16.3",
     "prisma": "^6.18.0",
     "typescript": "^5.9.3",
+    "uuid": "^13.0.0",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10"
   }
 }

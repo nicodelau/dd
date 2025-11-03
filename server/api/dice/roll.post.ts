@@ -22,6 +22,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    const roomCode = body.roomCode || 'default'
+
     // Validate dice roll data
     if (!body.diceRolled || !Array.isArray(body.diceRolled)) {
       throw createError({
@@ -31,11 +33,11 @@ export default defineEventHandler(async (event) => {
     }
 
     // Update user's last seen time (activity tracking)
-    const user = diceRoomStore.getUser(body.userId)
+    const user = diceRoomStore.getUser(body.userId, roomCode)
     if (user) {
-      diceRoomStore.updateUserActivity(body.userId)
+      diceRoomStore.updateUserActivity(body.userId, roomCode)
     } else {
-      diceRoomStore.addUser(body.userId, body.userName)
+      diceRoomStore.addUser(body.userId, body.userName, roomCode)
     }
 
     // Create and add the roll
@@ -53,12 +55,12 @@ export default defineEventHandler(async (event) => {
       isOwn: false // Will be set correctly by clients
     }
 
-    const savedRoll = diceRoomStore.addRoll(rollData)
+    const savedRoll = diceRoomStore.addRoll(rollData, roomCode)
 
     return {
       success: true,
       roll: savedRoll,
-      stats: diceRoomStore.getStats()
+      stats: diceRoomStore.getStats(roomCode)
     }
   } catch (error) {
     console.error('🎲 Error processing dice roll:', error)

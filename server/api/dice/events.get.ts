@@ -1,7 +1,7 @@
 // SSE endpoint for real-time dice room events
 // GET /api/dice/events - establishes SSE connection for receiving real-time updates
 
-import { diceRoomStore } from '~/server/utils/diceRoomStore'
+import { diceRoomStore, type UserRole } from '~/server/utils/diceRoomStore'
 
 export default defineEventHandler(async (event) => {
   // Only allow GET requests
@@ -16,6 +16,8 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = query.userId as string || `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   const userName = query.userName as string || 'Anonymous'
+  const role = (query.role as UserRole) || 'Player'
+  const roomCode = query.roomCode as string || 'default'
 
   // Set SSE headers
   setHeader(event, 'Content-Type', 'text/event-stream')
@@ -34,42 +36,42 @@ export default defineEventHandler(async (event) => {
     timestamp: new Date().toISOString() 
   })}\n\n`)
 
-  // Add user to room
-  diceRoomStore.addUser(userId, userName)
+  // Add user to room with role
+  diceRoomStore.addUser(userId, userName, roomCode, role)
 
   // Add SSE connection to store
-  diceRoomStore.addSSEConnection(connectionId, response, userId)
+  diceRoomStore.addSSEConnection(connectionId, response, userId, roomCode)
 
-  console.log(`🎲 SSE connection established: ${connectionId} for user ${userName} (${userId})`)
+  console.log(`🎲 SSE connection established: ${connectionId} for ${role} ${userName} (${userId})`)
 
   // Handle client disconnect
   event.node.req.on('close', () => {
     console.log(`🎲 SSE connection closed: ${connectionId}`)
-    diceRoomStore.removeSSEConnection(connectionId)
-    diceRoomStore.removeUser(userId)
+    diceRoomStore.removeSSEConnection(connectionId, roomCode)
+    diceRoomStore.removeUser(userId, roomCode)
   })
 
   event.node.req.on('error', (error) => {
     console.error(`🎲 SSE connection error: ${connectionId}`, error)
-    diceRoomStore.removeSSEConnection(connectionId)
-    diceRoomStore.removeUser(userId)
+    diceRoomStore.removeSSEConnection(connectionId, roomCode)
+    diceRoomStore.removeUser(userId, roomCode)
   })
 
   // Keep connection alive with periodic heartbeat
   const heartbeatInterval = setInterval(() => {
     try {
       // Update user activity on heartbeat
-      diceRoomStore.updateUserActivity(userId)
+      diceRoomStore.updateUserActivity(userId, roomCode)
       
       response.write(`event: heartbeat\ndata: ${JSON.stringify({ 
         timestamp: new Date().toISOString(),
-        userCount: diceRoomStore.getUserCount()
+        userCount: diceRoomStore.getUserCount(roomCode)
       })}\n\n`)
     } catch (error) {
       console.error(`🎲 Heartbeat failed for ${connectionId}:`, error)
       clearInterval(heartbeatInterval)
-      diceRoomStore.removeSSEConnection(connectionId)
-      diceRoomStore.removeUser(userId)
+      diceRoomStore.removeSSEConnection(connectionId, roomCode)
+      diceRoomStore.removeUser(userId, roomCode)
     }
   }, 30000) // Every 30 seconds
 

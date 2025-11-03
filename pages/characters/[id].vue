@@ -6,13 +6,13 @@
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-4">
             <UButton
-              to="/dashboard"
+              :to="canEdit ? '/dashboard' : '/'"
               color="gray"
               variant="ghost"
               icon="i-heroicons-arrow-left"
               size="sm"
             >
-              Back to Dashboard
+              {{ canEdit ? 'Back to Dashboard' : 'Back to Home' }}
             </UButton>
             
             <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
@@ -24,6 +24,7 @@
           
           <div class="flex items-center space-x-2">
             <UButton
+              v-if="canEdit"
               color="gray"
               variant="outline"
               icon="i-heroicons-pencil"
@@ -34,7 +35,7 @@
             </UButton>
             
             <UButton
-              v-if="editMode"
+              v-if="editMode && canEdit"
               color="primary"
               icon="i-heroicons-check"
               @click="saveCharacter"
@@ -65,8 +66,8 @@
           Character Not Found
         </h3>
         <p class="text-red-500 mb-6">{{ error }}</p>
-        <UButton color="primary" to="/dashboard">
-          Back to Dashboard
+        <UButton color="primary" :to="canEdit ? '/dashboard' : '/'">
+          {{ canEdit ? 'Back to Dashboard' : 'Back to Home' }}
         </UButton>
       </div>
       
@@ -92,7 +93,7 @@
                   v-model="editForm.characterName"
                   placeholder="Character name"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.characterName }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.characterName || 'Unknown' }}</p>
               </div>
               
               <div>
@@ -104,7 +105,7 @@
                   v-model="editForm.playerName"
                   placeholder="Player name"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.playerName }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.playerName || 'Unassigned' }}</p>
               </div>
               
               <div>
@@ -117,7 +118,7 @@
                   :options="raceOptions"
                   placeholder="Select race"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.race }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.race || 'Unknown' }}</p>
               </div>
               
               <div>
@@ -139,7 +140,7 @@
                     class="w-20"
                   />
                 </div>
-                <p v-else class="text-gray-900 dark:text-white">{{ character.className }} {{ character.classLevel }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ (character.className || 'Unknown') }} {{ character.classLevel || 1 }}</p>
               </div>
               
               <div>
@@ -189,7 +190,7 @@
                   type="number"
                   min="1"
                 />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.armorClass }}</p>
+                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.armorClass || 10 }}</p>
               </div>
               
               <div>
@@ -202,7 +203,7 @@
                   type="number"
                   min="0"
                 />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.speed }} ft</p>
+                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.speed || 30 }} ft</p>
               </div>
               
               <div>
@@ -215,7 +216,7 @@
                   type="number"
                   min="1"
                 />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxHp }}</p>
+                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxHp || 0 }}</p>
               </div>
               
               <div>
@@ -229,7 +230,7 @@
                   min="0"
                   :max="character.maxHp"
                 />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp }}</p>
+                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp || 0 }}</p>
               </div>
             </div>
             
@@ -238,18 +239,18 @@
               <div class="flex justify-between items-center mb-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Health</span>
                 <span class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ Math.round((character.currentHp / character.maxHp) * 100) }}%
+                  {{ Math.round(((character.currentHp || 0) / (character.maxHp || 1)) * 100) }}%
                 </span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-3">
                 <div 
                   class="h-3 rounded-full transition-all duration-300"
                   :class="{
-                    'bg-green-500': (character.currentHp / character.maxHp) > 0.6,
-                    'bg-yellow-500': (character.currentHp / character.maxHp) > 0.3 && (character.currentHp / character.maxHp) <= 0.6,
-                    'bg-red-500': (character.currentHp / character.maxHp) <= 0.3
+                    'bg-green-500': ((character.currentHp || 0) / (character.maxHp || 1)) > 0.6,
+                    'bg-yellow-500': ((character.currentHp || 0) / (character.maxHp || 1)) > 0.3 && ((character.currentHp || 0) / (character.maxHp || 1)) <= 0.6,
+                    'bg-red-500': ((character.currentHp || 0) / (character.maxHp || 1)) <= 0.3
                   }"
-                  :style="`width: ${Math.max(0, (character.currentHp / character.maxHp) * 100)}%`"
+                  :style="`width: ${Math.max(0, ((character.currentHp || 0) / (character.maxHp || 1)) * 100)}%`"
                 ></div>
               </div>
             </div>
@@ -268,11 +269,11 @@
             
             <div class="text-center">
               <div class="h-32 w-32 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-4xl mx-auto mb-4">
-                {{ character.characterName.charAt(0).toUpperCase() }}
+                {{ character.characterName?.charAt(0)?.toUpperCase() || '?' }}
               </div>
               
               <p class="text-sm text-gray-600 dark:text-gray-300">
-                {{ character.race }} {{ character.className }}
+                {{ (character.race || 'Unknown') }} {{ (character.className || 'Unknown') }}
               </p>
             </div>
           </UCard>
@@ -288,12 +289,12 @@
             <div class="space-y-3">
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-300">Experience</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ character.experience.toLocaleString() }} XP</span>
+                <span class="font-medium text-gray-900 dark:text-white">{{ (character.experience || 0).toLocaleString() }} XP</span>
               </div>
               
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-300">Proficiency Bonus</span>
-                <span class="font-medium text-gray-900 dark:text-white">+{{ character.proficiencyBonus }}</span>
+                <span class="font-medium text-gray-900 dark:text-white">+{{ character.proficiencyBonus || 2 }}</span>
               </div>
               
               <div class="flex justify-between items-center">
@@ -335,6 +336,14 @@ import type { Character } from '~/types/dtos'
 
 const route = useRoute()
 const characterId = route.params.id as string
+
+// Authentication
+const user = useState('user')
+
+// Check if user can edit characters (DM or ADMIN only)
+const canEdit = computed(() => {
+  return user.value?.role === 'DM' || user.value?.role === 'ADMIN'
+})
 
 // Reactive state
 const character = ref<Character | null>(null)
@@ -400,6 +409,13 @@ const alignmentOptions = [
 async function loadCharacter() {
   isLoading.value = true
   error.value = null
+  
+  // Validate that characterId is a valid UUID or ID format
+  if (!characterId || characterId === 'create' || characterId.length < 5) {
+    error.value = 'Invalid character ID'
+    isLoading.value = false
+    return
+  }
   
   try {
     const response = await $fetch<{success: boolean, data: Character}>(`/api/characters/${characterId}`)

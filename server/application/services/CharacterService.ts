@@ -22,6 +22,11 @@ export class CharacterService {
     return characters.map(this.mapToDTO)
   }
 
+  async getCharactersByUserId(userId: string): Promise<CharacterDTO[]> {
+    const characters = await this.characterRepository.findByUserId(userId)
+    return characters.map(this.mapToDTO)
+  }
+
   async createCharacter(dto: CreateCharacterDTO): Promise<CharacterDTO> {
     const characterData = {
       ...dto,
@@ -135,7 +140,12 @@ export class CharacterService {
       languages: character.languages,
       notes: character.notes,
       createdAt: character.createdAt?.toISOString(),
-      updatedAt: character.updatedAt?.toISOString()
+      updatedAt: character.updatedAt?.toISOString(),
+      // New user assignment fields
+      userId: character.userId,
+      ownerId: character.ownerId,
+      user: character.user,
+      owner: character.owner
     }
   }
 }

@@ -12,6 +12,7 @@ export interface ICharacterRepository {
   findAll(): Promise<Character[]>
   findById(id: string): Promise<Character | null>
   findByPlayerName(playerName: string): Promise<Character[]>
+  findByUserId(userId: string): Promise<Character[]>
   create(character: Omit<Character, 'id' | 'createdAt' | 'updatedAt'>): Promise<Character>
   update(id: string, character: Partial<Character>): Promise<Character | null>
   delete(id: string): Promise<boolean>

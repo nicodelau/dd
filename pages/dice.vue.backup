@@ -15,36 +15,13 @@
               <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                 🎲 Collaborative Dice Room
               </h1>
-              <div v-if="currentRoom" class="flex items-center space-x-2">
-                <span class="text-sm text-gray-500 dark:text-gray-400">
-                  Room: {{ currentRoom.name }} 
-                </span>
-                <div class="flex items-center space-x-1">
-                  <span class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                    {{ currentRoom.code }}
-                  </span>
-                  <UButton 
-                    v-if="currentRoom.code !== 'default'" 
-                    color="gray" 
-                    variant="ghost" 
-                    size="xs"
-                    icon="i-heroicons-clipboard-document"
-                    @click="copyRoomCode"
-                  >
-                    Copy
-                  </UButton>
-                </div>
+              <div v-if="currentRoom" class="text-sm text-gray-500 dark:text-gray-400">
+                Room: {{ currentRoom.name }} ({{ currentRoom.code }})
               </div>
             </div>
           </div>
 
           <div class="flex items-center space-x-3">
-            <!-- Player Stats Toggle -->
-            <UButton color="gray" variant="outline" size="sm" @click="isSidebarOpen = !isSidebarOpen"
-              :icon="isSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'">
-              {{ isSidebarOpen ? 'Hide' : 'Show' }} Stats
-            </UButton>
-
             <!-- Room Actions -->
             <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
               <UButton color="red" variant="outline" size="sm" icon="i-heroicons-arrow-right-on-rectangle"
@@ -59,16 +36,6 @@
               <span class="text-sm text-gray-600 dark:text-gray-300">
                 {{ isConnected ? 'Connected' : isOfflineMode ? 'Offline Mode' : 'Disconnected' }}
               </span>
-              <UButton 
-                v-if="!isConnected || isOfflineMode"
-                color="yellow" 
-                variant="ghost" 
-                size="xs"
-                :icon="isOfflineModePreference ? 'i-heroicons-wifi' : 'i-heroicons-wifi-slash'"
-                @click="toggleOfflineMode"
-              >
-                {{ isOfflineModePreference ? 'Go Online' : 'Stay Offline' }}
-              </UButton>
             </div>
 
             <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
@@ -84,8 +51,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Sidebar toggle button for mobile -->
       <div class="lg:hidden mb-4">
-        <UButton color="gray" variant="outline" @click="isSidebarOpen = !isSidebarOpen" 
-          :icon="isSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" block>
+        <UButton color="gray" variant="outline" @click="isSidebarOpen = !isSidebarOpen" icon="i-heroicons-bars-3" block>
           {{ isSidebarOpen ? 'Hide' : 'Show' }} Player Stats
         </UButton>
       </div>
@@ -109,7 +75,7 @@
       </div>
 
       <!-- Room Selection/Creation Card -->
-      <UCard v-if="!currentRoom || !isConnected || currentRoom.code === 'default'" class="mb-6">
+      <UCard v-if="!currentRoom || !isConnected" class="mb-6">
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             🏠 Room Management
@@ -118,12 +84,11 @@
 
         <div class="space-y-4">
           <div class="flex items-center space-x-4">
-            <!-- Only show Create Room button for DMs -->
-            <UButton v-if="userRole === 'DM'" color="primary" @click="showCreateRoom = true" icon="i-heroicons-plus">
+            <UButton color="primary" @click="showCreateRoom = true" icon="i-heroicons-plus">
               Create New Room
             </UButton>
 
-            <div v-if="userRole === 'DM'" class="text-gray-400 dark:text-gray-500">or</div>
+            <div class="text-gray-400 dark:text-gray-500">or</div>
 
             <div class="flex items-center space-x-2 flex-1">
               <UInput v-model="joinRoomCode" placeholder="Enter room code..." class="flex-1"
@@ -132,16 +97,6 @@
                 icon="i-heroicons-arrow-right-on-rectangle">
                 Join Room
               </UButton>
-            </div>
-          </div>
-
-          <div v-if="userRole === 'Player'" class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-            <div class="flex items-start space-x-2">
-              <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-              <div>
-                <span class="font-medium text-blue-900 dark:text-blue-100">Player Note:</span>
-                <span class="text-blue-800 dark:text-blue-200">Only DMs can create new rooms. Ask your DM for the room code to join their session.</span>
-              </div>
             </div>
           </div>
 
@@ -346,23 +301,17 @@
                   </p>
                 </div>
 
-                <!-- Name Display (Read-only for authenticated users) -->
+                <!-- Name Input -->
                 <div>
                   <UFormGroup label="Your Name">
                     <div class="flex items-center space-x-4">
-                      <div class="flex-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <span class="text-gray-900 dark:text-white font-medium">{{ userName }}</span>
-                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">(from your account)</span>
-                      </div>
-                      <UButton color="gray" variant="outline" @click="refreshUserData"
-                        icon="i-heroicons-arrow-path" :loading="isRefreshingUserData">
-                        Refresh
+                      <UInput v-model="userName" placeholder="Enter your name..." class="flex-1"
+                        @keyup.enter="updateUserName" />
+                      <UButton color="primary" @click="updateUserName" :disabled="!userName.trim()">
+                        Update
                       </UButton>
                     </div>
                   </UFormGroup>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Your name is automatically set from your authenticated user account
-                  </p>
                 </div>
 
                 <!-- Character Selection (for Players) -->
@@ -383,42 +332,38 @@
                 }}
               </p>
             </UCard>
+          </div>
 
-            <!-- Dice Selection Card -->
-            <UCard>
-              <template #header>
-                <div class="flex items-center justify-between">
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    🎲 Select Dice
-                  </h3>
-                  <div v-if="totalDiceSelected > 0" class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ totalDiceSelected }} dice selected
-                  </div>
-                </div>
-              </template>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
+          <!-- Dice Selection Card -->
+          <UCard>
+            <template #header>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Select Dice
+              </h3>
+            </template>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div v-for="dice in diceTypes" :key="dice.type" class="relative">
                 <button @click="toggleDice(dice.type)"
-                  class="w-full p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105 hover:shadow-md transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  class="w-full p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
                   :class="[
                     selectedDice[dice.type] > 0
-                      ? `${dice.bgColor} border-current shadow-sm`
+                      ? `${dice.bgColor} border-current shadow-md`
                       : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600',
-                    animatingDice.has(dice.type) ? 'animate-pulse' : ''
-                  ]"
-                  :aria-label="`Select ${dice.name} dice with ${dice.sides} sides. Currently selected: ${selectedDice[dice.type]}`">
-                  <div class="flex flex-col items-center space-y-1">
-                    <!-- Dice Symbol -->
-                    <div class="text-3xl font-bold transition-all duration-200" :class="[
+                    animatingDice.has(dice.type) ? 'animate-bounce' : ''
+                  ]">
+                  <div class="flex flex-col items-center space-y-2">
+                    <!-- Dice Symbol with Rotation Animation -->
+                    <div class="text-4xl font-bold transition-all duration-300 transform" :class="[
                       selectedDice[dice.type] > 0 ? dice.color : 'text-gray-400 dark:text-gray-500',
-                      animatingDice.has(dice.type) ? 'animate-bounce scale-110' : 'hover:scale-105'
+                      animatingDice.has(dice.type) ? 'animate-spin scale-125' : 'hover:scale-110'
                     ]">
                       {{ dice.symbol }}
                     </div>
 
                     <!-- Dice Name -->
-                    <div class="text-xs font-semibold text-gray-900 dark:text-white">
+                    <div class="text-sm font-semibold text-gray-900 dark:text-white">
                       {{ dice.name }}
                     </div>
 
@@ -430,10 +375,10 @@
                   </div>
                 </button>
 
-                <!-- Dice Counter with better styling -->
+                <!-- Dice Counter with Animation -->
                 <div v-if="selectedDice[dice.type] > 0"
-                  class="absolute -top-1 -right-1 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center transition-all duration-200 transform shadow-lg border border-white"
-                  :class="getBadgeColor(dice.type)">
+                  class="absolute -top-2 -right-2 text-white text-sm font-bold rounded-full h-7 w-7 flex items-center justify-center transition-all duration-300 transform scale-110 shadow-lg"
+                  :class="dice.color.replace('text-', 'bg-')">
                   {{ selectedDice[dice.type] }}
                 </div>
               </div>
@@ -467,24 +412,19 @@
 
             <div class="space-y-4">
               <!-- Roll Summary -->
-              <div v-if="totalDiceSelected > 0" class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div class="flex items-center justify-between mb-2">
-                  <p class="text-sm font-medium text-blue-900 dark:text-blue-100">Ready to roll:</p>
-                  <div class="text-xs text-blue-700 dark:text-blue-300">
-                    {{ totalDiceSelected }} dice total
-                  </div>
-                </div>
-                <div class="flex flex-wrap gap-1.5">
+              <div v-if="totalDiceSelected > 0" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Rolling:</p>
+                <div class="flex flex-wrap gap-2">
                   <span v-for="(count, type) in selectedDice" :key="type" v-show="count > 0"
-                    class="inline-flex items-center px-2.5 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
-                    {{ count }}d{{ diceTypes.find(d => d.type === type)?.sides }}
+                    class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full">
+                    {{ count }}d{{diceTypes.find(d => d.type === type)?.sides}}
                   </span>
                   <span v-if="modifier !== 0"
-                    class="inline-flex items-center px-2.5 py-1 bg-green-600 text-white text-xs font-medium rounded-full">
+                    class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium rounded-full">
                     {{ modifier > 0 ? '+' : '' }}{{ modifier }}
                   </span>
                   <span v-if="rollType !== 'normal'"
-                    class="inline-flex items-center px-2.5 py-1 bg-purple-600 text-white text-xs font-medium rounded-full">
+                    class="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-medium rounded-full">
                     {{ rollType }}
                   </span>
                 </div>
@@ -519,7 +459,14 @@
         </div>
 
         <!-- Right Column - Roll History (hidden when sidebar is open on mobile) -->
-        <div class="space-y-6" :class="{ 'hidden lg:block': isSidebarOpen }">
+        <div class="space-y-6" :class="{ 'hidden lg:block': isSidebarOpen }">>
+          <!-- Stats Toggle Button (Desktop) -->
+          <div class="hidden lg:block">
+            <UButton color="gray" variant="outline" @click="isSidebarOpen = !isSidebarOpen"
+              :icon="isSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" block>
+              {{ isSidebarOpen ? 'Hide' : 'Show' }} Player Stats
+            </UButton>
+          </div>
           <!-- Live Roll Feed -->
           <UCard>
             <template #header>
@@ -608,7 +555,7 @@
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-300">Highest Roll</span>
                 <span class="font-medium text-gray-900 dark:text-white">
-                  {{ highestRoll || '-' }}
+                  {{ highestRoll || '—' }}
                 </span>
               </div>
 
@@ -620,7 +567,6 @@
           </UCard>
         </div>
       </div>
-      </div> <!-- End relative container for main content area with sidebar -->
     </main>
 
     <!-- Room Creation Modal -->
@@ -803,17 +749,15 @@ interface QuickRoll {
   modifier?: number
 }
 
-// Get authenticated user
-const user = useState<any>('user')
-
 // Reactive state
+const userName = ref('Anonymous')
 const userRole = ref<'Player' | 'DM'>('Player')
 const isConnected = ref(false)
 const isOfflineMode = ref(false)
-const isOfflineModePreference = ref(false) // Persistent offline mode preference
 const connectedUsers = ref(1)
 const isRolling = ref(false)
 const eventSource = ref<EventSource | null>(null)
+const userId = ref(`user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`)
 const animatingDice = ref<Set<string>>(new Set())
 
 // Sidebar state
@@ -860,13 +804,13 @@ const rollHistory = ref<DiceRoll[]>([])
 
 // Constants
 const diceTypes: DiceType[] = [
-  { type: 'd4', name: 'D4', sides: 4, color: 'text-blue-600', bgColor: 'bg-blue-100 border-blue-300 hover:bg-blue-200', symbol: '◆' },
+  { type: 'd4', name: 'D4', sides: 4, color: 'text-blue-600', bgColor: 'bg-blue-100 border-blue-300 hover:bg-blue-200', symbol: '▲' },
   { type: 'd6', name: 'D6', sides: 6, color: 'text-green-600', bgColor: 'bg-green-100 border-green-300 hover:bg-green-200', symbol: '⬛' },
   { type: 'd8', name: 'D8', sides: 8, color: 'text-purple-600', bgColor: 'bg-purple-100 border-purple-300 hover:bg-purple-200', symbol: '♦' },
   { type: 'd10', name: 'D10', sides: 10, color: 'text-pink-600', bgColor: 'bg-pink-100 border-pink-300 hover:bg-pink-200', symbol: '🔟' },
-  { type: 'd12', name: 'D12', sides: 12, color: 'text-red-600', bgColor: 'bg-red-100 border-red-300 hover:bg-red-200', symbol: '◇' },
+  { type: 'd12', name: 'D12', sides: 12, color: 'text-red-600', bgColor: 'bg-red-100 border-red-300 hover:bg-red-200', symbol: '⬟' },
   { type: 'd20', name: 'D20', sides: 20, color: 'text-orange-600', bgColor: 'bg-orange-100 border-orange-300 hover:bg-orange-200', symbol: '●' },
-  { type: 'd36', name: 'D36', sides: 36, color: 'text-cyan-600', bgColor: 'bg-cyan-100 border-cyan-300 hover:bg-cyan-200', symbol: '◯' },
+  { type: 'd36', name: 'D36', sides: 36, color: 'text-cyan-600', bgColor: 'bg-cyan-100 border-cyan-300 hover:bg-cyan-200', symbol: '⬢' },
   { type: 'd100', name: 'D100', sides: 100, color: 'text-green-600', bgColor: 'bg-green-100 border-green-300 hover:bg-green-200', symbol: '💯' }
 ]
 
@@ -906,25 +850,18 @@ const criticalHits = computed(() => {
   return rollHistory.value.filter(roll => roll.isCritical && roll.criticalType === 'success').length
 })
 
-// Computed properties for user info
-const userName = computed(() => user.value?.username || 'Anonymous')
-const userId = computed(() => user.value?.id || `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`)
-const userInitials = computed(() => user.value?.username?.charAt(0)?.toUpperCase() || 'A')
-const userEmail = computed(() => user.value?.email || '')
-
 // User role and character management functions
 async function loadUserCharacters() {
-  if (!user.value?.id) {
+  if (!userName.value || userName.value.trim() === 'Anonymous') {
     userCharacters.value = []
     userRole.value = 'DM'
     return
   }
 
   try {
-    const response = await $fetch<{ success: boolean, data: any[] }>(`/api/characters?player=${user.value.id}`)
+    const response = await $fetch<{  success: boolean, data: any[ ] }>(`/api/characters?player=${encodeURIComponent(userName.value)}`)
     if (response.success && Array.isArray(response.data)) {
-      userCharacters.value = response.data
-      // Auto-detect role based on characters
+      userCharacters.value = response.dat   // Auto-detect role based on characters
       if (userCharacters.value.length > 0) {
         userRole.value = 'Player'
         // If no active character is selected, select the first one
@@ -938,7 +875,7 @@ async function loadUserCharacters() {
         activeCharacterId.value = null
       }
 
-      console.log(`🎭 Auto-detected role: ${userRole.value} (${userCharacters.value.length} characters found)`)
+   sole.log(`🎭 Auto-detected role: ${userRole.value} (${userCharacters.value.length} characters found)`)
     } else {
       console.warn('Invalid response format from characters API:', response)
       userCharacters.value = []
@@ -949,13 +886,11 @@ async function loadUserCharacters() {
     userCharacters.value = []
     userRole.value = 'DM' // Default to DM if we can't load characters
 
-    // User-friendly error message if this is not just a 404 (no characters found)
+    // Shser-friendly error message if this is not just a 404 (no characters found)
     if (error.statusCode !== 404) {
       console.warn('Character loading failed - defaulting to DM role due to connection issue')
     }
   }
-
-
 }
 
 async function loadCharacterStats() {
@@ -970,8 +905,8 @@ async function loadCharacterStats() {
       // Convert character data to player stats format
       playerStats.value = {
         hitPoints: {
-          current: character.currentHp || character.maxHp || 10,
-          max: character.maxHp || 10
+          curent: character.currentHp || character.maxHp || 10,
+          max:character.maxHp || 10
         },
        armorClass: character.armorClass || 10,
         abilities: {
@@ -1029,21 +964,6 @@ async function onActiveCharacterChange() {
     }
   }
 }
-
-function getBadgeColor(diceType: string): string {
-  const colorMap: Record<string, string> = {
-    'd4': 'bg-blue-600',
-    'd6': 'bg-green-600', 
-    'd8': 'bg-purple-600',
-    'd10': 'bg-pink-600',
-    'd12': 'bg-red-600',
-    'd20': 'bg-orange-600',
-    'd36': 'bg-cyan-600',
-    'd100': 'bg-green-600'
-  }
-  return colorMap[diceType] || 'bg-gray-600'
-}
-
 function toggleDice(diceType: string) {
   // Add animation
   animatingDice.value.add(diceType)
@@ -1191,7 +1111,7 @@ async function rollDice() {
     rollHistory.value.unshift(roll)
 
     // Submit to server for other s (only if connected and not in offline mode)
-    if (isConnected.value && !isOfflineMode.value) {
+    if (isConnected.value &&OfflineMode.value) {
       try {
         await submitDiceRoll({
           userName: roll.userName,
@@ -1224,7 +1144,7 @@ function performQuickRoll(quickRoll: QuickRoll) {
   // Set dice for quick roll
   Object.assign(selectedDice.value, quickRoll.dice)
   if (quickRoll.modifier) {
-    modifier.value = quickRoll.modifier
+    modifievalue = quickRoll.modifier
   }
 
   // Roll immediately
@@ -1278,7 +1198,7 @@ async function updateStats() {
     await $fetch(`/api/dice/stats/${userId.value}`, {
       method: 'POST',
       body: {
-        modifierUserId: userId.value,
+        modifierUserId: userIdalue,
         stats: playerStats.value,
         roomCode: currentRoom.value?.code || 'default'
       }
@@ -1312,7 +1232,7 @@ async function loadAllPlayersStats(roomCode: string = 'default') {
 
   try {
     const response = await $fetch(`/api/dice/stats?viewerUserId=${userId.value}&roomCode=${roomCode}`)
-    if (response.success) {
+    if (response.succs) {
       allPlayers.value = response.players
     }
   } catch (error) {
@@ -1350,7 +1270,7 @@ async function savePlayerStats() {
 
     // Update local state
     const playerIndex = allPlayers.value.findIndex(p => p.userId === editingPlayer.value!.userId)
-    if (playerIndex !== -1) {
+    if (playdex !== -1) {
       allPlayers.value[playerIndex].stats = editingPlayerStats.value
     }
 
@@ -1390,16 +1310,6 @@ function getCriticalClass(roll: DiceRoll): string {
 
 // Room Maagement Functions
 async function createRoom(){
-  if (!userName.value.trim()) {
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Please enter your name before creating a room.',
-      color: 'red'
-    })
-    return
-  }
-
   try {
     const response = await $fetch('/api/dice/rooms/create', {
       method: 'POST',
@@ -1415,29 +1325,15 @@ async function createRoom(){
         name: response.room.name,
         code: response.room.code,
         isOwner: true
-      }
+  }
       console.log('🏠 Created room:', response.room.code)
       showCreateRoom.value = false
-
-      // Show success notification
-      const toast = useToast()
-      toast.add({
-        title: 'Room Created',
-        description: `Room ${response.room.code} created successfully`,
-        color: 'green'
-      })
 
       // Reconnect SSE with room code
       await reconnectWithRoom(response.room.code)
     }
   } catch (error) {
-    console.error('🏠 Failed to create room:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to create room. Please try again.',
-      color: 'red'
-    })
+    console.error('🏠 Failed to cream:', error)
   }
 }
 
@@ -1449,7 +1345,7 @@ async function joinExistingRoom() {
       method: 'POST',
       body: {
         userId: userId.value,
-        userName: userName.value,
+        userName: userme.value,
         roomCode: joinRoomCode.value.trim().toUpperCase()
       }
     })
@@ -1460,28 +1356,15 @@ async function joinExistingRoom() {
         code: response.room.code,
         isOwner: false
       }
-      console.log('🏠 Joined room:', response.room.code)
+   onsole.log('🏠 Joined room:', response.room.code)
       joinRoomCode.value = ''
-
-      // Show success notification
-      const toast = useToast()
-      toast.add({
-        title: 'Joined Room',
-        description: `Successfully joined room ${response.room.code}`,
-        color: 'green'
-      })
 
       // Reconnect SSE with room code
       await reconnectWithRoom(response.room.code)
     }
   } catch (error) {
     console.error('🏠 Failed to join room:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to join room. Please check the room code and try again.',
-      color: 'red'
-    })
+    // Show user-friendly error message here if needed
   }
 }
 
@@ -1496,67 +1379,13 @@ async function leaveRoom() {
         roomCode: currentRoom.value.code
       }
     })
-    console.log('🏠 Left room:', currentRoom.value.code)
+   console.log('🏠 Left room:', currentRoom.value.code)
     currentRoom.value = null
-
-    // Show success notification
-    const toast = useToast()
-    toast.add({
-      title: 'Left Room',
-      description: 'You have successfully left the room',
-      color: 'green'
-    })
 
     // Reconnect to default room
     await reconnectWithRoom('default')
   } catch (error) {
     console.error('🏠 Failed to leave room:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to leave room. Please try again.',
-      color: 'red'
-    })
-  }
-}
-
-async function copyRoomCode() {
-  if (!currentRoom.value || currentRoom.value.code === 'default') return
-
-  try {
-    await navigator.clipboard.writeText(currentRoom.value.code)
-    const toast = useToast()
-    toast.add({
-      title: 'Room Code Copied',
-      description: `Room code ${currentRoom.value.code} copied to clipboard`,
-      color: 'green'
-    })
-  } catch (error) {
-    console.error('Failed to copy room code:', error)
-    // Fallback for older browsers or when clipboard API fails
-    try {
-      const textArea = document.createElement('textarea')
-      textArea.value = currentRoom.value.code
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      
-      const toast = useToast()
-      toast.add({
-        title: 'Room Code Copied',
-        description: `Room code ${currentRoom.value.code} copied to clipboard`,
-        color: 'green'
-      })
-    } catch (fallbackError) {
-      console.error('Fallback copy failed:', fallbackError)
-      const toast = useToast()
-      toast.add({
-        title: 'Copy Failed',
-        description: 'Failed to copy room code. Please copy manually.',
-        color: 'red'
-      })
-    }
   }
 }
 
@@ -1569,7 +1398,7 @@ async function kickPlayer(player: Player) {
       body: {
         dmUserId: userId.value,
         targetUserId: player.userId,
-        roomCode: currentRoom.value.code
+        roomCode: currentRoovalue.code
       }
     })
 
@@ -1577,9 +1406,7 @@ async function kickPlayer(player: Player) {
 
     // Remove from local list
     allPlayers.value = allPlayers.value.filter(p => p.userId !== player.userId)
-  } catch (error) { 
-    console.error('🏠 Failed to kick player:', error)
-  }
+  } catch (error) { console.error('🏠 Failed to kick player:', error)
 }
 
 async function reconnectWithRoom(roomCode: string) {
@@ -1601,21 +1428,12 @@ const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 
 
 // SSE Functions - Server-Sent Events for real-time updates
 function initializeSSE(roomCode: string = 'default') {
-  // Check if user has explicitly chosen offline mode
-  if (isOfflineModePreference.value) {
-    console.log('🎲 Staying in offline mode per user preference')
-    isConnected.value = false
-    isOfflineMode.value = true
-    connectedUsers.value = 1
-    return
-  }
-
   // Always try SSE first (works in all environments)
   console.log('🎲 Initializing SSE connection for real-time dice room, room:', roomCode)
 
   try {
     // Create SSE connection with room code
-    const sseUrl = `/api/dice/events?userId=${encodeURIComponent(userId.value)}&userName=${encodeURIComponent(userName.value)}&role=${encodeURIComponent(userRole.value)}&roomCode=${encodeURIComponent(roomCode)}`
+    const sseUrl = `/api/dice/events?userId=${encodeURIComponent(userId.value)}&userName=${encodeURIComponent(userName.value)}&role=${encodeIComponent(userRole.value)}&roomCode=${encodeURIComponent(roomCode)}`
     eventSource.value = new EventSource(sseUrl)
 
     // Connection events
@@ -1630,7 +1448,7 @@ function initializeSSE(roomCode: string = 'default') {
 
     eventSource.value.onerror = (error) => {
       console.error('🎲 SSE connection error:', error)
-      console.log('🎲 Fallback to offline mode')
+      console.log('🎲 Fallck to offline mode')
       isConnected.value = false
       isOfflineMode.value = true
       connectedUsers.value = 1
@@ -1673,7 +1491,7 @@ function initializeSSE(roomCode: string = 'default') {
           ...roll,
           timestamp: new Date(roll.timestamp),
           isOwn: false
-        }
+  }
 
         rollHistory.value.unshift(processedRoll)
       }
@@ -1681,7 +1499,7 @@ function initializeSSE(roomCode: string = 'default') {
 
     eventSource.value.addEventListener('heartbeat', (event) => {
       const data = JSON.parse(event.data)
-      // Optional: Update user count from heartbeat
+      // Optional: Update user count froeat
       if (data.userCount) {
         connectedUsers.value = data.userCount
       }
@@ -1789,65 +1607,30 @@ function disconnectSSE() {
   }
 }
 
-function toggleOfflineMode() {
-  isOfflineModePreference.value = !isOfflineModePreference.value
-  
-  if (isOfflineModePreference.value) {
-    // Switch to offline mode
-    disconnectSSE()
-    isConnected.value = false
-    isOfflineMode.value = true
-    connectedUsers.value = 1
-    console.log('🎲 Switched to persistent offline mode')
-    
-    const toast = useToast()
-    toast.add({
-      title: 'Offline Mode',
-      description: 'Switched to offline mode. Your rolls will only be stored locally.',
-      color: 'yellow'
-    })
-  } else {
-    // Switch back to online mode
-    isOfflineMode.value = false
-    console.log('🎲 Switching back to online mode')
-    
-    const toast = useToast()
-    toast.add({
-      title: 'Online Mode',
-      description: 'Attempting to reconnect to the server...',
-      color: 'blue'
-    })
-    
-    // Reconnect with current room
-    const roomCode = currentRoom.value?.code || 'default'
-    initializeSSE(roomCode)
-  }
-}
-
 // Initialize with SSE connection
-onMounted(async () => {
-  // Set initial room state (default room)
-  currentRoom.value = {
-    name: 'Default Room',
-    code: 'default',
-    isOwner: false
-  }
+// onMounted(async () => {
+//   // Set initial room state (default room)
+//   currentRoom.value = {
+//     name: 'Default Room',
+//     code: 'default',
+//     isOwner: false
+//   }
 
-  // Load user characters and auto-detect role
-  await loadUserCharacters()
+//   // Load user characters and auto-detect role
+//   await loadUserCharacters()
 
-  initializeSSE('default')
-})
+//   initializeSSE('default')
+// })
 
-onUnmounted(() => {
-  disconnectSSE()
-})
+// onUnmounted(() => {
+//   disconnectSSE()
+// })
 
 // SEO
-useHead({
-  title: 'Collaborative Dice Room',
-  meta: [
-    { name: 'description', content: 'Roll dice together with your D&D party' }
-  ]
-})
+// useHead({
+//   title: 'Collaborative Dice Room',
+//   meta: [
+//     { name: 'description', content: 'Roll dice together with your D&D party' }
+//   ]
+// })
 </script>

@@ -10,11 +10,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Auth Info
+  email       String   @unique
+  password    String
+  username    String   @unique
+  
+  // Profile Info
+  firstName   String?
+  lastName    String?
+  avatar      String?
+  bio         String?
+  
+  // Role Management
+  role        UserRole @default(PLAYER)
+  isActive    Boolean  @default(true)
+  lastLoginAt DateTime?
+  
+  // Relationships
+  characters  Character[]
+  ownedCharacters Character[] @relation("CharacterOwner")
+  
+  @@map("users")
+}
+
+enum UserRole {
+  PLAYER
+  DM
+  ADMIN
+}
+
 model Character {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Ownership
+  userId      String?   // The player who owns this character
+  ownerId     String?   // The DM who created/manages this character
+  
   // Basic Info
   name        String
   playerName  String?
@@ -42,11 +80,14 @@ model Character {
 
   // Experience and Currency
   experiencePoints Int @default(0)
-  copper          Int @default(0)
-  silver          Int @default(0)
-  electrum        Int @default(0)
-  gold            Int @default(0)
-  platinum        Int @default(0)
+  copperCoins      Int @default(0)
+  silverCoins      Int @default(0)
+  electrumCoins    Int @default(0)
+  goldCoins        Int @default(0)
+  platinumCoins    Int @default(0)
+
+  // Inventory and Equipment
+  backpack         String? // Text description of backpack contents
 
   // Character Details
   inspiration     Boolean @default(false)
@@ -62,6 +103,8 @@ model Character {
   deathSaveFailures  Int @default(0)
 
   // Relationships
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  owner           User?         @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   savingThrows    SavingThrow[]
   skills          Skill[]
   spells          CharacterSpell[]

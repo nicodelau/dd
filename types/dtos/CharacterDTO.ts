@@ -8,7 +8,7 @@ export interface ApiResponse<T> {
 
 // Character DTOs
 export interface CharacterDTO {
-  id?: number
+  id?: string
   playerName?: string
   characterName: string
   race?: string
@@ -38,9 +38,30 @@ export interface CharacterDTO {
   deathSaveSuccesses: number
   deathSaveFailures: number
   languages?: string
+  // Currency fields
+  copperCoins?: number
+  silverCoins?: number
+  electrumCoins?: number
+  goldCoins?: number
+  platinumCoins?: number
+  // Inventory
+  backpack?: string
   notes: Record<string, any>
   createdAt?: string
   updatedAt?: string
+  // New user assignment fields
+  userId?: string | null
+  ownerId?: string | null
+  user?: {
+    id: string
+    username: string
+    email: string
+  } | null
+  owner?: {
+    id: string
+    username: string
+    email: string
+  } | null
 }
 
 export interface CreateCharacterDTO {
@@ -73,7 +94,18 @@ export interface CreateCharacterDTO {
   deathSaveSuccesses?: number
   deathSaveFailures?: number
   languages?: string
+  // Currency fields
+  copperCoins?: number
+  silverCoins?: number
+  electrumCoins?: number
+  goldCoins?: number
+  platinumCoins?: number
+  // Inventory
+  backpack?: string
   notes?: Record<string, any>
+  // New user assignment fields for creation
+  userId?: string | null
+  ownerId?: string | null
 }
 
 export interface UpdateCharacterDTO {
@@ -106,11 +138,22 @@ export interface UpdateCharacterDTO {
   deathSaveSuccesses?: number
   deathSaveFailures?: number
   languages?: string
+  // Currency fields
+  copperCoins?: number
+  silverCoins?: number
+  electrumCoins?: number
+  goldCoins?: number
+  platinumCoins?: number
+  // Inventory
+  backpack?: string
   notes?: Record<string, any>
+  // New user assignment fields for updates
+  userId?: string | null
+  ownerId?: string | null
 }
 
 export interface CharacterSummaryDTO {
-  id: number
+  id: string
   playerName?: string
   characterName: string
   race?: string
@@ -120,4 +163,11 @@ export interface CharacterSummaryDTO {
   maxHp: number
   armorClass?: number
   createdAt?: string
+  // New user assignment fields for summary
+  userId?: string | null
+  ownerId?: string | null
+  user?: {
+    id: string
+    username: string
+  } | null
 }

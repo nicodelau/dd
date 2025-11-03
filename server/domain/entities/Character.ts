@@ -29,9 +29,30 @@ export interface Character {
   deathSaveSuccesses: number
   deathSaveFailures: number
   languages?: string
+  // Currency fields
+  copperCoins?: number
+  silverCoins?: number
+  electrumCoins?: number
+  goldCoins?: number
+  platinumCoins?: number
+  // Inventory
+  backpack?: string
   notes: Record<string, any>
   createdAt?: Date
   updatedAt?: Date
+  // New user assignment fields
+  userId?: string | null
+  ownerId?: string | null
+  user?: {
+    id: string
+    username: string
+    email: string
+  } | null
+  owner?: {
+    id: string
+    username: string
+    email: string
+  } | null
 }
 
 export class CharacterEntity {
@@ -161,12 +182,54 @@ export class CharacterEntity {
     return this.data.notes
   }
 
+  // Currency getters
+  get copperCoins(): number | undefined {
+    return this.data.copperCoins
+  }
+
+  get silverCoins(): number | undefined {
+    return this.data.silverCoins
+  }
+
+  get electrumCoins(): number | undefined {
+    return this.data.electrumCoins
+  }
+
+  get goldCoins(): number | undefined {
+    return this.data.goldCoins
+  }
+
+  get platinumCoins(): number | undefined {
+    return this.data.platinumCoins
+  }
+
+  // Inventory getter
+  get backpack(): string | undefined {
+    return this.data.backpack
+  }
+
   get createdAt(): Date | undefined {
     return this.data.createdAt
   }
 
   get updatedAt(): Date | undefined {
     return this.data.updatedAt
+  }
+
+  get userId(): string | null | undefined {
+    return this.data.userId
+  }
+
+  get ownerId(): string | null | undefined {
+    return this.data.ownerId
+  }
+
+  get user(): { id: string; username: string; email: string } | null | undefined {
+    return this.data.user
+  }
+
+  get owner(): { id: string; username: string; email: string } | null | undefined {
+    return this.data.owner
   }
 
   // Business logic methods

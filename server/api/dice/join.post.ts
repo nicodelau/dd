@@ -1,5 +1,5 @@
 // POST /api/dice/join - handle user joining the dice room
-import { diceRoomStore } from '~/server/utils/diceRoomStore'
+import { diceRoomStore, type UserRole } from '~/server/utils/diceRoomStore'
 
 export default defineEventHandler(async (event) => {
   // Only allow POST requests
@@ -21,19 +21,23 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Validate role if provided
+    const role: UserRole = body.role === 'DM' ? 'DM' : 'Player'
+    const roomCode = body.roomCode || 'default'
+
     // Add or update user
-    const existingUser = diceRoomStore.getUser(body.userId)
+    const existingUser = diceRoomStore.getUser(body.userId, roomCode)
     const user = existingUser 
-      ? diceRoomStore.updateUser(body.userId, body.userName)
-      : diceRoomStore.addUser(body.userId, body.userName)
+      ? diceRoomStore.updateUser(body.userId, body.userName, roomCode, role)
+      : diceRoomStore.addUser(body.userId, body.userName, roomCode, role)
     
     // Update activity tracking
-    diceRoomStore.updateUserActivity(body.userId)
+    diceRoomStore.updateUserActivity(body.userId, roomCode)
 
     return {
       success: true,
       user,
-      stats: diceRoomStore.getStats()
+      stats: diceRoomStore.getStats(roomCode)
     }
   } catch (error) {
     console.error('🎲 Error processing user join:', error)

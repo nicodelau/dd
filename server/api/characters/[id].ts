@@ -1,6 +1,7 @@
 import { CharacterService } from '../../application/services/CharacterService'
 import type { ApiResponse, UpdateCharacterDTO } from '../../../types/dtos'
 import { PrismaCharacterRepository } from '../../infrastructure/repositories/PrismaCharacterRepository'
+import { requireDMOrAdmin, authenticateUser } from '~/server/utils/auth'
 import prisma from '../../utils/prisma'
 
 let characterService: CharacterService | null = null
@@ -26,13 +27,46 @@ export default defineEventHandler(async (event) => {
   }
   
   try {
-    const service = getCharacterService()
+    const user = await authenticateUser(event)
+    
+    // Get character directly from Prisma to access userId field
+    const character = await prisma.character.findUnique({
+      where: { id: characterId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        }
+      }
+    })
+    
+    if (!character) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Character not found'
+      })
+    }
+    
+    // Check if user has access to this character
+    const hasAccess = user.role === 'DM' || user.role === 'ADMIN' || character.userId === user.id
+    
+    if (!hasAccess) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Access denied to this character'
+      })
+    }
     
     switch (method) {
       case 'GET':
-        const character = await service.getCharacterById(characterId)
+        // Use the character service to get properly mapped data
+        const getService = getCharacterService()
+        const mappedCharacter = await getService.getCharacterById(characterId)
         
-        if (!character) {
+        if (!mappedCharacter) {
           throw createError({
             statusCode: 404,
             statusMessage: 'Character not found'
@@ -41,12 +75,16 @@ export default defineEventHandler(async (event) => {
         
         return {
           success: true,
-          data: character
-        } as ApiResponse<typeof character>
+          data: mappedCharacter
+        } as ApiResponse<typeof mappedCharacter>
         
       case 'PUT':
+        // Only DMs and Admins can modify characters
+        await requireDMOrAdmin(event)
+        
         const updateData = await readBody(event) as UpdateCharacterDTO
-        const updatedCharacter = await service.updateCharacter(characterId, updateData)
+        const updateService = getCharacterService()
+        const updatedCharacter = await updateService.updateCharacter(characterId, updateData)
         
         if (!updatedCharacter) {
           throw createError({
@@ -62,7 +100,11 @@ export default defineEventHandler(async (event) => {
         } as ApiResponse<typeof updatedCharacter>
         
       case 'DELETE':
-        const deleted = await service.deleteCharacter(characterId)
+        // Only DMs and Admins can delete characters
+        await requireDMOrAdmin(event)
+        
+        const deleteService = getCharacterService()
+        const deleted = await deleteService.deleteCharacter(characterId)
         
         if (!deleted) {
           throw createError({
