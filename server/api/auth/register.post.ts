@@ -12,7 +12,7 @@ interface RegisterRequest {
 }
 
 export default defineEventHandler(async (event) => {
-  if (getMethod(event) !== 'POST') {
+  if (event.method !== 'POST') {
     throw createError({
       statusCode: 405,
       statusMessage: 'Method Not Allowed'
