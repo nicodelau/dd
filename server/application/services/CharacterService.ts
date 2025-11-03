@@ -138,6 +138,24 @@ export class CharacterService {
       deathSaveSuccesses: character.deathSaveSuccesses,
       deathSaveFailures: character.deathSaveFailures,
       languages: character.languages,
+      // Ability Scores
+      strength: character.strength,
+      dexterity: character.dexterity,
+      constitution: character.constitution,
+      intelligence: character.intelligence,
+      wisdom: character.wisdom,
+      charisma: character.charisma,
+      // Avatar/Character Image
+      avatar: character.avatar,
+      // Currency fields
+      copperCoins: character.copperCoins,
+      silverCoins: character.silverCoins,
+      electrumCoins: character.electrumCoins,
+      goldCoins: character.goldCoins,
+      platinumCoins: character.platinumCoins,
+      // Skills and Saving Throws
+      skills: character.skills || [],
+      savingThrows: character.savingThrows || [],
       notes: character.notes,
       createdAt: character.createdAt?.toISOString(),
       updatedAt: character.updatedAt?.toISOString(),

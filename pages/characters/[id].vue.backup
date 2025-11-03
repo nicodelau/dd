@@ -108,7 +108,7 @@
                 <p v-else class="text-gray-900 dark:text-white">{{ character.playerName || 'Unassigned' }}</p>
               </div>
               
-              <div>
+               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Race
                 </label>
@@ -140,7 +140,7 @@
                 <UInput
                   v-if="editMode"
                   v-model="editForm.ancestry"
-                  placeholder="Character lineage or ancestry"
+                  placeholder="Heritage or lineage"
                 />
                 <p v-else class="text-gray-900 dark:text-white">{{ character.ancestry || 'Not set' }}</p>
               </div>
@@ -191,6 +191,190 @@
                   placeholder="Select alignment"
                 />
                 <p v-else class="text-gray-900 dark:text-white">{{ character.alignment || 'Not set' }}</p>
+              </div>
+            </div>
+          </UCard>
+          
+          <!-- Physical Characteristics Card -->
+          <UCard>
+            <template #header>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Physical Characteristics
+              </h3>
+            </template>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Age
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.age"
+                  type="number"
+                  min="1"
+                  placeholder="Age"
+                />
+                <p v-else class="text-gray-900 dark:text-white">{{ character.age || 'Not set' }}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Height
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model="editForm.height"
+                  placeholder="e.g., 5'8&quot;"
+                />
+                <p v-else class="text-gray-900 dark:text-white">{{ character.height || 'Not set' }}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Weight
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model="editForm.weight"
+                  placeholder="e.g., 150 lbs"
+                />
+                <p v-else class="text-gray-900 dark:text-white">{{ character.weight || 'Not set' }}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Eyes
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model="editForm.eyes"
+                  placeholder="Eye color"
+                />
+                <p v-else class="text-gray-900 dark:text-white">{{ character.eyes || 'Not set' }}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Skin
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model="editForm.skin"
+                  placeholder="Skin color/tone"
+                />
+                <p v-else class="text-gray-900 dark:text-white">{{ character.skin || 'Not set' }}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Hair
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model="editForm.hair"
+                  placeholder="Hair color/style"
+                />
+                <p v-else class="text-gray-900 dark:text-white">{{ character.hair || 'Not set' }}</p>
+              </div>
+            </div>
+          </UCard>
+        </div>
+              </div>
+              
+              <!-- Dexterity -->
+              <div class="text-center">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  DEX
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.dexterity"
+                  type="number"
+                  min="1"
+                  max="30"
+                  class="text-center"
+                />
+                <div v-else class="border rounded-lg p-2 bg-gray-50 dark:bg-gray-700">
+                  <div class="text-lg font-bold text-gray-900 dark:text-white">{{ character.dexterity || 10 }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getAbilityModifier(character.dexterity || 10) }}</div>
+                </div>
+              </div>
+              
+              <!-- Constitution -->
+              <div class="text-center">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  CON
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.constitution"
+                  type="number"
+                  min="1"
+                  max="30"
+                  class="text-center"
+                />
+                <div v-else class="border rounded-lg p-2 bg-gray-50 dark:bg-gray-700">
+                  <div class="text-lg font-bold text-gray-900 dark:text-white">{{ character.constitution || 10 }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getAbilityModifier(character.constitution || 10) }}</div>
+                </div>
+              </div>
+              
+              <!-- Intelligence -->
+              <div class="text-center">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  INT
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.intelligence"
+                  type="number"
+                  min="1"
+                  max="30"
+                  class="text-center"
+                />
+                <div v-else class="border rounded-lg p-2 bg-gray-50 dark:bg-gray-700">
+                  <div class="text-lg font-bold text-gray-900 dark:text-white">{{ character.intelligence || 10 }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getAbilityModifier(character.intelligence || 10) }}</div>
+                </div>
+              </div>
+              
+              <!-- Wisdom -->
+              <div class="text-center">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  WIS
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.wisdom"
+                  type="number"
+                  min="1"
+                  max="30"
+                  class="text-center"
+                />
+                <div v-else class="border rounded-lg p-2 bg-gray-50 dark:bg-gray-700">
+                  <div class="text-lg font-bold text-gray-900 dark:text-white">{{ character.wisdom || 10 }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getAbilityModifier(character.wisdom || 10) }}</div>
+                </div>
+              </div>
+              
+              <!-- Charisma -->
+              <div class="text-center">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  CHA
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.charisma"
+                  type="number"
+                  min="1"
+                  max="30"
+                  class="text-center"
+                />
+                <div v-else class="border rounded-lg p-2 bg-gray-50 dark:bg-gray-700">
+                  <div class="text-lg font-bold text-gray-900 dark:text-white">{{ character.charisma || 10 }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getAbilityModifier(character.charisma || 10) }}</div>
+                </div>
               </div>
             </div>
           </UCard>
@@ -279,377 +463,6 @@
               </div>
             </div>
           </UCard>
-          
-          <!-- Physical Characteristics Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Physical Characteristics
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Age
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.age"
-                  type="number"
-                  min="1"
-                  placeholder="Age"
-                />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.age || 'Not set' }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Height
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model="editForm.height"
-                  placeholder="e.g., 5'8&quot;"
-                />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.height || 'Not set' }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Weight
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model="editForm.weight"
-                  placeholder="e.g., 160 lbs"
-                />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.weight || 'Not set' }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Eyes
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model="editForm.eyes"
-                  placeholder="Eye color"
-                />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.eyes || 'Not set' }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Skin
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model="editForm.skin"
-                  placeholder="Skin color/type"
-                />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.skin || 'Not set' }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Hair
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model="editForm.hair"
-                  placeholder="Hair color/style"
-                />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.hair || 'Not set' }}</p>
-              </div>
-            </div>
-          </UCard>
-          
-          <!-- Combat Actions Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Combat Actions
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Hit Dice
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model="editForm.hitDice"
-                  placeholder="e.g., 1d8"
-                />
-                <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.hitDice || 'Not set' }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Initiative
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.initiative"
-                  type="number"
-                  placeholder="Initiative"
-                />
-                <p v-else class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ character.initiative !== undefined ? (character.initiative >= 0 ? '+' : '') + character.initiative : 'Not set' }}
-                </p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Passive Perception
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.passivePerception"
-                  type="number"
-                  min="1"
-                  placeholder="Passive Perception"
-                />
-                <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.passivePerception || 10 }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Death Saves
-                </label>
-                <div v-if="editMode" class="space-y-2">
-                  <div class="flex space-x-2">
-                    <span class="text-xs text-gray-500">Success:</span>
-                    <UInput
-                      v-model.number="editForm.deathSaveSuccesses"
-                      type="number"
-                      min="0"
-                      max="3"
-                      class="w-16"
-                    />
-                  </div>
-                  <div class="flex space-x-2">
-                    <span class="text-xs text-gray-500">Failures:</span>
-                    <UInput
-                      v-model.number="editForm.deathSaveFailures"
-                      type="number"
-                      min="0"
-                      max="3"
-                      class="w-16"
-                    />
-                  </div>
-                </div>
-                <div v-else class="text-sm text-gray-900 dark:text-white">
-                  <div>✓ {{ character.deathSaveSuccesses || 0 }}/3</div>
-                  <div>✗ {{ character.deathSaveFailures || 0 }}/3</div>
-                </div>
-              </div>
-            </div>
-          </UCard>
-          
-          <!-- Ability Scores Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Ability Scores
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  STR
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.strength"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.strength || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.strength || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.strength || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  DEX
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.dexterity"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.dexterity || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.dexterity || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.dexterity || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  CON
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.constitution"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.constitution || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.constitution || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.constitution || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  INT
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.intelligence"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.intelligence || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.intelligence || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.intelligence || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  WIS
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.wisdom"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.wisdom || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.wisdom || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.wisdom || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  CHA
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.charisma"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.charisma || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.charisma || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.charisma || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </UCard>
-          
-          <!-- Saving Throws Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Saving Throws
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Strength</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('strength')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Dexterity</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('dexterity')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Constitution</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('constitution')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Intelligence</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('intelligence')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Wisdom</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('wisdom')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Charisma</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('charisma')) }}
-                </span>
-              </div>
-            </div>
-          </UCard>
-          
-          <!-- Skills Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Skills
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ skill.label }}</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSkillModifier(skill.name, skill.ability)) }}
-                </span>
-              </div>
-            </div>
-          </UCard>
         </div>
         
         <!-- Right Column - Quick Info & Actions -->
@@ -663,24 +476,7 @@
             </template>
             
             <div class="text-center">
-              <!-- Avatar Image or Initials -->
-              <div class="relative h-32 w-32 mx-auto mb-4">
-                <img
-                  v-if="character.avatar"
-                  :src="character.avatar"
-                  :alt="character.characterName || 'Character'"
-                  class="h-32 w-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
-                  @error="($event.target as HTMLImageElement).style.display = 'none'"
-                />
-                <div
-                  v-if="!character.avatar"
-                  class="h-32 w-32 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-4xl"
-                >
-                  {{ character.characterName?.charAt(0)?.toUpperCase() || '?' }}
-                </div>
-              </div>
-              
-              <!-- Avatar URL Input in Edit Mode -->
+              <!-- Avatar URL input in edit mode -->
               <div v-if="editMode" class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Avatar URL
@@ -692,9 +488,33 @@
                 />
               </div>
               
+              <!-- Portrait display -->
+              <div class="h-32 w-32 mx-auto mb-4 relative">
+                <img
+                  v-if="character.avatar"
+                  :src="character.avatar"
+                  :alt="`${character.characterName || 'Character'} portrait`"
+                  class="h-full w-full object-cover rounded-full border-2 border-gray-200 dark:border-gray-600"
+                  @error="handleAvatarError"
+                />
+                <div
+                  v-else
+                  class="h-full w-full bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-4xl border-2 border-gray-200 dark:border-gray-600"
+                >
+                  {{ character.characterName?.charAt(0)?.toUpperCase() || '?' }}
+                </div>
+              </div>
+              
               <p class="text-sm text-gray-600 dark:text-gray-300">
                 {{ (character.race || 'Unknown') }} {{ (character.className || 'Unknown') }}
               </p>
+              
+              <!-- Enhanced race info with subrace/ancestry -->
+              <div v-if="character.subrace || character.ancestry" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <span v-if="character.subrace">{{ character.subrace }}</span>
+                <span v-if="character.subrace && character.ancestry"> • </span>
+                <span v-if="character.ancestry">{{ character.ancestry }}</span>
+              </div>
             </div>
           </UCard>
           
@@ -758,22 +578,30 @@ const route = useRoute()
 const characterId = route.params.id as string
 
 // Authentication
-const user = useState('user')
+interface User {
+  id: string
+  username: string
+  email: string
+  role: 'PLAYER' | 'DM' | 'ADMIN'
+  isActive: boolean
+}
+
+const user = useState('user') as Ref<User>
 
 // Check if user can edit characters (DM or ADMIN only)
 const canEdit = computed(() => {
-  return (user.value as any)?.role === 'DM' || (user.value as any)?.role === 'ADMIN'
+  return user.value?.role === 'DM' || user.value?.role === 'ADMIN'
 })
 
 // Reactive state
-const character = ref<CharacterDTO | null>(null)
+const character = ref(null) as Ref<CharacterDTO | null>
 const editMode = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
-const error = ref<string | null>(null)
+const error = ref(null) as Ref<string | null>
 
 // Form data
-const editForm = ref<Partial<CharacterDTO>>({})
+const editForm = ref({}) as Ref<Partial<CharacterDTO>>
 const characterNotes = ref('')
 
 // Options
@@ -825,78 +653,17 @@ const alignmentOptions = [
   { label: 'Chaotic Evil', value: 'Chaotic Evil' }
 ]
 
-// Standard D&D 5e Skills
-const standardSkills = [
-  { name: 'acrobatics', label: 'Acrobacias', ability: 'dexterity' },
-  { name: 'animal_handling', label: 'Trato con Animales', ability: 'wisdom' },
-  { name: 'arcana', label: 'Arcanos', ability: 'intelligence' },
-  { name: 'athletics', label: 'Atletismo', ability: 'strength' },
-  { name: 'deception', label: 'Engaño', ability: 'charisma' },
-  { name: 'history', label: 'Historia', ability: 'intelligence' },
-  { name: 'insight', label: 'Perspicacia', ability: 'wisdom' },
-  { name: 'intimidation', label: 'Intimidación', ability: 'charisma' },
-  { name: 'investigation', label: 'Investigación', ability: 'intelligence' },
-  { name: 'medicine', label: 'Medicina', ability: 'wisdom' },
-  { name: 'nature', label: 'Naturaleza', ability: 'intelligence' },
-  { name: 'perception', label: 'Percepción', ability: 'wisdom' },
-  { name: 'performance', label: 'Interpretación', ability: 'charisma' },
-  { name: 'persuasion', label: 'Persuasión', ability: 'charisma' },
-  { name: 'religion', label: 'Religión', ability: 'intelligence' },
-  { name: 'sleight_of_hand', label: 'Juego de Manos', ability: 'dexterity' },
-  { name: 'stealth', label: 'Sigilo', ability: 'dexterity' },
-  { name: 'survival', label: 'Supervivencia', ability: 'wisdom' }
-]
-
-// Helper functions for calculations
-const getAbilityModifier = (abilityScore: number) => {
-  return Math.floor((abilityScore - 10) / 2)
-}
-
-const getFormattedBonus = (modifier: number) => {
+// Methods
+function getAbilityModifier(score: number): string {
+  const modifier = Math.floor((score - 10) / 2)
   return modifier >= 0 ? `+${modifier}` : `${modifier}`
 }
 
-const getSavingThrowModifier = (abilityName: string) => {
-  if (!character.value) return 0
-  
-  const abilityScore = character.value[abilityName as keyof typeof character.value] as number || 10
-  const abilityModifier = getAbilityModifier(abilityScore)
-  
-  // Check if character is proficient in this saving throw
-  const isProficient = character.value.savingThrows?.some(
-    (save: any) => save.ability === abilityName && save.proficient
-  ) || false
-  
-  const proficiencyBonus = isProficient ? (character.value.proficiencyBonus || 2) : 0
-  
-  return abilityModifier + proficiencyBonus
+function handleAvatarError(event: Event) {
+  console.log('Avatar failed to load:', event)
+  // Could add toast notification here
 }
 
-const getSkillModifier = (skillName: string, abilityName: string) => {
-  if (!character.value) return 0
-  
-  const abilityScore = character.value[abilityName as keyof typeof character.value] as number || 10
-  const abilityModifier = getAbilityModifier(abilityScore)
-  
-  // Check if character is proficient in this skill
-  const skill = character.value.skills?.find((s: any) => s.name === skillName)
-  const isProficient = skill?.proficient || false
-  const hasExpertise = skill?.expertise || false
-  
-  const proficiencyBonus = character.value.proficiencyBonus || 2
-  let totalBonus = abilityModifier
-  
-  if (isProficient) {
-    totalBonus += proficiencyBonus
-    if (hasExpertise) {
-      totalBonus += proficiencyBonus // Expertise doubles proficiency bonus
-    }
-  }
-  
-  return totalBonus
-}
-
-// Methods
 async function loadCharacter() {
   isLoading.value = true
   error.value = null
@@ -909,7 +676,7 @@ async function loadCharacter() {
   }
   
   try {
-    const response = await $fetch<{success: boolean, data: CharacterDTO}>(`/api/characters/${characterId}`)
+    const response = await $fetch(`/api/characters/${characterId}`) as {success: boolean, data: CharacterDTO}
     
     if (response.success) {
       character.value = response.data
@@ -937,10 +704,10 @@ async function saveCharacter() {
       notes: characterNotes.value
     }
     
-    const response = await $fetch<{success: boolean, data: CharacterDTO}>(`/api/characters/${characterId}`, {
+    const response = await $fetch(`/api/characters/${characterId}`, {
       method: 'PUT',
       body: updateData
-    })
+    }) as {success: boolean, data: CharacterDTO}
     
     if (response.success) {
       character.value = response.data

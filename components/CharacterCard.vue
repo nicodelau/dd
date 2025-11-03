@@ -145,6 +145,12 @@ interface Character {
   armorClass?: number
   createdAt?: string
   avatar?: string
+  strength?: number
+  dexterity?: number
+  constitution?: number
+  intelligence?: number
+  wisdom?: number
+  charisma?: number
 }
 
 interface Props {

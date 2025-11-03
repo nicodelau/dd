@@ -38,6 +38,15 @@ export interface CharacterDTO {
   deathSaveSuccesses: number
   deathSaveFailures: number
   languages?: string
+  // Ability Scores
+  strength?: number
+  dexterity?: number
+  constitution?: number
+  intelligence?: number
+  wisdom?: number
+  charisma?: number
+  // Avatar/Character Image
+  avatar?: string
   // Currency fields
   copperCoins?: number
   silverCoins?: number
@@ -47,6 +56,9 @@ export interface CharacterDTO {
   // Inventory
   backpack?: string
   notes: Record<string, any>
+  // Skills and Saving Throws
+  skills?: SkillDTO[]
+  savingThrows?: SavingThrowDTO[]
   createdAt?: string
   updatedAt?: string
   // New user assignment fields
@@ -62,6 +74,22 @@ export interface CharacterDTO {
     username: string
     email: string
   } | null
+}
+
+export interface SkillDTO {
+  id?: string
+  name: string
+  ability: string
+  proficient: boolean
+  expertise: boolean
+  category: string
+  description?: string
+}
+
+export interface SavingThrowDTO {
+  id?: string
+  ability: string
+  proficient: boolean
 }
 
 export interface CreateCharacterDTO {
@@ -94,6 +122,15 @@ export interface CreateCharacterDTO {
   deathSaveSuccesses?: number
   deathSaveFailures?: number
   languages?: string
+  // Ability Scores
+  strength?: number
+  dexterity?: number
+  constitution?: number
+  intelligence?: number
+  wisdom?: number
+  charisma?: number
+  // Avatar/Character Image
+  avatar?: string
   // Currency fields
   copperCoins?: number
   silverCoins?: number

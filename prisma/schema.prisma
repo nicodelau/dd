@@ -56,11 +56,23 @@ model Character {
   // Basic Info
   name        String
   playerName  String?
-  race        String
-  class       String
+  race        String?    // Now optional to allow custom input
+  subrace     String?
+  class       String?    // Now optional to allow custom input
   level       Int      @default(1)
-  background  String?
-  alignment   String?
+  background  String?    // Now allows custom input
+  alignment   String?    // Now allows custom input
+  
+  // Character Image
+  avatar      String?    // URL or path to character image
+  
+  // Physical Characteristics
+  age         Int?
+  height      String?
+  weight      String?
+  eyes        String?
+  skin        String?
+  hair        String?
 
   // Core Stats
   hitPoints      Int @default(0)
@@ -69,8 +81,10 @@ model Character {
   armorClass     Int @default(10)
   proficiencyBonus Int @default(2)
   speed          Int @default(30)
+  initiative     Int @default(0)
+  passivePerception Int @default(10)
 
-  // Ability Scores
+  // Ability Scores (the 6 main stats)
   strength       Int @default(10)
   dexterity      Int @default(10)
   constitution   Int @default(10)
@@ -88,6 +102,7 @@ model Character {
 
   // Inventory and Equipment
   backpack         String? // Text description of backpack contents
+  languages        String? // Known languages
 
   // Character Details
   inspiration     Boolean @default(false)
@@ -130,17 +145,25 @@ model SavingThrow {
 }
 
 model Skill {
-  id           String    @id @default(cuid())
+  id           String      @id @default(cuid())
   characterId  String
-  name         String    // "Acrobatics", "Animal Handling", etc.
-  ability      String    // "dexterity", "wisdom", etc.
-  proficient   Boolean   @default(false)
-  expertise    Boolean   @default(false)
+  name         String      // "Acrobatics", "Animal Handling", etc.
+  ability      String      // "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"
+  proficient   Boolean     @default(false)
+  expertise    Boolean     @default(false)
+  category     SkillCategory @default(OTRO)
+  description  String?     // For custom skills, especially "Otro" category
   
   character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([characterId, name])
   @@map("skills")
+}
+
+enum SkillCategory {
+  DANO    // Damage skills - create attacks
+  AYUDA   // Support skills - help allies
+  OTRO    // Other skills - general abilities, invocations, etc.
 }
 
 model Spell {
@@ -211,6 +234,7 @@ model Attack {
   damageBonus   Int?
   range         String?
   description   String?
+  sourceSkillId String?   // Reference to the skill that created this attack
   
   character     Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 

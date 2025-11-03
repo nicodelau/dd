@@ -203,55 +203,11 @@
       </div>
     </div>
 
-    <!-- Create Character Modal -->
-    <UModal v-model="showCreateModal">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">Create New Character</h3>
-        </template>
-        
-        <div class="space-y-4">
-          <UFormGroup label="Character Name" required>
-            <UInput v-model="createForm.characterName" placeholder="Enter character name" />
-          </UFormGroup>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <UFormGroup label="Race" required>
-              <USelect v-model="createForm.race" :options="raceOptions" placeholder="Select race" />
-            </UFormGroup>
-            
-            <UFormGroup label="Class" required>
-              <USelect v-model="createForm.characterClass" :options="classOptions" placeholder="Select class" />
-            </UFormGroup>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <UFormGroup label="Level" required>
-              <UInput v-model="createForm.level" type="number" min="1" max="20" />
-            </UFormGroup>
-            
-            <UFormGroup label="Background" required>
-              <USelect v-model="createForm.background" :options="backgroundOptions" placeholder="Select background" />
-            </UFormGroup>
-          </div>
-        </div>
-        
-        <template #footer>
-          <div class="flex justify-end space-x-2">
-            <UButton color="gray" variant="outline" @click="showCreateModal = false">
-              Cancel
-            </UButton>
-            <UButton 
-              color="primary" 
-              @click="createCharacter"
-              :loading="createLoading"
-            >
-              Create Character
-            </UButton>
-          </div>
-        </template>
-      </UCard>
-    </UModal>
+    <!-- Enhanced Create Character Modal -->
+    <CreateCharacterModal
+      v-model="showCreateModal"
+      @created="handleCharacterCreated"
+    />
 
     <!-- Assign Character Modal -->
     <UModal v-model="showAssignModal">
@@ -326,19 +282,10 @@ const showAssignModal = ref(false)
 const selectedCharacter = ref(null)
 
 // Form states
-const createLoading = ref(false)
 const assignmentLoading = ref(false)
 const loadingPlayers = ref(false)
 
 // Forms
-const createForm = ref({
-  characterName: '',
-  race: '',
-  characterClass: '',
-  level: 1,
-  background: ''
-})
-
 const assignmentForm = ref({
   playerId: ''
 })
@@ -390,18 +337,6 @@ const filterOptions = [
   { value: 'unassigned', label: 'Unassigned' }
 ]
 
-const raceOptions = [
-  'Human', 'Elf', 'Dwarf', 'Halfling', 'Dragonborn', 'Gnome', 'Half-Elf', 'Half-Orc', 'Tiefling'
-]
-
-const classOptions = [
-  'Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard'
-]
-
-const backgroundOptions = [
-  'Acolyte', 'Criminal', 'Folk Hero', 'Noble', 'Sage', 'Soldier', 'Charlatan', 'Entertainer', 'Guild Artisan', 'Hermit', 'Outlander', 'Sailor'
-]
-
 // Methods
 const fetchCharacters = async () => {
   try {
@@ -442,41 +377,13 @@ const fetchPlayers = async () => {
   }
 }
 
-const createCharacter = async () => {
-  try {
-    createLoading.value = true
-    
-    await $fetch('/api/characters', {
-      method: 'POST',
-      body: createForm.value
-    })
-    
-    toast.add({
-      title: 'Success',
-      description: 'Character created successfully',
-      color: 'green'
-    })
-    
-    showCreateModal.value = false
-    createForm.value = {
-      characterName: '',
-      race: '',
-      characterClass: '',
-      level: 1,
-      background: ''
-    }
-    
-    await fetchCharacters()
-  } catch (error) {
-    console.error('Error creating character:', error)
-    toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to create character',
-      color: 'red'
-    })
-  } finally {
-    createLoading.value = false
-  }
+const handleCharacterCreated = async (character) => {
+  toast.add({
+    title: 'Success', 
+    description: `${character.characterName} has been created successfully!`,
+    color: 'green'
+  })
+  await fetchCharacters()
 }
 
 const openAssignModal = (character) => {

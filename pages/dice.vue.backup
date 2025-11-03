@@ -15,13 +15,44 @@
               <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                 🎲 Collaborative Dice Room
               </h1>
-              <div v-if="currentRoom" class="text-sm text-gray-500 dark:text-gray-400">
-                Room: {{ currentRoom.name }} ({{ currentRoom.code }})
+              <div v-if="currentRoom" class="flex items-center space-x-2">
+                <span class="text-sm text-gray-500 dark:text-gray-400">
+                  Room: {{ currentRoom.name }} 
+                </span>
+                <div class="flex items-center space-x-1">
+                  <span class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                    {{ currentRoom.code }}
+                  </span>
+                  <UButton 
+                    v-if="currentRoom.code !== 'default'" 
+                    color="gray" 
+                    variant="ghost" 
+                    size="xs"
+                    icon="i-heroicons-clipboard-document"
+                    @click="copyRoomCode"
+                  >
+                    Copy
+                  </UButton>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="flex items-center space-x-3">
+            <!-- Sidebar Toggle Buttons -->
+            <div class="flex items-center space-x-2">
+              <UButton color="blue" variant="outline" size="sm" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
+                :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
+                <span class="hidden sm:inline">{{ isLeftSidebarOpen ? 'Hide' : 'Show' }} Character</span>
+                <span class="sm:hidden">Char</span>
+              </UButton>
+              <UButton color="green" variant="outline" size="sm" @click="isRightSidebarOpen = !isRightSidebarOpen"
+                :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
+                <span class="hidden sm:inline">{{ isRightSidebarOpen ? 'Hide' : 'Show' }} Abilities</span>
+                <span class="sm:hidden">Stats</span>
+              </UButton>
+            </div>
+
             <!-- Room Actions -->
             <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
               <UButton color="red" variant="outline" size="sm" icon="i-heroicons-arrow-right-on-rectangle"
@@ -36,6 +67,16 @@
               <span class="text-sm text-gray-600 dark:text-gray-300">
                 {{ isConnected ? 'Connected' : isOfflineMode ? 'Offline Mode' : 'Disconnected' }}
               </span>
+              <UButton 
+                v-if="!isConnected || isOfflineMode"
+                color="yellow" 
+                variant="ghost" 
+                size="xs"
+                :icon="isOfflineModePreference ? 'i-heroicons-wifi' : 'i-heroicons-wifi-slash'"
+                @click="toggleOfflineMode"
+              >
+                {{ isOfflineModePreference ? 'Go Online' : 'Stay Offline' }}
+              </UButton>
             </div>
 
             <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
@@ -49,10 +90,15 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Sidebar toggle button for mobile -->
-      <div class="lg:hidden mb-4">
-        <UButton color="gray" variant="outline" @click="isSidebarOpen = !isSidebarOpen" icon="i-heroicons-bars-3" block>
-          {{ isSidebarOpen ? 'Hide' : 'Show' }} Player Stats
+      <!-- Sidebar toggle buttons for mobile -->
+      <div class="lg:hidden mb-4 grid grid-cols-2 gap-2">
+        <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen" 
+          :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
+          {{ isLeftSidebarOpen ? 'Hide' : 'Show' }} Character
+        </UButton>
+        <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen" 
+          :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
+          {{ isRightSidebarOpen ? 'Hide' : 'Show' }} Abilities
         </UButton>
       </div>
 
@@ -75,7 +121,7 @@
       </div>
 
       <!-- Room Selection/Creation Card -->
-      <UCard v-if="!currentRoom || !isConnected" class="mb-6">
+      <UCard v-if="!currentRoom || !isConnected || currentRoom.code === 'default'" class="mb-6">
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             🏠 Room Management
@@ -84,11 +130,12 @@
 
         <div class="space-y-4">
           <div class="flex items-center space-x-4">
-            <UButton color="primary" @click="showCreateRoom = true" icon="i-heroicons-plus">
+            <!-- Only show Create Room button for DMs -->
+            <UButton v-if="userRole === 'DM'" color="primary" @click="showCreateRoom = true" icon="i-heroicons-plus">
               Create New Room
             </UButton>
 
-            <div class="text-gray-400 dark:text-gray-500">or</div>
+            <div v-if="userRole === 'DM'" class="text-gray-400 dark:text-gray-500">or</div>
 
             <div class="flex items-center space-x-2 flex-1">
               <UInput v-model="joinRoomCode" placeholder="Enter room code..." class="flex-1"
@@ -100,41 +147,51 @@
             </div>
           </div>
 
+          <div v-if="userRole === 'Player'" class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <div class="flex items-start space-x-2">
+              <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div>
+                <span class="font-medium text-blue-900 dark:text-blue-100">Player Note:</span>
+                <span class="text-blue-800 dark:text-blue-200">Only DMs can create new rooms. Ask your DM for the room code to join their session.</span>
+              </div>
+            </div>
+          </div>
+
           <div v-if="!isConnected" class="text-sm text-gray-500 dark:text-gray-400">
             Connect to create or join rooms for multiplayer functionality.
           </div>
         </div>
       </UCard>
 
-      <!-- Main content area with sidebar -->
+      <!-- Main content area with dual sidebars -->
       <div class="relative">
-        <!-- Mobile Overlay -->
-        <div v-if="isSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          @click="isSidebarOpen = false">
+        <!-- Mobile Overlays -->
+        <div v-if="isLeftSidebarOpen || isRightSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          @click="isLeftSidebarOpen = false; isRightSidebarOpen = false">
         </div>
 
-        <!-- Collapsible Sidebar -->
+        <!-- Left Sidebar - Character Info -->
         <div
-          class="fixed top-0 right-0 h-full w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto lg:w-80 md:w-72 sm:w-64"
-          :class="isSidebarOpen ? 'translate-x-0' : 'translate-x-full'">
-          <!-- Sidebar Header -->
+          class="fixed top-0 left-0 h-full w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto lg:w-80 md:w-72 sm:w-64"
+          :class="isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+          <!-- Left Sidebar Header -->
           <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                🧙‍♂️ Player Stats
+                🧙‍♂️ Character Info
               </h3>
-              <UButton color="gray" variant="ghost" size="sm" @click="isSidebarOpen = false"
+              <UButton color="gray" variant="ghost" size="sm" @click="isLeftSidebarOpen = false"
                 icon="i-heroicons-x-mark" />
             </div>
           </div>
 
-          <!-- Sidebar Content -->
+          <!-- Left Sidebar Content -->
           <div class="p-4 space-y-6">
-            <!-- Player Stats Card (only for Players) -->
+            <!-- Character Info Card (only for Players) -->
             <div v-if="userRole === 'Player'">
               <div class="mb-4">
                 <div class="flex items-center justify-between">
-                  <h4 class="font-medium text-gray-900 dark:text-white">Your Character Stats</h4>
+                  <h4 class="font-medium text-gray-900 dark:text-white">Character Details</h4>
                   <UButton v-if="!isOfflineMode" color="gray" variant="outline" size="xs" @click="resetStats">
                     Reset Stats
                   </UButton>
@@ -142,57 +199,194 @@
               </div>
 
               <div v-if="playerStats" class="space-y-4">
+                <!-- Character Image Placeholder -->
+                <div class="flex justify-center">
+                  <div class="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                    <span class="text-3xl">🧙‍♂️</span>
+                  </div>
+                </div>
+
+                <!-- Character Name -->
+                <div class="text-center">
+                  <h5 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {{ userCharacters.find(c => c.id === activeCharacterId)?.characterName || 'Unknown Character' }}
+                  </h5>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Level {{ playerStats.level }} {{ userCharacters.find(c => c.id === activeCharacterId)?.className || 'Adventurer' }}
+                  </p>
+                </div>
+
                 <!-- Hit Points -->
-                <div class="grid grid-cols-2 gap-4">
-                  <UFormGroup label="Current HP">
-                    <UInput v-model.number="playerStats.hitPoints.current" type="number" min="0"
-                      :max="playerStats.hitPoints.max" @change="updateStats" />
-                  </UFormGroup>
-                  <UFormGroup label="Max HP">
-                    <UInput v-model.number="playerStats.hitPoints.max" type="number" min="1" @change="updateStats" />
-                  </UFormGroup>
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-red-800 dark:text-red-200 mb-3">Health</h6>
+                  <div class="grid grid-cols-2 gap-3">
+                    <UFormGroup label="Current HP">
+                      <UInput v-model.number="playerStats.hitPoints.current" type="number" min="0"
+                        :max="playerStats.hitPoints.max" @change="updateStats" />
+                    </UFormGroup>
+                    <UFormGroup label="Max HP">
+                      <UInput v-model.number="playerStats.hitPoints.max" type="number" min="1" @change="updateStats" />
+                    </UFormGroup>
+                  </div>
+                  <!-- HP Bar -->
+                  <div class="mt-3">
+                    <div class="flex justify-between text-xs mb-1">
+                      <span>Health</span>
+                      <span>{{ playerStats.hitPoints.current }}/{{ playerStats.hitPoints.max }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div class="bg-red-600 h-2 rounded-full transition-all duration-300" 
+                        :style="{ width: `${Math.max(0, Math.min(100, (playerStats.hitPoints.current / playerStats.hitPoints.max) * 100))}%` }">
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Core Stats -->
-                <div class="grid grid-cols-3 gap-4">
-                  <UFormGroup label="AC">
-                    <UInput v-model.number="playerStats.armorClass" type="number" min="1" @change="updateStats" />
-                  </UFormGroup>
-                  <UFormGroup label="Level">
-                    <UInput v-model.number="playerStats.level" type="number" min="1" max="20" @change="updateStats" />
-                  </UFormGroup>
-                  <UFormGroup label="Speed">
-                    <UInput v-model.number="playerStats.speed" type="number" min="0" @change="updateStats" />
-                  </UFormGroup>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-3">Core Stats</h6>
+                  <div class="grid grid-cols-2 gap-3">
+                    <UFormGroup label="Armor Class">
+                      <UInput v-model.number="playerStats.armorClass" type="number" min="1" @change="updateStats" />
+                    </UFormGroup>
+                    <UFormGroup label="Level">
+                      <UInput v-model.number="playerStats.level" type="number" min="1" max="20" @change="updateStats" />
+                    </UFormGroup>
+                    <UFormGroup label="Speed">
+                      <UInput v-model.number="playerStats.speed" type="number" min="0" @change="updateStats" />
+                    </UFormGroup>
+                    <UFormGroup label="Prof. Bonus">
+                      <UInput v-model.number="playerStats.proficiencyBonus" type="number" min="2" max="6" @change="updateStats" />
+                    </UFormGroup>
+                  </div>
                 </div>
 
-                <!-- Abilities -->
-                <div>
-                  <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Ability Scores</h4>
-                  <div class="grid grid-cols-3 gap-3">
-                    <UFormGroup label="STR">
-                      <UInput v-model.number="playerStats.abilities.strength" type="number" min="1" max="30"
-                        @change="updateStats" />
+                <!-- Initiative -->
+                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-green-800 dark:text-green-200 mb-3">Combat</h6>
+                  <UFormGroup label="Initiative Modifier">
+                    <UInput v-model.number="playerStats.initiative" type="number" @change="updateStats" />
+                  </UFormGroup>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-4">
+                <p class="text-gray-500 dark:text-gray-400">
+                  {{ isOfflineMode ? 'Character info not available in offline mode' : 'Loading character info...' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- DM Character Info Placeholder -->
+            <div v-else>
+              <div class="text-center py-8">
+                <div class="text-4xl mb-4">🎯</div>
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Dungeon Master</h4>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Character info is available for players only.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Sidebar - Ability Scores -->
+        <div
+          class="fixed top-0 right-0 h-full w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto lg:w-80 md:w-72 sm:w-64"
+          :class="isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'">
+          <!-- Right Sidebar Header -->
+          <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                ⚡ Ability Scores
+              </h3>
+              <UButton color="gray" variant="ghost" size="sm" @click="isRightSidebarOpen = false"
+                icon="i-heroicons-x-mark" />
+            </div>
+          </div>
+
+          <!-- Right Sidebar Content -->
+          <div class="p-4 space-y-6">
+            <!-- Ability Scores (only for Players) -->
+            <div v-if="userRole === 'Player'">
+              <div v-if="playerStats" class="space-y-4">
+                <!-- Ability Scores Grid -->
+                <div class="space-y-3">
+                  <!-- Strength -->
+                  <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                    <UFormGroup label="Strength (STR)">
+                      <div class="flex items-center space-x-3">
+                        <UInput v-model.number="playerStats.abilities.strength" type="number" min="1" max="30"
+                          @change="updateStats" class="flex-1" />
+                        <div class="text-lg font-bold text-red-600 dark:text-red-400 w-12 text-center">
+                          {{ Math.floor((playerStats.abilities.strength - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.strength - 10) / 2) }}
+                        </div>
+                      </div>
                     </UFormGroup>
-                    <UFormGroup label="DEX">
-                      <UInput v-model.number="playerStats.abilities.dexterity" type="number" min="1" max="30"
-                        @change="updateStats" />
+                  </div>
+
+                  <!-- Dexterity -->
+                  <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                    <UFormGroup label="Dexterity (DEX)">
+                      <div class="flex items-center space-x-3">
+                        <UInput v-model.number="playerStats.abilities.dexterity" type="number" min="1" max="30"
+                          @change="updateStats" class="flex-1" />
+                        <div class="text-lg font-bold text-green-600 dark:text-green-400 w-12 text-center">
+                          {{ Math.floor((playerStats.abilities.dexterity - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.dexterity - 10) / 2) }}
+                        </div>
+                      </div>
                     </UFormGroup>
-                    <UFormGroup label="CON">
-                      <UInput v-model.number="playerStats.abilities.constitution" type="number" min="1" max="30"
-                        @change="updateStats" />
+                  </div>
+
+                  <!-- Constitution -->
+                  <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                    <UFormGroup label="Constitution (CON)">
+                      <div class="flex items-center space-x-3">
+                        <UInput v-model.number="playerStats.abilities.constitution" type="number" min="1" max="30"
+                          @change="updateStats" class="flex-1" />
+                        <div class="text-lg font-bold text-orange-600 dark:text-orange-400 w-12 text-center">
+                          {{ Math.floor((playerStats.abilities.constitution - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.constitution - 10) / 2) }}
+                        </div>
+                      </div>
                     </UFormGroup>
-                    <UFormGroup label="INT">
-                      <UInput v-model.number="playerStats.abilities.intelligence" type="number" min="1" max="30"
-                        @change="updateStats" />
+                  </div>
+
+                  <!-- Intelligence -->
+                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                    <UFormGroup label="Intelligence (INT)">
+                      <div class="flex items-center space-x-3">
+                        <UInput v-model.number="playerStats.abilities.intelligence" type="number" min="1" max="30"
+                          @change="updateStats" class="flex-1" />
+                        <div class="text-lg font-bold text-purple-600 dark:text-purple-400 w-12 text-center">
+                          {{ Math.floor((playerStats.abilities.intelligence - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.intelligence - 10) / 2) }}
+                        </div>
+                      </div>
                     </UFormGroup>
-                    <UFormGroup label="WIS">
-                      <UInput v-model.number="playerStats.abilities.wisdom" type="number" min="1" max="30"
-                        @change="updateStats" />
+                  </div>
+
+                  <!-- Wisdom -->
+                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <UFormGroup label="Wisdom (WIS)">
+                      <div class="flex items-center space-x-3">
+                        <UInput v-model.number="playerStats.abilities.wisdom" type="number" min="1" max="30"
+                          @change="updateStats" class="flex-1" />
+                        <div class="text-lg font-bold text-blue-600 dark:text-blue-400 w-12 text-center">
+                          {{ Math.floor((playerStats.abilities.wisdom - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.wisdom - 10) / 2) }}
+                        </div>
+                      </div>
                     </UFormGroup>
-                    <UFormGroup label="CHA">
-                      <UInput v-model.number="playerStats.abilities.charisma" type="number" min="1" max="30"
-                        @change="updateStats" />
+                  </div>
+
+                  <!-- Charisma -->
+                  <div class="bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 rounded-lg p-3">
+                    <UFormGroup label="Charisma (CHA)">
+                      <div class="flex items-center space-x-3">
+                        <UInput v-model.number="playerStats.abilities.charisma" type="number" min="1" max="30"
+                          @change="updateStats" class="flex-1" />
+                        <div class="text-lg font-bold text-pink-600 dark:text-pink-400 w-12 text-center">
+                          {{ Math.floor((playerStats.abilities.charisma - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.charisma - 10) / 2) }}
+                        </div>
+                      </div>
                     </UFormGroup>
                   </div>
                 </div>
@@ -200,371 +394,302 @@
 
               <div v-else class="text-center py-4">
                 <p class="text-gray-500 dark:text-gray-400">
-                  {{ isOfflineMode ? 'Stats not available in offline mode' : 'Loading your character stats...' }}
+                  {{ isOfflineMode ? 'Ability scores not available in offline mode' : 'Loading ability scores...' }}
                 </p>
               </div>
             </div>
 
             <!-- DM Player Management (only for DMs) -->
-            <div v-if="userRole === 'DM'">
+            <div v-else>
               <div class="mb-4">
-                <h4 class="font-medium text-gray-900 dark:text-white">Player Management</h4>
+                <div class="flex items-center justify-between">
+                  <h4 class="font-medium text-gray-900 dark:text-white">Player Management</h4>
+                  <UButton color="blue" variant="outline" size="xs" @click="loadAllPlayersStats(currentRoom?.code || 'default')"
+                    icon="i-heroicons-arrow-path">
+                    Refresh
+                  </UButton>
+                </div>
               </div>
 
-              <div v-if="allPlayers.length > 0" class="space-y-4">
+              <div v-if="allPlayers.length > 0" class="space-y-3">
                 <div v-for="player in allPlayers" :key="player.userId"
-                  class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border">
+                  class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                   <div class="flex items-center justify-between mb-2">
-                    <h5 class="font-medium text-gray-900 dark:text-white">{{ player.name }}</h5>
                     <div class="flex items-center space-x-2">
-                      <UButton color="gray" variant="outline" size="xs" @click="editPlayerStats(player)">
-                        Edit Stats
-                      </UButton>
-                      <UButton v-if="!isOfflineMode && currentRoom?.code !== 'default'" color="red" variant="outline"
-                        size="xs" @click="kickPlayer(player)" icon="i-heroicons-user-minus">
-                        Kick
-                      </UButton>
+                      <span class="font-medium text-gray-900 dark:text-white">{{ player.name }}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400">({{ player.userId }})</span>
                     </div>
+                    <UButton color="blue" variant="outline" size="xs" @click="editPlayerStats(player)"
+                      icon="i-heroicons-pencil">
+                      Edit
+                    </UButton>
                   </div>
-
-                  <div class="grid grid-cols-3 gap-2 text-sm">
-                    <div>
-                      <span class="text-gray-500 dark:text-gray-400">HP:</span>
-                      <span class="ml-1 font-medium">{{ player.stats.hitPoints.current }}/{{ player.stats.hitPoints.max
-                      }}</span>
-                    </div>
-                    <div>
-                      <span class="text-gray-500 dark:text-gray-400">AC:</span>
-                      <span class="ml-1 font-medium">{{ player.stats.armorClass }}</span>
-                    </div>
-                    <div>
-                      <span class="text-gray-500 dark:text-gray-400">Level:</span>
-                      <span class="ml-1 font-medium">{{ player.stats.level }}</span>
-                    </div>
+                  
+                  <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                    <div>STR: {{ player.stats.abilities.strength }} | DEX: {{ player.stats.abilities.dexterity }} | CON: {{ player.stats.abilities.constitution }}</div>
+                    <div>INT: {{ player.stats.abilities.intelligence }} | WIS: {{ player.stats.abilities.wisdom }} | CHA: {{ player.stats.abilities.charisma }}</div>
                   </div>
                 </div>
               </div>
 
-              <div v-else class="text-center py-4">
+              <div v-else class="text-center py-8">
+                <div class="text-4xl mb-4">👥</div>
                 <p class="text-gray-500 dark:text-gray-400">
-                  {{ isOfflineMode ? 'Player management not available in offline mode' : 'No players connected yet' }}
+                  {{ isOfflineMode ? 'Player management not available in offline mode' : 'No players connected' }}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Main content area -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 transition-all duration-300"
-          :class="{ 'lg:mr-80 xl:mr-80': isSidebarOpen }">
-          <!-- Left Column - Dice Rolling -->
-          <div class="lg:col-span-2 space-y-6">
-            <!-- User Info Card -->
-            <UCard>
-              <template #header>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Your Identity
-                </h3>
-              </template>
+        <!-- Main content area (centered between sidebars) -->
+        <div class="transition-all duration-300"
+          :class="{
+            'lg:ml-80 xl:ml-80': isLeftSidebarOpen,
+            'lg:mr-80 xl:mr-80': isRightSidebarOpen
+          }">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Dice Rolling -->
+            <div class="lg:col-span-2 space-y-6">
+              <!-- User Info Card -->
+              <UCard>
+                <template #header>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    Your Identity
+                  </h3>
+                </template>
 
-              <div class="space-y-4">
-                <!-- Auto-detected Role Display -->
-                <div>
-                  <UFormGroup label="Your Role">
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <div class="text-2xl">
-                        {{ userRole === 'DM' ? '🎯' : '🎭' }}
-                      </div>
-                      <div class="flex-1">
-                        <div class="font-medium text-gray-900 dark:text-white">
-                          {{ userRole === 'DM' ? 'Dungeon Master (DM)' : 'Player' }}
+                <div class="space-y-4">
+                  <!-- Auto-detected Role Display -->
+                  <div>
+                    <UFormGroup label="Your Role">
+                      <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="text-2xl">
+                          {{ userRole === 'DM' ? '🎯' : '🎭' }}
                         </div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                          {{ userRole === 'DM'
-                            ? 'Auto-detected: No characters found'
-                            : `Auto-detected: ${userCharacters.length} character${userCharacters.length !== 1 ? 's' : ''}
-                          found`
-                          }}
+                        <div class="flex-1">
+                          <div class="font-medium text-gray-900 dark:text-white">
+                            {{ userRole === 'DM' ? 'Dungeon Master (DM)' : 'Player' }}
+                          </div>
+                          <div class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ userRole === 'DM'
+                              ? 'Auto-detected: No characters found'
+                              : `Auto-detected: ${userCharacters.length} character${userCharacters.length !== 1 ? 's' : ''}
+                            found`
+                            }}
+                          </div>
                         </div>
+                        <UButton color="gray" variant="ghost" size="xs" @click="refreshUserData"
+                          icon="i-heroicons-arrow-path" :loading="isRefreshingUserData">
+                          Refresh
+                        </UButton>
                       </div>
-                      <UButton color="gray" variant="ghost" size="xs" @click="refreshUserData"
-                        icon="i-heroicons-arrow-path" :loading="isRefreshingUserData">
-                        Refresh
-                      </UButton>
-                    </div>
-                  </UFormGroup>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {{ userRole === 'DM'
-                      ? 'As a DM, you can view and modify all player stats'
-                      : 'As a Player, you can view and edit your own character stats'
-                    }}
-                  </p>
+                    </UFormGroup>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {{ userRole === 'DM'
+                        ? 'As a DM, you can view and modify all player stats'
+                        : 'As a Player, you can view and edit your own character stats'
+                      }}
+                    </p>
+                  </div>
+
+                  <!-- Name Display (Read-only for authenticated users) -->
+                  <div>
+                    <UFormGroup label="Your Name">
+                      <div class="flex items-center space-x-4">
+                        <div class="flex-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <span class="text-gray-900 dark:text-white font-medium">{{ userName }}</span>
+                          <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">(from your account)</span>
+                        </div>
+                        <UButton color="gray" variant="outline" @click="refreshUserData"
+                          icon="i-heroicons-arrow-path" :loading="isRefreshingUserData">
+                          Refresh
+                        </UButton>
+                      </div>
+                    </UFormGroup>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Your name is automatically set from your authenticated user account
+                    </p>
+                  </div>
+
+                  <!-- Character Selection (for Players) -->
+                  <div v-if="userRole === 'Player' && userCharacters.length > 0">
+                    <UFormGroup label="Active Character">
+                      <USelect v-model="activeCharacterId" :options="userCharacters.map(c => ({
+                        label: `${c.characterName} (Level ${c.classLevel} ${c.className})`,
+                        value: c.id
+                      }))" placeholder="Select your character" class="w-full" @change="onActiveCharacterChange" />
+                    </UFormGroup>
+                  </div>
                 </div>
 
-                <!-- Name Input -->
-                <div>
-                  <UFormGroup label="Your Name">
-                    <div class="flex items-center space-x-4">
-                      <UInput v-model="userName" placeholder="Enter your name..." class="flex-1"
-                        @keyup.enter="updateUserName" />
-                      <UButton color="primary" @click="updateUserName" :disabled="!userName.trim()">
-                        Update
-                      </UButton>
-                    </div>
-                  </UFormGroup>
-                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
+                  {{ isOfflineMode
+                    ? 'You\'re in offline mode. Your rolls are only visible to you.'
+                    : 'Your name and role will be visible to other players when you roll dice.'
+                  }}
+                </p>
+              </UCard>
 
-                <!-- Character Selection (for Players) -->
-                <div v-if="userRole === 'Player' && userCharacters.length > 0">
-                  <UFormGroup label="Active Character">
-                    <USelect v-model="activeCharacterId" :options="userCharacters.map(c => ({
-                      label: `${c.characterName} (Level ${c.classLevel} ${c.className})`,
-                      value: c.id
-                    }))" placeholder="Select your character" class="w-full" @change="onActiveCharacterChange" />
-                  </UFormGroup>
+              <!-- Dice Selection Card -->
+              <UCard>
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      🎲 Select Dice
+                    </h3>
+                    <div v-if="totalDiceSelected > 0" class="text-sm text-gray-500 dark:text-gray-400">
+                      {{ totalDiceSelected }} dice selected
+                    </div>
+                  </div>
+                </template>
+
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
+                <div v-for="dice in diceTypes" :key="dice.type" class="relative">
+                  <button @click="toggleDice(dice.type)"
+                    class="w-full p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105 hover:shadow-md transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    :class="[
+                      selectedDice[dice.type] > 0
+                        ? `${dice.bgColor} border-current shadow-sm`
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600',
+                      animatingDice.has(dice.type) ? 'animate-pulse' : ''
+                    ]"
+                    :aria-label="`Select ${dice.name} dice with ${dice.sides} sides. Currently selected: ${selectedDice[dice.type]}`">
+                    
+                    <div class="flex flex-col items-center space-y-2">
+                      <div class="text-2xl" :class="selectedDice[dice.type] > 0 ? 'text-white' : 'text-gray-600 dark:text-gray-300'">
+                        {{ dice.icon }}
+                      </div>
+                      <div class="text-sm font-medium" :class="selectedDice[dice.type] > 0 ? 'text-white' : 'text-gray-900 dark:text-white'">
+                        {{ dice.name }}
+                      </div>
+                      <div class="text-xs" :class="selectedDice[dice.type] > 0 ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'">
+                        {{ dice.sides }} sides
+                      </div>
+                    </div>
+                    
+                    <!-- Selection Counter -->
+                    <div v-if="selectedDice[dice.type] > 0"
+                      class="absolute -top-2 -right-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-current rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                      {{ selectedDice[dice.type] }}
+                    </div>
+                  </button>
                 </div>
               </div>
 
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                {{ isOfflineMode
-                  ? 'You\'re in offline mode. Your rolls are only visible to you.'
-                  : 'Your name and role will be visible to other players when you roll dice.'
-                }}
-              </p>
+              <!-- Rolling Controls -->
+              <div class="flex flex-col items-center space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <UButton @click="rollDice" :loading="isRolling" :disabled="totalDiceSelected === 0 || isRolling"
+                  color="primary" size="lg" icon="i-heroicons-cube" class="w-full">
+                  <template #default>
+                    🎲 Roll {{ totalDiceSelected }} {{ totalDiceSelected === 1 ? 'Die' : 'Dice' }}
+                  </template>
+                </UButton>
+
+                <!-- Quick Roll Buttons -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <UButton v-for="quickRoll in quickRolls" :key="quickRoll.label" color="gray" variant="outline" size="sm"
+                    @click="performQuickRoll(quickRoll)" :disabled="isRolling">
+                    {{ quickRoll.label }}
+                  </UButton>
+                </div>
+              </div>
             </UCard>
           </div>
 
+          <!-- Right Column - Roll History -->
+          <div class="space-y-6">
+            <!-- Live Roll Feed -->
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    📜 Roll History
+                  </h3>
+                  <UButton color="gray" variant="outline" size="xs" @click="clearHistory"
+                    icon="i-heroicons-trash" :disabled="rollHistory.length === 0">
+                    Clear
+                  </UButton>
+                </div>
+              </template>
 
-          <!-- Dice Selection Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Select Dice
-              </h3>
-            </template>
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div v-for="dice in diceTypes" :key="dice.type" class="relative">
-                <button @click="toggleDice(dice.type)"
-                  class="w-full p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
-                  :class="[
-                    selectedDice[dice.type] > 0
-                      ? `${dice.bgColor} border-current shadow-md`
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600',
-                    animatingDice.has(dice.type) ? 'animate-bounce' : ''
-                  ]">
-                  <div class="flex flex-col items-center space-y-2">
-                    <!-- Dice Symbol with Rotation Animation -->
-                    <div class="text-4xl font-bold transition-all duration-300 transform" :class="[
-                      selectedDice[dice.type] > 0 ? dice.color : 'text-gray-400 dark:text-gray-500',
-                      animatingDice.has(dice.type) ? 'animate-spin scale-125' : 'hover:scale-110'
-                    ]">
-                      {{ dice.symbol }}
-                    </div>
-
-                    <!-- Dice Name -->
-                    <div class="text-sm font-semibold text-gray-900 dark:text-white">
-                      {{ dice.name }}
-                    </div>
-
-                    <!-- Sides Count -->
-                    <div class="text-xs"
-                      :class="selectedDice[dice.type] > 0 ? dice.color : 'text-gray-500 dark:text-gray-400'">
-                      {{ dice.sides }} sides
+              <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                <div v-for="roll in rollHistory.slice().reverse()" :key="roll.id"
+                  class="border-l-4 border-blue-500 bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                  <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3 flex-1">
+                      <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ roll.rollerName }}
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ new Date(roll.timestamp).toLocaleTimeString() }}
+                      </div>
                     </div>
                   </div>
-                </button>
 
-                <!-- Dice Counter with Animation -->
-                <div v-if="selectedDice[dice.type] > 0"
-                  class="absolute -top-2 -right-2 text-white text-sm font-bold rounded-full h-7 w-7 flex items-center justify-center transition-all duration-300 transform scale-110 shadow-lg"
-                  :class="dice.color.replace('text-', 'bg-')">
-                  {{ selectedDice[dice.type] }}
+                  <div class="mt-2">
+                    <div class="space-y-1">
+                      <div class="text-sm text-gray-600 dark:text-gray-300">
+                        {{ roll.description }}
+                      </div>
+
+                      <div class="flex items-center space-x-2">
+                        <span class="text-lg font-bold" :class="getCriticalClass(roll)">
+                          {{ roll.total }}
+                        </span>
+
+                        <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400">
+                          ({{ roll.details.join(' + ') }})
+                        </div>
+                      </div>
+
+                      <div v-if="roll.isCritical" class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                        {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Modifier Input -->
-            <div class="mt-6 flex items-center space-x-4">
-              <UFormGroup label="Modifier" class="flex-1">
-                <UInput v-model.number="modifier" type="number" placeholder="0" class="w-full" />
-              </UFormGroup>
+              <div v-else class="text-center py-8">
+                <div class="text-4xl mb-4">🎲</div>
+                <p class="text-gray-500 dark:text-gray-400">
+                  No rolls yet. Start rolling some dice!
+                </p>
+              </div>
+            </UCard>
 
-              <UFormGroup label="Advantage/Disadvantage">
-                <USelect v-model="rollType" :options="rollTypeOptions" class="w-48" />
-              </UFormGroup>
-            </div>
-          </UCard>
-
-          <!-- Roll Actions Card -->
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
+            <!-- Room Stats -->
+            <UCard>
+              <template #header>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Roll the Dice!
+                  Room Statistics
                 </h3>
-                <UButton color="gray" variant="outline" size="sm" @click="clearSelection"
-                  :disabled="totalDiceSelected === 0">
-                  Clear All
-                </UButton>
-              </div>
-            </template>
+              </template>
 
-            <div class="space-y-4">
-              <!-- Roll Summary -->
-              <div v-if="totalDiceSelected > 0" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Rolling:</p>
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="(count, type) in selectedDice" :key="type" v-show="count > 0"
-                    class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full">
-                    {{ count }}d{{diceTypes.find(d => d.type === type)?.sides}}
-                  </span>
-                  <span v-if="modifier !== 0"
-                    class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium rounded-full">
-                    {{ modifier > 0 ? '+' : '' }}{{ modifier }}
-                  </span>
-                  <span v-if="rollType !== 'normal'"
-                    class="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs font-medium rounded-full">
-                    {{ rollType }}
-                  </span>
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Total Rolls</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ rollHistory.length }}</span>
+                </div>
+
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Your Rolls</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ userRollCount }}</span>
+                </div>
+
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Connected Users</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ connectedUsers }}</span>
+                </div>
+
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Critical Hits</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ criticalHits }}</span>
                 </div>
               </div>
-
-              <!-- Roll Button with Enhanced Styling -->
-              <UButton color="primary" size="xl" block @click="rollDice"
-                :disabled="totalDiceSelected === 0 || isRolling" :loading="isRolling"
-                class="text-lg font-semibold py-4 transition-all duration-300 transform hover:scale-105"
-                :class="isRolling ? 'animate-pulse bg-gradient-to-r from-blue-600 to-purple-600' : ''">
-                <template v-if="isRolling">
-                  <div class="flex items-center space-x-2">
-                    <div class="animate-spin text-xl">🎲</div>
-                    <span>Rolling dice...</span>
-                    <div class="animate-bounce text-xl">🎯</div>
-                  </div>
-                </template>
-                <template v-else>
-                  🎲 Roll {{ totalDiceSelected }} {{ totalDiceSelected === 1 ? 'Die' : 'Dice' }}
-                </template>
-              </UButton>
-
-              <!-- Quick Roll Buttons -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <UButton v-for="quickRoll in quickRolls" :key="quickRoll.label" color="gray" variant="outline" size="sm"
-                  @click="performQuickRoll(quickRoll)" :disabled="isRolling">
-                  {{ quickRoll.label }}
-                </UButton>
-              </div>
-            </div>
-          </UCard>
-        </div>
-
-        <!-- Right Column - Roll History (hidden when sidebar is open on mobile) -->
-        <div class="space-y-6" :class="{ 'hidden lg:block': isSidebarOpen }">>
-          <!-- Stats Toggle Button (Desktop) -->
-          <div class="hidden lg:block">
-            <UButton color="gray" variant="outline" @click="isSidebarOpen = !isSidebarOpen"
-              :icon="isSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" block>
-              {{ isSidebarOpen ? 'Hide' : 'Show' }} Player Stats
-            </UButton>
+            </UCard>
           </div>
-          <!-- Live Roll Feed -->
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Live Roll Feed
-                </h3>
-                <UButton color="gray" variant="ghost" size="sm" @click="clearHistory" icon="i-heroicons-trash">
-                  Clear
-                </UButton>
-              </div>
-            </template>
-
-            <div class="space-y-3 max-h-96 overflow-y-auto">
-              <!-- Empty State -->
-              <div v-if="rollHistory.length === 0" class="text-center py-8">
-                <div class="text-gray-400 dark:text-gray-600 mb-2">
-                  <UIcon name="i-heroicons-cube" class="h-12 w-12 mx-auto" />
-                </div>
-                <p class="text-gray-500 dark:text-gray-400">No rolls yet</p>
-                <p class="text-sm text-gray-400 dark:text-gray-500">Be the first to roll!</p>
-              </div>
-
-              <!-- Roll Items -->
-              <div v-for="roll in rollHistory" :key="roll.id" class="p-3 rounded-lg border transition-all duration-200"
-                :class="roll.isOwn
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'">
-                <div class="flex items-start justify-between mb-2">
-                  <div>
-                    <span class="font-medium text-gray-900 dark:text-white">
-                      {{ roll.userName }}
-                    </span>
-                    <span v-if="roll.isOwn"
-                      class="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium rounded">
-                      You
-                    </span>
-                  </div>
-                  <span class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ formatTime(roll.timestamp) }}
-                  </span>
-                </div>
-
-                <div class="space-y-1">
-                  <div class="text-sm text-gray-600 dark:text-gray-300">
-                    {{ roll.description }}
-                  </div>
-
-                  <div class="flex items-center space-x-2">
-                    <span class="text-lg font-bold" :class="getCriticalClass(roll)">
-                      {{ roll.total }}
-                    </span>
-
-                    <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400">
-                      ({{ roll.details.join(' + ') }})
-                    </div>
-                  </div>
-
-                  <div v-if="roll.isCritical" class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                    {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </UCard>
-
-          <!-- Room Stats -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Room Statistics
-              </h3>
-            </template>
-
-            <div class="space-y-3">
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Total Rolls</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ rollHistory.length }}</span>
-              </div>
-
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Your Rolls</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ userRollCount }}</span>
-              </div>
-
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Highest Roll</span>
-                <span class="font-medium text-gray-900 dark:text-white">
-                  {{ highestRoll || '—' }}
-                </span>
-              </div>
-
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Critical Hits</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ criticalHits }}</span>
-              </div>
-            </div>
-          </UCard>
         </div>
       </div>
     </main>
@@ -749,19 +874,25 @@ interface QuickRoll {
   modifier?: number
 }
 
+// Get authenticated user
+const user = useState<any>('user')
+
 // Reactive state
-const userName = ref('Anonymous')
 const userRole = ref<'Player' | 'DM'>('Player')
 const isConnected = ref(false)
 const isOfflineMode = ref(false)
+const isOfflineModePreference = ref(false) // Persistent offline mode preference
 const connectedUsers = ref(1)
 const isRolling = ref(false)
 const eventSource = ref<EventSource | null>(null)
-const userId = ref(`user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`)
 const animatingDice = ref<Set<string>>(new Set())
 
 // Sidebar state
-const isSidebarOpen = ref(false)
+const isLeftSidebarOpen = ref(false)
+const isRightSidebarOpen = ref(false)
+
+// Legacy compatibility - for existing sidebar references
+const isSidebarOpen = computed(() => isLeftSidebarOpen.value || isRightSidebarOpen.value)
 
 // User character data and role detection
 const userCharacters = ref<any[]>([])
@@ -804,13 +935,13 @@ const rollHistory = ref<DiceRoll[]>([])
 
 // Constants
 const diceTypes: DiceType[] = [
-  { type: 'd4', name: 'D4', sides: 4, color: 'text-blue-600', bgColor: 'bg-blue-100 border-blue-300 hover:bg-blue-200', symbol: '▲' },
+  { type: 'd4', name: 'D4', sides: 4, color: 'text-blue-600', bgColor: 'bg-blue-100 border-blue-300 hover:bg-blue-200', symbol: '◆' },
   { type: 'd6', name: 'D6', sides: 6, color: 'text-green-600', bgColor: 'bg-green-100 border-green-300 hover:bg-green-200', symbol: '⬛' },
   { type: 'd8', name: 'D8', sides: 8, color: 'text-purple-600', bgColor: 'bg-purple-100 border-purple-300 hover:bg-purple-200', symbol: '♦' },
   { type: 'd10', name: 'D10', sides: 10, color: 'text-pink-600', bgColor: 'bg-pink-100 border-pink-300 hover:bg-pink-200', symbol: '🔟' },
-  { type: 'd12', name: 'D12', sides: 12, color: 'text-red-600', bgColor: 'bg-red-100 border-red-300 hover:bg-red-200', symbol: '⬟' },
+  { type: 'd12', name: 'D12', sides: 12, color: 'text-red-600', bgColor: 'bg-red-100 border-red-300 hover:bg-red-200', symbol: '◇' },
   { type: 'd20', name: 'D20', sides: 20, color: 'text-orange-600', bgColor: 'bg-orange-100 border-orange-300 hover:bg-orange-200', symbol: '●' },
-  { type: 'd36', name: 'D36', sides: 36, color: 'text-cyan-600', bgColor: 'bg-cyan-100 border-cyan-300 hover:bg-cyan-200', symbol: '⬢' },
+  { type: 'd36', name: 'D36', sides: 36, color: 'text-cyan-600', bgColor: 'bg-cyan-100 border-cyan-300 hover:bg-cyan-200', symbol: '◯' },
   { type: 'd100', name: 'D100', sides: 100, color: 'text-green-600', bgColor: 'bg-green-100 border-green-300 hover:bg-green-200', symbol: '💯' }
 ]
 
@@ -850,18 +981,25 @@ const criticalHits = computed(() => {
   return rollHistory.value.filter(roll => roll.isCritical && roll.criticalType === 'success').length
 })
 
+// Computed properties for user info
+const userName = computed(() => user.value?.username || 'Anonymous')
+const userId = computed(() => user.value?.id || `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`)
+const userInitials = computed(() => user.value?.username?.charAt(0)?.toUpperCase() || 'A')
+const userEmail = computed(() => user.value?.email || '')
+
 // User role and character management functions
 async function loadUserCharacters() {
-  if (!userName.value || userName.value.trim() === 'Anonymous') {
+  if (!user.value?.id) {
     userCharacters.value = []
     userRole.value = 'DM'
     return
   }
 
   try {
-    const response = await $fetch<{  success: boolean, data: any[ ] }>(`/api/characters?player=${encodeURIComponent(userName.value)}`)
+    const response = await $fetch<{ success: boolean, data: any[] }>(`/api/characters?player=${user.value.id}`)
     if (response.success && Array.isArray(response.data)) {
-      userCharacters.value = response.dat   // Auto-detect role based on characters
+      userCharacters.value = response.data
+      // Auto-detect role based on characters
       if (userCharacters.value.length > 0) {
         userRole.value = 'Player'
         // If no active character is selected, select the first one
@@ -875,7 +1013,7 @@ async function loadUserCharacters() {
         activeCharacterId.value = null
       }
 
-   sole.log(`🎭 Auto-detected role: ${userRole.value} (${userCharacters.value.length} characters found)`)
+      console.log(`🎭 Auto-detected role: ${userRole.value} (${userCharacters.value.length} characters found)`)
     } else {
       console.warn('Invalid response format from characters API:', response)
       userCharacters.value = []
@@ -886,11 +1024,13 @@ async function loadUserCharacters() {
     userCharacters.value = []
     userRole.value = 'DM' // Default to DM if we can't load characters
 
-    // Shser-friendly error message if this is not just a 404 (no characters found)
+    // User-friendly error message if this is not just a 404 (no characters found)
     if (error.statusCode !== 404) {
       console.warn('Character loading failed - defaulting to DM role due to connection issue')
     }
   }
+
+
 }
 
 async function loadCharacterStats() {
@@ -905,17 +1045,17 @@ async function loadCharacterStats() {
       // Convert character data to player stats format
       playerStats.value = {
         hitPoints: {
-          curent: character.currentHp || character.maxHp || 10,
-          max:character.maxHp || 10
+          current: character.currentHp || character.maxHp || 10,
+          max: character.maxHp || 10
         },
        armorClass: character.armorClass || 10,
         abilities: {
-          strength: 10,
-          dexterity: 10,
-          constitution: 10,
-          intelligence: 10,
-          wisdom: 10,
-          charisma: 10
+          strength: character.strength || 10,
+          dexterity: character.dexterity || 10,
+          constitution: character.constitution || 10,
+          intelligence: character.intelligence || 10,
+          wisdom: character.wisdom || 10,
+          charisma: character.charisma || 10
         },
         level: character.classLevel || 1,
         proficiencyBonus: character.proficiencyBonus || 2,
@@ -964,6 +1104,21 @@ async function onActiveCharacterChange() {
     }
   }
 }
+
+function getBadgeColor(diceType: string): string {
+  const colorMap: Record<string, string> = {
+    'd4': 'bg-blue-600',
+    'd6': 'bg-green-600', 
+    'd8': 'bg-purple-600',
+    'd10': 'bg-pink-600',
+    'd12': 'bg-red-600',
+    'd20': 'bg-orange-600',
+    'd36': 'bg-cyan-600',
+    'd100': 'bg-green-600'
+  }
+  return colorMap[diceType] || 'bg-gray-600'
+}
+
 function toggleDice(diceType: string) {
   // Add animation
   animatingDice.value.add(diceType)
@@ -1111,7 +1266,7 @@ async function rollDice() {
     rollHistory.value.unshift(roll)
 
     // Submit to server for other s (only if connected and not in offline mode)
-    if (isConnected.value &&OfflineMode.value) {
+    if (isConnected.value && !isOfflineMode.value) {
       try {
         await submitDiceRoll({
           userName: roll.userName,
@@ -1144,7 +1299,7 @@ function performQuickRoll(quickRoll: QuickRoll) {
   // Set dice for quick roll
   Object.assign(selectedDice.value, quickRoll.dice)
   if (quickRoll.modifier) {
-    modifievalue = quickRoll.modifier
+    modifier.value = quickRoll.modifier
   }
 
   // Roll immediately
@@ -1198,7 +1353,7 @@ async function updateStats() {
     await $fetch(`/api/dice/stats/${userId.value}`, {
       method: 'POST',
       body: {
-        modifierUserId: userIdalue,
+        modifierUserId: userId.value,
         stats: playerStats.value,
         roomCode: currentRoom.value?.code || 'default'
       }
@@ -1232,7 +1387,7 @@ async function loadAllPlayersStats(roomCode: string = 'default') {
 
   try {
     const response = await $fetch(`/api/dice/stats?viewerUserId=${userId.value}&roomCode=${roomCode}`)
-    if (response.succs) {
+    if (response.success) {
       allPlayers.value = response.players
     }
   } catch (error) {
@@ -1270,7 +1425,7 @@ async function savePlayerStats() {
 
     // Update local state
     const playerIndex = allPlayers.value.findIndex(p => p.userId === editingPlayer.value!.userId)
-    if (playdex !== -1) {
+    if (playerIndex !== -1) {
       allPlayers.value[playerIndex].stats = editingPlayerStats.value
     }
 
@@ -1310,6 +1465,16 @@ function getCriticalClass(roll: DiceRoll): string {
 
 // Room Maagement Functions
 async function createRoom(){
+  if (!userName.value.trim()) {
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Please enter your name before creating a room.',
+      color: 'red'
+    })
+    return
+  }
+
   try {
     const response = await $fetch('/api/dice/rooms/create', {
       method: 'POST',
@@ -1325,15 +1490,29 @@ async function createRoom(){
         name: response.room.name,
         code: response.room.code,
         isOwner: true
-  }
+      }
       console.log('🏠 Created room:', response.room.code)
       showCreateRoom.value = false
+
+      // Show success notification
+      const toast = useToast()
+      toast.add({
+        title: 'Room Created',
+        description: `Room ${response.room.code} created successfully`,
+        color: 'green'
+      })
 
       // Reconnect SSE with room code
       await reconnectWithRoom(response.room.code)
     }
   } catch (error) {
-    console.error('🏠 Failed to cream:', error)
+    console.error('🏠 Failed to create room:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to create room. Please try again.',
+      color: 'red'
+    })
   }
 }
 
@@ -1345,7 +1524,7 @@ async function joinExistingRoom() {
       method: 'POST',
       body: {
         userId: userId.value,
-        userName: userme.value,
+        userName: userName.value,
         roomCode: joinRoomCode.value.trim().toUpperCase()
       }
     })
@@ -1356,15 +1535,28 @@ async function joinExistingRoom() {
         code: response.room.code,
         isOwner: false
       }
-   onsole.log('🏠 Joined room:', response.room.code)
+      console.log('🏠 Joined room:', response.room.code)
       joinRoomCode.value = ''
+
+      // Show success notification
+      const toast = useToast()
+      toast.add({
+        title: 'Joined Room',
+        description: `Successfully joined room ${response.room.code}`,
+        color: 'green'
+      })
 
       // Reconnect SSE with room code
       await reconnectWithRoom(response.room.code)
     }
   } catch (error) {
     console.error('🏠 Failed to join room:', error)
-    // Show user-friendly error message here if needed
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to join room. Please check the room code and try again.',
+      color: 'red'
+    })
   }
 }
 
@@ -1379,13 +1571,67 @@ async function leaveRoom() {
         roomCode: currentRoom.value.code
       }
     })
-   console.log('🏠 Left room:', currentRoom.value.code)
+    console.log('🏠 Left room:', currentRoom.value.code)
     currentRoom.value = null
+
+    // Show success notification
+    const toast = useToast()
+    toast.add({
+      title: 'Left Room',
+      description: 'You have successfully left the room',
+      color: 'green'
+    })
 
     // Reconnect to default room
     await reconnectWithRoom('default')
   } catch (error) {
     console.error('🏠 Failed to leave room:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to leave room. Please try again.',
+      color: 'red'
+    })
+  }
+}
+
+async function copyRoomCode() {
+  if (!currentRoom.value || currentRoom.value.code === 'default') return
+
+  try {
+    await navigator.clipboard.writeText(currentRoom.value.code)
+    const toast = useToast()
+    toast.add({
+      title: 'Room Code Copied',
+      description: `Room code ${currentRoom.value.code} copied to clipboard`,
+      color: 'green'
+    })
+  } catch (error) {
+    console.error('Failed to copy room code:', error)
+    // Fallback for older browsers or when clipboard API fails
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = currentRoom.value.code
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Room Code Copied',
+        description: `Room code ${currentRoom.value.code} copied to clipboard`,
+        color: 'green'
+      })
+    } catch (fallbackError) {
+      console.error('Fallback copy failed:', fallbackError)
+      const toast = useToast()
+      toast.add({
+        title: 'Copy Failed',
+        description: 'Failed to copy room code. Please copy manually.',
+        color: 'red'
+      })
+    }
   }
 }
 
@@ -1398,7 +1644,7 @@ async function kickPlayer(player: Player) {
       body: {
         dmUserId: userId.value,
         targetUserId: player.userId,
-        roomCode: currentRoovalue.code
+        roomCode: currentRoom.value.code
       }
     })
 
@@ -1406,7 +1652,9 @@ async function kickPlayer(player: Player) {
 
     // Remove from local list
     allPlayers.value = allPlayers.value.filter(p => p.userId !== player.userId)
-  } catch (error) { console.error('🏠 Failed to kick player:', error)
+  } catch (error) { 
+    console.error('🏠 Failed to kick player:', error)
+  }
 }
 
 async function reconnectWithRoom(roomCode: string) {
@@ -1428,12 +1676,21 @@ const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 
 
 // SSE Functions - Server-Sent Events for real-time updates
 function initializeSSE(roomCode: string = 'default') {
+  // Check if user has explicitly chosen offline mode
+  if (isOfflineModePreference.value) {
+    console.log('🎲 Staying in offline mode per user preference')
+    isConnected.value = false
+    isOfflineMode.value = true
+    connectedUsers.value = 1
+    return
+  }
+
   // Always try SSE first (works in all environments)
   console.log('🎲 Initializing SSE connection for real-time dice room, room:', roomCode)
 
   try {
     // Create SSE connection with room code
-    const sseUrl = `/api/dice/events?userId=${encodeURIComponent(userId.value)}&userName=${encodeURIComponent(userName.value)}&role=${encodeIComponent(userRole.value)}&roomCode=${encodeURIComponent(roomCode)}`
+    const sseUrl = `/api/dice/events?userId=${encodeURIComponent(userId.value)}&userName=${encodeURIComponent(userName.value)}&role=${encodeURIComponent(userRole.value)}&roomCode=${encodeURIComponent(roomCode)}`
     eventSource.value = new EventSource(sseUrl)
 
     // Connection events
@@ -1448,7 +1705,7 @@ function initializeSSE(roomCode: string = 'default') {
 
     eventSource.value.onerror = (error) => {
       console.error('🎲 SSE connection error:', error)
-      console.log('🎲 Fallck to offline mode')
+      console.log('🎲 Fallback to offline mode')
       isConnected.value = false
       isOfflineMode.value = true
       connectedUsers.value = 1
@@ -1491,7 +1748,7 @@ function initializeSSE(roomCode: string = 'default') {
           ...roll,
           timestamp: new Date(roll.timestamp),
           isOwn: false
-  }
+        }
 
         rollHistory.value.unshift(processedRoll)
       }
@@ -1499,7 +1756,7 @@ function initializeSSE(roomCode: string = 'default') {
 
     eventSource.value.addEventListener('heartbeat', (event) => {
       const data = JSON.parse(event.data)
-      // Optional: Update user count froeat
+      // Optional: Update user count from heartbeat
       if (data.userCount) {
         connectedUsers.value = data.userCount
       }
@@ -1607,30 +1864,65 @@ function disconnectSSE() {
   }
 }
 
+function toggleOfflineMode() {
+  isOfflineModePreference.value = !isOfflineModePreference.value
+  
+  if (isOfflineModePreference.value) {
+    // Switch to offline mode
+    disconnectSSE()
+    isConnected.value = false
+    isOfflineMode.value = true
+    connectedUsers.value = 1
+    console.log('🎲 Switched to persistent offline mode')
+    
+    const toast = useToast()
+    toast.add({
+      title: 'Offline Mode',
+      description: 'Switched to offline mode. Your rolls will only be stored locally.',
+      color: 'yellow'
+    })
+  } else {
+    // Switch back to online mode
+    isOfflineMode.value = false
+    console.log('🎲 Switching back to online mode')
+    
+    const toast = useToast()
+    toast.add({
+      title: 'Online Mode',
+      description: 'Attempting to reconnect to the server...',
+      color: 'blue'
+    })
+    
+    // Reconnect with current room
+    const roomCode = currentRoom.value?.code || 'default'
+    initializeSSE(roomCode)
+  }
+}
+
 // Initialize with SSE connection
-// onMounted(async () => {
-//   // Set initial room state (default room)
-//   currentRoom.value = {
-//     name: 'Default Room',
-//     code: 'default',
-//     isOwner: false
-//   }
+onMounted(async () => {
+  // Set initial room state (default room)
+  currentRoom.value = {
+    name: 'Default Room',
+    code: 'default',
+    isOwner: false
+  }
 
-//   // Load user characters and auto-detect role
-//   await loadUserCharacters()
+  // Load user characters and auto-detect role
+  await loadUserCharacters()
 
-//   initializeSSE('default')
-// })
+  initializeSSE('default')
+})
 
-// onUnmounted(() => {
-//   disconnectSSE()
-// })
+onUnmounted(() => {
+  disconnectSSE()
+})
 
 // SEO
-// useHead({
-//   title: 'Collaborative Dice Room',
-//   meta: [
-//     { name: 'description', content: 'Roll dice together with your D&D party' }
-//   ]
-// })
+useHead({
+  title: 'Collaborative Dice Room',
+  meta: [
+    { name: 'description', content: 'Roll dice together with your D&D party' }
+  ]
+})
 </script>

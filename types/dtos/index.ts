@@ -1,8 +1,21 @@
 // Re-export all DTOs
-export * from './CharacterDTO'
-export * from './StatsDTO'
-export * from './SpellDTO'
-export * from './CombatInventoryDTO'
+export type { 
+  CharacterDTO, 
+  SkillDTO, 
+  SavingThrowDTO, 
+  CreateCharacterDTO, 
+  UpdateCharacterDTO,
+  ApiResponse 
+} from './CharacterDTO'
+export type * from './StatsDTO'
+export type * from './SpellDTO'
+export type * from './CombatInventoryDTO'
+export type { 
+  CustomSkillDTO, 
+  CustomSkillCalculationDTO, 
+  CreateCustomSkillDTO, 
+  UpdateCustomSkillDTO 
+} from './SkillDTO'
 
 // Pagination and filtering
 export interface PaginationParams {

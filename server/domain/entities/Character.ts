@@ -8,14 +8,23 @@ export interface Character {
   classLevel: number
   background?: string
   alignment?: string
-  experience: number
-  ancestry?: string
+  
+  // Character Image
+  avatar?: string
+  
+  // Physical Characteristics
   age?: number
   height?: string
   weight?: string
   eyes?: string
   skin?: string
   hair?: string
+  
+  // Experience and Level
+  experience: number
+  ancestry?: string
+  
+  // Combat Stats
   inspiration: boolean
   passivePerception?: number
   proficiencyBonus: number
@@ -28,19 +37,37 @@ export interface Character {
   hitDice?: string
   deathSaveSuccesses: number
   deathSaveFailures: number
+  
+  // Ability Scores (the 6 main stats)
+  strength?: number
+  dexterity?: number
+  constitution?: number
+  intelligence?: number
+  wisdom?: number
+  charisma?: number
+  
+  // Miscellaneous
   languages?: string
+  
   // Currency fields
   copperCoins?: number
   silverCoins?: number
   electrumCoins?: number
   goldCoins?: number
   platinumCoins?: number
+  
   // Inventory
   backpack?: string
   notes: Record<string, any>
+  
+  // Skills and Saving Throws
+  skills?: any[]
+  savingThrows?: any[]
+  
   createdAt?: Date
   updatedAt?: Date
-  // New user assignment fields
+  
+  // User assignment fields
   userId?: string | null
   ownerId?: string | null
   user?: {
@@ -53,6 +80,16 @@ export interface Character {
     username: string
     email: string
   } | null
+}
+
+// Helper functions for ability score modifiers
+export function getAbilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2)
+}
+
+export function getAbilityModifierString(score: number): string {
+  const modifier = getAbilityModifier(score)
+  return modifier >= 0 ? `+${modifier}` : `${modifier}`
 }
 
 export class CharacterEntity {
@@ -136,6 +173,60 @@ export class CharacterEntity {
 
   get proficiencyBonus(): number {
     return this.data.proficiencyBonus
+  }
+
+  // Ability Scores
+  get strength(): number | undefined {
+    return this.data.strength
+  }
+
+  get dexterity(): number | undefined {
+    return this.data.dexterity
+  }
+
+  get constitution(): number | undefined {
+    return this.data.constitution
+  }
+
+  get intelligence(): number | undefined {
+    return this.data.intelligence
+  }
+
+  get wisdom(): number | undefined {
+    return this.data.wisdom
+  }
+
+  get charisma(): number | undefined {
+    return this.data.charisma
+  }
+
+  // Ability Modifiers
+  get strengthModifier(): number {
+    return getAbilityModifier(this.strength || 10)
+  }
+
+  get dexterityModifier(): number {
+    return getAbilityModifier(this.dexterity || 10)
+  }
+
+  get constitutionModifier(): number {
+    return getAbilityModifier(this.constitution || 10)
+  }
+
+  get intelligenceModifier(): number {
+    return getAbilityModifier(this.intelligence || 10)
+  }
+
+  get wisdomModifier(): number {
+    return getAbilityModifier(this.wisdom || 10)
+  }
+
+  get charismaModifier(): number {
+    return getAbilityModifier(this.charisma || 10)
+  }
+
+  get avatar(): string | undefined {
+    return this.data.avatar
   }
 
   get speed(): number | undefined {
