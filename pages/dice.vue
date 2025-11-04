@@ -172,7 +172,7 @@
 
         <!-- Left Sidebar - Character Info -->
         <div
-          class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto lg:w-80 md:w-72 sm:w-64"
+          class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
           :class="isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
           <!-- Left Sidebar Header -->
           <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
@@ -296,7 +296,7 @@
 
         <!-- Right Sidebar - Ability Scores -->
         <div
-          class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto lg:w-80 md:w-72 sm:w-64"
+          class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
           :class="isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'">
           <!-- Right Sidebar Header -->
           <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
@@ -326,7 +326,7 @@
                       <div class="text-right">
                         <div class="text-lg font-bold text-red-900 dark:text-red-100">{{ playerStats.abilities.strength }}</div>
                         <div class="text-xs text-red-700 dark:text-red-300">
-                          {{ playerStats.abilities.strength >= 0 ? '+' : '' }}{{ playerStats.abilities.strength }} mod
+                          {{ Math.floor((playerStats.abilities.strength - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.strength - 10) / 2) }} mod
                         </div>
                       </div>
                     </div>
@@ -342,7 +342,7 @@
                       <div class="text-right">
                         <div class="text-lg font-bold text-green-900 dark:text-green-100">{{ playerStats.abilities.dexterity }}</div>
                         <div class="text-xs text-green-700 dark:text-green-300">
-                          {{ playerStats.abilities.dexterity >= 0 ? '+' : '' }}{{ playerStats.abilities.dexterity }} mod
+                          {{ Math.floor((playerStats.abilities.dexterity - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.dexterity - 10) / 2) }} mod
                         </div>
                       </div>
                     </div>
@@ -358,7 +358,7 @@
                       <div class="text-right">
                         <div class="text-lg font-bold text-orange-900 dark:text-orange-100">{{ playerStats.abilities.constitution }}</div>
                         <div class="text-xs text-orange-700 dark:text-orange-300">
-                          {{ playerStats.abilities.constitution >= 0 ? '+' : '' }}{{ playerStats.abilities.constitution }} mod
+                          {{ Math.floor((playerStats.abilities.constitution - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.constitution - 10) / 2) }} mod
                         </div>
                       </div>
                     </div>
@@ -374,7 +374,7 @@
                       <div class="text-right">
                         <div class="text-lg font-bold text-purple-900 dark:text-purple-100">{{ playerStats.abilities.intelligence }}</div>
                         <div class="text-xs text-purple-700 dark:text-purple-300">
-                          {{ playerStats.abilities.intelligence >= 0 ? '+' : '' }}{{ playerStats.abilities.intelligence }} mod
+                          {{ Math.floor((playerStats.abilities.intelligence - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.intelligence - 10) / 2) }} mod
                         </div>
                       </div>
                     </div>
@@ -390,7 +390,7 @@
                       <div class="text-right">
                         <div class="text-lg font-bold text-blue-900 dark:text-blue-100">{{ playerStats.abilities.wisdom }}</div>
                         <div class="text-xs text-blue-700 dark:text-blue-300">
-                          {{ playerStats.abilities.wisdom >= 0 ? '+' : '' }}{{ playerStats.abilities.wisdom }} mod
+                          {{ Math.floor((playerStats.abilities.wisdom - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.wisdom - 10) / 2) }} mod
                         </div>
                       </div>
                     </div>
@@ -406,7 +406,7 @@
                       <div class="text-right">
                         <div class="text-lg font-bold text-pink-900 dark:text-pink-100">{{ playerStats.abilities.charisma }}</div>
                         <div class="text-xs text-pink-700 dark:text-pink-300">
-                          {{ playerStats.abilities.charisma >= 0 ? '+' : '' }}{{ playerStats.abilities.charisma }} mod
+                          {{ Math.floor((playerStats.abilities.charisma - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.charisma - 10) / 2) }} mod
                         </div>
                       </div>
                     </div>
@@ -466,12 +466,8 @@
         </div>
 
         <!-- Main content area -->
-        <div class="transition-all duration-300 min-h-screen"
-          :class="{
-            'lg:ml-80': isLeftSidebarOpen,
-            'lg:mr-80': isRightSidebarOpen,
-            'lg:ml-80 lg:mr-80': isLeftSidebarOpen && isRightSidebarOpen
-          }">
+        <div class="transition-all duration-300 min-h-screen">
+          <div class="px-4 sm:px-6 lg:px-8">
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left Column - Dice Rolling -->
             <div class="lg:col-span-2 space-y-6">
@@ -712,10 +708,11 @@
                 </div>
               </UCard>
             </div>
-          </div>
-        </div>
-      </div>
-    </main>
+           </div>
+         </div>
+       </div>
+     </div>
+     </main>
     <!-- Room Creation Modal -->
     <UModal v-model="showCreateRoom" :ui="{ width: 'max-w-md' }">
       <div class="p-6">
@@ -1064,14 +1061,15 @@ async function loadCharacterStats() {
   try {
     const character = userCharacters.value.find(c => c.id === activeCharacterId.value)
     if (character) {
-      // Convert character data to player stats format
-      playerStats.value = {
+      // Convert character data to player stats format using REAL character data
+      const realStats = {
         hitPoints: {
           current: character.currentHp || character.maxHp || 10,
           max: character.maxHp || 10
         },
-       armorClass: character.armorClass || 10,
+        armorClass: character.armorClass || 10,
         abilities: {
+          // Use raw ability scores from the character data
           strength: character.strength || 10,
           dexterity: character.dexterity || 10,
           constitution: character.constitution || 10,
@@ -1080,11 +1078,18 @@ async function loadCharacterStats() {
           charisma: character.charisma || 10
         },
         level: character.classLevel || 1,
-        proficiencyBonus: character.proficiencyBonus || 2,
-        initiative: character.initiative || 0,
+        proficiencyBonus: character.proficiencyBonus || Math.ceil(character.classLevel / 4) + 1,
+        initiative: Math.floor((character.dexterity - 10) / 2) || 0, // Calculate DEX modifier
         speed: character.speed || 30
       }
-      console.log('📊 Loaded character stats for:', character.characterName)
+
+      playerStats.value = realStats
+      console.log('📊 Loaded REAL character stats for:', character.characterName, realStats)
+      
+      // Update the dice room store with the real character stats
+      if (!isOfflineMode.value) {
+        await updateStats()
+      }
     } else {
       console.warn('Character not found in user characters list:', activeCharacterId.value)
       playerStats.value = createDefaultStats()
@@ -1388,17 +1393,25 @@ async function updateStats() {
 
 async function loadPlayerStats(roomCode: string = 'default') {
   if (isOfflineMode.value) {
-    playerStats.value = createDefaultStats()
+    // In offline mode, load character stats directly from the character data
+    await loadCharacterStats()
     return
   }
 
+  // First try to load the character stats directly if we have an active character
+  if (activeCharacterId.value && userRole.value === 'Player') {
+    await loadCharacterStats()
+    return
+  }
+
+  // Fallback to dice room store stats (this was the old behavior)
   try {
     const response = await $fetch(`/api/dice/stats/${userId.value}?viewerUserId=${userId.value}&roomCode=${roomCode}`)
     if (response.success) {
       playerStats.value = response.stats
     }
   } catch (error) {
-    console.error('Failed to load player stats:', error)
+    console.error('Failed to load player stats from store:', error)
     // Create default stats if none exist
     playerStats.value = createDefaultStats()
   }
