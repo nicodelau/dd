@@ -442,10 +442,16 @@
                       <span class="font-medium text-gray-900 dark:text-white">{{ player.name }}</span>
                       <span class="text-xs text-gray-500 dark:text-gray-400">({{ player.userId }})</span>
                     </div>
-                    <UButton color="blue" variant="outline" size="xs" @click="editPlayerStats(player)"
-                      icon="i-heroicons-pencil">
-                      Edit
-                    </UButton>
+                    <div class="flex items-center space-x-2">
+                      <UButton color="green" variant="outline" size="xs" @click="requestRollFromPlayer(player)"
+                        icon="i-heroicons-cube">
+                        Request Roll
+                      </UButton>
+                      <UButton color="blue" variant="outline" size="xs" @click="editPlayerStats(player)"
+                        icon="i-heroicons-pencil">
+                        Edit
+                      </UButton>
+                    </div>
                   </div>
                   
                   <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
@@ -471,85 +477,6 @@
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left Column - Dice Rolling -->
             <div class="lg:col-span-2 space-y-6">
-              <!-- User Info Card -->
-              <UCard>
-                <template #header>
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Your Identity
-                  </h3>
-                </template>
-
-                <div class="space-y-4">
-                  <!-- Auto-detected Role Display -->
-                  <div>
-                    <UFormGroup label="Your Role">
-                      <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div class="text-2xl">
-                          {{ userRole === 'DM' ? '🎯' : '🎭' }}
-                        </div>
-                        <div class="flex-1">
-                          <div class="font-medium text-gray-900 dark:text-white">
-                            {{ userRole === 'DM' ? 'Dungeon Master (DM)' : 'Player' }}
-                          </div>
-                          <div class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ userRole === 'DM'
-                              ? 'Auto-detected: No characters found'
-                              : `Auto-detected: ${userCharacters.length} character${userCharacters.length !== 1 ? 's' : ''} found`
-                            }}
-                          </div>
-                        </div>
-                        <UButton color="gray" variant="ghost" size="xs" @click="refreshUserData"
-                          icon="i-heroicons-arrow-path" :loading="isRefreshingUserData">
-                          Refresh
-                        </UButton>
-                      </div>
-                    </UFormGroup>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {{ userRole === 'DM'
-                        ? 'As a DM, you can view and modify all player stats'
-                        : 'As a Player, you can view and edit your own character stats'
-                      }}
-                    </p>
-                  </div>
-
-                  <!-- Name Display (Read-only for authenticated users) -->
-                  <div>
-                    <UFormGroup label="Your Name">
-                      <div class="flex items-center space-x-4">
-                        <div class="flex-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <span class="text-gray-900 dark:text-white font-medium">{{ userName }}</span>
-                          <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">(from your account)</span>
-                        </div>
-                        <UButton color="gray" variant="outline" @click="refreshUserData"
-                          icon="i-heroicons-arrow-path" :loading="isRefreshingUserData">
-                          Refresh
-                        </UButton>
-                      </div>
-                    </UFormGroup>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Your name is automatically set from your authenticated user account
-                    </p>
-                  </div>
-
-                  <!-- Character Selection (for Players) -->
-                  <div v-if="userRole === 'Player' && userCharacters.length > 0">
-                    <UFormGroup label="Active Character">
-                      <USelect v-model="activeCharacterId" :options="userCharacters.map(c => ({
-                        label: `${c.characterName} (Level ${c.classLevel} ${c.className})`,
-                        value: c.id
-                      }))" placeholder="Select your character" class="w-full" @change="onActiveCharacterChange" />
-                    </UFormGroup>
-                  </div>
-                </div>
-
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                  {{ isOfflineMode
-                    ? 'You\'re in offline mode. Your rolls are only visible to you.'
-                    : 'Your name and role will be visible to other players when you roll dice.'
-                  }}
-                </p>
-              </UCard>
-
               <!-- Dice Selection Card -->
               <UCard>
                 <template #header>
@@ -586,7 +513,7 @@
                     <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Quick Rolls</h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                       <UButton v-for="roll in quickRolls" :key="roll.label" color="gray" variant="outline" size="sm"
-                        @click="setQuickRoll(roll)" class="text-xs">
+                        @click="performQuickRoll(roll)" class="text-xs">
                         {{ roll.label }}
                       </UButton>
                     </div>
@@ -746,6 +673,75 @@
       </div>
     </UModal>
 
+    <!-- DM Roll Request Modal -->
+    <UModal v-model="showRollRequestModal" :ui="{ width: 'max-w-md' }">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            🎲 Request Roll from {{ selectedPlayerForRequest?.name }}
+          </h3>
+          <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="closeRollRequestModal" />
+        </div>
+
+        <div class="space-y-4">
+          <!-- Dice Type Selection -->
+          <div>
+            <UFormGroup label="Select Dice Type">
+              <div class="grid grid-cols-2 gap-3">
+                <UButton
+                  v-for="diceType in diceTypes"
+                  :key="diceType.type"
+                  :color="requestedDiceType === diceType.type ? 'primary' : 'gray'"
+                  :variant="requestedDiceType === diceType.type ? 'solid' : 'outline'"
+                  class="flex flex-col items-center p-4 h-20"
+                  @click="requestedDiceType = diceType.type"
+                >
+                  <div class="text-2xl mb-1">🎲</div>
+                  <div class="text-xs">{{ diceType.name }}</div>
+                </UButton>
+              </div>
+            </UFormGroup>
+          </div>
+
+          <!-- Optional Message -->
+          <div>
+            <UFormGroup label="Optional Message">
+              <UTextarea
+                v-model="rollRequestMessage"
+                placeholder="e.g., Make a Dexterity saving throw..."
+                rows="3"
+              />
+            </UFormGroup>
+          </div>
+
+          <!-- Modifier (optional) -->
+          <div>
+            <UFormGroup label="Modifier (optional)">
+              <UInput
+                v-model.number="rollRequestModifier"
+                type="number"
+                placeholder="0"
+              />
+            </UFormGroup>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-8">
+          <UButton color="gray" variant="outline" @click="closeRollRequestModal">
+            Cancel
+          </UButton>
+          <UButton
+            color="primary"
+            @click="sendRollRequest"
+            :disabled="!requestedDiceType"
+            icon="i-heroicons-paper-airplane"
+          >
+            Send Request
+          </UButton>
+        </div>
+      </div>
+    </UModal>
+
     <!-- DM Player Stats Editing Modal -->
     <UModal v-model="isEditingPlayer" :ui="{ width: 'max-w-2xl' }">
       <div class="p-6">
@@ -830,6 +826,40 @@
           <UButton color="primary" @click="savePlayerStats" :disabled="!editingPlayerStats">
             Save Changes
           </UButton>
+        </div>
+      </div>
+    </UModal>
+
+    <!-- Player Roll Request Notification Modal -->
+    <UModal v-model="showRollRequestNotification" :ui="{ width: 'max-w-md' }" :prevent-close="true">
+      <div class="p-6">
+        <div class="text-center">
+          <div class="text-6xl mb-4">🎲</div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Roll Request from DM
+          </h3>
+          <p class="text-gray-600 dark:text-gray-300 mb-4">
+            The DM is requesting you to roll: <strong>{{ pendingRollRequest?.diceType }}</strong>
+          </p>
+          
+          <div v-if="pendingRollRequest?.message" class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4">
+            <p class="text-sm text-blue-900 dark:text-blue-100">
+              "{{ pendingRollRequest.message }}"
+            </p>
+          </div>
+
+          <div v-if="pendingRollRequest?.modifier && pendingRollRequest.modifier !== 0" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Modifier: {{ pendingRollRequest.modifier > 0 ? '+' : '' }}{{ pendingRollRequest.modifier }}
+          </div>
+
+          <div class="flex justify-center space-x-3">
+            <UButton color="gray" variant="outline" @click="declineRollRequest">
+              Decline
+            </UButton>
+            <UButton color="primary" @click="acceptRollRequest" icon="i-heroicons-cube">
+              Roll {{ pendingRollRequest?.diceType }}
+            </UButton>
+          </div>
         </div>
       </div>
     </UModal>
@@ -951,6 +981,23 @@ const rollType = ref('normal')
 
 // Roll history
 const rollHistory = ref<DiceRoll[]>([])
+
+// Roll request system
+const showRollRequestModal = ref(false)
+const selectedPlayerForRequest = ref<Player | null>(null)
+const requestedDiceType = ref<string>('')
+const rollRequestMessage = ref('')
+const rollRequestModifier = ref(0)
+
+// Player roll request notification
+const showRollRequestNotification = ref(false)
+const pendingRollRequest = ref<{
+  fromDM: string
+  diceType: string
+  message?: string
+  modifier?: number
+  requestId: string
+} | null>(null)
 
 // Constants
 const diceTypes: DiceType[] = [
@@ -1481,6 +1528,82 @@ function clearHistory() {
   rollHistory.value = []
 }
 
+// Roll request functions (DM side)
+function requestRollFromPlayer(player: Player) {
+  selectedPlayerForRequest.value = player
+  requestedDiceType.value = ''
+  rollRequestMessage.value = ''
+  rollRequestModifier.value = 0
+  showRollRequestModal.value = true
+}
+
+function closeRollRequestModal() {
+  showRollRequestModal.value = false
+  selectedPlayerForRequest.value = null
+  requestedDiceType.value = ''
+  rollRequestMessage.value = ''
+  rollRequestModifier.value = 0
+}
+
+async function sendRollRequest() {
+  if (!selectedPlayerForRequest.value || !requestedDiceType.value) return
+
+  try {
+    const response = await $fetch('/api/dice/request-roll', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value?.code || 'default',
+        targetUserId: selectedPlayerForRequest.value.userId,
+        diceType: requestedDiceType.value,
+        message: rollRequestMessage.value || undefined,
+        modifier: rollRequestModifier.value || undefined
+      }
+    })
+
+    if (response.success) {
+      closeRollRequestModal()
+      // Show success message
+      showToast(`Roll request sent to ${selectedPlayerForRequest.value.name}`, 'success')
+    }
+  } catch (error) {
+    console.error('Error sending roll request:', error)
+    showToast('Failed to send roll request', 'error')
+  }
+}
+
+// Roll request functions (Player side)
+function acceptRollRequest() {
+  if (!pendingRollRequest.value) return
+
+  const diceType = pendingRollRequest.value.diceType
+  const requestModifier = pendingRollRequest.value.modifier || 0
+
+  // Close the notification
+  showRollRequestNotification.value = false
+  
+  // Set up the dice selection
+  selectedDice.value = { [diceType]: 1 }
+  modifier.value = requestModifier
+
+  // Automatically roll the dice
+  rollDice()
+
+  // Clear the pending request
+  pendingRollRequest.value = null
+}
+
+function declineRollRequest() {
+  showRollRequestNotification.value = false
+  pendingRollRequest.value = null
+}
+
+// Helper function for showing toast notifications
+function showToast(message: string, type: 'success' | 'error' = 'success') {
+  // You can implement this with your preferred toast library
+  // For now, we'll use a simple alert
+  console.log(`${type.toUpperCase()}: ${message}`)
+}
+
 function formatTime(timestamp: Date): string {
   return new Intl.DateTimeFormat('en', {
     hour: 'numeric',
@@ -1831,6 +1954,22 @@ function initializeSSE(roomCode: string = 'default') {
         playerStats.value = data.stats
       }
       console.log('🎲 Stats updated for user:', data.userId)
+    })
+
+    eventSource.value.addEventListener('dice:request', (event) => {
+      const data = JSON.parse(event.data)
+      // Only show notification to the target player
+      if (data.targetUserId === userId.value) {
+        pendingRollRequest.value = {
+          fromDM: data.fromDM,
+          diceType: data.diceType,
+          message: data.message,
+          modifier: data.modifier,
+          requestId: data.requestId
+        }
+        showRollRequestNotification.value = true
+        console.log('🎲 Received roll request from DM:', data)
+      }
     })
 
   } catch (error) {

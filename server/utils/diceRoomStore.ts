@@ -510,6 +510,11 @@ class DiceRoomStore {
     this.broadcastEvent('stats:updated', { userId, stats }, roomCode)
   }
 
+  // Public method to broadcast custom events (used by API endpoints)
+  sendEvent(event: string, data: any, roomCode: string): void {
+    this.broadcastEvent(event, data, roomCode)
+  }
+
   // Cleanup inactive connections and users
   cleanup(): void {
     const now = new Date()
