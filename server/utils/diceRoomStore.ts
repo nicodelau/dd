@@ -36,6 +36,67 @@ export interface PlayerStats {
   speed: number
 }
 
+// Battle mode interfaces
+export interface Enemy {
+  id: string
+  name: string
+  hitPoints: { current: number; max: number }
+  armorClass: number
+  initiative: number
+  initiativeRoll?: number
+  isDefeated: boolean
+  createdBy: string // DM userId who created this enemy
+}
+
+export interface BattleParticipant {
+  id: string
+  name: string
+  type: 'player' | 'enemy'
+  initiative: number
+  initiativeRoll: number
+  hitPoints: { current: number; max: number }
+  armorClass: number
+  isDefeated: boolean
+  userId?: string // Only for players
+}
+
+export interface BattleState {
+  isActive: boolean
+  round: number
+  currentTurnIndex: number
+  participants: BattleParticipant[]
+  enemies: Map<string, Enemy>
+  initiativeRolled: boolean
+  phase: 'setup' | 'rolling_initiative' | 'combat' | 'ended'
+}
+
+// Music system interfaces
+export interface MusicTrack {
+  id: string
+  name: string // Keep for backward compatibility
+  title: string // YouTube video title
+  artist?: string // Optional artist/channel name
+  url: string // YouTube URL
+  duration?: number // in seconds
+  addedBy: string // userId of who added this track
+  addedAt: Date
+  // Enhanced metadata from YouTube Data API v3
+  thumbnail?: string // Video thumbnail URL
+  publishedAt?: string // Video publish date
+  description?: string // Video description (truncated)
+  tags?: string[] // Video tags
+}
+
+export interface MusicState {
+  currentTrack?: MusicTrack
+  isPlaying: boolean
+  volume: number // 0-100
+  position: number // current position in seconds
+  playlist: MusicTrack[]
+  fadeTransition: boolean
+  lastUpdated: Date
+}
+
 export interface DiceUser {
   id: string
   name: string
@@ -54,6 +115,8 @@ export interface DiceRoom {
   users: Map<string, DiceUser>
   rollHistory: DiceRoll[]
   sseConnections: Map<string, { response: any; userId: string; roomCode: string }>
+  battleState?: BattleState // Battle mode state
+  musicState?: MusicState // DJ music system state
 }
 
 class DiceRoomStore {
@@ -515,6 +578,254 @@ class DiceRoomStore {
     this.broadcastEvent(event, data, roomCode)
   }
 
+  // Battle mode management
+  startBattleMode(dmUserId: string, roomCode: string): BattleState {
+    const room = this.getRoom(roomCode)
+    if (!room) {
+      throw new Error('Room not found')
+    }
+
+    // Check if user is DM
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can start battle mode')
+    }
+
+    // Initialize battle state
+    const battleState: BattleState = {
+      isActive: false,
+      round: 0,
+      currentTurnIndex: 0,
+      participants: [],
+      enemies: new Map(),
+      initiativeRolled: false,
+      phase: 'setup'
+    }
+
+    room.battleState = battleState
+    // Don't broadcast battle started until initiative is rolled
+    console.log(`⚔️ Battle mode started in room ${roomCode} by ${dmUserId} (setup phase)`)
+    return battleState
+  }
+
+  addEnemy(dmUserId: string, enemyData: Omit<Enemy, 'id' | 'createdBy'>, roomCode: string): Enemy {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can add enemies')
+    }
+
+    const enemy: Enemy = {
+      ...enemyData,
+      id: `enemy_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      createdBy: dmUserId,
+      isDefeated: false
+    }
+
+    room.battleState.enemies.set(enemy.id, enemy)
+    
+    // Only broadcast enemy additions during combat phase, not during setup
+    if (room.battleState.phase === 'combat') {
+      this.broadcastEvent('battle:enemy_added', { enemy }, roomCode)
+    }
+    console.log(`⚔️ Enemy added: ${enemy.name} in room ${roomCode} (${room.battleState.phase} phase)`)
+    return enemy
+  }
+
+  removeEnemy(dmUserId: string, enemyId: string, roomCode: string): boolean {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can remove enemies')
+    }
+
+    const success = room.battleState.enemies.delete(enemyId)
+    if (success) {
+      // Only broadcast enemy removals during combat phase, not during setup
+      if (room.battleState.phase === 'combat') {
+        this.broadcastEvent('battle:enemy_removed', { enemyId }, roomCode)
+      }
+      console.log(`⚔️ Enemy removed: ${enemyId} in room ${roomCode} (${room.battleState.phase} phase)`)
+    }
+    return success
+  }
+
+  rollInitiative(dmUserId: string, roomCode: string): BattleParticipant[] {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can roll initiative')
+    }
+
+    const participants: BattleParticipant[] = []
+
+    // Add players
+    for (const [userId, user] of room.users) {
+      if (user.role === 'Player' && user.stats) {
+        const initiativeRoll = this.rollD20() + this.getModifier(user.stats.abilities.dexterity)
+        participants.push({
+          id: userId,
+          name: user.name,
+          type: 'player',
+          initiative: user.stats.initiative,
+          initiativeRoll,
+          hitPoints: { ...user.stats.hitPoints },
+          armorClass: user.stats.armorClass,
+          isDefeated: false,
+          userId
+        })
+      }
+    }
+
+    // Add enemies
+    for (const [enemyId, enemy] of room.battleState.enemies) {
+      const initiativeRoll = this.rollD20() + this.getModifier(10) // Default dex modifier for enemies
+      participants.push({
+        id: enemyId,
+        name: enemy.name,
+        type: 'enemy',
+        initiative: enemy.initiative,
+        initiativeRoll,
+        hitPoints: { ...enemy.hitPoints },
+        armorClass: enemy.armorClass,
+        isDefeated: enemy.isDefeated
+      })
+    }
+
+    // Sort by initiative roll (highest first)
+    participants.sort((a, b) => b.initiativeRoll - a.initiativeRoll)
+
+    room.battleState.participants = participants
+    room.battleState.initiativeRolled = true
+    room.battleState.phase = 'combat'
+    room.battleState.isActive = true
+    room.battleState.round = 1
+
+    // Now broadcast that battle has started with initiative rolled
+    this.broadcastEvent('battle:started', { battleState: room.battleState }, roomCode)
+    this.broadcastEvent('battle:initiative_rolled', { participants }, roomCode)
+    console.log(`⚔️ Initiative rolled in room ${roomCode} - combat begins!`)
+    return participants
+  }
+
+  nextTurn(dmUserId: string, roomCode: string): { currentParticipant: BattleParticipant; round: number } {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState || !room.battleState.isActive) {
+      throw new Error('Battle not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can advance turns')
+    }
+
+    if (!room.battleState.participants || room.battleState.participants.length === 0) {
+      throw new Error('No participants in battle')
+    }
+
+    room.battleState.currentTurnIndex++
+    
+    // Check if we need to start a new round
+    if (room.battleState.currentTurnIndex >= room.battleState.participants.length) {
+      room.battleState.currentTurnIndex = 0
+      room.battleState.round++
+    }
+
+    const currentParticipant = room.battleState.participants[room.battleState.currentTurnIndex]
+    
+    if (!currentParticipant) {
+      throw new Error(`No participant found at index ${room.battleState.currentTurnIndex}`)
+    }
+    
+    this.broadcastEvent('battle:turn_changed', { 
+      currentParticipant, 
+      round: room.battleState.round,
+      currentTurnIndex: room.battleState.currentTurnIndex 
+    }, roomCode)
+
+    return { currentParticipant, round: room.battleState.round }
+  }
+
+  dealDamage(dmUserId: string, targetId: string, damage: number, roomCode: string): BattleParticipant | null {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can deal damage')
+    }
+
+    const participant = room.battleState.participants.find(p => p.id === targetId)
+    if (!participant) {
+      throw new Error('Participant not found')
+    }
+
+    participant.hitPoints.current = Math.max(0, participant.hitPoints.current - damage)
+    participant.isDefeated = participant.hitPoints.current === 0
+
+    // Update the actual user/enemy data as well
+    if (participant.type === 'player' && participant.userId) {
+      const user = room.users.get(participant.userId)
+      if (user?.stats) {
+        user.stats.hitPoints.current = participant.hitPoints.current
+      }
+    } else if (participant.type === 'enemy') {
+      const enemy = room.battleState.enemies.get(participant.id)
+      if (enemy) {
+        enemy.hitPoints.current = participant.hitPoints.current
+        enemy.isDefeated = participant.isDefeated
+      }
+    }
+
+    this.broadcastEvent('battle:damage_dealt', { 
+      targetId, 
+      damage, 
+      newHp: participant.hitPoints.current,
+      isDefeated: participant.isDefeated 
+    }, roomCode)
+
+    console.log(`⚔️ ${damage} damage dealt to ${participant.name} in room ${roomCode}`)
+    return participant
+  }
+
+  endBattle(dmUserId: string, roomCode: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can end battle')
+    }
+
+    room.battleState.isActive = false
+    room.battleState.phase = 'ended'
+    
+    this.broadcastEvent('battle:ended', {}, roomCode)
+    console.log(`⚔️ Battle ended in room ${roomCode}`)
+  }
+
+  getBattleState(roomCode: string): BattleState | null {
+    const room = this.getRoom(roomCode)
+    return room?.battleState || null
+  }
+
+  private rollD20(): number {
+    return Math.floor(Math.random() * 20) + 1
+  }
+
+  private getModifier(abilityScore: number): number {
+    return Math.floor((abilityScore - 10) / 2)
+  }
+
   // Cleanup inactive connections and users
   cleanup(): void {
     const now = new Date()
@@ -593,6 +904,239 @@ class DiceRoomStore {
       })
     }
     return rooms
+  }
+
+  // Music system methods
+  initializeMusicState(roomCode: string, dmUserId: string): MusicState {
+    const room = this.getRoom(roomCode)
+    if (!room) {
+      throw new Error('Room not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can initialize music system')
+    }
+
+    const musicState: MusicState = {
+      isPlaying: false,
+      volume: 50,
+      position: 0,
+      playlist: [],
+      fadeTransition: false,
+      lastUpdated: new Date()
+    }
+
+    room.musicState = musicState
+    this.broadcastEvent('music:state_updated', musicState, roomCode)
+    
+    console.log(`🎵 Music system initialized in room ${roomCode}`)
+    return musicState
+  }
+
+  addTrackToPlaylist(roomCode: string, dmUserId: string, trackData: { 
+    name: string; 
+    title?: string; 
+    artist?: string; 
+    url: string; 
+    duration?: number;
+    thumbnail?: string;
+    publishedAt?: string;
+    description?: string;
+    tags?: string[];
+  }): MusicTrack {
+    const room = this.getRoom(roomCode)
+    if (!room) {
+      throw new Error('Room not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can add tracks')
+    }
+
+    // Initialize music state if it doesn't exist
+    if (!room.musicState) {
+      this.initializeMusicState(roomCode, dmUserId)
+    }
+
+    const track: MusicTrack = {
+      id: `track_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      name: trackData.name,
+      title: trackData.title || trackData.name, // Use title if provided, fallback to name
+      artist: trackData.artist,
+      url: trackData.url,
+      duration: trackData.duration,
+      addedBy: dmUserId,
+      addedAt: new Date(),
+      thumbnail: trackData.thumbnail,
+      publishedAt: trackData.publishedAt,
+      description: trackData.description,
+      tags: trackData.tags
+    }
+
+    room.musicState!.playlist.push(track)
+    room.musicState!.lastUpdated = new Date()
+
+    this.broadcastEvent('music:track_added', { track, playlist: room.musicState!.playlist }, roomCode)
+    
+    console.log(`🎵 Track "${track.name}" added to playlist in room ${roomCode}`)
+    return track
+  }
+
+  removeTrackFromPlaylist(roomCode: string, dmUserId: string, trackId: string): boolean {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      throw new Error('Room or music state not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can remove tracks')
+    }
+
+    const trackIndex = room.musicState.playlist.findIndex(t => t.id === trackId)
+    if (trackIndex === -1) {
+      return false
+    }
+
+    const removedTrack = room.musicState.playlist.splice(trackIndex, 1)[0]
+    room.musicState.lastUpdated = new Date()
+
+    // If the removed track was currently playing, stop playback
+    if (room.musicState.currentTrack?.id === trackId) {
+      room.musicState.currentTrack = undefined
+      room.musicState.isPlaying = false
+      room.musicState.position = 0
+    }
+
+    this.broadcastEvent('music:track_removed', { 
+      trackId, 
+      playlist: room.musicState.playlist,
+      currentTrack: room.musicState.currentTrack,
+      isPlaying: room.musicState.isPlaying
+    }, roomCode)
+    
+    console.log(`🎵 Track "${removedTrack.name}" removed from playlist in room ${roomCode}`)
+    return true
+  }
+
+  playTrack(roomCode: string, dmUserId: string, trackId: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      throw new Error('Room or music state not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can control music playback')
+    }
+
+    const track = room.musicState.playlist.find(t => t.id === trackId)
+    if (!track) {
+      throw new Error('Track not found in playlist')
+    }
+
+    // Set fade transition if changing tracks
+    const wasPlaying = room.musicState.isPlaying && !!room.musicState.currentTrack
+    room.musicState.fadeTransition = wasPlaying
+    room.musicState.currentTrack = track
+    room.musicState.isPlaying = true
+    room.musicState.position = 0
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:playback_changed', {
+      currentTrack: track,
+      isPlaying: true,
+      position: 0,
+      fadeTransition: room.musicState.fadeTransition,
+      volume: room.musicState.volume
+    }, roomCode)
+    
+    console.log(`🎵 Now playing "${track.name}" in room ${roomCode}`)
+  }
+
+  pauseMusic(roomCode: string, dmUserId: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      throw new Error('Room or music state not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can control music playback')
+    }
+
+    room.musicState.isPlaying = false
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:playback_changed', {
+      currentTrack: room.musicState.currentTrack,
+      isPlaying: false,
+      position: room.musicState.position,
+      fadeTransition: false,
+      volume: room.musicState.volume
+    }, roomCode)
+    
+    console.log(`⏸️ Music paused in room ${roomCode}`)
+  }
+
+  resumeMusic(roomCode: string, dmUserId: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      throw new Error('Room or music state not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can control music playback')
+    }
+
+    if (!room.musicState.currentTrack) {
+      throw new Error('No track selected to resume')
+    }
+
+    room.musicState.isPlaying = true
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:playback_changed', {
+      currentTrack: room.musicState.currentTrack,
+      isPlaying: true,
+      position: room.musicState.position,
+      fadeTransition: false,
+      volume: room.musicState.volume
+    }, roomCode)
+    
+    console.log(`▶️ Music resumed in room ${roomCode}`)
+  }
+
+  setVolume(roomCode: string, dmUserId: string, volume: number): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      throw new Error('Room or music state not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can control volume')
+    }
+
+    // Clamp volume between 0 and 100
+    volume = Math.max(0, Math.min(100, volume))
+    room.musicState.volume = volume
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:volume_changed', { volume }, roomCode)
+    
+    console.log(`🔊 Volume set to ${volume}% in room ${roomCode}`)
+  }
+
+  updateMusicPosition(roomCode: string, position: number): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      return
+    }
+
+    room.musicState.position = position
+    room.musicState.lastUpdated = new Date()
+  }
+
+  getMusicState(roomCode: string): MusicState | null {
+    const room = this.getRoom(roomCode)
+    return room?.musicState || null
   }
 }
 

@@ -550,6 +550,675 @@
 
             <!-- Right Column - Roll History -->
             <div class="space-y-6">
+                <!-- Battle Mode Panel (DM Only) -->
+              <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      ⚔️ Battle Mode
+                    </h3>
+                    <div class="flex items-center space-x-2">
+                      <UBadge v-if="isInBattle" :color="getBattlePhaseColor(battleMode.phase)" variant="soft">
+                        {{ getBattlePhaseLabel(battleMode.phase) }} 
+                      </UBadge>
+                      <UButton
+                        v-if="!isInBattle"
+                        color="red"
+                        size="sm"
+                        @click="startBattle"
+                        :loading="isBattleLoading"
+                        icon="i-heroicons-play"
+                      >
+                        Start Battle Setup
+                      </UButton>
+                      <UButton
+                        v-else
+                        color="gray"
+                        size="sm"
+                        @click="endBattle"
+                        :loading="isBattleLoading"
+                        icon="i-heroicons-stop"
+                      >
+                        End Battle
+                      </UButton>
+                    </div>
+                  </div>
+                </template>
+
+                <div v-if="!isInBattle" class="text-center py-8">
+                  <div class="text-4xl mb-4">⚔️</div>
+                  <h4 class="font-medium text-gray-900 dark:text-white mb-2">Ready for Battle</h4>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Click "Start Battle Setup" to begin preparing for combat. You'll be able to add enemies and then roll initiative when ready.
+                  </p>
+                </div>
+
+                <!-- Battle Setup Phase -->
+                <div v-else-if="battleMode.phase === 'setup'" class="space-y-4">
+                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div class="flex items-start space-x-3">
+                      <UIcon name="i-heroicons-information-circle" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div>
+                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">Battle Setup Phase</h4>
+                        <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                          Add all enemies that will participate in this battle, then click "Roll Initiative" to begin combat.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Enemy Management -->
+                  <div>
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemy Setup</h4>
+                      <UButton
+                        color="green"
+                        variant="outline"
+                        size="xs"
+                        @click="showAddEnemyModal = true"
+                        icon="i-heroicons-plus"
+                      >
+                        Add Enemy
+                      </UButton>
+                    </div>
+                    
+                    <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
+                      <div v-for="enemy in Object.values(battleMode.enemies)" :key="enemy.id"
+                        class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                        <div class="flex-1">
+                          <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
+                          <div class="text-xs text-red-700 dark:text-red-300">
+                            HP: {{ enemy.hitPoints.current }}/{{ enemy.hitPoints.max }} | AC: {{ enemy.armorClass }} | Init: {{ enemy.initiative >= 0 ? '+' : '' }}{{ enemy.initiative }}
+                          </div>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                          <UButton
+                            color="red"
+                            variant="ghost"
+                            size="xs"
+                            @click="removeEnemy(enemy.id)"
+                            icon="i-heroicons-trash"
+                          >
+                          </UButton>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div v-else class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                      <div class="text-2xl mb-2">👹</div>
+                      <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                        No enemies added yet
+                      </p>
+                      <UButton
+                        color="green"
+                        variant="outline"
+                        size="sm"
+                        @click="showAddEnemyModal = true"
+                        icon="i-heroicons-plus"
+                      >
+                        Add Your First Enemy
+                      </UButton>
+                    </div>
+                  </div>
+
+                  <!-- Ready to Roll Initiative -->
+                  <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" 
+                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div class="text-center">
+                      <div class="text-green-900 dark:text-green-100 font-medium mb-2">
+                        Ready to Start Combat!
+                      </div>
+                      <p class="text-sm text-green-700 dark:text-green-300 mb-3">
+                        {{ Object.keys(battleMode.enemies).length }} enemies ready. Click below to roll initiative and begin combat.
+                      </p>
+                      <UButton
+                        color="green"
+                        size="sm"
+                        @click="rollInitiative"
+                        icon="i-heroicons-play"
+                      >
+                        Roll Initiative & Start Combat
+                      </UButton>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Active Combat Phase -->
+                <div v-else-if="battleMode.phase === 'combat'" class="space-y-4">
+                  <!-- Enemy Management -->
+                  <div>
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemies</h4>
+                      <UButton
+                        color="green"
+                        variant="outline"
+                        size="xs"
+                        @click="showAddEnemyModal = true"
+                        icon="i-heroicons-plus"
+                      >
+                        Add Enemy
+                      </UButton>
+                    </div>
+                    
+                    <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
+                      <div v-for="enemy in Object.values(battleMode.enemies)" :key="enemy.id"
+                        class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                        <div class="flex-1">
+                          <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
+                          <div class="text-xs text-red-700 dark:text-red-300">
+                            HP: {{ enemy.hitPoints.current }}/{{ enemy.hitPoints.max }} | AC: {{ enemy.armorClass }}
+                          </div>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                          <UButton
+                            color="red"
+                            variant="ghost"
+                            size="xs"
+                            @click="dealDamageToEnemy(enemy)"
+                            icon="i-heroicons-minus"
+                          >
+                          </UButton>
+                          <UButton
+                            color="red"
+                            variant="ghost"
+                            size="xs"
+                            @click="removeEnemy(enemy.id)"
+                            icon="i-heroicons-trash"
+                          >
+                          </UButton>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                      No enemies in battle
+                    </div>
+                  </div>
+
+                  <!-- Initiative Tracker -->
+                  <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Initiative Order</h4>
+                      <div class="flex items-center space-x-2">
+                        <UButton
+                          v-if="battleMode.phase === 'setup'"
+                          color="blue"
+                          variant="outline"
+                          size="xs"
+                          @click="rollInitiative"
+                          icon="i-heroicons-arrow-path"
+                        >
+                          Roll Initiative
+                        </UButton>
+                        <UButton
+                          v-else-if="battleMode.phase === 'combat'"
+                          color="green"
+                          variant="outline"
+                          size="xs"
+                          @click="nextTurn"
+                          icon="i-heroicons-arrow-right"
+                        >
+                          Next Turn
+                        </UButton>
+                      </div>
+                    </div>
+                    
+                    <div class="space-y-1">
+                      <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
+                        class="flex items-center justify-between p-2 rounded"
+                        :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                            :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
+                            {{ index + 1 }}
+                          </div>
+                          <span class="font-medium" 
+                            :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
+                            {{ participant.name }}
+                          </span>
+                          <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
+                            {{ participant.type }}
+                          </UBadge>
+                        </div>
+                        <div class="text-sm font-mono"
+                          :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
+                          {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{ participant.initiative }})
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </UCard>
+
+              <!-- Battle Status (Player View) -->
+              <UCard v-else-if="userRole === 'Player' && isInBattle">
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      ⚔️ Battle in Progress
+                    </h3>
+                    <UBadge color="green" variant="soft">
+                      {{ battleMode.phase }}
+                    </UBadge>
+                  </div>
+                </template>
+
+                <div class="space-y-4">
+                  <!-- Current Turn Display -->
+                  <div v-if="battleMode.phase === 'combat' && battleMode.initiativeOrder && battleMode.currentTurnIndex !== undefined" 
+                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div class="text-center">
+                      <div class="text-lg font-bold text-green-900 dark:text-green-100">
+                        Current Turn
+                      </div>
+                      <div class="text-2xl font-bold text-green-700 dark:text-green-300 mt-1">
+                        {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.name || 'Unknown' }}
+                      </div>
+                      <UBadge 
+                        :color="battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type === 'player' ? 'blue' : 'red'" 
+                        variant="soft" 
+                        class="mt-2"
+                      >
+                        {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type || 'unknown' }}
+                      </UBadge>
+                    </div>
+                  </div>
+
+                  <!-- Initiative Order (Player View) -->
+                  <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Initiative Order</h4>
+                    <div class="space-y-1">
+                      <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
+                        class="flex items-center justify-between p-2 rounded"
+                        :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                            :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
+                            {{ index + 1 }}
+                          </div>
+                          <span class="font-medium" 
+                            :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
+                            {{ participant.name }}
+                          </span>
+                          <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
+                            {{ participant.type }}
+                          </UBadge>
+                        </div>
+                        <div class="text-sm font-mono"
+                          :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
+                          {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{ participant.initiative }})
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Battle Phase Info -->
+                  <div v-if="battleMode.phase === 'setup'" class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                    <div class="text-2xl mb-2">⏳</div>
+                    <p>Waiting for DM to roll initiative...</p>
+                  </div>
+                </div>
+              </UCard>
+
+              <!-- DJ Music Control Panel (DM Only) -->
+              <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      🎵 DJ Music Control
+                    </h3>
+                    <div class="flex items-center space-x-2">
+                      <UBadge v-if="musicState.isPlaying" color="green" variant="soft">
+                        Playing
+                      </UBadge>
+                      <UBadge v-else-if="musicState.currentTrack" color="yellow" variant="soft">
+                        Paused
+                      </UBadge>
+                      <UBadge v-else color="gray" variant="soft">
+                        No Track
+                      </UBadge>
+                    </div>
+                  </div>
+                </template>
+
+                <div class="space-y-4">
+                  <!-- Add YouTube Track Section -->
+                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">Add YouTube Track</h4>
+                    <div class="space-y-3">
+                      <UInput
+                        v-model="newTrackUrl"
+                        placeholder="Paste YouTube URL here..."
+                        icon="i-heroicons-musical-note"
+                      />
+                      <div class="flex space-x-2">
+                        <UButton
+                          color="blue"
+                          size="sm"
+                          @click="addTrackToPlaylist"
+                          :disabled="!newTrackUrl || isAddingTrack"
+                          :loading="isAddingTrack"
+                          icon="i-heroicons-plus"
+                        >
+                          Add to Playlist
+                        </UButton>
+                        <UButton
+                          color="green"
+                          size="sm"
+                          @click="addAndPlayTrack"
+                          :disabled="!newTrackUrl || isAddingTrack"
+                          :loading="isAddingTrack"
+                          icon="i-heroicons-play"
+                        >
+                          Add & Play Now
+                        </UButton>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Fade Transition Settings -->
+                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🎚️ Audio Transitions</h4>
+                    <div class="space-y-3">
+                      <div class="flex items-center justify-between">
+                        <label class="text-sm text-purple-700 dark:text-purple-300">Enable Smooth Fades</label>
+                        <UToggle v-model="fadeConfig.enabled" />
+                      </div>
+                      
+                      <div v-if="fadeConfig.enabled" class="space-y-2 border-t border-purple-200 dark:border-purple-700 pt-3">
+                        <div class="flex items-center justify-between">
+                          <label class="text-xs text-purple-600 dark:text-purple-400">Track Switch (ms)</label>
+                          <UInput 
+                            v-model.number="fadeConfig.trackTransition" 
+                            type="number" 
+                            min="100" 
+                            max="2000" 
+                            size="xs"
+                            class="w-20"
+                          />
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                          <label class="text-xs text-purple-600 dark:text-purple-400">Volume Change (ms)</label>
+                          <UInput 
+                            v-model.number="fadeConfig.volumeChange" 
+                            type="number" 
+                            min="100" 
+                            max="1000" 
+                            size="xs"
+                            class="w-20"
+                          />
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                          <label class="text-xs text-purple-600 dark:text-purple-400">Play/Pause (ms)</label>
+                          <UInput 
+                            v-model.number="fadeConfig.playPause" 
+                            type="number" 
+                            min="100" 
+                            max="1000" 
+                            size="xs"
+                            class="w-20"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Current Track Display -->
+                  <div v-if="musicState.currentTrack" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div class="flex items-start space-x-3">
+                      <!-- Thumbnail -->
+                      <div class="flex-shrink-0">
+                        <img 
+                          v-if="musicState.currentTrack.thumbnail" 
+                          :src="musicState.currentTrack.thumbnail" 
+                          :alt="musicState.currentTrack.title"
+                          class="w-16 h-12 object-cover rounded-lg"
+                        />
+                        <div 
+                          v-else 
+                          class="w-16 h-12 bg-green-200 dark:bg-green-800 rounded-lg flex items-center justify-center"
+                        >
+                          <UIcon name="i-heroicons-musical-note" class="h-6 w-6 text-green-600 dark:text-green-400" />
+                        </div>
+                      </div>
+                      
+                      <!-- Track info and controls -->
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-medium text-green-900 dark:text-green-100 truncate">
+                              🎵 {{ musicState.currentTrack.title || 'Unknown Track' }}
+                            </h4>
+                            <p class="text-xs text-green-700 dark:text-green-300 truncate mt-1">
+                              {{ musicState.currentTrack.artist || 'Unknown Artist' }}
+                            </p>
+                            <!-- Duration and metadata -->
+                            <div class="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400 mt-1">
+                              <span v-if="musicState.currentTrack.duration">{{ formatDuration(musicState.currentTrack.duration) }}</span>
+                              <span v-if="musicState.currentTrack.tags && musicState.currentTrack.tags.length > 0" class="truncate">
+                                #{{ musicState.currentTrack.tags.slice(0, 1).join(', #') }}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <!-- Control buttons -->
+                          <div class="flex items-center space-x-1 ml-3">
+                            <!-- Fade transition indicator -->
+                            <div 
+                              v-if="fadeTransition.isActive" 
+                              class="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 mr-2"
+                            >
+                              <UIcon name="i-heroicons-arrows-right-left" class="w-3 h-3 animate-pulse" />
+                              <span class="text-xs">Fading...</span>
+                            </div>
+                            
+                            <UButton
+                              v-if="musicState.isPlaying"
+                              color="yellow"
+                              variant="ghost"
+                              size="xs"
+                              @click="pauseMusic"
+                              icon="i-heroicons-pause"
+                            />
+                            <UButton
+                              v-else
+                              color="green"
+                              variant="ghost"
+                              size="xs"
+                              @click="resumeMusic"
+                              icon="i-heroicons-play"
+                            />
+                            <UButton
+                              color="red"
+                              variant="ghost"
+                              size="xs"
+                              @click="stopMusic"
+                              icon="i-heroicons-stop"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Volume Control -->
+                  <div class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Volume</h4>
+                      <span class="text-sm text-gray-600 dark:text-gray-400">{{ musicState.volume }}%</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-gray-400" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        v-model="musicState.volume"
+                        @input="setVolume"
+                        class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      />
+                      <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <!-- Playlist -->
+                  <div>
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Playlist</h4>
+                      <UButton
+                        v-if="musicState.playlist.length > 0"
+                        color="gray"
+                        variant="ghost"
+                        size="xs"
+                        @click="clearPlaylist"
+                        icon="i-heroicons-trash"
+                      >
+                        Clear All
+                      </UButton>
+                    </div>
+                    
+                    <div v-if="musicState.playlist.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
+                      <div
+                        v-for="track in musicState.playlist"
+                        :key="track.id"
+                        class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                        :class="{ 'ring-2 ring-green-500': track.id === musicState.currentTrack?.id }"
+                      >
+                        <!-- Thumbnail and track info -->
+                        <div class="flex items-center flex-1 min-w-0 space-x-3">
+                          <!-- Video thumbnail -->
+                          <div class="flex-shrink-0">
+                            <img 
+                              v-if="track.thumbnail" 
+                              :src="track.thumbnail" 
+                              :alt="track.title"
+                              class="w-12 h-9 object-cover rounded"
+                            />
+                            <div 
+                              v-else 
+                              class="w-12 h-9 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center"
+                            >
+                              <UIcon name="i-heroicons-musical-note" class="h-4 w-4 text-gray-400" />
+                            </div>
+                          </div>
+                          
+                          <!-- Track details -->
+                          <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {{ track.title || 'Unknown Track' }}
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {{ track.artist || 'Unknown Artist' }}
+                            </div>
+                            <!-- Duration and additional metadata -->
+                            <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-gray-500 mt-1">
+                              <span v-if="track.duration">{{ formatDuration(track.duration) }}</span>
+                              <span v-if="track.tags && track.tags.length > 0" class="truncate">
+                                {{ track.tags.slice(0, 2).join(', ') }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Control buttons -->
+                        <div class="flex items-center space-x-1 ml-2">
+                          <UButton
+                            color="green"
+                            variant="ghost"
+                            size="xs"
+                            @click="playTrackFromPlaylist(track)"
+                            icon="i-heroicons-play"
+                            :disabled="track.id === musicState.currentTrack?.id && musicState.isPlaying"
+                          />
+                          <UButton
+                            color="red"
+                            variant="ghost"
+                            size="xs"
+                            @click="removeTrackFromPlaylist(track.id)"
+                            icon="i-heroicons-trash"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div v-else class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                      <div class="text-2xl mb-2">🎵</div>
+                      <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                        No tracks in playlist
+                      </p>
+                      <p class="text-gray-400 dark:text-gray-500 text-xs">
+                        Add YouTube tracks to create atmosphere for your session
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Music Sync Info for Participants -->
+                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                    <div class="flex items-start space-x-2">
+                      <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5" />
+                      <div>
+                        <h4 class="text-xs font-medium text-purple-900 dark:text-purple-100">Music Sync</h4>
+                        <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                          All participants will hear the music you play in real-time. Volume is controlled individually by each player.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </UCard>
+
+              <!-- YouTube Music Player (All Users) -->
+              <UCard v-if="currentRoom && currentRoom.code !== 'default' && musicState.currentTrack">
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      🎵 Now Playing
+                    </h3>
+                    <UBadge v-if="musicState.isPlaying" color="green" variant="soft">
+                      Live
+                    </UBadge>
+                    <UBadge v-else color="yellow" variant="soft">
+                      Paused
+                    </UBadge>
+                  </div>
+                </template>
+
+                <div class="space-y-4">
+                  <!-- YouTube Player Container -->
+                  <div class="aspect-video bg-black rounded-lg overflow-hidden">
+                    <div 
+                      id="youtube-player" 
+                      class="w-full h-full"
+                    ></div>
+                  </div>
+                  
+                  <!-- Track Info -->
+                  <div class="text-center">
+                    <h4 class="font-medium text-gray-900 dark:text-white">
+                      {{ musicState.currentTrack.title }}
+                    </h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                      {{ musicState.currentTrack.artist }}
+                    </p>
+                  </div>
+                  
+                  <!-- Non-DM Notice -->
+                  <div v-if="userRole !== 'DM'" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <div class="flex items-start space-x-2">
+                      <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div>
+                        <h4 class="text-xs font-medium text-blue-900 dark:text-blue-100">Music Player</h4>
+                        <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          Music is controlled by the DM. You can adjust the volume using your browser controls.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </UCard>
+
               <!-- Roll History -->
               <UCard>
                 <template #header>
@@ -863,6 +1532,51 @@
         </div>
       </div>
     </UModal>
+
+    <!-- Add Enemy Modal -->
+    <UModal v-model="showAddEnemyModal" :ui="{ width: 'max-w-md' }">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          👹 Add Enemy
+        </h3>
+        
+        <div class="space-y-4">
+          <UFormGroup label="Enemy Name" required>
+            <UInput v-model="newEnemy.name" placeholder="Goblin, Orc, Dragon..." />
+          </UFormGroup>
+          
+          <UFormGroup label="Hit Points" required>
+            <UInput v-model.number="newEnemy.hitPoints" type="number" min="1" placeholder="10" />
+          </UFormGroup>
+          
+          <UFormGroup label="Armor Class">
+            <UInput v-model.number="newEnemy.armorClass" type="number" min="1" placeholder="10" />
+          </UFormGroup>
+          
+          <UFormGroup label="Initiative Modifier">
+            <UInput v-model.number="newEnemy.initiative" type="number" placeholder="0" />
+          </UFormGroup>
+          
+          <div class="flex justify-end space-x-3 mt-6">
+            <UButton color="gray" variant="outline" @click="showAddEnemyModal = false">
+              Cancel
+            </UButton>
+            <UButton color="green" @click="addEnemy" :disabled="!newEnemy.name || !newEnemy.hitPoints">
+              Add Enemy
+            </UButton>
+          </div>
+        </div>
+      </div>
+    </UModal>
+
+    <!-- Special Abilities Modal -->
+    <SpecialAbilitiesModal
+      v-model="showSpecialAbilitiesModal"
+      :character-name="currentPlayerName"
+      :special-abilities="currentPlayerAbilities"
+      @roll-ability="handleRollAbility"
+      @use-ability="handleUseAbility"
+    />
   </div>
 </template>
 
@@ -963,6 +1677,40 @@ const allPlayers = ref<Player[]>([])
 const isEditingPlayer = ref(false)
 const editingPlayer = ref<Player | null>(null)
 const editingPlayerStats = ref<PlayerStats | null>(null)
+
+// Battle mode state
+const battleMode = ref<any>(null)
+const isInBattle = computed(() => battleMode.value?.phase !== undefined)
+const showBattleUI = ref(false)
+const showAddEnemyModal = ref(false)
+const newEnemy = ref({ name: '', hitPoints: 10, armorClass: 10, initiative: 0 })
+const isBattleLoading = ref(false)
+const showSpecialAbilitiesModal = ref(false)
+const currentPlayerAbilities = ref<any[]>([])
+const currentPlayerName = ref('')
+
+// Music system state
+const musicState = ref({
+  isPlaying: false,
+  currentTrack: null as any,
+  volume: 50,
+  playlist: [] as any[]
+})
+const newTrackUrl = ref('')
+const isAddingTrack = ref(false)
+
+// YouTube Player state
+const youtubePlayer = ref<any>(null)
+const isYouTubeAPIReady = ref(false)
+const currentVideoId = ref<string | null>(null)
+
+// Fade transition configuration
+const fadeConfig = ref({
+  trackTransition: 500,  // ms for track switching fade
+  volumeChange: 300,     // ms for volume change fade
+  playPause: 400,        // ms for play/pause fade
+  enabled: true          // global fade enable/disable
+})
 
 // Dice selection
 const selectedDice = ref<Record<string, number>>({
@@ -1191,6 +1939,26 @@ function getBadgeColor(diceType: string): string {
     'd100': 'bg-green-600'
   }
   return colorMap[diceType] || 'bg-gray-600'
+}
+
+function getBattlePhaseColor(phase: string): string {
+  const colorMap: Record<string, string> = {
+    'setup': 'blue',
+    'rolling_initiative': 'yellow', 
+    'combat': 'red',
+    'ended': 'gray'
+  }
+  return colorMap[phase] || 'gray'
+}
+
+function getBattlePhaseLabel(phase: string): string {
+  const labelMap: Record<string, string> = {
+    'setup': 'Setup Phase',
+    'rolling_initiative': 'Rolling Initiative',
+    'combat': 'Active Combat',
+    'ended': 'Battle Ended'
+  }
+  return labelMap[phase] || 'Unknown Phase'
 }
 
 function toggleDice(diceType: string) {
@@ -1972,6 +2740,217 @@ function initializeSSE(roomCode: string = 'default') {
       }
     })
 
+    // Battle Mode Events
+    eventSource.value.addEventListener('battle:started', (event) => {
+      const data = JSON.parse(event.data)
+      battleMode.value = data.battleState
+      console.log('⚔️ Battle mode started by DM:', data)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Battle Started',
+        description: 'The DM has started battle mode',
+        color: 'green'
+      })
+    })
+
+    eventSource.value.addEventListener('battle:ended', (event) => {
+      const data = JSON.parse(event.data)
+      battleMode.value = null
+      console.log('⚔️ Battle mode ended by DM:', data)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Battle Ended',
+        description: 'The DM has ended battle mode',
+        color: 'blue'
+      })
+    })
+
+    eventSource.value.addEventListener('battle:enemy_added', (event) => {
+      const data = JSON.parse(event.data)
+      if (battleMode.value && battleMode.value.enemies) {
+        battleMode.value.enemies[data.enemy.id] = data.enemy
+      }
+      console.log('👹 Enemy added to battle:', data.enemy)
+      
+      if (userRole.value === 'Player') {
+        const toast = useToast()
+        toast.add({
+          title: 'Enemy Added',
+          description: `${data.enemy.name} has entered the battle`,
+          color: 'orange'
+        })
+      }
+    })
+
+    eventSource.value.addEventListener('battle:enemy_removed', (event) => {
+      const data = JSON.parse(event.data)
+      if (battleMode.value && battleMode.value.enemies) {
+        delete battleMode.value.enemies[data.enemyId]
+      }
+      console.log('👹 Enemy removed from battle:', data.enemyId)
+      
+      if (userRole.value === 'Player') {
+        const toast = useToast()
+        toast.add({
+          title: 'Enemy Defeated',
+          description: 'An enemy has been removed from battle',
+          color: 'green'
+        })
+      }
+    })
+
+    eventSource.value.addEventListener('battle:initiative_rolled', (event) => {
+      const data = JSON.parse(event.data)
+      if (battleMode.value) {
+        battleMode.value.initiativeOrder = data.participants
+        battleMode.value.phase = 'combat'
+        battleMode.value.currentTurnIndex = 0
+      }
+      console.log('🎲 Initiative rolled:', data.participants)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Initiative Rolled',
+        description: 'Initiative has been rolled for all participants',
+        color: 'blue'
+      })
+    })
+
+    eventSource.value.addEventListener('battle:turn_changed', (event) => {
+      const data = JSON.parse(event.data)
+      if (battleMode.value) {
+        battleMode.value.currentTurnIndex = data.currentTurnIndex
+      }
+      console.log('🔄 Turn changed:', data)
+      
+      const currentParticipant = battleMode.value?.initiativeOrder?.[data.currentTurnIndex]
+      if (currentParticipant) {
+        const toast = useToast()
+        toast.add({
+          title: 'Next Turn',
+          description: `It's now ${currentParticipant.name}'s turn`,
+          color: 'green'
+        })
+
+        // Check if it's the current user's turn and they're a player
+        if (currentParticipant.type === 'player' && currentParticipant.userId === userId.value) {
+          // Load special abilities for this character and show modal
+          loadPlayerSpecialAbilities(currentParticipant)
+        }
+      }
+    })
+
+    eventSource.value.addEventListener('battle:damage_dealt', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('💥 Damage dealt:', data)
+      
+      // Update local battle state if target is an enemy
+      if (battleMode.value && battleMode.value.enemies && data.targetId in battleMode.value.enemies) {
+        const enemy = battleMode.value.enemies[data.targetId]
+        enemy.hitPoints.current = data.newHitPoints
+        if (data.isDefeated) {
+          enemy.isDefeated = true
+        }
+      }
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Damage Dealt',
+        description: `${data.damage} damage dealt to ${data.targetName || 'target'}`,
+        color: 'red'
+      })
+    })
+
+    // Music event listeners for real-time synchronization
+    eventSource.value.addEventListener('music:state_changed', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.isPlaying = data.isPlaying
+      musicState.isPaused = data.isPaused
+      musicState.currentTrack = data.currentTrack
+      musicState.volume = data.volume
+      console.log('🎵 Music state changed:', data)
+      
+      const toast = useToast()
+      if (data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Now Playing',
+          description: `🎵 ${data.currentTrack.title}`,
+          color: 'green'
+        })
+      } else if (data.isPaused) {
+        toast.add({
+          title: 'Music Paused',
+          description: '⏸️ Playback paused',
+          color: 'yellow'
+        })
+      }
+    })
+
+    eventSource.value.addEventListener('music:playlist_updated', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.playlist = data.playlist
+      console.log('🎵 Playlist updated:', data.playlist)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Playlist Updated',
+        description: `📋 Playlist now has ${data.playlist.length} tracks`,
+        color: 'blue'
+      })
+    })
+
+    eventSource.value.addEventListener('music:track_added', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.playlist.push(data.track)
+      console.log('🎵 SSE: Track added to playlist:', data.track)
+      
+      // Reset adding flag in case API response completed but SSE event was delayed
+      if (isAddingTrack.value) {
+        console.log('🎵 SSE: Resetting isAddingTrack flag from SSE event')
+        isAddingTrack.value = false
+      }
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Track Added',
+        description: `➕ ${data.track.title} added to playlist`,
+        color: 'green'
+      })
+    })
+
+    eventSource.value.addEventListener('music:track_removed', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.playlist = musicState.playlist.filter(track => track.id !== data.trackId)
+      console.log('🎵 Track removed from playlist:', data.trackId)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Track Removed',
+        description: '➖ Track removed from playlist',
+        color: 'orange'
+      })
+    })
+
+    eventSource.value.addEventListener('music:volume_changed', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.volume = data.volume
+      console.log('🎵 Volume changed:', data.volume)
+    })
+
+    eventSource.value.addEventListener('music:playlist_cleared', (event) => {
+      musicState.playlist = []
+      console.log('🎵 Playlist cleared')
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Playlist Cleared',
+        description: '🗑️ All tracks removed from playlist',
+        color: 'red'
+      })
+    })
+
   } catch (error) {
     console.error('🎲 Failed to initialize SSE:', error)
     console.log('🎲 Using offline mode')
@@ -2073,6 +3052,990 @@ function toggleOfflineMode() {
   }
 }
 
+// Battle Mode Functions
+async function startBattle() {
+  if (!currentRoom.value || currentRoom.value.code === 'default') return
+  
+  isBattleLoading.value = true
+  try {
+    const response = await $fetch('/api/battle/start', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      battleMode.value = response.battleState
+      console.log('⚔️ Battle mode started:', response.battleState)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Battle Started',
+        description: 'Battle mode is now active',
+        color: 'green'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to start battle:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to start battle mode',
+      color: 'red'
+    })
+  } finally {
+    isBattleLoading.value = false
+  }
+}
+
+async function endBattle() {
+  if (!currentRoom.value || currentRoom.value.code === 'default') return
+  
+  isBattleLoading.value = true
+  try {
+    const response = await $fetch('/api/battle/end', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      battleMode.value = null
+      console.log('⚔️ Battle mode ended')
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Battle Ended',
+        description: 'Battle mode has been deactivated',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to end battle:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to end battle mode',
+      color: 'red'
+    })
+  } finally {
+    isBattleLoading.value = false
+  }
+}
+
+async function addEnemy() {
+  if (!newEnemy.value.name || !newEnemy.value.hitPoints || !currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/battle/enemy/add', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        name: newEnemy.value.name,
+        hitPoints: newEnemy.value.hitPoints,
+        armorClass: newEnemy.value.armorClass,
+        initiative: newEnemy.value.initiative
+      }
+    })
+    
+    if (response.success) {
+      console.log('👹 Enemy added:', response.enemy)
+      
+      // Update local state immediately for instant UI feedback
+      if (battleMode.value && battleMode.value.enemies) {
+        battleMode.value.enemies[response.enemy.id] = response.enemy
+      }
+      
+      // Reset form
+      newEnemy.value = { name: '', hitPoints: 10, armorClass: 10, initiative: 0 }
+      showAddEnemyModal.value = false
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Enemy Added',
+        description: `${response.enemy.name} has been added to the battle`,
+        color: 'green'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to add enemy:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to add enemy to battle',
+      color: 'red'
+    })
+  }
+}
+
+async function removeEnemy(enemyId: string) {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/battle/enemy/remove', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        enemyId: enemyId
+      }
+    })
+    
+    if (response.success) {
+      console.log('👹 Enemy removed:', enemyId)
+      
+      // Update local state immediately for instant UI feedback
+      if (battleMode.value && battleMode.value.enemies) {
+        delete battleMode.value.enemies[enemyId]
+      }
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Enemy Removed',
+        description: 'Enemy has been removed from battle',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to remove enemy:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to remove enemy from battle',
+      color: 'red'
+    })
+  }
+}
+
+async function rollInitiative() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/battle/initiative', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      console.log('🎲 Initiative rolled:', response.initiativeOrder)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Initiative Rolled',
+        description: 'All participants have rolled initiative',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to roll initiative:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to roll initiative',
+      color: 'red'
+    })
+  }
+}
+
+async function nextTurn() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/battle/next-turn', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      console.log('🔄 Next turn:', response.currentTurn)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Next Turn',
+        description: `It's now ${response.currentTurn?.name || 'the next participant'}'s turn`,
+        color: 'green'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to advance turn:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to advance to next turn',
+      color: 'red'
+    })
+  }
+}
+
+async function loadPlayerSpecialAbilities(participant: any) {
+  try {
+    // For now, we'll use mock data since we need to first implement the API to load special abilities
+    // TODO: Replace with actual API call to load character's special abilities
+    const mockAbilities = [
+      {
+        id: '1',
+        name: 'Sword Strike',
+        diceFormula: '1d8+3',
+        description: 'A powerful sword attack that deals slashing damage.',
+        abilityType: 'ACTION' as const,
+        usesPerRest: undefined,
+        usesRemaining: undefined
+      },
+      {
+        id: '2',
+        name: 'Shield Bash',
+        diceFormula: '1d4+2',
+        description: 'Bash an enemy with your shield, potentially stunning them.',
+        abilityType: 'BONUS_ACTION' as const,
+        usesPerRest: 3,
+        usesRemaining: 2
+      },
+      {
+        id: '3',
+        name: 'Second Wind',
+        diceFormula: '1d10+1',
+        description: 'Regain hit points equal to the roll result.',
+        abilityType: 'ACTION' as const,
+        usesPerRest: 1,
+        usesRemaining: 1
+      }
+    ]
+    
+    currentPlayerAbilities.value = mockAbilities
+    currentPlayerName.value = participant.name
+    showSpecialAbilitiesModal.value = true
+  } catch (error) {
+    console.error('Failed to load special abilities:', error)
+  }
+}
+
+function handleRollAbility(ability: any) {
+  // Trigger a dice roll with the ability's dice formula
+  console.log('Rolling ability:', ability.name, ability.diceFormula)
+  
+  // Parse dice formula and trigger roll
+  // TODO: Implement dice formula parsing and rolling
+  const toast = useToast()
+  toast.add({
+    title: 'Ability Used',
+    description: `Rolling ${ability.diceFormula} for ${ability.name}`,
+    color: 'blue'
+  })
+  
+  // Close the modal after using ability
+  showSpecialAbilitiesModal.value = false
+}
+
+function handleUseAbility(ability: any) {
+  // Handle using an ability (might reduce uses, apply effects, etc.)
+  console.log('Using ability:', ability.name)
+  
+  // For abilities with limited uses, decrease the remaining count
+  if (ability.usesPerRest && ability.usesRemaining > 0) {
+    ability.usesRemaining--
+  }
+  
+  // Trigger the roll automatically when using an ability
+  handleRollAbility(ability)
+}
+
+async function dealDamageToEnemy(enemy: any) {
+  const damage = prompt(`How much damage to deal to ${enemy.name}?`)
+  if (!damage || isNaN(parseInt(damage)) || !currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/battle/damage', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        targetId: enemy.id,
+        damage: parseInt(damage)
+      }
+    })
+    
+    if (response.success) {
+      console.log('💥 Damage dealt:', response.result)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Damage Dealt',
+        description: `${damage} damage dealt to ${enemy.name}`,
+        color: 'red'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to deal damage:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to deal damage',
+      color: 'red'
+    })
+  }
+}
+
+// Music System Functions
+async function addTrackToPlaylist() {
+  if (!newTrackUrl.value.trim() || !currentRoom.value) return
+  
+  const startTime = Date.now()
+  isAddingTrack.value = true
+  
+  // Check SSE connection status
+  const sseStatus = eventSource.value?.readyState
+  const sseStatusText = sseStatus === 0 ? 'CONNECTING' : sseStatus === 1 ? 'OPEN' : sseStatus === 2 ? 'CLOSED' : 'UNKNOWN'
+  console.log('🎵 Starting to add track:', newTrackUrl.value.trim(), `(timestamp: ${startTime}) SSE Status: ${sseStatusText} (${sseStatus})`)
+  
+  // Add a fallback timeout to reset isAddingTrack in case something goes wrong
+  const fallbackTimeout = setTimeout(() => {
+    if (isAddingTrack.value) {
+      console.warn('🎵 ⚠️ Fallback timeout: Resetting isAddingTrack after 10 seconds')
+      isAddingTrack.value = false
+    }
+  }, 10000) // 10 second fallback
+  
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim()
+      }
+    })
+    
+    const apiResponseTime = Date.now()
+    console.log('🎵 API Response:', response, `(response time: ${apiResponseTime - startTime}ms)`)
+    
+    if (response && response.success) {
+      console.log('🎵 Track added to playlist:', response.track, `(api completed in ${apiResponseTime - startTime}ms)`)
+      
+      // Don't update local state manually - let SSE handle it
+      // This prevents conflicts between local updates and server events
+      newTrackUrl.value = ''
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Track Added',
+        description: `Added "${response.track.title}" to playlist`,
+        color: 'green'
+      })
+    } else {
+      console.error('🎵 API returned unsuccessful response:', response)
+      throw new Error(response?.message || 'API returned unsuccessful response')
+    }
+  } catch (error: any) {
+    console.error('🎵 Failed to add track:', error)
+    
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: error.data?.statusMessage || error.message || 'Failed to add track to playlist',
+      color: 'red'
+    })
+  } finally {
+    clearTimeout(fallbackTimeout) // Clear the fallback timeout
+    const finalTime = Date.now()
+    console.log('🎵 Setting isAddingTrack to false', `(total time: ${finalTime - startTime}ms)`)
+    isAddingTrack.value = false
+  }
+}
+
+async function addAndPlayTrack() {
+  if (!newTrackUrl.value.trim() || !currentRoom.value) return
+  
+  isAddingTrack.value = true
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim(),
+        playImmediately: true
+      }
+    })
+    
+    if (response.success) {
+      console.log('🎵 Track added and playing:', response.track)
+      
+      // Update local state
+      musicState.value.playlist.push(response.track)
+      musicState.value.currentTrack = response.track
+      musicState.value.isPlaying = true
+      newTrackUrl.value = ''
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Now Playing',
+        description: `Playing "${response.track.title}"`,
+        color: 'green'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to add and play track:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to add and play track',
+      color: 'red'
+    })
+  } finally {
+    isAddingTrack.value = false
+  }
+}
+
+async function pauseMusic() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/pause', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      musicState.value.isPlaying = false
+      console.log('🎵 Music paused')
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Music Paused',
+        description: 'Music has been paused for all participants',
+        color: 'yellow'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to pause music:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to pause music',
+      color: 'red'
+    })
+  }
+}
+
+async function resumeMusic() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/resume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      musicState.value.isPlaying = true
+      console.log('🎵 Music resumed')
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Music Resumed',
+        description: 'Music has been resumed for all participants',
+        color: 'green'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to resume music:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to resume music',
+      color: 'red'
+    })
+  }
+}
+
+async function stopMusic() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/stop', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      musicState.value.isPlaying = false
+      musicState.value.currentTrack = null
+      console.log('🎵 Music stopped')
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Music Stopped',
+        description: 'Music has been stopped for all participants',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to stop music:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to stop music',
+      color: 'red'
+    })
+  }
+}
+
+async function setVolume() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/volume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        volume: musicState.value.volume
+      }
+    })
+    
+    if (response.success) {
+      console.log('🎵 Volume set to:', musicState.value.volume)
+    }
+  } catch (error) {
+    console.error('Failed to set volume:', error)
+    // Don't show toast for volume changes as they happen frequently
+  }
+}
+
+async function clearPlaylist() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/clear', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+    
+    if (response.success) {
+      musicState.value.playlist = []
+      musicState.value.currentTrack = null
+      musicState.value.isPlaying = false
+      console.log('🎵 Playlist cleared')
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Playlist Cleared',
+        description: 'All tracks have been removed from the playlist',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to clear playlist:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to clear playlist',
+      color: 'red'
+    })
+  }
+}
+
+async function playTrackFromPlaylist(track: any) {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/play', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: track.id
+      }
+    })
+    
+    if (response.success) {
+      musicState.value.currentTrack = track
+      musicState.value.isPlaying = true
+      console.log('🎵 Playing track from playlist:', track.title)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Now Playing',
+        description: `Playing "${track.title}"`,
+        color: 'green'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to play track:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to play track',
+      color: 'red'
+    })
+  }
+}
+
+async function removeTrackFromPlaylist(trackId: string) {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/remove-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: trackId
+      }
+    })
+    
+    if (response.success) {
+      // Update local state
+      musicState.value.playlist = musicState.value.playlist.filter(t => t.id !== trackId)
+      
+      // If the removed track was currently playing, stop playback
+      if (musicState.value.currentTrack?.id === trackId) {
+        musicState.value.currentTrack = null
+        musicState.value.isPlaying = false
+      }
+      
+      console.log('🎵 Track removed from playlist:', trackId)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Track Removed',
+        description: 'Track has been removed from the playlist',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to remove track:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to remove track',
+      color: 'red'
+    })
+  }
+}
+
+// Utility function to format duration in seconds to MM:SS format
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return '0:00'
+  
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// YouTube Player API Integration
+function loadYouTubeAPI() {
+  if (isYouTubeAPIReady.value || document.querySelector('#youtube-api-script')) {
+    return Promise.resolve()
+  }
+
+  return new Promise((resolve) => {
+    const script = document.createElement('script')
+    script.id = 'youtube-api-script'
+    script.src = 'https://www.youtube.com/iframe_api'
+    script.async = true
+    
+    // YouTube API calls this global function when ready
+    window.onYouTubeIframeAPIReady = () => {
+      isYouTubeAPIReady.value = true
+      console.log('🎵 YouTube API loaded')
+      resolve(true)
+    }
+    
+    document.head.appendChild(script)
+  })
+}
+
+function getYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+  ]
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+  
+  return null
+}
+
+async function initializeYouTubePlayer() {
+  try {
+    await loadYouTubeAPI()
+    
+    if (!isYouTubeAPIReady.value) {
+      console.error('YouTube API not ready')
+      return
+    }
+
+    youtubePlayer.value = new window.YT.Player('youtube-player', {
+      height: '100%',
+      width: '100%',
+      playerVars: {
+        autoplay: 0,
+        controls: userRole.value === 'DM' ? 1 : 0, // Only DMs get controls
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+        disablekb: userRole.value !== 'DM' ? 1 : 0, // Disable keyboard for non-DMs
+        fs: 0, // Disable fullscreen for embedded player
+        cc_load_policy: 0
+      },
+      events: {
+        onReady: (event: any) => {
+          console.log('🎵 YouTube player ready')
+          syncPlayerWithMusicState()
+        },
+        onStateChange: (event: any) => {
+          handlePlayerStateChange(event)
+        },
+        onError: (event: any) => {
+          console.error('🎵 YouTube player error:', event.data)
+          const toast = useToast()
+          toast.add({
+            title: 'Playback Error',
+            description: 'There was an error playing the video',
+            color: 'red'
+          })
+        }
+      }
+    })
+  } catch (error) {
+    console.error('Failed to initialize YouTube player:', error)
+  }
+}
+
+function handlePlayerStateChange(event: any) {
+  const YT = window.YT
+  if (!YT) return
+  
+  const state = event.data
+  const isPlaying = state === YT.PlayerState.PLAYING
+  const isPaused = state === YT.PlayerState.PAUSED
+  const isEnded = state === YT.PlayerState.ENDED
+  
+  // Only DMs can control music state via the player
+  if (userRole.value === 'DM') {
+    if (isPlaying && !musicState.value.isPlaying) {
+      // Player started, update backend
+      resumeMusic()
+    } else if (isPaused && musicState.value.isPlaying) {
+      // Player paused, update backend
+      pauseMusic()
+    } else if (isEnded) {
+      // Track ended, stop playback
+      stopMusic()
+    }
+  }
+}
+
+// Fade transition variables
+const fadeTransition = ref({
+  isActive: false,
+  targetVolume: 100,
+  currentVolume: 100,
+  duration: 1000, // 1 second fade
+  intervalId: null
+})
+
+// Smooth volume fade function
+function fadeVolume(fromVolume: number, toVolume: number, duration: number = 1000): Promise<void> {
+  return new Promise((resolve) => {
+    if (!isYouTubePlayerReady()) {
+      resolve()
+      return
+    }
+    
+    const startTime = Date.now()
+    const volumeRange = toVolume - fromVolume
+    
+    fadeTransition.value.isActive = true
+    fadeTransition.value.currentVolume = fromVolume
+    fadeTransition.value.targetVolume = toVolume
+    
+    const fadeStep = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      
+      // Use easeInOut curve for smoother transition
+      const easedProgress = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2
+      
+      const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
+      fadeTransition.value.currentVolume = currentVolume
+      
+      if (isYouTubePlayerReady()) {
+        youtubePlayer.value.setVolume(currentVolume)
+      }
+      
+      if (progress >= 1) {
+        fadeTransition.value.isActive = false
+        fadeTransition.value.currentVolume = toVolume
+        resolve()
+      } else {
+        requestAnimationFrame(fadeStep)
+      }
+    }
+    
+    fadeStep()
+  })
+}
+
+// Enhanced track switching with fade transitions
+// Helper function to check if YouTube player is ready and has required methods
+function isYouTubePlayerReady(): boolean {
+  return !!(youtubePlayer.value && 
+           typeof youtubePlayer.value.setVolume === 'function' &&
+           typeof youtubePlayer.value.playVideo === 'function' &&
+           typeof youtubePlayer.value.pauseVideo === 'function' &&
+           typeof youtubePlayer.value.loadVideoById === 'function')
+}
+
+async function switchTrackWithFade(newVideoId: string) {
+  if (!isYouTubePlayerReady() || !fadeConfig.value.enabled) {
+    // Fallback to instant switching if fades disabled or player not ready
+    currentVideoId.value = newVideoId
+    if (isYouTubePlayerReady()) {
+      youtubePlayer.value.loadVideoById(newVideoId)
+    }
+    return
+  }
+  
+  const currentVolume = musicState.value.volume
+  
+  try {
+    // Fade out current track
+    if (currentVideoId.value) {
+      await fadeVolume(currentVolume, 0, fadeConfig.value.trackTransition / 2)
+    }
+    
+    // Load new track
+    currentVideoId.value = newVideoId
+    youtubePlayer.value.loadVideoById(newVideoId)
+    
+    // Wait a brief moment for the video to load
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
+    // Fade in new track
+    await fadeVolume(0, currentVolume, fadeConfig.value.trackTransition / 2)
+    
+  } catch (error) {
+    console.error('Error during track transition:', error)
+    // Fallback: set volume directly
+    if (isYouTubePlayerReady()) {
+      youtubePlayer.value.setVolume(currentVolume)
+    }
+  }
+}
+
+function syncPlayerWithMusicState() {
+  if (!isYouTubePlayerReady() || !musicState.value.currentTrack) {
+    console.log('🎵 Skipping sync - player not ready or no current track')
+    return
+  }
+  
+  const videoId = getYouTubeVideoId(musicState.value.currentTrack.url)
+  if (!videoId) {
+    console.error('Invalid YouTube URL:', musicState.value.currentTrack.url)
+    return
+  }
+  
+  // Load video with fade transition if different from current
+  if (currentVideoId.value !== videoId) {
+    switchTrackWithFade(videoId)
+  }
+  
+  // Sync play/pause state
+  try {
+    if (musicState.value.isPlaying) {
+      youtubePlayer.value.playVideo()
+    } else {
+      youtubePlayer.value.pauseVideo()
+    }
+    
+    // Sync volume with smooth transition if not already fading
+    if (!fadeTransition.value.isActive) {
+      youtubePlayer.value.setVolume(musicState.value.volume)
+    }
+  } catch (error) {
+    console.error('🎵 Error syncing player state:', error)
+  }
+}
+
+// Watch for changes in music state to sync with player
+watch(() => musicState.value.currentTrack, (newTrack) => {
+  if (newTrack && isYouTubePlayerReady()) {
+    syncPlayerWithMusicState()
+  } else if (!newTrack && isYouTubePlayerReady()) {
+    youtubePlayer.value.stopVideo()
+    currentVideoId.value = null
+  }
+}, { deep: true })
+
+watch(() => musicState.value.isPlaying, async (isPlaying, wasPlaying) => {
+  if (!isYouTubePlayerReady()) return
+  
+  if (fadeConfig.value.enabled) {
+    if (isPlaying && !wasPlaying) {
+      // Starting playback - fade in
+      youtubePlayer.value.playVideo()
+      
+      // Add small fade in effect
+      const currentVolume = musicState.value.volume
+      await fadeVolume(Math.max(0, currentVolume - 20), currentVolume, fadeConfig.value.playPause)
+    } else if (!isPlaying && wasPlaying) {
+      // Pausing playback - fade out then pause
+      const currentVolume = musicState.value.volume
+      await fadeVolume(currentVolume, Math.max(0, currentVolume - 15), fadeConfig.value.playPause * 0.75)
+      youtubePlayer.value.pauseVideo()
+      
+      // Restore volume for when playback resumes
+      setTimeout(() => {
+        if (isYouTubePlayerReady()) {
+          youtubePlayer.value.setVolume(currentVolume)
+        }
+      }, 100)
+    }
+  } else {
+    // No fade effects - direct play/pause
+    if (isPlaying) {
+      youtubePlayer.value.playVideo()
+    } else {
+      youtubePlayer.value.pauseVideo()
+    }
+  }
+})
+
+watch(() => musicState.value.volume, (newVolume, oldVolume) => {
+  if (isYouTubePlayerReady() && !fadeTransition.value.isActive && fadeConfig.value.enabled) {
+    // Use smooth transition for volume changes if the change is significant
+    const volumeDifference = Math.abs(newVolume - (oldVolume || 0))
+    
+    if (volumeDifference > 10) {
+      // Large volume change - use fade transition
+      fadeVolume(oldVolume || 0, newVolume, fadeConfig.value.volumeChange)
+    } else {
+      // Small volume change - set directly
+      youtubePlayer.value.setVolume(newVolume)
+    }
+  } else if (isYouTubePlayerReady() && !fadeTransition.value.isActive) {
+    // Fades disabled - set volume directly
+    youtubePlayer.value.setVolume(newVolume)
+  }
+})
+
 // Initialize with SSE connection
 onMounted(async () => {
   // Set initial room state (default room)
@@ -2085,10 +4048,20 @@ onMounted(async () => {
   // Load user characters and auto-detect role
   await loadUserCharacters()
 
+  // Initialize YouTube player if there's music content
+  await initializeYouTubePlayer()
+
   initializeSSE('default')
 })
 
 onUnmounted(() => {
+  // Clean up fade transition
+  if (fadeTransition.value.intervalId) {
+    cancelAnimationFrame(fadeTransition.value.intervalId)
+    fadeTransition.value.intervalId = null
+    fadeTransition.value.isActive = false
+  }
+  
   disconnectSSE()
 })
 

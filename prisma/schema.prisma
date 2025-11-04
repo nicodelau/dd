@@ -128,6 +128,7 @@ model Character {
   attacks         Attack[]
   features        Feature[]
   cantrips        Cantrip[]
+  specialAbilities SpecialAbility[]
 
   @@map("characters")
 }
@@ -262,4 +263,26 @@ model Cantrip {
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("cantrips")
+}
+
+model SpecialAbility {
+  id             String    @id @default(cuid())
+  characterId    String
+  name           String
+  diceFormula    String    // e.g., "2d6+3", "1d20", "3d8+5"
+  description    String
+  usesPerRest    Int?      // optional: limited uses per rest
+  usesRemaining  Int?      // current remaining uses
+  abilityType    AbilityType @default(ACTION)
+  
+  character      Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("special_abilities")
+}
+
+enum AbilityType {
+  ACTION
+  BONUS_ACTION
+  REACTION
+  PASSIVE
 }

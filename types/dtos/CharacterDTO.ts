@@ -59,6 +59,7 @@ export interface CharacterDTO {
   // Skills and Saving Throws
   skills?: SkillDTO[]
   savingThrows?: SavingThrowDTO[]
+  specialAbilities?: SpecialAbilityDTO[]
   createdAt?: string
   updatedAt?: string
   // New user assignment fields
@@ -90,6 +91,16 @@ export interface SavingThrowDTO {
   id?: string
   ability: string
   proficient: boolean
+}
+
+export interface SpecialAbilityDTO {
+  id?: string
+  name: string
+  diceFormula: string
+  description: string
+  usesPerRest?: number
+  usesRemaining?: number
+  abilityType: 'ACTION' | 'BONUS_ACTION' | 'REACTION' | 'PASSIVE'
 }
 
 export interface CreateCharacterDTO {
