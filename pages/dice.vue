@@ -3974,7 +3974,10 @@ async function initializeYouTubePlayer() {
         cc_load_policy: 0,
         enablejsapi: 1,
         playsinline: 1,
-        origin: window.location.origin
+        origin: window.location.origin,
+        // Reduce tracking and ads
+        widget_referrer: window.location.origin,
+        host: 'https://www.youtube-nocookie.com'
       },
       events: {
         onReady: (event: any) => {
@@ -4001,6 +4004,14 @@ async function initializeYouTubePlayer() {
           console.error('🎵 YouTube player error:', event.data)
           console.error('🎵 Current video ID:', currentVideoId.value)
           console.error('🎵 Music state:', musicState.value)
+          
+          // Filter out CORS-related tracking errors which are safe to ignore
+          if (event.data && typeof event.data === 'object' && 
+              (event.data.toString().includes('doubleclick') || 
+               event.data.toString().includes('googleads'))) {
+            console.log('🎵 Ignoring YouTube tracking/ads error (safe):', event.data)
+            return
+          }
           
           let errorMessage = 'There was an error playing the video'
           
@@ -4493,6 +4504,20 @@ watch(() => musicState.value.volume, (newVolume, oldVolume) => {
 // Initialize with SSE connection
 onMounted(async () => {
   console.log('🎲 Dice room component mounted')
+  
+  // Add global error handler to filter out YouTube CORS tracking errors
+  const originalConsoleError = console.error
+  console.error = (...args) => {
+    const errorStr = args.join(' ')
+    if (errorStr.includes('doubleclick.net') || 
+        errorStr.includes('googleads.g.doubleclick.net') ||
+        errorStr.includes('CORS policy') && errorStr.includes('youtube')) {
+      // Silently ignore YouTube tracking/ads CORS errors
+      return
+    }
+    // Log all other errors normally
+    originalConsoleError.apply(console, args)
+  }
   
   // Set initial room state (default room)
   currentRoom.value = {
