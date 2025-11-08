@@ -471,6 +471,16 @@ class DiceRoomStore {
     this.sendToConnection(connectionId, 'users:count', { count: this.getUserCount(roomCode) }, roomCode)
     this.sendToConnection(connectionId, 'dice:history', { history: this.getRollHistory(roomCode) }, roomCode)
     this.sendToConnection(connectionId, 'room:info', { code: room.code, name: room.name }, roomCode)
+
+    // Send music state if it exists
+    if (room.musicState) {
+      this.sendToConnection(connectionId, 'music:state_changed', {
+        isPlaying: room.musicState.isPlaying,
+        currentTrack: room.musicState.currentTrack,
+        volume: room.musicState.volume,
+        playlist: room.musicState.playlist
+      }, roomCode)
+    }
     
     // Send user's own role and stats if they're a player
     const user = this.getUser(userId, roomCode)

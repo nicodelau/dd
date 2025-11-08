@@ -860,8 +860,8 @@
                 </div>
               </UCard>
 
-              <!-- DJ Music Control Panel (DM Only) -->
-              <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
+               <!-- DJ Music Control Panel (DM Only) -->
+               <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default' && isConnected">
                 <template #header>
                   <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -1169,8 +1169,8 @@
                 </div>
               </UCard>
 
-              <!-- YouTube Music Player (All Users) -->
-              <UCard v-if="currentRoom">
+               <!-- YouTube Music Player (All Users) -->
+               <UCard v-if="currentRoom && currentRoom.code !== 'default' && isConnected">
                 <template #header>
                   <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -2877,15 +2877,21 @@ function initializeSSE(roomCode: string = 'default') {
     eventSource.value.addEventListener('music:state_changed', (event) => {
       console.log('🎵 SSE: Received music:state_changed event:', event.data)
       const data = JSON.parse(event.data)
-      
-      musicState.isPlaying = data.isPlaying
-      musicState.isPaused = data.isPaused
-      musicState.currentTrack = data.currentTrack
-      musicState.volume = data.volume
-      
+
+      musicState.value.isPlaying = data.isPlaying
+      musicState.value.isPaused = data.isPaused
+      musicState.value.currentTrack = data.currentTrack
+      musicState.value.volume = data.volume
+
       console.log('🎵 Music state changed:', data)
-      console.log('🎵 Updated local music state:', musicState)
-      
+      console.log('🎵 Updated local music state:', musicState.value)
+
+      // Ensure YouTube player is initialized if we have music state
+      if (data.currentTrack && !isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Initializing YouTube player for music sync')
+        initializeYouTubePlayer()
+      }
+
       // Sync player with new state
       if (isYouTubePlayerReady()) {
         console.log('🎵 SSE: Syncing YouTube player with new state')
@@ -2912,7 +2918,7 @@ function initializeSSE(roomCode: string = 'default') {
 
     eventSource.value.addEventListener('music:playlist_updated', (event) => {
       const data = JSON.parse(event.data)
-      musicState.playlist = data.playlist
+      musicState.value.playlist = data.playlist
       console.log('🎵 Playlist updated:', data.playlist)
       
       const toast = useToast()
@@ -2926,11 +2932,17 @@ function initializeSSE(roomCode: string = 'default') {
     eventSource.value.addEventListener('music:track_added', (event) => {
       console.log('🎵 SSE: Received music:track_added event:', event.data)
       const data = JSON.parse(event.data)
-      
-      musicState.playlist.push(data.track)
+
+      musicState.value.playlist.push(data.track)
       console.log('🎵 Track added to playlist:', data.track)
-      console.log('🎵 Updated playlist:', musicState.playlist)
-      
+      console.log('🎵 Updated playlist:', musicState.value.playlist)
+
+      // Ensure YouTube player is initialized if this is the first track
+      if (musicState.value.playlist.length === 1 && !isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Initializing YouTube player for first track')
+        initializeYouTubePlayer()
+      }
+
       const toast = useToast()
       toast.add({
         title: 'Track Added',
@@ -2939,9 +2951,51 @@ function initializeSSE(roomCode: string = 'default') {
       })
     })
 
+    eventSource.value.addEventListener('music:playback_changed', (event) => {
+      console.log('🎵 SSE: Received music:playback_changed event:', event.data)
+      const data = JSON.parse(event.data)
+
+      musicState.value.currentTrack = data.currentTrack
+      musicState.value.isPlaying = data.isPlaying
+      musicState.value.position = data.position
+      musicState.value.volume = data.volume
+      fadeTransition.value.isActive = data.fadeTransition || false
+
+      console.log('🎵 Playback changed:', data)
+
+      // Ensure YouTube player is initialized if we have a track
+      if (data.currentTrack && !isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Initializing YouTube player for playback')
+        initializeYouTubePlayer()
+      }
+
+      // Sync player with new state
+      if (isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Syncing YouTube player with playback change')
+        syncPlayerWithMusicState()
+      } else {
+        console.log('🎵 SSE: YouTube player not ready for playback sync')
+      }
+
+      const toast = useToast()
+      if (data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Now Playing',
+          description: `🎵 ${data.currentTrack.title}`,
+          color: 'green'
+        })
+      } else if (!data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Music Paused',
+          description: '⏸️ Playback paused',
+          color: 'yellow'
+        })
+      }
+    })
+
     eventSource.value.addEventListener('music:track_removed', (event) => {
       const data = JSON.parse(event.data)
-      musicState.playlist = musicState.playlist.filter(track => track.id !== data.trackId)
+      musicState.value.playlist = musicState.value.playlist.filter(track => track.id !== data.trackId)
       console.log('🎵 Track removed from playlist:', data.trackId)
       
       const toast = useToast()
@@ -2954,12 +3008,12 @@ function initializeSSE(roomCode: string = 'default') {
 
     eventSource.value.addEventListener('music:volume_changed', (event) => {
       const data = JSON.parse(event.data)
-      musicState.volume = data.volume
+      musicState.value.volume = data.volume
       console.log('🎵 Volume changed:', data.volume)
     })
 
     eventSource.value.addEventListener('music:playlist_cleared', (event) => {
-      musicState.playlist = []
+      musicState.value.playlist = []
       console.log('🎵 Playlist cleared')
       
       const toast = useToast()
@@ -3400,15 +3454,30 @@ async function dealDamageToEnemy(enemy: any) {
 
 // Music System Functions
 async function addTrackToPlaylist() {
-  if (!newTrackUrl.value.trim() || !currentRoom.value) return
-  
+  console.log('🎵 addTrackToPlaylist called with URL:', newTrackUrl.value, 'currentRoom:', currentRoom.value)
+
+  if (!newTrackUrl.value.trim()) {
+    console.log('🎵 No URL provided')
+    return
+  }
+
+  if (!currentRoom.value) {
+    console.log('🎵 No current room')
+    return
+  }
+
+  if (currentRoom.value.code === 'default') {
+    console.log('🎵 Cannot add tracks to default room')
+    return
+  }
+
   const startTime = Date.now()
   isAddingTrack.value = true
-  
+
   // Check SSE connection status
   const sseStatus = eventSource.value?.readyState
   const sseStatusText = sseStatus === 0 ? 'CONNECTING' : sseStatus === 1 ? 'OPEN' : sseStatus === 2 ? 'CLOSED' : 'UNKNOWN'
-  console.log('🎵 Starting to add track:', newTrackUrl.value.trim(), `(timestamp: ${startTime}) SSE Status: ${sseStatusText} (${sseStatus})`)
+  console.log('🎵 Starting to add track:', newTrackUrl.value.trim(), `(timestamp: ${startTime}) SSE Status: ${sseStatusText} (${sseStatus}) Room: ${currentRoom.value.code}`)
   
   // Add a fallback timeout to reset isAddingTrack in case something goes wrong
   const fallbackTimeout = setTimeout(() => {
@@ -3751,43 +3820,86 @@ function formatDuration(seconds: number): string {
 
 // YouTube Player API Integration
 function loadYouTubeAPI() {
-  if (isYouTubeAPIReady.value || document.querySelector('#youtube-api-script')) {
-    console.log('🎵 YouTube API already loaded or loading')
-    return Promise.resolve()
+  // Check if YouTube API is already loaded
+  if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
+    console.log('🎵 YouTube API already available')
+    isYouTubeAPIReady.value = true
+    return Promise.resolve(true)
+  }
+
+  if (isYouTubeAPIReady.value) {
+    console.log('🎵 YouTube API marked as ready')
+    return Promise.resolve(true)
+  }
+
+  const existingScript = document.querySelector('#youtube-api-script')
+  if (existingScript) {
+    console.log('🎵 YouTube API script already in DOM, waiting...')
+    // Script exists but API not ready, wait a bit
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (window.YT && window.YT.Player) {
+          isYouTubeAPIReady.value = true
+          console.log('🎵 YouTube API loaded after waiting')
+          resolve(true)
+        } else {
+          console.error('🎵 YouTube API script present but API not ready')
+          resolve(false)
+        }
+      }, 2000)
+    })
   }
 
   return new Promise((resolve) => {
+    console.log('🎵 Loading YouTube API script...')
     const script = document.createElement('script')
     script.id = 'youtube-api-script'
     script.src = 'https://www.youtube.com/iframe_api'
     script.async = true
-    
+
     // Store previous callback if it exists
     const previousCallback = window.onYouTubeIframeAPIReady
-    
+
     // YouTube API calls this global function when ready
     window.onYouTubeIframeAPIReady = () => {
       isYouTubeAPIReady.value = true
       console.log('🎵 YouTube API loaded successfully')
-      
+
       // Call previous callback if it existed
       if (previousCallback && typeof previousCallback === 'function') {
         previousCallback()
       }
-      
+
       resolve(true)
     }
-    
+
+    script.onload = () => {
+      console.log('🎵 YouTube API script loaded, waiting for API ready...')
+    }
+
     script.onerror = () => {
-      console.error('🎵 Failed to load YouTube API script')
+      console.error('🎵 Failed to load YouTube API script - check network connection, CSP, or firewall')
       resolve(false)
     }
-    
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      if (!isYouTubeAPIReady.value) {
+        console.error('🎵 YouTube API loading timed out')
+        resolve(false)
+      }
+    }, 10000)
+
     document.head.appendChild(script)
   })
 }
 
 function getYouTubeVideoId(url: string): string | null {
+  if (!url || typeof url !== 'string') {
+    console.warn('🎵 Invalid URL provided to getYouTubeVideoId:', url)
+    return null
+  }
+  
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
     /youtube\.com\/watch\?.*v=([^&\n?#]+)/
@@ -3796,10 +3908,18 @@ function getYouTubeVideoId(url: string): string | null {
   for (const pattern of patterns) {
     const match = url.match(pattern)
     if (match && match[1]) {
-      return match[1]
+      const videoId = match[1]
+      // Validate video ID format
+      const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/
+      if (videoIdPattern.test(videoId)) {
+        return videoId
+      } else {
+        console.warn('🎵 Extracted video ID has invalid format:', videoId)
+      }
     }
   }
   
+  console.warn('🎵 Could not extract valid video ID from URL:', url)
   return null
 }
 
@@ -3879,12 +3999,15 @@ async function initializeYouTubePlayer() {
         },
         onError: (event: any) => {
           console.error('🎵 YouTube player error:', event.data)
+          console.error('🎵 Current video ID:', currentVideoId.value)
+          console.error('🎵 Music state:', musicState.value)
+          
           let errorMessage = 'There was an error playing the video'
           
           // More specific error messages
           switch (event.data) {
             case 2:
-              errorMessage = 'Invalid video ID'
+              errorMessage = `Invalid video ID: ${currentVideoId.value}`
               break
             case 5:
               errorMessage = 'Video cannot be played in HTML5 player'
@@ -4085,9 +4208,21 @@ async function forceReinitializePlayer() {
 async function switchTrackWithFade(newVideoId: string) {
   console.log('🎵 Switching to track:', newVideoId)
   
-  if (!isYouTubePlayerReady() || !fadeConfig.value.enabled) {
-    // Fallback to instant switching if fades disabled or player not ready
-    console.log('🎵 Using instant switch (player not ready or fades disabled)')
+  // Validate video ID format
+  if (!newVideoId || typeof newVideoId !== 'string' || newVideoId.length < 10) {
+    console.error('🎵 Invalid video ID:', newVideoId)
+    return
+  }
+  
+  // YouTube video IDs are 11 characters long and contain only alphanumeric characters, hyphens, and underscores
+  const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/
+  if (!videoIdPattern.test(newVideoId)) {
+    console.error('🎵 Video ID format invalid:', newVideoId)
+    return
+  }
+  
+  if (!isYouTubePlayerReady()) {
+    console.log('🎵 Player not ready, using instant switch')
     currentVideoId.value = newVideoId
     if (isYouTubePlayerReady()) {
       try {
@@ -4101,39 +4236,148 @@ async function switchTrackWithFade(newVideoId: string) {
   }
   
   const currentVolume = musicState.value.volume
-  console.log('🎵 Starting fade transition with volume:', currentVolume)
+  console.log('🎵 Starting smooth track transition with volume:', currentVolume)
   
   try {
-    // Fade out current track
-    if (currentVideoId.value) {
-      console.log('🎵 Fading out current track')
-      await fadeVolume(currentVolume, 0, fadeConfig.value.trackTransition / 2)
-    }
+    // Store current player state
+    const wasPlaying = youtubePlayer.value.getPlayerState() === 1 // PLAYING = 1
     
-    // Load new track
-    console.log('🎵 Loading new video:', newVideoId)
-    currentVideoId.value = newVideoId
-    youtubePlayer.value.loadVideoById(newVideoId)
+    // Create a temporary second player for crossfading
+    const tempPlayerDiv = document.createElement('div')
+    tempPlayerDiv.id = 'youtube-player-temp'
+    tempPlayerDiv.style.display = 'none'
+    document.body.appendChild(tempPlayerDiv)
     
-    // Wait a brief moment for the video to load
-    await new Promise(resolve => setTimeout(resolve, 200))
-    
-    // Fade in new track
-    console.log('🎵 Fading in new track')
-    await fadeVolume(0, currentVolume, fadeConfig.value.trackTransition / 2)
+    const tempPlayer = new window.YT.Player('youtube-player-temp', {
+      height: '1',
+      width: '1',
+      videoId: newVideoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        modestbranding: 1,
+        playsinline: 1,
+        rel: 0
+      },
+      events: {
+        onReady: async (event) => {
+          console.log('🎵 Temp player ready for crossfade')
+          
+          // Start new track at 0 volume
+          event.target.setVolume(0)
+          if (wasPlaying) {
+            event.target.playVideo()
+          }
+          
+          // Crossfade: fade out current, fade in new simultaneously
+          const fadeDuration = fadeConfig.value.trackTransition
+          const promises = []
+          
+          // Fade out current track
+          if (currentVideoId.value) {
+            promises.push(fadeVolume(currentVolume, 0, fadeDuration))
+          }
+          
+          // Fade in new track on temp player
+          promises.push(new Promise(async (resolve) => {
+            await new Promise(r => setTimeout(r, 50)) // Slight delay for smoother transition
+            await fadeVolumeForPlayer(event.target, 0, currentVolume, fadeDuration)
+            resolve(true)
+          }))
+          
+          // Wait for both fades to complete
+          await Promise.all(promises)
+          
+          // Switch to new player
+          currentVideoId.value = newVideoId
+          youtubePlayer.value.stopVideo()
+          
+          // Replace main player with new video
+          youtubePlayer.value.loadVideoById(newVideoId)
+          youtubePlayer.value.setVolume(currentVolume)
+          
+          if (wasPlaying) {
+            // Small delay to ensure video is loaded
+            setTimeout(() => {
+              if (isYouTubePlayerReady()) {
+                youtubePlayer.value.playVideo()
+              }
+            }, 100)
+          }
+          
+          // Cleanup temp player
+          setTimeout(() => {
+            event.target.destroy()
+            if (tempPlayerDiv.parentNode) {
+              tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
+            }
+          }, 500)
+          
+          console.log('🎵 Crossfade transition completed')
+        },
+        onError: (event) => {
+          console.error('🎵 Temp player error:', event.data)
+          // Fallback to instant switch
+          currentVideoId.value = newVideoId
+          youtubePlayer.value.loadVideoById(newVideoId)
+          youtubePlayer.value.setVolume(currentVolume)
+          
+          // Cleanup
+          if (tempPlayerDiv.parentNode) {
+            tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
+          }
+        }
+      }
+    })
     
   } catch (error) {
-    console.error('🎵 Error during track transition:', error)
-    // Fallback: set volume directly
-    if (isYouTubePlayerReady()) {
+    console.error('🎵 Error during crossfade transition:', error)
+    // Fallback to instant switch
+    currentVideoId.value = newVideoId
+    youtubePlayer.value.loadVideoById(newVideoId)
+    youtubePlayer.value.setVolume(currentVolume)
+  }
+}
+
+// Helper function for fading volume on a specific player
+function fadeVolumeForPlayer(player: any, fromVolume: number, toVolume: number, duration: number = 1000): Promise<void> {
+  return new Promise((resolve) => {
+    if (!player || typeof player.setVolume !== 'function') {
+      resolve()
+      return
+    }
+    
+    const startTime = Date.now()
+    const volumeRange = toVolume - fromVolume
+    
+    const fadeStep = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      
+      // Use easeInOut curve for smoother transition
+      const easedProgress = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2
+      
+      const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
+      
       try {
-        youtubePlayer.value.setVolume(currentVolume)
-        console.log('🎵 Fallback volume set')
-      } catch (volumeError) {
-        console.error('🎵 Error setting fallback volume:', volumeError)
+        player.setVolume(currentVolume)
+      } catch (e) {
+        console.error('🎵 Error setting volume during fade:', e)
+      }
+      
+      if (progress >= 1) {
+        resolve()
+      } else {
+        requestAnimationFrame(fadeStep)
       }
     }
-  }
+    
+    fadeStep()
+  })
 }
 
 function syncPlayerWithMusicState() {
@@ -4145,14 +4389,18 @@ function syncPlayerWithMusicState() {
   console.log('🎵 Syncing player with music state:', {
     track: musicState.value.currentTrack.title,
     isPlaying: musicState.value.isPlaying,
-    volume: musicState.value.volume
+    volume: musicState.value.volume,
+    url: musicState.value.currentTrack.url
   })
   
   const videoId = getYouTubeVideoId(musicState.value.currentTrack.url)
   if (!videoId) {
     console.error('🎵 Invalid YouTube URL:', musicState.value.currentTrack.url)
+    console.error('🎵 Current track data:', musicState.value.currentTrack)
     return
   }
+  
+  console.log('🎵 Extracted video ID:', videoId)
   
   // Load video with fade transition if different from current
   if (currentVideoId.value !== videoId) {
