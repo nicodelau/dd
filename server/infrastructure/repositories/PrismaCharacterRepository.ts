@@ -243,59 +243,63 @@ export class PrismaCharacterRepository implements ICharacterRepository {
 
   async update(id: string, characterData: Partial<Character>): Promise<Character | null> {
     try {
+      // Handle related entities separately
+      const updateData = {
+        ...(characterData.characterName && { name: characterData.characterName }),
+        ...(characterData.playerName && { playerName: characterData.playerName }),
+        ...(characterData.race && { race: characterData.race }),
+        ...(characterData.subrace && { subrace: characterData.subrace }),
+        ...(characterData.className && { class: characterData.className }),
+        ...(characterData.classLevel && { level: characterData.classLevel }),
+        ...(characterData.background && { background: characterData.background }),
+        ...(characterData.alignment && { alignment: characterData.alignment }),
+        ...(characterData.ancestry && { ancestry: characterData.ancestry }),
+        ...(characterData.currentHp !== undefined && { hitPoints: characterData.currentHp }),
+        ...(characterData.maxHp !== undefined && { maxHitPoints: characterData.maxHp }),
+        ...(characterData.tempHp !== undefined && { tempHitPoints: characterData.tempHp }),
+        ...(characterData.armorClass !== undefined && { armorClass: characterData.armorClass }),
+        ...(characterData.proficiencyBonus !== undefined && { proficiencyBonus: characterData.proficiencyBonus }),
+        ...(characterData.speed !== undefined && { speed: characterData.speed }),
+        ...(characterData.experience !== undefined && { experiencePoints: characterData.experience }),
+        ...(characterData.inspiration !== undefined && { inspiration: characterData.inspiration }),
+        ...(characterData.deathSaveSuccesses !== undefined && { deathSaveSuccesses: characterData.deathSaveSuccesses }),
+        ...(characterData.deathSaveFailures !== undefined && { deathSaveFailures: characterData.deathSaveFailures }),
+        ...(characterData.initiative !== undefined && { initiative: characterData.initiative }),
+        ...(characterData.passivePerception !== undefined && { passivePerception: characterData.passivePerception }),
+        ...(characterData.languages !== undefined && { languages: characterData.languages }),
+        // Ability Scores
+        ...(characterData.strength !== undefined && { strength: characterData.strength }),
+        ...(characterData.dexterity !== undefined && { dexterity: characterData.dexterity }),
+        ...(characterData.constitution !== undefined && { constitution: characterData.constitution }),
+        ...(characterData.intelligence !== undefined && { intelligence: characterData.intelligence }),
+        ...(characterData.wisdom !== undefined && { wisdom: characterData.wisdom }),
+        ...(characterData.charisma !== undefined && { charisma: characterData.charisma }),
+        // Avatar/Character Image
+        ...(characterData.avatar !== undefined && { avatar: characterData.avatar }),
+        // Physical Characteristics
+        ...(characterData.age !== undefined && { age: characterData.age }),
+        ...(characterData.height && { height: characterData.height }),
+        ...(characterData.weight && { weight: characterData.weight }),
+        ...(characterData.eyes && { eyes: characterData.eyes }),
+        ...(characterData.skin && { skin: characterData.skin }),
+        ...(characterData.hair && { hair: characterData.hair }),
+        // Currency fields
+        ...((characterData as any).copperCoins !== undefined && { copperCoins: (characterData as any).copperCoins }),
+        ...((characterData as any).silverCoins !== undefined && { silverCoins: (characterData as any).silverCoins }),
+        ...((characterData as any).electrumCoins !== undefined && { electrumCoins: (characterData as any).electrumCoins }),
+        ...((characterData as any).goldCoins !== undefined && { goldCoins: (characterData as any).goldCoins }),
+        ...((characterData as any).platinumCoins !== undefined && { platinumCoins: (characterData as any).platinumCoins }),
+        // Inventory
+        ...((characterData as any).backpack !== undefined && { backpack: (characterData as any).backpack }),
+        // User assignment fields
+        ...((characterData as any).userId !== undefined && { userId: (characterData as any).userId }),
+        ...((characterData as any).ownerId !== undefined && { ownerId: (characterData as any).ownerId })
+      }
+
+      // Update the character
       const character = await this.prisma.character.update({
         where: { id },
-        data: {
-          ...(characterData.characterName && { name: characterData.characterName }),
-          ...(characterData.playerName && { playerName: characterData.playerName }),
-          ...(characterData.race && { race: characterData.race }),
-          ...(characterData.subrace && { subrace: characterData.subrace }),
-          ...(characterData.className && { class: characterData.className }),
-          ...(characterData.classLevel && { level: characterData.classLevel }),
-          ...(characterData.background && { background: characterData.background }),
-          ...(characterData.alignment && { alignment: characterData.alignment }),
-          ...(characterData.ancestry && { ancestry: characterData.ancestry }),
-          ...(characterData.currentHp !== undefined && { hitPoints: characterData.currentHp }),
-          ...(characterData.maxHp !== undefined && { maxHitPoints: characterData.maxHp }),
-          ...(characterData.tempHp !== undefined && { tempHitPoints: characterData.tempHp }),
-          ...(characterData.armorClass !== undefined && { armorClass: characterData.armorClass }),
-          ...(characterData.proficiencyBonus !== undefined && { proficiencyBonus: characterData.proficiencyBonus }),
-          ...(characterData.speed !== undefined && { speed: characterData.speed }),
-          ...(characterData.experience !== undefined && { experiencePoints: characterData.experience }),
-          ...(characterData.inspiration !== undefined && { inspiration: characterData.inspiration }),
-          ...(characterData.deathSaveSuccesses !== undefined && { deathSaveSuccesses: characterData.deathSaveSuccesses }),
-          ...(characterData.deathSaveFailures !== undefined && { deathSaveFailures: characterData.deathSaveFailures }),
-          ...(characterData.initiative !== undefined && { initiative: characterData.initiative }),
-          ...(characterData.passivePerception !== undefined && { passivePerception: characterData.passivePerception }),
-          ...(characterData.languages !== undefined && { languages: characterData.languages }),
-          // Ability Scores
-          ...(characterData.strength !== undefined && { strength: characterData.strength }),
-          ...(characterData.dexterity !== undefined && { dexterity: characterData.dexterity }),
-          ...(characterData.constitution !== undefined && { constitution: characterData.constitution }),
-          ...(characterData.intelligence !== undefined && { intelligence: characterData.intelligence }),
-          ...(characterData.wisdom !== undefined && { wisdom: characterData.wisdom }),
-          ...(characterData.charisma !== undefined && { charisma: characterData.charisma }),
-          // Avatar/Character Image
-          ...(characterData.avatar !== undefined && { avatar: characterData.avatar }),
-          // Physical Characteristics
-          ...(characterData.age !== undefined && { age: characterData.age }),
-          ...(characterData.height && { height: characterData.height }),
-          ...(characterData.weight && { weight: characterData.weight }),
-          ...(characterData.eyes && { eyes: characterData.eyes }),
-          ...(characterData.skin && { skin: characterData.skin }),
-          ...(characterData.hair && { hair: characterData.hair }),
-          // Currency fields
-          ...((characterData as any).copperCoins !== undefined && { copperCoins: (characterData as any).copperCoins }),
-          ...((characterData as any).silverCoins !== undefined && { silverCoins: (characterData as any).silverCoins }),
-          ...((characterData as any).electrumCoins !== undefined && { electrumCoins: (characterData as any).electrumCoins }),
-          ...((characterData as any).goldCoins !== undefined && { goldCoins: (characterData as any).goldCoins }),
-          ...((characterData as any).platinumCoins !== undefined && { platinumCoins: (characterData as any).platinumCoins }),
-          // Inventory
-          ...((characterData as any).backpack !== undefined && { backpack: (characterData as any).backpack }),
-          // User assignment fields
-          ...((characterData as any).userId !== undefined && { userId: (characterData as any).userId }),
-          ...((characterData as any).ownerId !== undefined && { ownerId: (characterData as any).ownerId })
-        },
+        data: updateData,
         include: {
           user: {
             select: {
@@ -322,12 +326,159 @@ export class PrismaCharacterRepository implements ICharacterRepository {
           inventory: true,
           attacks: true,
           features: true,
-          cantrips: true
+          cantrips: true,
+          combatActions: true
         }
       })
 
-      return this.mapPrismaToEntity(character)
+      // Handle related entities updates
+      const typedCharacterData = characterData as any
+
+      // Update saving throws if provided
+      if (typedCharacterData.savingThrows) {
+        // Delete existing saving throws
+        await this.prisma.savingThrow.deleteMany({
+          where: { characterId: id }
+        })
+
+        // Create new saving throws
+        if (typedCharacterData.savingThrows.length > 0) {
+          await this.prisma.savingThrow.createMany({
+            data: typedCharacterData.savingThrows.map((st: any) => ({
+              characterId: id,
+              ability: st.ability,
+              proficient: st.proficient
+            }))
+          })
+        }
+      }
+
+      // Update skills if provided
+      if (typedCharacterData.skills) {
+        // Delete existing skills
+        await this.prisma.skill.deleteMany({
+          where: { characterId: id }
+        })
+
+        // Create new skills
+        if (typedCharacterData.skills.length > 0) {
+          await this.prisma.skill.createMany({
+            data: typedCharacterData.skills.map((skill: any) => ({
+              characterId: id,
+              name: skill.name,
+              ability: skill.ability,
+              proficient: skill.proficient,
+              expertise: skill.expertise || false,
+              category: skill.category || 'STANDARD'
+            }))
+          })
+        }
+      }
+
+      // Update attacks if provided
+      if (typedCharacterData.attacks) {
+        // Delete existing attacks
+        await this.prisma.attack.deleteMany({
+          where: { characterId: id }
+        })
+
+        // Create new attacks
+        if (typedCharacterData.attacks.length > 0) {
+          await this.prisma.attack.createMany({
+            data: typedCharacterData.attacks.map((attack: any) => ({
+              characterId: id,
+              name: attack.name,
+              attackBonus: attack.attackBonus,
+              damageDice: attack.damage, // Map damage to damageDice
+              damageType: attack.damageType,
+              range: attack.rangeText, // Map rangeText to range
+              description: attack.notes // Map notes to description
+            }))
+          })
+        }
+      }
+
+      // Update inventory if provided
+      if (typedCharacterData.inventory) {
+        // Delete existing inventory
+        await this.prisma.inventoryItem.deleteMany({
+          where: { characterId: id }
+        })
+
+        // Create new inventory items
+        if (typedCharacterData.inventory.length > 0) {
+          await this.prisma.inventoryItem.createMany({
+            data: typedCharacterData.inventory.map((item: any) => ({
+              characterId: id,
+              name: item.name,
+              quantity: item.quantity,
+              weight: item.weight,
+              equipped: item.equipped,
+              notes: item.notes
+            }))
+          })
+        }
+      }
+
+      // Update combat actions if provided (assuming there's a combatAction table)
+      if (typedCharacterData.combatActions) {
+        // Delete existing combat actions
+        await this.prisma.combatAction.deleteMany({
+          where: { characterId: id }
+        })
+
+        // Create new combat actions
+        if (typedCharacterData.combatActions.length > 0) {
+          await this.prisma.combatAction.createMany({
+            data: typedCharacterData.combatActions.map((action: any) => ({
+              characterId: id,
+              name: action.name,
+              type: action.type,
+              currentUses: action.currentUses,
+              maxUses: action.maxUses,
+              description: action.description
+            }))
+          })
+        }
+      }
+
+      // Fetch the updated character with all relations
+      const updatedCharacter = await this.prisma.character.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true
+            }
+          },
+          owner: {
+            select: {
+              id: true,
+              username: true,
+              email: true
+            }
+          },
+          savingThrows: true,
+          skills: true,
+          spells: {
+            include: {
+              spell: true
+            }
+          },
+          spellSlots: true,
+          inventory: true,
+          attacks: true,
+          features: true,
+          cantrips: true,
+          combatActions: true
+        }
+      })
+
+      return updatedCharacter ? this.mapPrismaToEntity(updatedCharacter) : null
     } catch (error) {
+      console.error('Error updating character:', error)
       return null
     }
   }

@@ -129,6 +129,7 @@ model Character {
   features        Feature[]
   cantrips        Cantrip[]
   specialAbilities SpecialAbility[]
+  combatActions   CombatAction[]
 
   @@map("characters")
 }
@@ -274,10 +275,24 @@ model SpecialAbility {
   usesPerRest    Int?      // optional: limited uses per rest
   usesRemaining  Int?      // current remaining uses
   abilityType    AbilityType @default(ACTION)
-  
+
   character      Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("special_abilities")
+}
+
+model CombatAction {
+  id           String    @id @default(cuid())
+  characterId  String
+  name         String
+  type         String    // "Action", "Bonus Action", "Reaction", "Free Action", "Special"
+  currentUses  Int       @default(0)
+  maxUses      Int       @default(0)
+  description  String?
+
+  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@map("combat_actions")
 }
 
 enum AbilityType {

@@ -6,6 +6,18 @@ export interface ApiResponse<T> {
   message?: string
 }
 
+// Import types from CombatInventoryDTO
+import type { InventoryItemDTO, AttackDTO } from './CombatInventoryDTO'
+
+export interface CombatActionDTO {
+  id?: string
+  name: string
+  type: string
+  currentUses: number
+  maxUses: number
+  description?: string
+}
+
 // Character DTOs
 export interface CharacterDTO {
   id?: string
@@ -55,7 +67,12 @@ export interface CharacterDTO {
   platinumCoins?: number
   // Inventory
   backpack?: string
+  inventory?: InventoryItemDTO[]
   notes: Record<string, any>
+  // Attacks
+  attacks?: AttackDTO[]
+  // Combat Actions
+  combatActions?: CombatActionDTO[]
   // Skills and Saving Throws
   skills?: SkillDTO[]
   savingThrows?: SavingThrowDTO[]

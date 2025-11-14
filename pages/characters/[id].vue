@@ -195,68 +195,111 @@
             </div>
           </UCard>
           
-          <!-- Combat Stats Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Combat Statistics
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Armor Class
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.armorClass"
-                  type="number"
-                  min="1"
-                />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.armorClass || 10 }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Speed
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.speed"
-                  type="number"
-                  min="0"
-                />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.speed || 30 }} ft</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Max HP
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.maxHp"
-                  type="number"
-                  min="1"
-                />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxHp || 0 }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Current HP
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.currentHp"
-                  type="number"
-                  min="0"
-                  :max="character.maxHp"
-                />
-                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp || 0 }}</p>
-              </div>
-            </div>
+           <!-- Combat Stats Card -->
+           <UCard>
+             <template #header>
+               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                 Combat Statistics
+               </h3>
+             </template>
+
+             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Armor Class
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.armorClass"
+                   type="number"
+                   min="1"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.armorClass || 10 }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Speed
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.speed"
+                   type="number"
+                   min="0"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.speed || 30 }} ft</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Max HP
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.maxHp"
+                   type="number"
+                   min="1"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxHp || 0 }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Current HP
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.currentHp"
+                   type="number"
+                   min="0"
+                   :max="character.maxHp"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp || 0 }}</p>
+               </div>
+             </div>
+
+             <!-- Proficiency Checkboxes -->
+             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+               <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">
+                 Proficiencies
+               </h4>
+
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <!-- Saving Throws Proficiency -->
+                 <div>
+                   <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                     Saving Throws
+                   </h5>
+                   <div class="space-y-2">
+                     <div v-for="ability in ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']" :key="ability" class="flex items-center space-x-2">
+                       <UCheckbox
+                         v-if="editMode"
+                         v-model="savingThrowProficient[ability]"
+                         size="sm"
+                       />
+                       <span class="text-sm text-gray-600 dark:text-gray-400 capitalize">{{ ability }}</span>
+                     </div>
+                   </div>
+                 </div>
+
+                 <!-- Skills Proficiency -->
+                 <div>
+                   <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                     Skills
+                   </h5>
+                   <div class="space-y-2 max-h-48 overflow-y-auto">
+                     <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center space-x-2">
+                       <UCheckbox
+                         v-if="editMode"
+                         v-model="skillProficient[skill.name]"
+                         size="sm"
+                       />
+                       <span class="text-sm text-gray-600 dark:text-gray-400">{{ skill.label }}</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
             
             <!-- Health Bar -->
             <div class="mt-6">
@@ -365,89 +408,194 @@
             </div>
           </UCard>
           
-          <!-- Combat Actions Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Combat Actions
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Hit Dice
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model="editForm.hitDice"
-                  placeholder="e.g., 1d8"
-                />
-                <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.hitDice || 'Not set' }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Initiative
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.initiative"
-                  type="number"
-                  placeholder="Initiative"
-                />
-                <p v-else class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ character.initiative !== undefined ? (character.initiative >= 0 ? '+' : '') + character.initiative : 'Not set' }}
-                </p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Passive Perception
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.passivePerception"
-                  type="number"
-                  min="1"
-                  placeholder="Passive Perception"
-                />
-                <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.passivePerception || 10 }}</p>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Death Saves
-                </label>
-                <div v-if="editMode" class="space-y-2">
-                  <div class="flex space-x-2">
-                    <span class="text-xs text-gray-500">Success:</span>
-                    <UInput
-                      v-model.number="editForm.deathSaveSuccesses"
-                      type="number"
-                      min="0"
-                      max="3"
-                      class="w-16"
-                    />
-                  </div>
-                  <div class="flex space-x-2">
-                    <span class="text-xs text-gray-500">Failures:</span>
-                    <UInput
-                      v-model.number="editForm.deathSaveFailures"
-                      type="number"
-                      min="0"
-                      max="3"
-                      class="w-16"
-                    />
-                  </div>
-                </div>
-                <div v-else class="text-sm text-gray-900 dark:text-white">
-                  <div>✓ {{ character.deathSaveSuccesses || 0 }}/3</div>
-                  <div>✗ {{ character.deathSaveFailures || 0 }}/3</div>
-                </div>
-              </div>
-            </div>
-          </UCard>
+           <!-- Combat Actions Card -->
+           <UCard>
+             <template #header>
+               <div class="flex items-center justify-between">
+                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                   Combat Actions
+                 </h3>
+                 <UButton
+                   v-if="editMode && canEdit"
+                   color="primary"
+                   variant="soft"
+                   size="sm"
+                   icon="i-heroicons-plus"
+                   @click="addCombatAction"
+                 >
+                   Add Action
+                 </UButton>
+               </div>
+             </template>
+
+             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Hit Dice
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model="editForm.hitDice"
+                   placeholder="e.g., 1d8"
+                 />
+                 <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.hitDice || 'Not set' }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Initiative
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.initiative"
+                   type="number"
+                   placeholder="Initiative"
+                 />
+                 <p v-else class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ character.initiative !== undefined ? (character.initiative >= 0 ? '+' : '') + character.initiative : 'Not set' }}
+                 </p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Passive Perception
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.passivePerception"
+                   type="number"
+                   min="1"
+                   placeholder="Passive Perception"
+                 />
+                 <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.passivePerception || 10 }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Death Saves
+                 </label>
+                 <div v-if="editMode" class="space-y-2">
+                   <div class="flex space-x-2">
+                     <span class="text-xs text-gray-500">Success:</span>
+                     <UInput
+                       v-model.number="editForm.deathSaveSuccesses"
+                       type="number"
+                       min="0"
+                       max="3"
+                       class="w-16"
+                     />
+                   </div>
+                   <div class="flex space-x-2">
+                     <span class="text-xs text-gray-500">Failures:</span>
+                     <UInput
+                       v-model.number="editForm.deathSaveFailures"
+                       type="number"
+                       min="0"
+                       max="3"
+                       class="w-16"
+                     />
+                   </div>
+                 </div>
+                 <div v-else class="text-sm text-gray-900 dark:text-white">
+                   <div>✓ {{ character.deathSaveSuccesses || 0 }}/3</div>
+                   <div>✗ {{ character.deathSaveFailures || 0 }}/3</div>
+                 </div>
+               </div>
+             </div>
+
+             <!-- Custom Combat Actions -->
+             <div v-if="editCombatActions.length > 0 || (character.combatActions && character.combatActions.length > 0)" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+               <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">
+                 Custom Actions
+               </h4>
+
+               <div class="space-y-4">
+                 <div
+                   v-for="(action, index) in editMode ? editCombatActions : (character.combatActions || [])"
+                   :key="index"
+                   class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                 >
+                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div>
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                         Action Name
+                       </label>
+                       <UInput
+                         v-if="editMode"
+                         v-model="editCombatActions[index].name"
+                         placeholder="Action name"
+                       />
+                       <p v-else class="text-gray-900 dark:text-white font-medium">{{ action.name }}</p>
+                     </div>
+
+                     <div>
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                         Type
+                       </label>
+                       <USelect
+                         v-if="editMode"
+                         v-model="editCombatActions[index].type"
+                         :options="actionTypeOptions"
+                         placeholder="Action type"
+                       />
+                       <p v-else class="text-gray-900 dark:text-white">{{ action.type || 'Action' }}</p>
+                     </div>
+
+                     <div>
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                         Uses
+                       </label>
+                       <div v-if="editMode" class="flex space-x-2">
+                         <UInput
+                           v-model.number="editCombatActions[index].currentUses"
+                           type="number"
+                           min="0"
+                           placeholder="0"
+                           class="flex-1"
+                         />
+                         <span class="text-gray-500">/</span>
+                         <UInput
+                           v-model.number="editCombatActions[index].maxUses"
+                           type="number"
+                           min="0"
+                           placeholder="0"
+                           class="flex-1"
+                         />
+                       </div>
+                       <p v-else class="text-gray-900 dark:text-white">
+                         {{ action.currentUses || 0 }}/{{ action.maxUses || 0 }}
+                       </p>
+                     </div>
+                   </div>
+
+                   <div class="mt-4">
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                       Description
+                     </label>
+                     <UTextarea
+                       v-if="editMode"
+                       v-model="editCombatActions[index].description"
+                       placeholder="Describe what this action does..."
+                       :rows="2"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white text-sm">{{ action.description || 'No description' }}</p>
+                   </div>
+
+                   <div v-if="editMode" class="mt-4 flex justify-end">
+                     <UButton
+                       color="red"
+                       variant="ghost"
+                       size="sm"
+                       icon="i-heroicons-trash"
+                       @click="removeCombatAction(index)"
+                     >
+                       Remove
+                     </UButton>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </UCard>
           
           <!-- Ability Scores Card -->
           <UCard>
@@ -580,77 +728,436 @@
             </div>
           </UCard>
           
-          <!-- Saving Throws Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Saving Throws
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Strength</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('strength')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Dexterity</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('dexterity')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Constitution</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('constitution')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Intelligence</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('intelligence')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Wisdom</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('wisdom')) }}
-                </span>
-              </div>
-              
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Charisma</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSavingThrowModifier('charisma')) }}
-                </span>
-              </div>
-            </div>
-          </UCard>
+           <!-- Saving Throws Card -->
+           <UCard>
+             <template #header>
+               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                 Saving Throws
+               </h3>
+             </template>
+
+             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+               <div class="flex items-center justify-between">
+                 <div class="flex items-center space-x-2">
+                   <UCheckbox
+                     v-if="editMode"
+                     v-model="savingThrowProficient.strength"
+                     size="sm"
+                   />
+                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Strength</span>
+                 </div>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ getFormattedBonus(getSavingThrowModifier('strength')) }}
+                 </span>
+               </div>
+
+               <div class="flex items-center justify-between">
+                 <div class="flex items-center space-x-2">
+                   <UCheckbox
+                     v-if="editMode"
+                     v-model="savingThrowProficient.dexterity"
+                     size="sm"
+                   />
+                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Dexterity</span>
+                 </div>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ getFormattedBonus(getSavingThrowModifier('dexterity')) }}
+                 </span>
+               </div>
+
+               <div class="flex items-center justify-between">
+                 <div class="flex items-center space-x-2">
+                   <UCheckbox
+                     v-if="editMode"
+                     v-model="savingThrowProficient.constitution"
+                     size="sm"
+                   />
+                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Constitution</span>
+                 </div>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ getFormattedBonus(getSavingThrowModifier('constitution')) }}
+                 </span>
+               </div>
+
+               <div class="flex items-center justify-between">
+                 <div class="flex items-center space-x-2">
+                   <UCheckbox
+                     v-if="editMode"
+                     v-model="savingThrowProficient.intelligence"
+                     size="sm"
+                   />
+                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Intelligence</span>
+                 </div>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ getFormattedBonus(getSavingThrowModifier('intelligence')) }}
+                 </span>
+               </div>
+
+               <div class="flex items-center justify-between">
+                 <div class="flex items-center space-x-2">
+                   <UCheckbox
+                     v-if="editMode"
+                     v-model="savingThrowProficient.wisdom"
+                     size="sm"
+                   />
+                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Wisdom</span>
+                 </div>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ getFormattedBonus(getSavingThrowModifier('wisdom')) }}
+                 </span>
+               </div>
+
+               <div class="flex items-center justify-between">
+                 <div class="flex items-center space-x-2">
+                   <UCheckbox
+                     v-if="editMode"
+                     v-model="savingThrowProficient.charisma"
+                     size="sm"
+                   />
+                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Charisma</span>
+                 </div>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ getFormattedBonus(getSavingThrowModifier('charisma')) }}
+                 </span>
+               </div>
+             </div>
+           </UCard>
           
-          <!-- Skills Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Skills
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center justify-between">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ skill.label }}</span>
-                <span class="text-lg font-bold text-gray-900 dark:text-white">
-                  {{ getFormattedBonus(getSkillModifier(skill.name, skill.ability)) }}
-                </span>
-              </div>
-            </div>
-          </UCard>
-        </div>
+           <!-- Skills Card -->
+           <UCard>
+             <template #header>
+               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                 Skills
+               </h3>
+             </template>
+
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+               <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center justify-between">
+                 <div class="flex items-center space-x-2">
+                   <UCheckbox
+                     v-if="editMode"
+                     v-model="skillProficient[skill.name]"
+                     size="sm"
+                   />
+                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ skill.label }}</span>
+                 </div>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ getFormattedBonus(getSkillModifier(skill.name, skill.ability)) }}
+                 </span>
+               </div>
+             </div>
+           </UCard>
+
+           <!-- Attacks Card -->
+           <UCard>
+             <template #header>
+               <div class="flex items-center justify-between">
+                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                   Attacks
+                 </h3>
+                 <UButton
+                   v-if="editMode && canEdit"
+                   color="primary"
+                   variant="soft"
+                   size="sm"
+                   icon="i-heroicons-plus"
+                   @click="addAttack"
+                 >
+                   Add Attack
+                 </UButton>
+               </div>
+             </template>
+
+             <div v-if="!character.attacks || character.attacks.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+               No attacks configured yet.
+             </div>
+
+             <div v-else class="space-y-4">
+               <div
+                 v-for="(attack, index) in character.attacks"
+                 :key="attack.id || index"
+                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+               >
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                       Name
+                     </label>
+                     <UInput
+                       v-if="editMode"
+                       v-model="editAttacks[index].name"
+                       placeholder="Attack name"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white">{{ attack.name }}</p>
+                   </div>
+
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                       Attack Bonus
+                     </label>
+                     <UInput
+                       v-if="editMode"
+                       v-model.number="editAttacks[index].attackBonus"
+                       type="number"
+                       placeholder="+0"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white">
+                       {{ attack.attackBonus !== undefined ? (attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus : 'N/A' }}
+                     </p>
+                   </div>
+
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                       Damage
+                     </label>
+                     <UInput
+                       v-if="editMode"
+                       v-model="editAttacks[index].damage"
+                       placeholder="1d8+3"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white">{{ attack.damage || 'N/A' }}</p>
+                   </div>
+
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                       Range/Properties
+                     </label>
+                     <UInput
+                       v-if="editMode"
+                       v-model="editAttacks[index].rangeText"
+                       placeholder="5 ft"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white">{{ attack.rangeText || 'N/A' }}</p>
+                   </div>
+                 </div>
+
+                 <div class="mt-4">
+                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                     Description
+                   </label>
+                   <UTextarea
+                     v-if="editMode"
+                     v-model="editAttacks[index].notes"
+                     placeholder="Attack description..."
+                     :rows="2"
+                   />
+                   <p v-else class="text-gray-900 dark:text-white">{{ attack.notes || 'No description' }}</p>
+                 </div>
+
+                 <div v-if="editMode" class="mt-4 flex justify-end">
+                   <UButton
+                     color="red"
+                     variant="ghost"
+                     size="sm"
+                     icon="i-heroicons-trash"
+                     @click="removeAttack(index)"
+                   >
+                     Remove
+                   </UButton>
+                 </div>
+               </div>
+             </div>
+           </UCard>
+
+           <!-- Inventory Card -->
+           <UCard>
+             <template #header>
+               <div class="flex items-center justify-between">
+                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                   Inventory
+                 </h3>
+                 <UButton
+                   v-if="editMode && canEdit"
+                   color="primary"
+                   variant="soft"
+                   size="sm"
+                   icon="i-heroicons-plus"
+                   @click="addInventoryItem"
+                 >
+                   Add Item
+                 </UButton>
+               </div>
+             </template>
+
+             <div v-if="!character.inventory || character.inventory.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+               No items in inventory.
+             </div>
+
+             <div v-else class="space-y-3">
+               <div
+                 v-for="(item, index) in character.inventory"
+                 :key="item.id || index"
+                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+               >
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                   <div class="md:col-span-2">
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                       Item Name
+                     </label>
+                     <UInput
+                       v-if="editMode"
+                       v-model="editInventory[index].name"
+                       placeholder="Item name"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white font-medium">{{ item.name }}</p>
+                   </div>
+
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                       Quantity
+                     </label>
+                     <UInput
+                       v-if="editMode"
+                       v-model.number="editInventory[index].quantity"
+                       type="number"
+                       min="1"
+                       placeholder="1"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white">{{ item.quantity }}</p>
+                   </div>
+
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                       Weight (lbs)
+                     </label>
+                     <UInput
+                       v-if="editMode"
+                       v-model.number="editInventory[index].weight"
+                       type="number"
+                       step="0.1"
+                       min="0"
+                       placeholder="0.0"
+                     />
+                     <p v-else class="text-gray-900 dark:text-white">{{ item.weight || 0 }} lbs</p>
+                   </div>
+                 </div>
+
+                 <div class="mt-3">
+                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                     Notes
+                   </label>
+                   <UTextarea
+                     v-if="editMode"
+                     v-model="editInventory[index].notes"
+                     placeholder="Item description or notes..."
+                     :rows="2"
+                   />
+                   <p v-else class="text-gray-900 dark:text-white text-sm">{{ item.notes || 'No notes' }}</p>
+                 </div>
+
+                 <div v-if="editMode" class="mt-3 flex items-center justify-between">
+                   <UCheckbox
+                     v-model="editInventory[index].equipped"
+                     label="Equipped"
+                   />
+                   <UButton
+                     color="red"
+                     variant="ghost"
+                     size="sm"
+                     icon="i-heroicons-trash"
+                     @click="removeInventoryItem(index)"
+                   >
+                     Remove
+                   </UButton>
+                 </div>
+
+                 <div v-else-if="item.equipped" class="mt-2">
+                   <UBadge color="green" variant="soft" size="sm">Equipped</UBadge>
+                 </div>
+               </div>
+             </div>
+           </UCard>
+
+           <!-- Coins Card -->
+           <UCard>
+             <template #header>
+               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                 Currency
+               </h3>
+             </template>
+
+             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Copper (cp)
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.copperCoins"
+                   type="number"
+                   min="0"
+                   placeholder="0"
+                 />
+                 <p v-else class="text-2xl font-bold text-orange-600">{{ character.copperCoins || 0 }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Silver (sp)
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.silverCoins"
+                   type="number"
+                   min="0"
+                   placeholder="0"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-400">{{ character.silverCoins || 0 }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Electrum (ep)
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.electrumCoins"
+                   type="number"
+                   min="0"
+                   placeholder="0"
+                 />
+                 <p v-else class="text-2xl font-bold text-blue-400">{{ character.electrumCoins || 0 }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Gold (gp)
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.goldCoins"
+                   type="number"
+                   min="0"
+                   placeholder="0"
+                 />
+                 <p v-else class="text-2xl font-bold text-yellow-500">{{ character.goldCoins || 0 }}</p>
+               </div>
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Platinum (pp)
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.platinumCoins"
+                   type="number"
+                   min="0"
+                   placeholder="0"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-300">{{ character.platinumCoins || 0 }}</p>
+               </div>
+             </div>
+
+             <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+               <div class="flex justify-between items-center">
+                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Value (gp)</span>
+                 <span class="text-lg font-bold text-gray-900 dark:text-white">
+                   {{ calculateTotalWealth() }}
+                 </span>
+               </div>
+             </div>
+           </UCard>
+         </div>
         
         <!-- Right Column - Quick Info & Actions -->
         <div class="space-y-6">
@@ -662,23 +1169,24 @@
               </h3>
             </template>
             
-            <div class="text-center">
-              <!-- Avatar Image or Initials -->
-              <div class="relative h-32 w-32 mx-auto mb-4">
-                <img
-                  v-if="character.avatar"
-                  :src="character.avatar"
-                  :alt="character.characterName || 'Character'"
-                  class="h-32 w-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
-                  @error="($event.target as HTMLImageElement).style.display = 'none'"
-                />
-                <div
-                  v-if="!character.avatar"
-                  class="h-32 w-32 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-4xl"
-                >
-                  {{ character.characterName?.charAt(0)?.toUpperCase() || '?' }}
-                </div>
-              </div>
+             <div class="text-center">
+               <!-- Avatar Image or Initials -->
+               <div class="relative h-32 w-32 mx-auto mb-4">
+                 <img
+                   v-if="character.avatar && !imageLoadError"
+                   :src="character.avatar"
+                   :alt="character.characterName || 'Character'"
+                   class="h-32 w-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
+                   @error="imageLoadError = true"
+                   @load="imageLoadError = false"
+                 />
+                 <div
+                   v-if="!character.avatar || imageLoadError"
+                   class="h-32 w-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-4xl border-4 border-gray-200 dark:border-gray-600"
+                 >
+                   {{ character.characterName?.charAt(0)?.toUpperCase() || '?' }}
+                 </div>
+               </div>
               
               <!-- Avatar URL Input in Edit Mode -->
               <div v-if="editMode" class="mb-4">
@@ -771,10 +1279,28 @@ const editMode = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
 const error = ref<string | null>(null)
+const imageLoadError = ref(false)
 
 // Form data
 const editForm = ref<Partial<CharacterDTO>>({})
 const characterNotes = ref('')
+
+// Attacks and inventory data
+const editAttacks = ref<Array<{name: string, attackBonus?: number, damage?: string, rangeText?: string, notes?: string}>>([])
+const editInventory = ref<Array<{name: string, quantity: number, weight?: number, equipped: boolean, notes?: string}>>([])
+const editCombatActions = ref<Array<{name: string, type: string, currentUses: number, maxUses: number, description?: string}>>([])
+
+// Proficiency checkboxes
+const savingThrowProficient = ref({
+  strength: false,
+  dexterity: false,
+  constitution: false,
+  intelligence: false,
+  wisdom: false,
+  charisma: false
+})
+
+const skillProficient = ref<Record<string, boolean>>({})
 
 // Options
 const raceOptions = [
@@ -823,6 +1349,14 @@ const alignmentOptions = [
   { label: 'Lawful Evil', value: 'Lawful Evil' },
   { label: 'Neutral Evil', value: 'Neutral Evil' },
   { label: 'Chaotic Evil', value: 'Chaotic Evil' }
+]
+
+const actionTypeOptions = [
+  { label: 'Action', value: 'Action' },
+  { label: 'Bonus Action', value: 'Bonus Action' },
+  { label: 'Reaction', value: 'Reaction' },
+  { label: 'Free Action', value: 'Free Action' },
+  { label: 'Special', value: 'Special' }
 ]
 
 // Standard D&D 5e Skills
@@ -897,6 +1431,59 @@ const getSkillModifier = (skillName: string, abilityName: string) => {
 }
 
 // Methods
+function addAttack() {
+  editAttacks.value.push({
+    name: '',
+    attackBonus: undefined,
+    damage: '',
+    rangeText: '',
+    notes: ''
+  })
+}
+
+function removeAttack(index: number) {
+  editAttacks.value.splice(index, 1)
+}
+
+function addInventoryItem() {
+  editInventory.value.push({
+    name: '',
+    quantity: 1,
+    weight: undefined,
+    equipped: false,
+    notes: ''
+  })
+}
+
+function removeInventoryItem(index: number) {
+  editInventory.value.splice(index, 1)
+}
+
+function addCombatAction() {
+  editCombatActions.value.push({
+    name: '',
+    type: 'Action',
+    currentUses: 0,
+    maxUses: 0,
+    description: ''
+  })
+}
+
+function removeCombatAction(index: number) {
+  editCombatActions.value.splice(index, 1)
+}
+
+function calculateTotalWealth() {
+  const copper = character.value?.copperCoins || 0
+  const silver = character.value?.silverCoins || 0
+  const electrum = character.value?.electrumCoins || 0
+  const gold = character.value?.goldCoins || 0
+  const platinum = character.value?.platinumCoins || 0
+
+  const total = (copper * 0.01) + (silver * 0.1) + (electrum * 0.5) + gold + (platinum * 10)
+  return total.toFixed(2)
+}
+
 async function loadCharacter() {
   isLoading.value = true
   error.value = null
@@ -915,6 +1502,30 @@ async function loadCharacter() {
       character.value = response.data
       editForm.value = { ...response.data }
       characterNotes.value = typeof response.data.notes === 'string' ? response.data.notes : ''
+      imageLoadError.value = false
+
+      // Initialize attacks
+      editAttacks.value = response.data.attacks ? [...response.data.attacks] : []
+
+      // Initialize inventory
+      editInventory.value = response.data.inventory ? [...response.data.inventory] : []
+
+      // Initialize combat actions
+      editCombatActions.value = response.data.combatActions ? [...response.data.combatActions] : []
+
+      // Initialize saving throw proficiencies
+      if (response.data.savingThrows) {
+        response.data.savingThrows.forEach((save: any) => {
+          savingThrowProficient.value[save.ability] = save.proficient
+        })
+      }
+
+      // Initialize skill proficiencies
+      if (response.data.skills) {
+        response.data.skills.forEach((skill: any) => {
+          skillProficient.value[skill.name] = skill.proficient
+        })
+      }
     } else {
       throw new Error('Character not found')
     }
@@ -932,9 +1543,33 @@ async function saveCharacter() {
   isSaving.value = true
   
   try {
+    // Prepare saving throws data
+    const savingThrows = Object.entries(savingThrowProficient.value)
+      .filter(([_, proficient]) => proficient)
+      .map(([ability, proficient]) => ({ ability, proficient }))
+
+    // Prepare skills data
+    const skills = Object.entries(skillProficient.value)
+      .filter(([_, proficient]) => proficient)
+      .map(([name, proficient]) => {
+        const skill = standardSkills.find(s => s.name === name)
+        return {
+          name,
+          ability: skill?.ability || 'strength',
+          proficient,
+          expertise: false, // Could be enhanced later
+          category: 'STANDARD'
+        }
+      })
+
     const updateData = {
       ...editForm.value,
-      notes: characterNotes.value
+      notes: characterNotes.value,
+      attacks: editAttacks.value,
+      inventory: editInventory.value,
+      combatActions: editCombatActions.value,
+      savingThrows,
+      skills
     }
     
     const response = await $fetch<{success: boolean, data: CharacterDTO}>(`/api/characters/${characterId}`, {
@@ -961,6 +1596,32 @@ async function saveCharacter() {
 watch(editMode, (newValue) => {
   if (newValue && character.value) {
     editForm.value = { ...character.value }
+    editAttacks.value = character.value.attacks ? [...character.value.attacks] : []
+    editInventory.value = character.value.inventory ? [...character.value.inventory] : []
+    editCombatActions.value = character.value.combatActions ? [...character.value.combatActions] : []
+
+    // Reset proficiency checkboxes
+    savingThrowProficient.value = {
+      strength: false,
+      dexterity: false,
+      constitution: false,
+      intelligence: false,
+      wisdom: false,
+      charisma: false
+    }
+    skillProficient.value = {}
+
+    // Load current proficiencies
+    if (character.value.savingThrows) {
+      character.value.savingThrows.forEach((save: any) => {
+        savingThrowProficient.value[save.ability] = save.proficient
+      })
+    }
+    if (character.value.skills) {
+      character.value.skills.forEach((skill: any) => {
+        skillProficient.value[skill.name] = skill.proficient
+      })
+    }
   }
 })
 
