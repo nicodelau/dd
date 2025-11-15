@@ -86,6 +86,15 @@ export interface MusicTrack {
   publishedAt?: string // Video publish date
   description?: string // Video description (truncated)
   tags?: string[] // Video tags
+  // Sound effect properties
+  isPlayableWhileMusic?: boolean // Can play while background music is playing
+  isSoundEffect?: boolean // Mark as sound effect vs background music
+}
+
+export interface SoundEffectState {
+  soundEffectsVolume: number // 0-100, separate from music volume
+  playableTrackIds: Set<string> // Tracks marked as playable while music is on
+  lastSoundEffectPlayed?: Date
 }
 
 export interface MusicState {
@@ -96,6 +105,8 @@ export interface MusicState {
   playlist: MusicTrack[]
   fadeTransition: boolean
   lastUpdated: Date
+  // Sound effects state
+  soundEffects: SoundEffectState
 }
 
 export interface DiceUser {
@@ -1076,7 +1087,12 @@ class DiceRoomStore {
       position: 0,
       playlist: [],
       fadeTransition: false,
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
+      soundEffects: {
+        soundEffectsVolume: 75, // Default sound effects volume
+        playableTrackIds: new Set<string>(),
+        lastSoundEffectPlayed: undefined
+      }
     }
 
     room.musicState = musicState
@@ -1096,6 +1112,8 @@ class DiceRoomStore {
     publishedAt?: string;
     description?: string;
     tags?: string[];
+    isSoundEffect?: boolean;
+    isPlayableWhileMusic?: boolean;
   }): MusicTrack {
     const room = this.getRoom(roomCode)
     if (!room) {
@@ -1123,11 +1141,18 @@ class DiceRoomStore {
       thumbnail: trackData.thumbnail,
       publishedAt: trackData.publishedAt,
       description: trackData.description,
-      tags: trackData.tags
+      tags: trackData.tags,
+      isSoundEffect: trackData.isSoundEffect || false,
+      isPlayableWhileMusic: trackData.isPlayableWhileMusic || false
     }
 
     room.musicState!.playlist.push(track)
     room.musicState!.lastUpdated = new Date()
+
+    // If track is marked as playable while music, add it to the sound effects set
+    if (track.isPlayableWhileMusic) {
+      room.musicState!.soundEffects.playableTrackIds.add(track.id)
+    }
 
     this.broadcastEvent('music:track_added', { track, playlist: room.musicState!.playlist }, roomCode)
     
@@ -1152,6 +1177,9 @@ class DiceRoomStore {
 
     const removedTrack = room.musicState.playlist.splice(trackIndex, 1)[0]
     room.musicState.lastUpdated = new Date()
+
+    // Remove from sound effects set if it was marked as playable while music
+    room.musicState.soundEffects.playableTrackIds.delete(trackId)
 
     // If the removed track was currently playing, stop playback
     if (room.musicState.currentTrack?.id === trackId) {
@@ -1275,6 +1303,58 @@ class DiceRoomStore {
     this.broadcastEvent('music:volume_changed', { volume }, roomCode)
     
     console.log(`🔊 Volume set to ${volume}% in room ${roomCode}`)
+  }
+
+  setSoundEffectsVolume(roomCode: string, dmUserId: string, soundEffectsVolume: number): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      throw new Error('Room or music state not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can control sound effects volume')
+    }
+
+    // Clamp volume between 0 and 100
+    soundEffectsVolume = Math.max(0, Math.min(100, soundEffectsVolume))
+    room.musicState.soundEffects.soundEffectsVolume = soundEffectsVolume
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:sound_effects_volume_changed', { soundEffectsVolume }, roomCode)
+    
+    console.log(`🔊 Sound effects volume set to ${soundEffectsVolume}% in room ${roomCode}`)
+  }
+
+  playSoundEffect(roomCode: string, dmUserId: string, trackId: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) {
+      throw new Error('Room or music state not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can control music playback')
+    }
+
+    const track = room.musicState.playlist.find(t => t.id === trackId)
+    if (!track) {
+      throw new Error('Track not found in playlist')
+    }
+
+    if (!track.isPlayableWhileMusic && !track.isSoundEffect) {
+      throw new Error('Track is not marked as a sound effect')
+    }
+
+    // Update sound effects state
+    room.musicState.soundEffects.lastSoundEffectPlayed = new Date()
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:sound_effect_played', {
+      track,
+      volume: room.musicState.soundEffects.soundEffectsVolume,
+      timestamp: new Date()
+    }, roomCode)
+    
+    console.log(`🎵 Sound effect "${track.name}" played in room ${roomCode}`)
   }
 
   updateMusicPosition(roomCode: string, position: number): void {

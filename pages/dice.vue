@@ -43,13 +43,13 @@
             <div class="flex items-center space-x-2">
               <UButton color="blue" variant="outline" size="sm" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
                 :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
-                <span class="hidden sm:inline">{{ isLeftSidebarOpen ? 'Hide' : 'Show' }} Character</span>
-                <span class="sm:hidden">Char</span>
+                <span class="hidden sm:inline">{{ isLeftSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Players Info' : 'Character' }}</span>
+                <span class="sm:hidden">{{ userRole === 'DM' ? 'Players' : 'Char' }}</span>
               </UButton>
               <UButton color="green" variant="outline" size="sm" @click="isRightSidebarOpen = !isRightSidebarOpen"
                 :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
-                <span class="hidden sm:inline">{{ isRightSidebarOpen ? 'Hide' : 'Show' }} Abilities</span>
-                <span class="sm:hidden">Stats</span>
+                <span class="hidden sm:inline">{{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Request Dices' : 'Abilities' }}</span>
+                <span class="sm:hidden">{{ userRole === 'DM' ? 'Request' : 'Stats' }}</span>
               </UButton>
             </div>
 
@@ -94,11 +94,11 @@
       <div class="lg:hidden mb-4 grid grid-cols-2 gap-2">
         <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen" 
           :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
-          {{ isLeftSidebarOpen ? 'Hide' : 'Show' }} Character
+          {{ isLeftSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Players Info' : 'Character' }}
         </UButton>
         <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen" 
           :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
-          {{ isRightSidebarOpen ? 'Hide' : 'Show' }} Abilities
+          {{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Request Dices' : 'Abilities' }}
         </UButton>
       </div>
 
@@ -175,10 +175,10 @@
           class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
           :class="isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
           <!-- Left Sidebar Header -->
-          <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+           <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                🧙‍♂️ Character Info
+                {{ userRole === 'DM' ? '👥 Players Info' : '🧙‍♂️ Character Info' }}
               </h3>
               <UButton color="gray" variant="ghost" size="sm" @click="isLeftSidebarOpen = false"
                 icon="i-heroicons-x-mark" />
@@ -281,13 +281,91 @@
               </div>
             </div>
 
-            <!-- DM Character Info Placeholder -->
+            <!-- DM Players Health Display -->
             <div v-else>
-              <div class="text-center py-8">
-                <div class="text-4xl mb-4">🎯</div>
-                <h4 class="font-medium text-gray-900 dark:text-white mb-2">Dungeon Master</h4>
+              <div class="mb-4">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-medium text-gray-900 dark:text-white">Players Health</h4>
+                  <UButton v-if="!isOfflineMode" color="gray" variant="outline" size="xs" @click="loadAllPlayersStats(currentRoom?.code || 'default')"
+                    icon="i-heroicons-arrow-path">
+                    Refresh
+                  </UButton>
+                </div>
+              </div>
+
+              <div v-if="allPlayers.length > 0" class="space-y-4">
+                <div v-for="player in allPlayers" :key="player.userId"
+                  class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <!-- Player Name and Level -->
+                  <div class="flex items-center justify-between mb-3">
+                    <div>
+                      <h5 class="text-sm font-medium text-gray-900 dark:text-white">{{ player.name }}</h5>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Level {{ player.stats.level }}</p>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                      <span class="text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                        AC {{ player.stats.armorClass }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Health Bar -->
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-red-700 dark:text-red-300">Health Points</span>
+                      <span class="font-mono text-red-900 dark:text-red-100">
+                        {{ player.stats.hitPoints.current }} / {{ player.stats.hitPoints.max }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-3">
+                      <div class="bg-red-500 h-3 rounded-full transition-all duration-300"
+                        :style="{ width: `${(player.stats.hitPoints.current / player.stats.hitPoints.max) * 100}%` }"
+                        :class="{ 
+                          'bg-red-600': player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25,
+                          'bg-yellow-500': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.25 && player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5,
+                          'bg-green-500': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.5
+                        }">
+                      </div>
+                    </div>
+                    
+                    <!-- Health Status Indicator -->
+                    <div class="text-xs font-medium"
+                      :class="{ 
+                        'text-red-600 dark:text-red-400': player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25,
+                        'text-yellow-600 dark:text-yellow-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.25 && player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5,
+                        'text-green-600 dark:text-green-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.5
+                      }">
+                      {{ player.stats.hitPoints.current === 0 ? '💀 Unconscious' : 
+                         player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25 ? '🩸 Critical' :
+                         player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5 ? '⚠️ Wounded' : '💚 Healthy' }}
+                    </div>
+                  </div>
+
+                  <!-- Quick Stats Grid -->
+                  <div class="grid grid-cols-3 gap-2 mt-3">
+                    <div class="text-center">
+                      <div class="text-xs text-gray-500 dark:text-gray-400">Init</div>
+                      <div class="text-sm font-mono text-gray-900 dark:text-white">
+                        {{ player.stats.initiative >= 0 ? '+' : '' }}{{ player.stats.initiative }}
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-xs text-gray-500 dark:text-gray-400">Speed</div>
+                      <div class="text-sm font-mono text-gray-900 dark:text-white">{{ player.stats.speed }} ft</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-xs text-gray-500 dark:text-gray-400">Prof</div>
+                      <div class="text-sm font-mono text-gray-900 dark:text-white">+{{ player.stats.proficiencyBonus }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-8">
+                <div class="text-4xl mb-4">👥</div>
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">No Players Connected</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                  Character info is available for players only.
+                  {{ isOfflineMode ? 'Player health monitoring not available in offline mode' : 'Players will appear here once they join the room' }}
                 </p>
               </div>
             </div>
@@ -299,10 +377,10 @@
           class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
           :class="isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'">
           <!-- Right Sidebar Header -->
-          <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+           <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                ⚡ Ability Scores
+                {{ userRole === 'DM' ? '🎲 Request Dices' : '⚡ Ability Scores' }}
               </h3>
               <UButton color="gray" variant="ghost" size="sm" @click="isRightSidebarOpen = false"
                 icon="i-heroicons-x-mark" />
@@ -1060,7 +1138,7 @@
                         placeholder="Paste YouTube URL here..."
                         icon="i-heroicons-musical-note"
                       />
-                      <div class="flex space-x-2">
+                      <div class="flex flex-wrap gap-2">
                         <UButton
                           color="blue"
                           size="sm"
@@ -1081,6 +1159,66 @@
                         >
                           Add & Play Now
                         </UButton>
+                        <UButton
+                          color="purple"
+                          size="sm"
+                          @click="addTrackAsSoundEffect"
+                          :disabled="!newTrackUrl || isAddingTrack"
+                          :loading="isAddingTrack"
+                          icon="i-heroicons-speaker-wave"
+                        >
+                          Add as Sound Effect
+                        </UButton>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Sound Effects Control Panel -->
+                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🔊 Sound Effects Control</h4>
+                    <div class="space-y-3">
+                      <!-- Sound Effects Volume Control -->
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <label class="text-sm text-purple-700 dark:text-purple-300">Sound Effects Volume</label>
+                          <span class="text-sm text-purple-600 dark:text-purple-400">{{ musicState.soundEffects.soundEffectsVolume }}%</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                          <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-purple-400" />
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            v-model="musicState.soundEffects.soundEffectsVolume"
+                            @input="setSoundEffectsVolume"
+                            class="flex-1 h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer dark:bg-purple-700"
+                          />
+                          <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-purple-400" />
+                        </div>
+                      </div>
+                      
+                      <!-- Quick Sound Effects -->
+                      <div v-if="musicState.playlist.filter(t => t.isSoundEffect).length > 0">
+                        <h5 class="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">Quick Sound Effects</h5>
+                        <div class="grid grid-cols-2 gap-2">
+                          <UButton
+                            v-for="track in musicState.playlist.filter(t => t.isSoundEffect).slice(0, 4)"
+                            :key="track.id"
+                            color="purple"
+                            variant="outline"
+                            size="xs"
+                            @click="playSoundEffect(track.id)"
+                            class="truncate text-xs"
+                          >
+                            🔊 {{ track.title.length > 12 ? track.title.substring(0, 12) + '...' : track.title }}
+                          </UButton>
+                        </div>
+                      </div>
+                      
+                      <div class="bg-purple-100 dark:bg-purple-800/30 border border-purple-200 dark:border-purple-700 rounded p-2">
+                        <p class="text-xs text-purple-700 dark:text-purple-300">
+                          Sound effects play simultaneously with background music and have separate volume control.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -1253,7 +1391,10 @@
                         v-for="track in musicState.playlist"
                         :key="track.id"
                         class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-                        :class="{ 'ring-2 ring-green-500': track.id === musicState.currentTrack?.id }"
+                        :class="{ 
+                          'ring-2 ring-green-500': track.id === musicState.currentTrack?.id,
+                          'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20': track.isSoundEffect
+                        }"
                       >
                         <!-- Thumbnail and track info -->
                         <div class="flex items-center flex-1 min-w-0 space-x-3">
@@ -1268,15 +1409,26 @@
                             <div 
                               v-else 
                               class="w-12 h-9 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center"
+                              :class="track.isSoundEffect ? 'bg-purple-200 dark:bg-purple-800' : ''"
                             >
-                              <UIcon name="i-heroicons-musical-note" class="h-4 w-4 text-gray-400" />
+                              <UIcon 
+                                :name="track.isSoundEffect ? 'i-heroicons-speaker-wave' : 'i-heroicons-musical-note'" 
+                                class="h-4 w-4"
+                                :class="track.isSoundEffect ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'"
+                              />
                             </div>
                           </div>
                           
                           <!-- Track details -->
                           <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {{ track.title || 'Unknown Track' }}
+                            <div class="flex items-center space-x-2">
+                              <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {{ track.title || 'Unknown Track' }}
+                              </div>
+                              <!-- Sound Effect Badge -->
+                              <UBadge v-if="track.isSoundEffect" color="purple" variant="soft" size="xs">
+                                SFX
+                              </UBadge>
                             </div>
                             <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {{ track.artist || 'Unknown Artist' }}
@@ -1284,6 +1436,9 @@
                             <!-- Duration and additional metadata -->
                             <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-gray-500 mt-1">
                               <span v-if="track.duration">{{ formatDuration(track.duration) }}</span>
+                              <span v-if="track.isSoundEffect && track.isPlayableWhileMusic" class="text-purple-500">
+                                • Can play with music
+                              </span>
                               <span v-if="track.tags && track.tags.length > 0" class="truncate">
                                 {{ track.tags.slice(0, 2).join(', ') }}
                               </span>
@@ -1293,7 +1448,19 @@
                         
                         <!-- Control buttons -->
                         <div class="flex items-center space-x-1 ml-2">
+                          <!-- Sound Effect Play Button -->
                           <UButton
+                            v-if="track.isSoundEffect"
+                            color="purple"
+                            variant="ghost"
+                            size="xs"
+                            @click="playSoundEffect(track.id)"
+                            icon="i-heroicons-speaker-wave"
+                            title="Play as sound effect"
+                          />
+                          <!-- Regular Play Button -->
+                          <UButton
+                            v-else
                             color="green"
                             variant="ghost"
                             size="xs"
@@ -1301,6 +1468,7 @@
                             icon="i-heroicons-play"
                             :disabled="track.id === musicState.currentTrack?.id && musicState.isPlaying"
                           />
+                          <!-- Remove Button -->
                           <UButton
                             color="red"
                             variant="ghost"
@@ -1365,6 +1533,13 @@
                       class="w-full h-full"
                     ></div>
                   </div>
+                  
+                  <!-- Sound Effects Container - Hidden but functional -->
+                  <div 
+                    id="sound-effects-container" 
+                    class="hidden"
+                    aria-hidden="true"
+                  ></div>
                   
                   <!-- Track Info - Only when track exists -->
                   <div v-if="musicState.currentTrack" class="text-center">
@@ -1917,7 +2092,12 @@ const musicState = ref({
   isPlaying: false,
   currentTrack: null as any,
   volume: 50,
-  playlist: [] as any[]
+  playlist: [] as any[],
+  soundEffects: {
+    soundEffectsVolume: 75,
+    playableTrackIds: new Set<string>(),
+    lastSoundEffectPlayed: null as Date | null
+  }
 })
 const newTrackUrl = ref('')
 const isAddingTrack = ref(false)
@@ -2839,6 +3019,18 @@ function getCriticalClass(roll: DiceRoll): string {
   return 'text-gray-900 dark:text-white'
 }
 
+// Helper function to show music-related toasts only to DMs
+function showMusicToast(title: string, description: string, color: 'green' | 'red' | 'blue' | 'yellow' = 'green') {
+  if (userRole.value === 'DM') {
+    const toast = useToast()
+    toast.add({
+      title,
+      description,
+      color
+    })
+  }
+}
+
 // Room Maagement Functions
 async function createRoom(){
   if (!userName.value.trim()) {
@@ -3464,6 +3656,62 @@ function initializeSSE(roomCode: string = 'default') {
       })
     })
 
+    eventSource.value.addEventListener('music:track_added', (event) => {
+      const data = JSON.parse(event.data)
+      
+      // Check if track already exists to prevent duplicates
+      const existingTrack = musicState.value.playlist.find(t => t.id === data.track.id)
+      if (!existingTrack) {
+        musicState.value.playlist.push(data.track)
+        
+        // If it's a sound effect, add it to the playable track IDs
+        if (data.track.isSoundEffect || data.track.isPlayableWhileMusic) {
+          musicState.value.soundEffects.playableTrackIds.add(data.track.id)
+        }
+        
+        console.log('🎵 Track added to playlist:', data.track.title)
+        
+        const toast = useToast()
+        toast.add({
+          title: data.track.isSoundEffect ? 'Sound Effect Added' : 'Track Added',
+          description: `${data.track.isSoundEffect ? '🔊' : '🎵'} ${data.track.title}`,
+          color: data.track.isSoundEffect ? 'purple' : 'green'
+        })
+      }
+    })
+
+    // Sound Effects SSE Event Handlers
+    eventSource.value.addEventListener('music:sound_effects_volume_changed', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.value.soundEffects.soundEffectsVolume = data.soundEffectsVolume
+      console.log('🔊 Sound effects volume changed:', data.soundEffectsVolume)
+    })
+
+    eventSource.value.addEventListener('music:sound_effect_played', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🔊 Sound effect played event received:', data)
+      console.log('🔊 Track data:', data.track)
+      console.log('🔊 Volume data:', data.volume)
+      
+      // Update last played timestamp
+      musicState.value.soundEffects.lastSoundEffectPlayed = new Date(data.timestamp)
+      
+      // Actually play the sound effect audio
+      if (data.track?.url) {
+        console.log('🔊 Calling playSoundEffectAudio with:', data.track.url, data.volume || musicState.value.soundEffects.soundEffectsVolume)
+        playSoundEffectAudio(data.track.url, data.volume || musicState.value.soundEffects.soundEffectsVolume)
+      } else {
+        console.error('🔊 No track URL found in sound effect data:', data)
+      }
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Sound Effect',
+        description: `🔊 ${data.track?.title || 'Sound effect'} played`,
+        color: 'purple'
+      })
+    })
+
   } catch (error) {
     console.error('🎲 Failed to initialize SSE:', error)
     console.log('🎲 Using offline mode')
@@ -3494,6 +3742,9 @@ async function joinRoom(roomCode: string = 'default') {
       } else {
         await loadAllPlayersStats(roomCode)
       }
+
+      // Load initial music state for DMs
+      await loadInitialMusicState(roomCode)
     }
   } catch (error) {
     console.error('Failed to join room:', error)
@@ -4129,12 +4380,7 @@ async function addTrackToPlaylist() {
       // This prevents conflicts between local updates and server events
       newTrackUrl.value = ''
       
-      const toast = useToast()
-      toast.add({
-        title: 'Track Added',
-        description: `Added "${response.track.title}" to playlist`,
-        color: 'green'
-      })
+      showMusicToast('Track Added', `Added "${response.track.title}" to playlist`, 'green')
     } else {
       console.error('🎵 API returned unsuccessful response:', response)
       throw new Error(response?.message || 'API returned unsuccessful response')
@@ -4142,16 +4388,300 @@ async function addTrackToPlaylist() {
   } catch (error: any) {
     console.error('🎵 Failed to add track:', error)
     
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: error.data?.statusMessage || error.message || 'Failed to add track to playlist',
-      color: 'red'
-    })
+    showMusicToast('Error', error.data?.statusMessage || error.message || 'Failed to add track to playlist', 'red')
   } finally {
     clearTimeout(fallbackTimeout) // Clear the fallback timeout
     const finalTime = Date.now()
     console.log('🎵 Setting isAddingTrack to false', `(total time: ${finalTime - startTime}ms)`)
+    isAddingTrack.value = false
+  }
+}
+
+// Sound Effects Functions
+async function setSoundEffectsVolume() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/sound-effects-volume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        soundEffectsVolume: musicState.value.soundEffects.soundEffectsVolume
+      }
+    })
+    
+    if (response.success) {
+      console.log('🔊 Sound effects volume set to:', musicState.value.soundEffects.soundEffectsVolume)
+    }
+  } catch (error) {
+    console.error('Failed to set sound effects volume:', error)
+    // Don't show toast for volume changes as they happen frequently
+  }
+}
+
+async function playSoundEffect(trackId: string) {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/music/play-sound-effect', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: trackId
+      }
+    })
+    
+    if (response.success) {
+      console.log('🔊 Sound effect played:', trackId)
+      
+      showMusicToast('Sound Effect Played', '🔊 Sound effect triggered for all players', 'blue')
+    }
+  } catch (error) {
+    console.error('Failed to play sound effect:', error)
+    showMusicToast('Error', 'Failed to play sound effect', 'red')
+  }
+}
+
+// Function to actually play sound effect audio for all clients
+// Ensure YouTube API is ready for sound effects
+function ensureYouTubeAPIForSoundEffects(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
+      console.log('🔊 YouTube API already available for sound effects')
+      resolve(true)
+      return
+    }
+    
+    // If the main music player has already loaded the API, it should be available
+    if (isYouTubeAPIReady.value) {
+      console.log('🔊 YouTube API marked as ready')
+      // Wait a moment for the API to fully initialize
+      setTimeout(() => {
+        if (window.YT && window.YT.Player) {
+          resolve(true)
+        } else {
+          console.error('🔊 YouTube API marked ready but not actually available')
+          resolve(false)
+        }
+      }, 100)
+      return
+    }
+    
+    // Try to wait for the API to become available
+    let attempts = 0
+    const checkAPI = () => {
+      attempts++
+      if (window.YT && window.YT.Player) {
+        console.log('🔊 YouTube API became available after', attempts, 'attempts')
+        resolve(true)
+      } else if (attempts < 20) { // Wait up to 10 seconds
+        setTimeout(checkAPI, 500)
+      } else {
+        console.error('🔊 YouTube API not available after waiting')
+        resolve(false)
+      }
+    }
+    
+    checkAPI()
+  })
+}
+
+function playSoundEffectAudio(youtubeUrl: string, volume: number = 50) {
+  try {
+    // Extract YouTube video ID
+    const videoId = extractYouTubeVideoId(youtubeUrl)
+    if (!videoId) {
+      console.error('🔊 Invalid YouTube URL for sound effect:', youtubeUrl)
+      return
+    }
+    
+    console.log('🔊 Playing sound effect:', videoId, 'at volume:', volume)
+    
+    // Ensure YouTube API is available, then create player
+    ensureYouTubeAPIForSoundEffects().then((apiReady) => {
+      if (apiReady) {
+        createSoundEffectPlayer(videoId, volume)
+      } else {
+        console.error('🔊 Cannot play sound effect - YouTube API not available')
+        // Could add a fallback here, but for volume control we need the API
+      }
+    })
+    
+  } catch (error) {
+    console.error('🔊 Error playing sound effect audio:', error)
+  }
+}
+
+// Create a YouTube Player specifically for sound effects with volume control
+function createSoundEffectPlayer(videoId: string, volume: number) {
+  // Create unique ID for this sound effect player
+  const playerId = `sound-effect-player-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  
+  // Create container div
+  const playerDiv = document.createElement('div')
+  playerDiv.id = playerId
+  playerDiv.style.position = 'absolute'
+  playerDiv.style.left = '-9999px'
+  playerDiv.style.top = '-9999px'
+  playerDiv.style.width = '1px'
+  playerDiv.style.height = '1px'
+  playerDiv.style.opacity = '0'
+  playerDiv.style.pointerEvents = 'none'
+  
+  // Add to sound effects container
+  let container = document.getElementById('sound-effects-container')
+  if (!container) {
+    console.log('🔊 Creating sound effects container')
+    container = document.createElement('div')
+    container.id = 'sound-effects-container'
+    container.style.display = 'none'
+    container.style.position = 'absolute'
+    container.style.left = '-9999px'
+    document.body.appendChild(container)
+  }
+  
+  container.appendChild(playerDiv)
+  console.log('🔊 Sound effect player container created:', playerId)
+  
+  // Add small delay to avoid conflicts with main player
+  setTimeout(() => {
+    try {
+      if (!window.YT || !window.YT.Player) {
+        console.error('🔊 YouTube API not available when creating sound effect player')
+        if (playerDiv && playerDiv.parentNode) {
+          playerDiv.parentNode.removeChild(playerDiv)
+        }
+        return
+      }
+      
+      console.log('🔊 Creating YouTube Player for sound effect')
+      const player = new window.YT.Player(playerId, {
+        height: '1',
+        width: '1',
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          disablekb: 1,
+          enablejsapi: 1,
+          modestbranding: 1,
+          playsinline: 1,
+          rel: 0,
+          start: 0,
+          end: 10,  // Play only first 10 seconds
+          origin: window.location.origin
+        },
+        events: {
+          onReady: (event) => {
+            console.log('🔊 Sound effect player ready, setting volume to:', volume)
+            try {
+              // Set volume and play
+              event.target.setVolume(Math.max(0, Math.min(100, volume)))
+              event.target.playVideo()
+              console.log('🔊 Sound effect playback started at volume:', volume)
+            } catch (e) {
+              console.error('🔊 Error setting volume or starting playback:', e)
+            }
+          },
+          onStateChange: (event) => {
+            console.log('🔊 Sound effect player state changed:', event.data)
+            // Clean up when finished (ENDED = 0)
+            if (event.data === 0) {
+              console.log('🔊 Sound effect ended, cleaning up')
+              setTimeout(() => cleanupPlayer(player, playerDiv), 1000)
+            }
+          },
+          onError: (event) => {
+            console.error('🔊 Sound effect player error:', event.data)
+            setTimeout(() => cleanupPlayer(player, playerDiv), 1000)
+          }
+        }
+      })
+      
+      // Safety cleanup after 15 seconds
+      setTimeout(() => {
+        console.log('🔊 Safety cleanup for sound effect player')
+        cleanupPlayer(player, playerDiv)
+      }, 15000)
+      
+    } catch (error) {
+      console.error('🔊 Error creating YouTube player for sound effect:', error)
+      // Remove the div if player creation failed
+      if (playerDiv && playerDiv.parentNode) {
+        playerDiv.parentNode.removeChild(playerDiv)
+      }
+    }
+  }, 100) // Small delay to avoid conflicts
+}
+
+// Clean up a sound effect player
+function cleanupPlayer(player: any, playerDiv: HTMLElement) {
+  try {
+    if (player && typeof player.destroy === 'function') {
+      player.destroy()
+      console.log('🔊 YouTube player destroyed')
+    }
+  } catch (e) {
+    console.log('🔊 Error destroying player:', e.message)
+  }
+  
+  try {
+    if (playerDiv && playerDiv.parentNode) {
+      playerDiv.parentNode.removeChild(playerDiv)
+      console.log('🔊 Player div removed from DOM')
+    }
+  } catch (e) {
+    console.log('🔊 Error removing player div:', e.message)
+  }
+}
+
+
+
+// Helper function to extract YouTube video ID
+function extractYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+  ]
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+  
+  return null
+}
+
+async function addTrackAsSoundEffect() {
+  if (!newTrackUrl.value.trim() || !currentRoom.value) return
+  
+  isAddingTrack.value = true
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim(),
+        isSoundEffect: true,
+        isPlayableWhileMusic: true
+      }
+    })
+    
+    if (response.success) {
+      console.log('🔊 Sound effect added:', response.track)
+      
+      // Clear the input field
+      newTrackUrl.value = ''
+      
+      // The track will be added to playlist via SSE event
+      showMusicToast('Sound Effect Added', `Added "${response.track.title}" as sound effect`, 'green')
+    }
+  } catch (error) {
+    console.error('Failed to add sound effect:', error)
+    showMusicToast('Error', 'Failed to add sound effect', 'red')
+  } finally {
     isAddingTrack.value = false
   }
 }
@@ -4173,27 +4703,15 @@ async function addAndPlayTrack() {
     if (response.success) {
       console.log('🎵 Track added and playing:', response.track)
       
-      // Update local state
-      musicState.value.playlist.push(response.track)
-      musicState.value.currentTrack = response.track
-      musicState.value.isPlaying = true
+      // Clear the input field
       newTrackUrl.value = ''
       
-      const toast = useToast()
-      toast.add({
-        title: 'Now Playing',
-        description: `Playing "${response.track.title}"`,
-        color: 'green'
-      })
+      // The track and playback state will be updated via SSE events
+      showMusicToast('Track Added & Playing', `🎵 ${response.track.title}`, 'green')
     }
   } catch (error) {
     console.error('Failed to add and play track:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to add and play track',
-      color: 'red'
-    })
+    showMusicToast('Error', 'Failed to add and play track', 'red')
   } finally {
     isAddingTrack.value = false
   }
@@ -4214,21 +4732,11 @@ async function pauseMusic() {
       musicState.value.isPlaying = false
       console.log('🎵 Music paused')
       
-      const toast = useToast()
-      toast.add({
-        title: 'Music Paused',
-        description: 'Music has been paused for all participants',
-        color: 'yellow'
-      })
+      showMusicToast('Music Paused', 'Music has been paused for all participants', 'yellow')
     }
   } catch (error) {
     console.error('Failed to pause music:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to pause music',
-      color: 'red'
-    })
+    showMusicToast('Error', 'Failed to pause music', 'red')
   }
 }
 
@@ -4247,21 +4755,11 @@ async function resumeMusic() {
       musicState.value.isPlaying = true
       console.log('🎵 Music resumed')
       
-      const toast = useToast()
-      toast.add({
-        title: 'Music Resumed',
-        description: 'Music has been resumed for all participants',
-        color: 'green'
-      })
+      showMusicToast('Music Resumed', 'Music has been resumed for all participants', 'green')
     }
   } catch (error) {
     console.error('Failed to resume music:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to resume music',
-      color: 'red'
-    })
+    showMusicToast('Error', 'Failed to resume music', 'red')
   }
 }
 
@@ -4281,21 +4779,11 @@ async function stopMusic() {
       musicState.value.currentTrack = null
       console.log('🎵 Music stopped')
       
-      const toast = useToast()
-      toast.add({
-        title: 'Music Stopped',
-        description: 'Music has been stopped for all participants',
-        color: 'blue'
-      })
+      showMusicToast('Music Stopped', 'Music has been stopped for all participants', 'blue')
     }
   } catch (error) {
     console.error('Failed to stop music:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to stop music',
-      color: 'red'
-    })
+    showMusicToast('Error', 'Failed to stop music', 'red')
   }
 }
 
@@ -4337,21 +4825,11 @@ async function clearPlaylist() {
       musicState.value.isPlaying = false
       console.log('🎵 Playlist cleared')
       
-      const toast = useToast()
-      toast.add({
-        title: 'Playlist Cleared',
-        description: 'All tracks have been removed from the playlist',
-        color: 'blue'
-      })
+      showMusicToast('Playlist Cleared', 'All tracks have been removed from the playlist', 'blue')
     }
   } catch (error) {
     console.error('Failed to clear playlist:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to clear playlist',
-      color: 'red'
-    })
+    showMusicToast('Error', 'Failed to clear playlist', 'red')
   }
 }
 
@@ -4372,21 +4850,11 @@ async function playTrackFromPlaylist(track: any) {
       musicState.value.isPlaying = true
       console.log('🎵 Playing track from playlist:', track.title)
       
-      const toast = useToast()
-      toast.add({
-        title: 'Now Playing',
-        description: `Playing "${track.title}"`,
-        color: 'green'
-      })
+      showMusicToast('Now Playing', `Playing "${track.title}"`, 'green')
     }
   } catch (error) {
     console.error('Failed to play track:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to play track',
-      color: 'red'
-    })
+    showMusicToast('Error', 'Failed to play track', 'red')
   }
 }
 
@@ -4406,6 +4874,9 @@ async function removeTrackFromPlaylist(trackId: string) {
       // Update local state
       musicState.value.playlist = musicState.value.playlist.filter(t => t.id !== trackId)
       
+      // Clean up sound effects tracking
+      musicState.value.soundEffects.playableTrackIds.delete(trackId)
+      
       // If the removed track was currently playing, stop playback
       if (musicState.value.currentTrack?.id === trackId) {
         musicState.value.currentTrack = null
@@ -4423,12 +4894,7 @@ async function removeTrackFromPlaylist(trackId: string) {
     }
   } catch (error) {
     console.error('Failed to remove track:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: 'Failed to remove track',
-      color: 'red'
-    })
+    showMusicToast('Error', 'Failed to remove track', 'red')
   }
 }
 
@@ -4439,6 +4905,50 @@ function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// Load initial music state when joining a room
+async function loadInitialMusicState(roomCode: string = 'default') {
+  if (!userRole.value || userRole.value === 'Player') {
+    console.log('🎵 Skipping music state load - not DM')
+    return
+  }
+
+  try {
+    console.log('🎵 Loading initial music state for room:', roomCode)
+    
+    const response = await $fetch(`/api/music/state?roomCode=${encodeURIComponent(roomCode)}`)
+    
+    if (response.success && response.musicState) {
+      console.log('🎵 Initial music state loaded:', response.musicState)
+      
+      // Update local music state
+      musicState.value.isPlaying = response.musicState.isPlaying || false
+      musicState.value.currentTrack = response.musicState.currentTrack || null
+      musicState.value.volume = response.musicState.volume || 50
+      musicState.value.playlist = response.musicState.playlist || []
+      
+      if (response.musicState.soundEffects) {
+        musicState.value.soundEffects.soundEffectsVolume = response.musicState.soundEffects.soundEffectsVolume || 75
+        musicState.value.soundEffects.playableTrackIds = new Set(response.musicState.soundEffects.playableTrackIds || [])
+        musicState.value.soundEffects.lastSoundEffectPlayed = response.musicState.soundEffects.lastSoundEffectPlayed || null
+      }
+      
+      console.log('🎵 Updated local music state:', musicState.value)
+      
+      // Initialize YouTube player with current track if available
+      if (response.musicState.currentTrack && isYouTubePlayerReady()) {
+        console.log('🎵 Syncing YouTube player with loaded music state')
+        syncPlayerWithMusicState()
+      }
+      
+    } else {
+      console.log('🎵 No initial music state found for room:', roomCode)
+    }
+    
+  } catch (error) {
+    console.error('🎵 Failed to load initial music state:', error)
+  }
 }
 
 // YouTube Player API Integration
@@ -5159,6 +5669,29 @@ onMounted(async () => {
   // Add global diagnostic function for debugging
   window.diagnoseMusicSystem = diagnoseMusicSystem
   window.forceReinitializePlayer = forceReinitializePlayer
+  
+  // Add debug function for testing sound effects volume
+  window.testSoundEffectVolume = (url: string, volume: number = 50) => {
+    console.log(`🔊 Testing sound effect at volume ${volume}%:`, url)
+    playSoundEffectAudio(url, volume)
+  }
+  
+  // Add debug function to test with a sample YouTube URL
+  window.testSoundEffect = (volume: number = 50) => {
+    const sampleUrl = 'https://www.youtube.com/watch?v=2WPCLda_erI' // Short sound effect
+    console.log(`🔊 Testing with sample URL at volume ${volume}%`)
+    playSoundEffectAudio(sampleUrl, volume)
+  }
+  
+  // Add function to check YouTube API status
+  window.checkYouTubeAPI = () => {
+    console.log('YouTube API status:', {
+      windowYT: !!window.YT,
+      YTPlayer: !!(window.YT && window.YT.Player),
+      isAPIReady: isYouTubeAPIReady.value,
+      youtubePlayerExists: !!youtubePlayer.value
+    })
+  }
 
   initializeSSE('default')
 })
