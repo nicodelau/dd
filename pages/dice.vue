@@ -492,13 +492,106 @@
                 </div>
               </div>
 
-              <div v-else class="text-center py-8">
-                <div class="text-4xl mb-4">⚡</div>
-                <p class="text-gray-500 dark:text-gray-400">
-                  Select a character to view ability scores
-                </p>
-              </div>
-            </div>
+               <!-- Skills -->
+               <div v-if="activeCharacter && activeCharacter.skills && activeCharacter.skills.length > 0">
+                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Skills</h4>
+                 <div class="space-y-2">
+                   <div v-for="skill in activeCharacter.skills" :key="skill.name"
+                     class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                     <div class="flex items-center space-x-2">
+                       <span class="text-sm font-medium text-gray-900 dark:text-white">{{ skill.name }}</span>
+                       <span v-if="skill.proficient" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
+                       <span v-if="skill.expertise" class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">Expertise</span>
+                     </div>
+                     <span class="text-sm text-gray-600 dark:text-gray-400">{{ skill.ability }}</span>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- Saving Throws -->
+               <div v-if="activeCharacter && activeCharacter.savingThrows && activeCharacter.savingThrows.length > 0">
+                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Saving Throws</h4>
+                 <div class="space-y-2">
+                   <div v-for="savingThrow in activeCharacter.savingThrows" :key="savingThrow.ability"
+                     class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                     <div class="flex items-center space-x-2">
+                       <span class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{ savingThrow.ability }}</span>
+                       <span v-if="savingThrow.proficient" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- Attacks -->
+               <div v-if="activeCharacterAttacks && activeCharacterAttacks.length > 0">
+                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Attacks</h4>
+                 <div class="space-y-2">
+                   <div v-for="attack in activeCharacterAttacks" :key="attack.id"
+                     class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                     <div class="flex items-center justify-between mb-1">
+                       <span class="font-medium text-gray-900 dark:text-white">{{ attack.name }}</span>
+                       <span class="text-sm text-gray-600 dark:text-gray-400">{{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}</span>
+                     </div>
+                     <div class="text-xs text-gray-500 dark:text-gray-400">
+                       {{ attack.damage }} {{ attack.rangeText || '' }}
+                     </div>
+                     <div v-if="attack.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                       {{ attack.notes }}
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- Special Abilities -->
+               <div v-if="currentPlayerAbilities && currentPlayerAbilities.length > 0">
+                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Special Abilities</h4>
+                 <div class="space-y-2">
+                   <div v-for="ability in currentPlayerAbilities" :key="ability.id"
+                     class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                     <div class="flex items-center justify-between mb-1">
+                       <span class="font-medium text-gray-900 dark:text-white">{{ ability.name }}</span>
+                       <UButton v-if="ability.diceFormula" color="blue" variant="outline" size="xs" @click="rollAbilityDice(ability)"
+                         icon="i-heroicons-cube">
+                         Roll
+                       </UButton>
+                     </div>
+                     <div class="text-xs text-gray-500 dark:text-gray-400">
+                       {{ ability.description }}
+                     </div>
+                     <div v-if="ability.usesPerRest && ability.usesRemaining !== undefined" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                       Uses: {{ ability.usesRemaining }}/{{ ability.usesPerRest }}
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- Combat Actions -->
+               <div v-if="activeCharacter && activeCharacter.combatActions && activeCharacter.combatActions.length > 0">
+                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Combat Actions</h4>
+                 <div class="space-y-2">
+                   <div v-for="action in activeCharacter.combatActions" :key="action.id"
+                     class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                     <div class="flex items-center justify-between mb-1">
+                       <span class="font-medium text-gray-900 dark:text-white">{{ action.name }}</span>
+                       <span class="text-xs text-gray-600 dark:text-gray-400">{{ action.type }}</span>
+                     </div>
+                     <div class="text-xs text-gray-500 dark:text-gray-400">
+                       {{ action.description }}
+                     </div>
+                     <div v-if="action.maxUses > 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                       Uses: {{ action.currentUses }}/{{ action.maxUses }}
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               <div v-else class="text-center py-8">
+                 <div class="text-4xl mb-4">⚡</div>
+                 <p class="text-gray-500 dark:text-gray-400">
+                   Select a character to view ability scores
+                 </p>
+               </div>
+             </div>
 
             <!-- DM Player Management (only for DMs) -->
             <div v-else>
@@ -1506,72 +1599,7 @@
                 </div>
               </UCard>
 
-               <!-- YouTube Music Player (All Users) -->
-               <UCard v-if="currentRoom && currentRoom.code !== 'default' && isConnected">
-                <template #header>
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      🎵 Music Player
-                    </h3>
-                    <UBadge v-if="musicState.currentTrack && musicState.isPlaying" color="green" variant="soft">
-                      Live
-                    </UBadge>
-                    <UBadge v-else-if="musicState.currentTrack" color="yellow" variant="soft">
-                      Paused
-                    </UBadge>
-                    <UBadge v-else color="gray" variant="soft">
-                      Ready
-                    </UBadge>
-                  </div>
-                </template>
 
-                <div class="space-y-4">
-                  <!-- YouTube Player Container - Always Present -->
-                  <div class="aspect-video bg-black rounded-lg overflow-hidden">
-                    <div 
-                      id="youtube-player" 
-                      class="w-full h-full"
-                    ></div>
-                  </div>
-                  
-                  <!-- Sound Effects Container - Hidden but functional -->
-                  <div 
-                    id="sound-effects-container" 
-                    class="hidden"
-                    aria-hidden="true"
-                  ></div>
-                  
-                  <!-- Track Info - Only when track exists -->
-                  <div v-if="musicState.currentTrack" class="text-center">
-                    <h4 class="font-medium text-gray-900 dark:text-white">
-                      {{ musicState.currentTrack.title }}
-                    </h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                      {{ musicState.currentTrack.artist }}
-                    </p>
-                  </div>
-                  
-                  <!-- No Track Message -->
-                  <div v-else class="text-center py-4">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                      No music playing. {{ userRole === 'DM' ? 'Add a YouTube link to start.' : 'Waiting for DM to start music.' }}
-                    </p>
-                  </div>
-                  
-                  <!-- Non-DM Notice -->
-                  <div v-if="userRole !== 'DM'" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                    <div class="flex items-start space-x-2">
-                      <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-                      <div>
-                        <h4 class="text-xs font-medium text-blue-900 dark:text-blue-100">Music Player</h4>
-                        <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                          Music is controlled by the DM. You can adjust the volume using your browser controls.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </UCard>
 
               <!-- Roll History -->
               <UCard>
@@ -2080,6 +2108,11 @@ const newEnemy = ref({ name: '', hitPoints: 10, armorClass: 10, initiative: 0 })
 const isBattleLoading = ref(false)
 const showSpecialAbilitiesModal = ref(false)
 const currentPlayerAbilities = ref<any[]>([])
+
+// Active character data
+const activeCharacter = computed(() => {
+  return userCharacters.value.find(c => c.id === activeCharacterId.value) || null
+})
 const currentPlayerName = ref('')
 
 // Battle player management

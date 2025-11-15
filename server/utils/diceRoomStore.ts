@@ -990,47 +990,48 @@ class DiceRoomStore {
     return Math.floor((abilityScore - 10) / 2)
   }
 
-  // Cleanup inactive connections and users
-  cleanup(): void {
-    const now = new Date()
-    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000)
+   // Cleanup inactive connections and users
+   cleanup(): void {
+     const now = new Date()
+     // Increased timeout to 1 hour for persistent sessions
+     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
 
-    for (const [roomCode, room] of this.rooms) {
-      const deadConnections: string[] = []
+     for (const [roomCode, room] of this.rooms) {
+       const deadConnections: string[] = []
 
-      // Remove connections older than 5 minutes without activity
-      for (const [connectionId, connection] of room.sseConnections) {
-        try {
-          // Send ping to test connection
-          connection.response.write(`event: ping\ndata: ${now.toISOString()}\n\n`)
-        } catch (error) {
-          deadConnections.push(connectionId)
-        }
-      }
+       // Remove connections that have errors
+       for (const [connectionId, connection] of room.sseConnections) {
+         try {
+           // Send ping to test connection
+           connection.response.write(`event: ping\ndata: ${now.toISOString()}\n\n`)
+         } catch (error) {
+           deadConnections.push(connectionId)
+         }
+       }
 
-      deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
+       deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
 
-      // Remove users who haven't been seen in 5 minutes
-      const removedUsers: string[] = []
-      
-      for (const [userId, user] of room.users) {
-        if (user.lastSeen < fiveMinutesAgo) {
-          this.removeUser(userId, roomCode)
-          removedUsers.push(user.name)
-        }
-      }
+       // Remove users who haven't been seen in 1 hour (increased from 5 minutes)
+       const removedUsers: string[] = []
 
-      // Log timeout activity
-      if (removedUsers.length > 0) {
-        console.log(`🎲 Auto-removed ${removedUsers.length} inactive users from room ${roomCode}: ${removedUsers.join(', ')}`)
-      }
+       for (const [userId, user] of room.users) {
+         if (user.lastSeen < oneHourAgo) {
+           this.removeUser(userId, roomCode)
+           removedUsers.push(user.name)
+         }
+       }
 
-      // Remove empty rooms (except default)
-      if (roomCode !== 'default' && room.users.size === 0 && room.sseConnections.size === 0) {
-        this.deleteRoom(roomCode)
-      }
-    }
-  }
+       // Log timeout activity
+       if (removedUsers.length > 0) {
+         console.log(`🎲 Auto-removed ${removedUsers.length} inactive users from room ${roomCode}: ${removedUsers.join(', ')}`)
+       }
+
+       // Remove empty rooms (except default)
+       if (roomCode !== 'default' && room.users.size === 0 && room.sseConnections.size === 0) {
+         this.deleteRoom(roomCode)
+       }
+     }
+   }
 
   // Get room statistics
   getStats(roomCode: string = 'default') {
