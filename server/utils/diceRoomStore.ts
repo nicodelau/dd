@@ -68,6 +68,7 @@ export interface BattleState {
   enemies: Map<string, Enemy>
   initiativeRolled: boolean
   phase: 'setup' | 'rolling_initiative' | 'combat' | 'ended'
+  selectedPlayerIds: Set<string> // Players selected for this battle
 }
 
 // Music system interfaces
@@ -608,7 +609,8 @@ class DiceRoomStore {
       participants: [],
       enemies: new Map(),
       initiativeRolled: false,
-      phase: 'setup'
+      phase: 'setup',
+      selectedPlayerIds: new Set()
     }
 
     room.battleState = battleState
@@ -677,9 +679,9 @@ class DiceRoomStore {
 
     const participants: BattleParticipant[] = []
 
-    // Add players
+    // Add selected players
     for (const [userId, user] of room.users) {
-      if (user.role === 'Player' && user.stats) {
+      if (user.role === 'Player' && user.stats && room.battleState.selectedPlayerIds.has(userId)) {
         const initiativeRoll = this.rollD20() + this.getModifier(user.stats.abilities.dexterity)
         participants.push({
           id: userId,
@@ -826,6 +828,147 @@ class DiceRoomStore {
   getBattleState(roomCode: string): BattleState | null {
     const room = this.getRoom(roomCode)
     return room?.battleState || null
+  }
+
+  // Player selection for battle
+  selectPlayerForBattle(dmUserId: string, playerId: string, roomCode: string): boolean {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can select players for battle')
+    }
+
+    const user = room.users.get(playerId)
+    if (!user || user.role !== 'Player') {
+      throw new Error('Player not found')
+    }
+
+    room.battleState.selectedPlayerIds.add(playerId)
+    this.broadcastEvent('battle:player_selected', { playerId, playerName: user.name }, roomCode)
+    console.log(`⚔️ Player ${user.name} selected for battle in room ${roomCode}`)
+    return true
+  }
+
+  deselectPlayerForBattle(dmUserId: string, playerId: string, roomCode: string): boolean {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can deselect players for battle')
+    }
+
+    const user = room.users.get(playerId)
+    if (!user) {
+      throw new Error('Player not found')
+    }
+
+    const wasSelected = room.battleState.selectedPlayerIds.delete(playerId)
+    if (wasSelected) {
+      this.broadcastEvent('battle:player_deselected', { playerId, playerName: user.name }, roomCode)
+      console.log(`⚔️ Player ${user.name} deselected for battle in room ${roomCode}`)
+    }
+    return wasSelected
+  }
+
+  getSelectedPlayers(roomCode: string): Array<{ userId: string; name: string }> {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      return []
+    }
+
+    const selectedPlayers: Array<{ userId: string; name: string }> = []
+    for (const playerId of room.battleState.selectedPlayerIds) {
+      const user = room.users.get(playerId)
+      if (user && user.role === 'Player') {
+        selectedPlayers.push({ userId: playerId, name: user.name })
+      }
+    }
+    return selectedPlayers
+  }
+
+  getUnselectedPlayers(roomCode: string): Array<{ userId: string; name: string }> {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      return []
+    }
+
+    const unselectedPlayers: Array<{ userId: string; name: string }> = []
+    for (const [userId, user] of room.users) {
+      if (user.role === 'Player' && !room.battleState.selectedPlayerIds.has(userId)) {
+        unselectedPlayers.push({ userId, name: user.name })
+      }
+    }
+    return unselectedPlayers
+  }
+
+  // Add player to ongoing battle
+  addPlayerToBattle(dmUserId: string, playerId: string, roomCode: string): BattleParticipant | null {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState || !room.battleState.isActive) {
+      throw new Error('Battle not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can add players to battle')
+    }
+
+    const user = room.users.get(playerId)
+    if (!user || user.role !== 'Player' || !user.stats) {
+      throw new Error('Player not found or not a valid player')
+    }
+
+    // Check if player is already in battle
+    const existingParticipant = room.battleState.participants.find(p => p.id === playerId)
+    if (existingParticipant) {
+      throw new Error('Player is already in battle')
+    }
+
+    // Select the player for battle if not already selected
+    room.battleState.selectedPlayerIds.add(playerId)
+
+    // Roll initiative for the new player
+    const initiativeRoll = this.rollD20() + this.getModifier(user.stats.abilities.dexterity)
+    const newParticipant: BattleParticipant = {
+      id: playerId,
+      name: user.name,
+      type: 'player',
+      initiative: user.stats.initiative,
+      initiativeRoll,
+      hitPoints: { ...user.stats.hitPoints },
+      armorClass: user.stats.armorClass,
+      isDefeated: false,
+      userId: playerId
+    }
+
+    // Insert the new participant in the correct initiative order
+    let insertIndex = room.battleState.participants.length
+    for (let i = 0; i < room.battleState.participants.length; i++) {
+      if (newParticipant.initiativeRoll > room.battleState.participants[i].initiativeRoll) {
+        insertIndex = i
+        break
+      }
+    }
+
+    room.battleState.participants.splice(insertIndex, 0, newParticipant)
+
+    // Adjust current turn index if necessary
+    if (insertIndex <= room.battleState.currentTurnIndex) {
+      room.battleState.currentTurnIndex++
+    }
+
+    this.broadcastEvent('battle:player_added', {
+      participant: newParticipant,
+      insertIndex,
+      currentTurnIndex: room.battleState.currentTurnIndex
+    }, roomCode)
+
+    console.log(`⚔️ Player ${user.name} added to ongoing battle in room ${roomCode}`)
+    return newParticipant
   }
 
   private rollD20(): number {

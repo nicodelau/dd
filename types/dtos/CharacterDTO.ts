@@ -211,6 +211,11 @@ export interface UpdateCharacterDTO {
   platinumCoins?: number
   // Inventory
   backpack?: string
+  inventory?: InventoryItemDTO[]
+  attacks?: AttackDTO[]
+  combatActions?: CombatActionDTO[]
+  skills?: SkillDTO[]
+  savingThrows?: SavingThrowDTO[]
   notes?: Record<string, any>
   // New user assignment fields for updates
   userId?: string | null

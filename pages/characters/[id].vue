@@ -874,16 +874,16 @@
                </div>
              </template>
 
-             <div v-if="!character.attacks || character.attacks.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-               No attacks configured yet.
-             </div>
+              <div v-if="editMode ? (!editAttacks || editAttacks.length === 0) : (!character.attacks || character.attacks.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                No attacks configured yet.
+              </div>
 
-             <div v-else class="space-y-4">
-               <div
-                 v-for="(attack, index) in character.attacks"
-                 :key="attack.id || index"
-                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-               >
+              <div v-else class="space-y-4">
+                <div
+                  v-for="(attack, index) in editMode ? editAttacks : character.attacks"
+                  :key="attack.id || index"
+                  class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                >
                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                    <div>
                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -985,16 +985,16 @@
                </div>
              </template>
 
-             <div v-if="!character.inventory || character.inventory.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-               No items in inventory.
-             </div>
+              <div v-if="editMode ? (!editInventory || editInventory.length === 0) : (!character.inventory || character.inventory.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                No items in inventory.
+              </div>
 
-             <div v-else class="space-y-3">
-               <div
-                 v-for="(item, index) in character.inventory"
-                 :key="item.id || index"
-                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-               >
+              <div v-else class="space-y-3">
+                <div
+                  v-for="(item, index) in editMode ? editInventory : character.inventory"
+                  :key="item.id || index"
+                  class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                >
                  <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                    <div class="md:col-span-2">
                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1274,9 +1274,13 @@ const characterId = route.params.id as string
 // Authentication
 const user = useState('user')
 
-// Check if user can edit characters (DM or ADMIN only)
+// Check if user can edit characters (DM, ADMIN, or character owner)
 const canEdit = computed(() => {
-  return (user.value as any)?.role === 'DM' || (user.value as any)?.role === 'ADMIN'
+  const userRole = (user.value as any)?.role
+  const userId = (user.value as any)?.id
+  const characterOwnerId = character.value?.userId
+
+  return userRole === 'DM' || userRole === 'ADMIN' || (characterOwnerId && userId === characterOwnerId)
 })
 
 // Reactive state

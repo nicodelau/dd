@@ -821,6 +821,77 @@
                       >
                         {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type || 'unknown' }}
                       </UBadge>
+                     </div>
+                   </div>
+
+                  <!-- Character Attacks Section (only show during player's turn) -->
+                  <div v-if="battleMode.phase === 'combat' && battleMode.initiativeOrder && battleMode.currentTurnIndex !== undefined && isPlayerTurn()" 
+                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        ⚔️ Your Attacks
+                      </h4>
+                      <UButton
+                        color="blue" 
+                        variant="ghost" 
+                        size="xs" 
+                        :icon="showCharacterAttacks ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                        @click="showCharacterAttacks = !showCharacterAttacks"
+                      >
+                        {{ showCharacterAttacks ? 'Hide' : 'Show' }}
+                      </UButton>
+                    </div>
+                    
+                    <div v-if="showCharacterAttacks">
+                      <div v-if="activeCharacterAttacks.length > 0" class="space-y-2">
+                        <div v-for="attack in activeCharacterAttacks" :key="attack.id || attack.name" 
+                          class="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded p-3">
+                          <div class="flex items-center justify-between mb-2">
+                            <h5 class="font-medium text-gray-900 dark:text-white">
+                              {{ attack.name || 'Unnamed Attack' }}
+                            </h5>
+                            <div class="flex items-center space-x-2">
+                              <UButton
+                                color="blue"
+                                size="xs"
+                                @click="rollAttack(attack)"
+                                :loading="isRollingAttack"
+                                icon="i-heroicons-cube"
+                              >
+                                Attack
+                              </UButton>
+                              <UButton
+                                v-if="attack.damage"
+                                color="red"
+                                size="xs"
+                                @click="rollDamage(attack)"
+                                :loading="isRollingAttack"
+                                icon="i-heroicons-fire"
+                              >
+                                Damage
+                              </UButton>
+                            </div>
+                          </div>
+                          <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                            <div v-if="attack.attackBonus !== undefined">
+                              <span class="font-medium">Attack Bonus:</span> 
+                              {{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}
+                            </div>
+                            <div v-if="attack.damage">
+                              <span class="font-medium">Damage:</span> {{ attack.damage }}
+                            </div>
+                            <div v-if="attack.rangeText">
+                              <span class="font-medium">Range:</span> {{ attack.rangeText }}
+                            </div>
+                            <div v-if="attack.notes" class="text-xs">
+                              {{ attack.notes }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="text-center py-4 text-blue-600 dark:text-blue-400 text-sm">
+                        No attacks configured. Edit your character sheet to add attacks.
+                      </div>
                     </div>
                   </div>
 
@@ -1680,6 +1751,11 @@ const joinRoomCode = ref('')
 // Player stats (for current user if they're a player)
 const playerStats = ref<PlayerStats | null>(null)
 
+// Character attacks and combat data
+const activeCharacterAttacks = ref<any[]>([])
+const showCharacterAttacks = ref(false)
+const isRollingAttack = ref(false)
+
 // All players stats (for DMs)
 const allPlayers = ref<Player[]>([])
 
@@ -1835,6 +1911,7 @@ async function loadUserCharacters() {
         userRole.value = 'DM'
         playerStats.value = null
         activeCharacterId.value = null
+        activeCharacterAttacks.value = []
       }
 
       console.log(`🎭 Auto-detected role: ${userRole.value} (${userCharacters.value.length} characters found)`)
@@ -1860,6 +1937,7 @@ async function loadUserCharacters() {
 async function loadCharacterStats() {
   if (!activeCharacterId.value || userRole.value !== 'Player') {
     playerStats.value = null
+    activeCharacterAttacks.value = []
     return
   }
 
@@ -1890,6 +1968,13 @@ async function loadCharacterStats() {
 
       playerStats.value = realStats
       console.log('📊 Loaded REAL character stats for:', character.characterName, realStats)
+      
+      // Load character attacks
+      activeCharacterAttacks.value = character.attacks || []
+      console.log('⚔️ Loaded character attacks:', activeCharacterAttacks.value.length, 'attacks')
+      
+      // Show attacks automatically when in combat and it's player's turn
+      showCharacterAttacks.value = isInBattle.value && isPlayerTurn()
       
       // Update the dice room store with the real character stats
       if (!isOfflineMode.value) {
@@ -2142,6 +2227,205 @@ async function rollDice() {
     animatingDice.value.clear()
     isRolling.value = false
   }, 1500) // Longer animation framatic effect
+}
+
+// Character Attack Functions
+async function rollAttack(attack: any) {
+  if (!attack || isRollingAttack.value) return
+  
+  isRollingAttack.value = true
+  
+  try {
+    // Calculate attack roll: 1d20 + attack bonus
+    const d20Roll = rollSingleDie(20)
+    const attackBonus = attack.attackBonus || 0
+    const total = d20Roll + attackBonus
+    
+    // Determine if it's a critical hit or miss
+    let isCritical = false
+    let criticalType: 'success' | 'failure' | undefined
+    
+    if (d20Roll === 20) {
+      isCritical = true
+      criticalType = 'success'
+    } else if (d20Roll === 1) {
+      isCritical = true
+      criticalType = 'failure'
+    }
+    
+    const description = `${attack.name} Attack: 1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`
+    const details = [`1d20=${d20Roll}`, attackBonus]
+    
+    const roll: DiceRoll = {
+      id: Date.now().toString(),
+      userName: userName.value || 'Anonymous',
+      userId: 'local-user',
+      timestamp: new Date(),
+      description,
+      total,
+      details,
+      diceRolled: [{ type: 'd20', count: 1, results: [d20Roll] }],
+      modifier: attackBonus,
+      rollType: 'normal',
+      isCritical,
+      criticalType,
+      isOwn: true
+    }
+    
+    // Add to history
+    rollHistory.value.unshift(roll)
+    
+    // Submit to server if connected
+    if (isConnected.value && !isOfflineMode.value) {
+      try {
+        await submitDiceRoll({
+          userName: roll.userName,
+          userId: roll.userId,
+          description: roll.description,
+          total: roll.total,
+          details: roll.details,
+          diceRolled: roll.diceRolled,
+          modifier: roll.modifier,
+          rollType: roll.rollType,
+          isCritical: roll.isCritical,
+          criticalType: roll.criticalType
+        })
+      } catch (error) {
+        console.error('⚔️ Failed to submit attack roll to server:', error)
+      }
+    }
+    
+  } catch (error) {
+    console.error('⚔️ Failed to roll attack:', error)
+  } finally {
+    isRollingAttack.value = false
+  }
+}
+
+async function rollDamage(attack: any) {
+  if (!attack || !attack.damage || isRollingAttack.value) return
+  
+  isRollingAttack.value = true
+  
+  try {
+    // Parse damage dice (e.g., "1d8+3", "2d6", "1d10+5")
+    const damageString = attack.damage.toString()
+    const total = rollDamageString(damageString)
+    
+    const description = `${attack.name} Damage: ${damageString}`
+    
+    const roll: DiceRoll = {
+      id: Date.now().toString(),
+      userName: userName.value || 'Anonymous',
+      userId: 'local-user',
+      timestamp: new Date(),
+      description,
+      total: total.total,
+      details: total.details,
+      diceRolled: total.diceRolled,
+      modifier: total.modifier,
+      rollType: 'normal',
+      isCritical: false,
+      isOwn: true
+    }
+    
+    // Add to history
+    rollHistory.value.unshift(roll)
+    
+    // Submit to server if connected
+    if (isConnected.value && !isOfflineMode.value) {
+      try {
+        await submitDiceRoll({
+          userName: roll.userName,
+          userId: roll.userId,
+          description: roll.description,
+          total: roll.total,
+          details: roll.details,
+          diceRolled: roll.diceRolled,
+          modifier: roll.modifier,
+          rollType: roll.rollType,
+          isCritical: roll.isCritical,
+          criticalType: roll.criticalType
+        })
+      } catch (error) {
+        console.error('🔥 Failed to submit damage roll to server:', error)
+      }
+    }
+    
+  } catch (error) {
+    console.error('🔥 Failed to roll damage:', error)
+  } finally {
+    isRollingAttack.value = false
+  }
+}
+
+function rollDamageString(damageString: string) {
+  // Parse damage strings like "1d8+3", "2d6", "1d10+5", "8", etc.
+  const match = damageString.match(/^(\d+)d(\d+)([+-]\d+)?$|^(\d+)$/)
+  
+  if (!match) {
+    // If parsing fails, treat as flat value
+    const flatValue = parseInt(damageString) || 0
+    return {
+      total: flatValue,
+      details: [flatValue],
+      diceRolled: [],
+      modifier: 0
+    }
+  }
+  
+  if (match[4]) {
+    // Flat damage (no dice)
+    const flatValue = parseInt(match[4])
+    return {
+      total: flatValue,
+      details: [flatValue],
+      diceRolled: [],
+      modifier: 0
+    }
+  }
+  
+  // Dice damage
+  const count = parseInt(match[1])
+  const sides = parseInt(match[2])
+  const modifier = match[3] ? parseInt(match[3]) : 0
+  
+  const results: number[] = []
+  let diceTotal = 0
+  
+  for (let i = 0; i < count; i++) {
+    const roll = rollSingleDie(sides)
+    results.push(roll)
+    diceTotal += roll
+  }
+  
+  const total = diceTotal + modifier
+  const details: (string | number)[] = [`${count}d${sides}=${results.join(',')}`]
+  if (modifier !== 0) {
+    details.push(modifier)
+  }
+  
+  return {
+    total,
+    details,
+    diceRolled: [{ type: `d${sides}`, count, results }],
+    modifier
+  }
+}
+
+function isPlayerTurn(): boolean {
+  if (!battleMode.value?.initiativeOrder || battleMode.value.currentTurnIndex === undefined) {
+    return false
+  }
+  
+  const currentParticipant = battleMode.value.initiativeOrder[battleMode.value.currentTurnIndex]
+  if (!currentParticipant || currentParticipant.type !== 'player') {
+    return false
+  }
+  
+  // Check if it's the current user's character
+  const activeCharacter = userCharacters.value.find(c => c.id === activeCharacterId.value)
+  return activeCharacter && currentParticipant.name === activeCharacter.characterName
 }
 
 function performQuickRoll(quickRoll: QuickRoll) {

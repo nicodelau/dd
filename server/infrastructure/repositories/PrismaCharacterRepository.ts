@@ -542,7 +542,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
       platinumCoins: prismaCharacter.platinumCoins,
       // Inventory
       backpack: prismaCharacter.backpack,
-      inventory: prismaCharacter.inventory?.map(item => ({
+      inventory: prismaCharacter.inventory?.map((item: any) => ({
         id: item.id,
         characterId: parseInt(prismaCharacter.id),
         name: item.name,
@@ -552,7 +552,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         notes: item.description // Map description back to notes
       })) || [],
       // Attacks
-      attacks: prismaCharacter.attacks?.map(attack => ({
+      attacks: prismaCharacter.attacks?.map((attack: any) => ({
         id: attack.id,
         characterId: parseInt(prismaCharacter.id),
         name: attack.name,
@@ -562,7 +562,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         notes: attack.description // Map description back to notes
       })) || [],
       // Combat Actions
-      combatActions: prismaCharacter.combatActions?.map(action => ({
+      combatActions: prismaCharacter.combatActions?.map((action: any) => ({
         id: action.id,
         name: action.name,
         type: action.type,

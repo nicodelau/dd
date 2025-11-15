@@ -78,9 +78,14 @@ export default defineEventHandler(async (event) => {
           data: mappedCharacter
         } as ApiResponse<typeof mappedCharacter>
         
-      case 'PUT':
-        // Only DMs and Admins can modify characters
-        await requireDMOrAdmin(event)
+       case 'PUT':
+         // Allow character owners, DMs and Admins to modify characters
+         if (user.role !== 'DM' && user.role !== 'ADMIN' && character.userId !== user.id) {
+           throw createError({
+             statusCode: 403,
+             statusMessage: 'Access denied to modify this character'
+           })
+         }
         
         const updateData = await readBody(event) as UpdateCharacterDTO
         const updateService = getCharacterService()

@@ -156,6 +156,10 @@ export class CharacterService {
       // Skills and Saving Throws
       skills: character.skills || [],
       savingThrows: character.savingThrows || [],
+      // Combat related fields
+      attacks: character.attacks || [],
+      inventory: character.inventory || [],
+      combatActions: character.combatActions || [],
       notes: character.notes,
       createdAt: character.createdAt?.toISOString(),
       updatedAt: character.updatedAt?.toISOString(),
