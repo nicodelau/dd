@@ -607,6 +607,79 @@
                     </div>
                   </div>
 
+                  <!-- Player Management -->
+                  <div>
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Player Selection</h4>
+                      <UButton
+                        color="gray"
+                        variant="outline"
+                        size="xs"
+                        @click="loadBattlePlayers"
+                        :loading="isBattlePlayersLoading"
+                        icon="i-heroicons-arrow-path"
+                      >
+                        Refresh
+                      </UButton>
+                    </div>
+                    
+                    <!-- Selected Players -->
+                    <div v-if="selectedPlayers.length > 0" class="mb-3">
+                      <h5 class="text-xs font-medium text-green-900 dark:text-green-100 mb-2">Selected Players</h5>
+                      <div class="space-y-1">
+                        <div v-for="player in selectedPlayers" :key="player.userId"
+                          class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+                          <div class="flex-1">
+                            <div class="font-medium text-green-900 dark:text-green-100">{{ player.name }}</div>
+                            <div class="text-xs text-green-700 dark:text-green-300">Ready for battle</div>
+                          </div>
+                          <UButton
+                            color="red"
+                            variant="ghost"
+                            size="xs"
+                            @click="removePlayerFromBattle(player.userId)"
+                            icon="i-heroicons-minus"
+                          >
+                          </UButton>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Available Players -->
+                    <div v-if="unselectedPlayers.length > 0" class="mb-3">
+                      <h5 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Available Players</h5>
+                      <div class="space-y-1">
+                        <div v-for="player in unselectedPlayers" :key="player.userId"
+                          class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
+                          <div class="flex-1">
+                            <div class="font-medium text-gray-900 dark:text-gray-100">{{ player.name }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Click to add to battle</div>
+                          </div>
+                          <UButton
+                            color="green"
+                            variant="ghost"
+                            size="xs"
+                            @click="addPlayerToBattle(player.userId)"
+                            icon="i-heroicons-plus"
+                          >
+                          </UButton>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- No Players State -->
+                    <div v-if="selectedPlayers.length === 0 && unselectedPlayers.length === 0 && !isBattlePlayersLoading" 
+                      class="text-center py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                      <div class="text-2xl mb-2">👥</div>
+                      <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                        No players connected to this room
+                      </p>
+                      <p class="text-xs text-gray-400 dark:text-gray-500">
+                        Players need to join the room first
+                      </p>
+                    </div>
+                  </div>
+
                   <!-- Enemy Management -->
                   <div>
                     <div class="flex items-center justify-between mb-3">
@@ -623,7 +696,7 @@
                     </div>
                     
                     <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
-                      <div v-for="enemy in Object.values(battleMode.enemies)" :key="enemy.id"
+                      <div v-for="enemy in Object.values(battleMode.enemies) as Enemy[]" :key="enemy.id"
                         class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
                         <div class="flex-1">
                           <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
@@ -662,14 +735,14 @@
                   </div>
 
                   <!-- Ready to Roll Initiative -->
-                  <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" 
+                  <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0 && selectedPlayers.length > 0" 
                     class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                     <div class="text-center">
                       <div class="text-green-900 dark:text-green-100 font-medium mb-2">
                         Ready to Start Combat!
                       </div>
                       <p class="text-sm text-green-700 dark:text-green-300 mb-3">
-                        {{ Object.keys(battleMode.enemies).length }} enemies ready. Click below to roll initiative and begin combat.
+                        {{ selectedPlayers.length }} players and {{ Object.keys(battleMode.enemies).length }} enemies ready. Click below to roll initiative and begin combat.
                       </p>
                       <UButton
                         color="green"
@@ -679,6 +752,31 @@
                       >
                         Roll Initiative & Start Combat
                       </UButton>
+                    </div>
+                  </div>
+
+                  <!-- Missing Players or Enemies Warning -->
+                  <div v-else-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0 && selectedPlayers.length === 0" 
+                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <div class="text-center">
+                      <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
+                        Players Needed
+                      </div>
+                      <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                        Add at least one player before starting combat.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div v-else-if="selectedPlayers.length > 0 && (!battleMode.enemies || Object.keys(battleMode.enemies).length === 0)" 
+                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <div class="text-center">
+                      <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
+                        Enemies Needed
+                      </div>
+                      <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                        Add at least one enemy before starting combat.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -701,7 +799,7 @@
                     </div>
                     
                     <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
-                      <div v-for="enemy in Object.values(battleMode.enemies)" :key="enemy.id"
+                      <div v-for="enemy in Object.values(battleMode.enemies) as Enemy[]" :key="enemy.id"
                         class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
                         <div class="flex-1">
                           <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
@@ -1315,7 +1413,7 @@
                 </template>
 
                 <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
-                  <div v-for="roll in rollHistory.slice().reverse()" :key="roll.id"
+                  <div v-for="roll in rollHistory" :key="roll.id"
                     class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
                     :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
                     <div class="flex items-start justify-between">
@@ -1664,6 +1762,40 @@
 <script setup lang="ts">
 // SSE-based dice room implementation (replaces Socket.IO)
 
+// Battle mode interfaces
+interface Enemy {
+  id: string
+  name: string
+  hitPoints: { current: number; max: number }
+  armorClass: number
+  initiative: number
+  initiativeRoll?: number
+  isDefeated: boolean
+  createdBy: string // DM userId who created this enemy
+}
+
+interface BattleParticipant {
+  id: string
+  name: string
+  type: 'player' | 'enemy'
+  initiative: number
+  initiativeRoll: number
+  hitPoints: { current: number; max: number }
+  armorClass: number
+  isDefeated: boolean
+  userId?: string // Only for players
+}
+
+interface BattleState {
+  isActive: boolean
+  round: number
+  currentTurnIndex: number
+  phase: 'setup' | 'combat' | 'ended'
+  initiativeOrder: BattleParticipant[]
+  enemies: { [key: string]: Enemy }
+  selectedPlayerIds: Set<string>
+}
+
 interface DiceType {
   type: string
   name: string
@@ -1765,7 +1897,7 @@ const editingPlayer = ref<Player | null>(null)
 const editingPlayerStats = ref<PlayerStats | null>(null)
 
 // Battle mode state
-const battleMode = ref<any>(null)
+const battleMode = ref<BattleState | null>(null)
 const isInBattle = computed(() => battleMode.value?.phase !== undefined)
 const showBattleUI = ref(false)
 const showAddEnemyModal = ref(false)
@@ -1774,6 +1906,11 @@ const isBattleLoading = ref(false)
 const showSpecialAbilitiesModal = ref(false)
 const currentPlayerAbilities = ref<any[]>([])
 const currentPlayerName = ref('')
+
+// Battle player management
+const selectedPlayers = ref<Array<{ userId: string; name: string }>>([])
+const unselectedPlayers = ref<Array<{ userId: string; name: string }>>([])
+const isBattlePlayersLoading = ref(false)
 
 // Music system state
 const musicState = ref({
@@ -2299,6 +2436,14 @@ async function rollAttack(attack: any) {
     console.error('⚔️ Failed to roll attack:', error)
   } finally {
     isRollingAttack.value = false
+    
+    // Automatically roll damage after attack (if attack has damage)
+    if (attack.damage) {
+      // Add a small delay to show attack roll first, then damage
+      setTimeout(async () => {
+        await rollDamage(attack)
+      }, 500)
+    }
   }
 }
 
@@ -2385,24 +2530,35 @@ function rollDamageString(damageString: string) {
     }
   }
   
-  // Dice damage
+  // Dice damage - modifier applies to each die
   const count = parseInt(match[1])
   const sides = parseInt(match[2])
   const modifier = match[3] ? parseInt(match[3]) : 0
   
   const results: number[] = []
-  let diceTotal = 0
+  let total = 0
   
   for (let i = 0; i < count; i++) {
     const roll = rollSingleDie(sides)
-    results.push(roll)
-    diceTotal += roll
+    const modifiedRoll = roll + modifier
+    results.push(roll) // Store original roll for display
+    total += modifiedRoll // Add modified roll to total
   }
   
-  const total = diceTotal + modifier
-  const details: (string | number)[] = [`${count}d${sides}=${results.join(',')}`]
+  // Build details to show the calculation clearly
+  const details: (string | number)[] = []
   if (modifier !== 0) {
-    details.push(modifier)
+    // For single die: "1d4+2: (4+2=6)"
+    // For multiple dice: "3d4+2: (2+2=4) + (3+2=5) + (1+2=3)"
+    if (count === 1) {
+      details.push(`1d${sides}${modifier >= 0 ? '+' : ''}${modifier}: (${results[0]}${modifier >= 0 ? '+' : ''}${modifier}=${results[0] + modifier})`)
+    } else {
+      const dieDetails = results.map(roll => `(${roll}${modifier >= 0 ? '+' : ''}${modifier}=${roll + modifier})`).join(' + ')
+      details.push(`${count}d${sides}${modifier >= 0 ? '+' : ''}${modifier}: ${dieDetails}`)
+    }
+  } else {
+    // No modifier, just show the dice: "3d4=2,4,1"
+    details.push(`${count}d${sides}=${results.join(',')}`)
   }
   
   return {
@@ -3426,6 +3582,9 @@ async function startBattle() {
       battleMode.value = response.battleState
       console.log('⚔️ Battle mode started:', response.battleState)
       
+      // Load available players for battle selection
+      await loadBattlePlayers()
+      
       const toast = useToast()
       toast.add({
         title: 'Battle Started',
@@ -3597,6 +3756,96 @@ async function rollInitiative() {
   }
 }
 
+// Battle Player Management Functions
+async function loadBattlePlayers() {
+  if (!currentRoom.value) return
+  
+  isBattlePlayersLoading.value = true
+  try {
+    const response = await $fetch(`/api/battle/players?roomCode=${currentRoom.value.code}`)
+    
+    if (response.success) {
+      selectedPlayers.value = response.data.selectedPlayers
+      unselectedPlayers.value = response.data.unselectedPlayers
+      console.log('👥 Battle players loaded:', response.data)
+    }
+  } catch (error) {
+    console.error('Failed to load battle players:', error)
+  } finally {
+    isBattlePlayersLoading.value = false
+  }
+}
+
+// Note: During setup phase, we use select/deselect endpoints
+// During active combat, we would use add/remove endpoints for mid-battle additions
+async function addPlayerToBattle(playerId: string) {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/battle/player/select', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        playerId: playerId
+      }
+    })
+    
+    if (response.success) {
+      // Reload the player lists to reflect changes
+      await loadBattlePlayers()
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Player Added',
+        description: 'Player has been added to battle',
+        color: 'green'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to add player to battle:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to add player to battle',
+      color: 'red'
+    })
+  }
+}
+
+async function removePlayerFromBattle(playerId: string) {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch('/api/battle/player/deselect', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        playerId: playerId
+      }
+    })
+    
+    if (response.success) {
+      // Reload the player lists to reflect changes
+      await loadBattlePlayers()
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Player Removed',
+        description: 'Player has been removed from battle',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to remove player from battle:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to remove player from battle',
+      color: 'red'
+    })
+  }
+}
+
 async function nextTurn() {
   if (!currentRoom.value) return
   
@@ -3631,61 +3880,151 @@ async function nextTurn() {
 
 async function loadPlayerSpecialAbilities(participant: any) {
   try {
-    // For now, we'll use mock data since we need to first implement the API to load special abilities
-    // TODO: Replace with actual API call to load character's special abilities
-    const mockAbilities = [
-      {
-        id: '1',
-        name: 'Sword Strike',
-        diceFormula: '1d8+3',
-        description: 'A powerful sword attack that deals slashing damage.',
-        abilityType: 'ACTION' as const,
-        usesPerRest: undefined,
-        usesRemaining: undefined
-      },
-      {
-        id: '2',
-        name: 'Shield Bash',
-        diceFormula: '1d4+2',
-        description: 'Bash an enemy with your shield, potentially stunning them.',
-        abilityType: 'BONUS_ACTION' as const,
-        usesPerRest: 3,
-        usesRemaining: 2
-      },
-      {
-        id: '3',
-        name: 'Second Wind',
-        diceFormula: '1d10+1',
-        description: 'Regain hit points equal to the roll result.',
-        abilityType: 'ACTION' as const,
-        usesPerRest: 1,
-        usesRemaining: 1
+    // For players, load their actual character attacks
+    if (participant.type === 'player' && participant.userId) {
+      let playerCharacter = null
+      
+      // If it's the current user, use their active character
+      if (participant.userId === userId.value) {
+        playerCharacter = userCharacters.value.find(c => c.id === activeCharacterId.value)
+      } else {
+        // For other players, fetch their character data from the API
+        try {
+          const response = await $fetch(`/api/characters?player=${participant.userId}`)
+          if (response.success && response.data.length > 0) {
+            // Find the character that matches the participant name
+            playerCharacter = response.data.find((char: any) => char.characterName === participant.name)
+            // If no exact match, use the first character (assuming they only have one active)
+            if (!playerCharacter && response.data.length === 1) {
+              playerCharacter = response.data[0]
+            }
+          }
+        } catch (apiError) {
+          console.warn('Could not fetch character data for participant:', participant.name, apiError)
+        }
       }
-    ]
+      
+      if (playerCharacter && playerCharacter.attacks) {
+        // Convert character attacks to special abilities format
+        const characterAttacks = playerCharacter.attacks.map((attack: any, index: number) => ({
+          id: attack.id || `attack_${index}`,
+          name: attack.name || 'Unnamed Attack',
+          diceFormula: attack.damage || '1d6',
+          description: `Attack bonus: +${attack.attackBonus || 0}${attack.rangeText ? ` | Range: ${attack.rangeText}` : ''}${attack.notes ? ` | ${attack.notes}` : ''}`,
+          abilityType: 'ACTION' as const,
+          usesPerRest: undefined,
+          usesRemaining: undefined,
+          attackBonus: attack.attackBonus || 0,
+          rangeText: attack.rangeText,
+          notes: attack.notes
+        }))
+        
+        currentPlayerAbilities.value = characterAttacks
+        currentPlayerName.value = participant.name
+        showSpecialAbilitiesModal.value = true
+        
+        console.log('🗡️ Loaded character attacks for', participant.name, characterAttacks)
+        return
+      }
+    }
     
-    currentPlayerAbilities.value = mockAbilities
+    // Fallback: Show empty state with helpful message
+    currentPlayerAbilities.value = []
     currentPlayerName.value = participant.name
     showSpecialAbilitiesModal.value = true
+    
+    const toast = useToast()
+    toast.add({
+      title: 'No Attacks Found',
+      description: `No attacks found for ${participant.name}. They may need to add attacks to their character sheet.`,
+      color: 'amber'
+    })
+    
   } catch (error) {
     console.error('Failed to load special abilities:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to load character attacks',
+      color: 'red'
+    })
   }
 }
 
 function handleRollAbility(ability: any) {
-  // Trigger a dice roll with the ability's dice formula
+  // Close the special abilities modal
+  showSpecialAbilitiesModal.value = false
+  
   console.log('Rolling ability:', ability.name, ability.diceFormula)
   
-  // Parse dice formula and trigger roll
-  // TODO: Implement dice formula parsing and rolling
+  // If this is a character attack (has attackBonus), treat it as an attack
+  if (ability.attackBonus !== undefined) {
+    // Roll attack first
+    rollAttack({
+      name: ability.name,
+      attackBonus: ability.attackBonus,
+      damage: ability.diceFormula,
+      rangeText: ability.rangeText,
+      notes: ability.notes
+    })
+  } else {
+    // For other abilities (like healing spells), just roll the dice formula
+    if (ability.diceFormula) {
+      try {
+        const result = rollDamageString(ability.diceFormula)
+        
+        const roll: DiceRoll = {
+          id: Date.now().toString(),
+          userName: userName.value || 'Anonymous', 
+          userId: 'local-user',
+          timestamp: new Date(),
+          description: `${ability.name}: ${ability.diceFormula}`,
+          total: result.total,
+          details: result.details,
+          diceRolled: result.diceRolled,
+          modifier: result.modifier,
+          rollType: 'normal',
+          isCritical: false,
+          isOwn: true
+        }
+        
+        // Add to history
+        rollHistory.value.unshift(roll)
+        
+        // Submit to server if connected
+        if (isConnected.value && !isOfflineMode.value) {
+          submitDiceRoll({
+            userName: roll.userName,
+            userId: roll.userId,
+            roomCode: currentRoom.value?.code || 'default',
+            description: roll.description,
+            total: roll.total,
+            details: roll.details,
+            diceRolled: roll.diceRolled,
+            modifier: roll.modifier,
+            rollType: roll.rollType,
+            isCritical: roll.isCritical,
+            criticalType: roll.criticalType
+          })
+        }
+      } catch (error) {
+        console.error('Failed to roll ability dice:', error)
+        const toast = useToast()
+        toast.add({
+          title: 'Roll Failed',
+          description: `Failed to roll ${ability.diceFormula}`,
+          color: 'red'
+        })
+      }
+    }
+  }
+  
   const toast = useToast()
   toast.add({
     title: 'Ability Used',
-    description: `Rolling ${ability.diceFormula} for ${ability.name}`,
+    description: `Rolling ${ability.diceFormula || 'dice'} for ${ability.name}`,
     color: 'blue'
   })
-  
-  // Close the modal after using ability
-  showSpecialAbilitiesModal.value = false
 }
 
 function handleUseAbility(ability: any) {
@@ -3701,7 +4040,7 @@ function handleUseAbility(ability: any) {
   handleRollAbility(ability)
 }
 
-async function dealDamageToEnemy(enemy: any) {
+async function dealDamageToEnemy(enemy: Enemy) {
   const damage = prompt(`How much damage to deal to ${enemy.name}?`)
   if (!damage || isNaN(parseInt(damage)) || !currentRoom.value) return
   
