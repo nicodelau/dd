@@ -243,19 +243,40 @@
                  <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxHp || 0 }}</p>
                </div>
 
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Current HP
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.currentHp"
-                   type="number"
-                   min="0"
-                   :max="character.maxHp"
-                 />
-                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp || 0 }}</p>
-               </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Current HP
+                  </label>
+                  <div v-if="editMode" class="space-y-2">
+                    <UInput
+                      v-model.number="editForm.currentHp"
+                      type="number"
+                      min="0"
+                      :max="character.maxHp"
+                    />
+                  </div>
+                  <div v-else class="space-y-2">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp || 0 }}</p>
+                    <!-- Quick HP adjustment for DMs -->
+                    <div v-if="canEdit" class="flex items-center space-x-2">
+                      <UInput
+                        v-model.number="hpAdjustment"
+                        type="number"
+                        placeholder="±HP"
+                        class="w-20 text-sm"
+                        @keyup.enter="adjustHp"
+                      />
+                      <UButton
+                        size="sm"
+                        variant="outline"
+                        @click="adjustHp"
+                        :disabled="!hpAdjustment || hpAdjustment === 0"
+                      >
+                        Adjust
+                      </UButton>
+                    </div>
+                  </div>
+                </div>
              </div>
 
              <!-- Proficiency Checkboxes -->
@@ -282,22 +303,7 @@
                    </div>
                  </div>
 
-                 <!-- Skills Proficiency -->
-                 <div>
-                   <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                     Skills
-                   </h5>
-                   <div class="space-y-2 max-h-48 overflow-y-auto">
-                     <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center space-x-2">
-                       <UCheckbox
-                         v-if="editMode"
-                         v-model="skillProficient[skill.name]"
-                         size="sm"
-                       />
-                       <span class="text-sm text-gray-600 dark:text-gray-400">{{ skill.label }}</span>
-                     </div>
-                   </div>
-                 </div>
+
                </div>
              </div>
             
@@ -1280,6 +1286,7 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const error = ref<string | null>(null)
 const imageLoadError = ref(false)
+const hpAdjustment = ref<number | null>(null)
 
 // Form data
 const editForm = ref<Partial<CharacterDTO>>({})
@@ -1473,6 +1480,26 @@ function removeCombatAction(index: number) {
   editCombatActions.value.splice(index, 1)
 }
 
+async function adjustHp() {
+  if (!character.value || !hpAdjustment.value || hpAdjustment.value === 0) return
+
+  try {
+    const newHp = Math.max(0, (character.value.currentHp || 0) + hpAdjustment.value)
+
+    // Direct update of character's current HP
+    await $fetch(`/api/characters/${character.value.id}`, {
+      method: 'PUT',
+      body: { currentHp: newHp }
+    })
+
+    // Reload character data to reflect changes
+    await loadCharacter()
+    hpAdjustment.value = null
+  } catch (err: any) {
+    console.error('Error adjusting HP:', err)
+  }
+}
+
 function calculateTotalWealth() {
   const copper = character.value?.copperCoins || 0
   const silver = character.value?.silverCoins || 0
@@ -1562,8 +1589,11 @@ async function saveCharacter() {
         }
       })
 
+    // Exclude system fields that shouldn't be updated by users
+    const { id, userId, ownerId, user, owner, createdAt, updatedAt, ...updateFields } = editForm.value
+
     const updateData = {
-      ...editForm.value,
+      ...updateFields,
       notes: characterNotes.value,
       attacks: editAttacks.value,
       inventory: editInventory.value,

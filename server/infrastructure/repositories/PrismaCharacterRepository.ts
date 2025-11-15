@@ -390,7 +390,6 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               name: attack.name,
               attackBonus: attack.attackBonus,
               damageDice: attack.damage, // Map damage to damageDice
-              damageType: attack.damageType,
               range: attack.rangeText, // Map rangeText to range
               description: attack.notes // Map notes to description
             }))
@@ -411,10 +410,10 @@ export class PrismaCharacterRepository implements ICharacterRepository {
             data: typedCharacterData.inventory.map((item: any) => ({
               characterId: id,
               name: item.name,
+              description: item.notes, // Map notes to description
               quantity: item.quantity,
               weight: item.weight,
-              equipped: item.equipped,
-              notes: item.notes
+              equipped: item.equipped
             }))
           })
         }
@@ -543,6 +542,34 @@ export class PrismaCharacterRepository implements ICharacterRepository {
       platinumCoins: prismaCharacter.platinumCoins,
       // Inventory
       backpack: prismaCharacter.backpack,
+      inventory: prismaCharacter.inventory?.map(item => ({
+        id: item.id,
+        characterId: parseInt(prismaCharacter.id),
+        name: item.name,
+        quantity: item.quantity,
+        weight: item.weight,
+        equipped: item.equipped,
+        notes: item.description // Map description back to notes
+      })) || [],
+      // Attacks
+      attacks: prismaCharacter.attacks?.map(attack => ({
+        id: attack.id,
+        characterId: parseInt(prismaCharacter.id),
+        name: attack.name,
+        attackBonus: attack.attackBonus,
+        damage: attack.damageDice, // Map damageDice back to damage
+        rangeText: attack.range, // Map range back to rangeText
+        notes: attack.description // Map description back to notes
+      })) || [],
+      // Combat Actions
+      combatActions: prismaCharacter.combatActions?.map(action => ({
+        id: action.id,
+        name: action.name,
+        type: action.type,
+        currentUses: action.currentUses,
+        maxUses: action.maxUses,
+        description: action.description
+      })) || [],
       // Skills and Saving Throws
       skills: prismaCharacter.skills || [],
       savingThrows: prismaCharacter.savingThrows || [],

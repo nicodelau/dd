@@ -56,13 +56,20 @@ export interface Character {
   goldCoins?: number
   platinumCoins?: number
   
-  // Inventory
-  backpack?: string
-  notes: Record<string, any>
-  
-  // Skills and Saving Throws
-  skills?: any[]
-  savingThrows?: any[]
+   // Inventory
+   backpack?: string
+   inventory?: any[]
+   notes: Record<string, any>
+
+   // Attacks
+   attacks?: any[]
+
+   // Combat Actions
+   combatActions?: any[]
+
+   // Skills and Saving Throws
+   skills?: any[]
+   savingThrows?: any[]
   
   createdAt?: Date
   updatedAt?: Date
