@@ -369,7 +369,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               ability: skill.ability,
               proficient: skill.proficient,
               expertise: skill.expertise || false,
-              category: skill.category || 'STANDARD'
+              category: skill.category || 'OTRO'
             }))
           })
         }

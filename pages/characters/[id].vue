@@ -1570,9 +1570,11 @@ async function loadCharacter() {
 
 async function saveCharacter() {
   if (!character.value || !editForm.value) return
-  
+
+  console.log('Saving character with ID:', characterId)
+
   isSaving.value = true
-  
+
   try {
     // Prepare saving throws data
     const savingThrows = Object.entries(savingThrowProficient.value)
@@ -1589,7 +1591,7 @@ async function saveCharacter() {
           ability: skill?.ability || 'strength',
           proficient,
           expertise: false, // Could be enhanced later
-          category: 'STANDARD'
+          category: 'OTRO'
         }
       })
 

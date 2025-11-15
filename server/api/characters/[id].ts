@@ -18,17 +18,22 @@ function getCharacterService(): CharacterService {
 export default defineEventHandler(async (event) => {
   const method = event.method
   const characterId = getRouterParam(event, 'id')
-  
+
+  console.log('Character ID:', characterId)
+
   if (!characterId) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Invalid character ID'
     })
   }
-  
+
   try {
+    console.log('DATABASE_URL:', process.env.DATABASE_URL)
     const user = await authenticateUser(event)
-    
+
+    console.log('Authenticated user:', user.id, user.username)
+
     // Get character directly from Prisma to access userId field
     const character = await prisma.character.findUnique({
       where: { id: characterId },
@@ -42,7 +47,9 @@ export default defineEventHandler(async (event) => {
         }
       }
     })
-    
+
+    console.log('Character found:', character ? character.name : 'null')
+
     if (!character) {
       throw createError({
         statusCode: 404,
