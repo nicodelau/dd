@@ -131,73 +131,14 @@
           </div>
           
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div 
+            <CharacterCard
               v-for="character in filteredCharacters" 
               :key="character.id"
-              class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-            >
-              <!-- Character Header -->
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex items-center space-x-3">
-                  <div class="h-10 w-10 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <span class="text-white font-bold">{{ character.characterName?.charAt(0) || '?' }}</span>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900 dark:text-white">{{ character.characterName }}</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                      {{ character.race }} {{ character.characterClass }}
-                    </p>
-                  </div>
-                </div>
-                
-                <!-- Actions Dropdown -->
-                <UDropdown :items="getCharacterActions(character)" :popper="{ placement: 'bottom-start' }">
-                  <UButton 
-                    color="gray" 
-                    variant="ghost" 
-                    icon="i-heroicons-ellipsis-vertical-20-solid"
-                    size="sm"
-                  />
-                </UDropdown>
-              </div>
-              
-              <!-- Character Info -->
-              <div class="space-y-2 mb-4">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600 dark:text-gray-400">Level:</span>
-                  <span class="font-medium text-gray-900 dark:text-white">{{ character.level }}</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600 dark:text-gray-400">Background:</span>
-                  <span class="font-medium text-gray-900 dark:text-white">{{ character.background }}</span>
-                </div>
-              </div>
-              
-              <!-- Assignment Status -->
-              <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-                <div v-if="character.user" class="flex items-center justify-between">
-                  <div class="flex items-center space-x-2">
-                    <div class="h-2 w-2 bg-green-500 rounded-full"></div>
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Assigned to:</span>
-                  </div>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ character.user.username }}</span>
-                </div>
-                <div v-else class="flex items-center justify-between">
-                  <div class="flex items-center space-x-2">
-                    <div class="h-2 w-2 bg-yellow-500 rounded-full"></div>
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Unassigned</span>
-                  </div>
-                  <UButton 
-                    size="xs" 
-                    color="primary" 
-                    variant="outline"
-                    @click="openAssignModal(character)"
-                  >
-                    Assign
-                  </UButton>
-                </div>
-              </div>
-            </div>
+              :character="character"
+              @view="navigateTo(`/characters/${character.id}`)"
+              @edit="navigateTo(`/characters/${character.id}?edit=true`)"
+              @delete="deleteCharacter(character.id)"
+            />
           </div>
         </div>
       </div>

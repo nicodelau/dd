@@ -182,102 +182,111 @@
           <div class="p-4 space-y-6">
             <!-- Character Info Card (only for Players) -->
             <div v-if="userRole === 'Player'">
-              <div class="mb-4">
-                <div class="flex items-center justify-between">
-                  <h4 class="font-medium text-gray-900 dark:text-white">Character Details</h4>
-                  <UButton v-if="!isOfflineMode" color="gray" variant="outline" size="xs" @click="resetStats">
-                    Reset Stats
-                  </UButton>
-                </div>
-              </div>
-
-              <div v-if="playerStats" class="space-y-4">
-                <!-- Character Image Placeholder -->
-                <div class="flex justify-center">
-                  <div class="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                    <span class="text-3xl">🧙‍♂️</span>
-                  </div>
-                </div>
-
-                <!-- Character Name -->
+              <!-- Character Portrait -->
+              <div v-if="activeCharacter" class="space-y-4">
+                <!-- Character Image -->
                 <div class="text-center">
+                  <div class="relative h-24 w-24 mx-auto mb-3">
+                    <img v-if="activeCharacter.avatar" :src="activeCharacter.avatar"
+                      :alt="activeCharacter.characterName || 'Character'"
+                      class="h-24 w-24 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
+                      @error="$event.target.style.display = 'none'" />
+                    <div v-if="!activeCharacter.avatar"
+                      class="h-24 w-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-gray-200 dark:border-gray-600">
+                      {{ activeCharacter.characterName?.charAt(0)?.toUpperCase() || '?' }}
+                    </div>
+                  </div>
+
                   <h5 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{userCharacters.find(c => c.id === activeCharacterId)?.characterName || 'Unknown Character'}}
+                    {{ activeCharacter.characterName || 'Unknown Character' }}
                   </h5>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Level {{ playerStats.level }} {{userCharacters.find(c => c.id === activeCharacterId)?.className ||
-                      'Class'}}
+                    Level {{ activeCharacter.classLevel || 1 }} {{ activeCharacter.className || 'Class' }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ (activeCharacter.race || 'Unknown') }}
                   </p>
                 </div>
 
-                <!-- Health Section -->
-                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                  <h6 class="text-sm font-medium text-red-900 dark:text-red-100 mb-2">Health</h6>
-                  <div class="space-y-2">
-                    <div class="flex items-center justify-between text-sm">
-                      <span class="text-red-700 dark:text-red-300">Hit Points</span>
-                      <span class="font-mono text-red-900 dark:text-red-100">
-                        {{ playerStats.hitPoints.current }} / {{ playerStats.hitPoints.max }}
+                <!-- Currency -->
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">💰 Currency</h6>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex justify-between">
+                      <span class="text-orange-600">Copper:</span>
+                      <span class="font-mono">{{ activeCharacter.copperCoins || 0 }} cp</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-400">Silver:</span>
+                      <span class="font-mono">{{ activeCharacter.silverCoins || 0 }} sp</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-blue-400">Electrum:</span>
+                      <span class="font-mono">{{ activeCharacter.electrumCoins || 0 }} ep</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-yellow-500">Gold:</span>
+                      <span class="font-mono">{{ activeCharacter.goldCoins || 0 }} gp</span>
+                    </div>
+                    <div class="flex justify-between col-span-2">
+                      <span class="text-gray-300">Platinum:</span>
+                      <span class="font-mono">{{ activeCharacter.platinumCoins || 0 }} pp</span>
+                    </div>
+                  </div>
+                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center text-sm">
+                      <span class="font-medium text-gray-700 dark:text-gray-300">Total Value:</span>
+                      <span class="font-bold text-gray-900 dark:text-white">
+                        {{ calculateTotalWealth(activeCharacter) }} gp
                       </span>
                     </div>
-                    <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-2">
-                      <div class="bg-red-500 h-2 rounded-full transition-all duration-300"
-                        :style="{ width: `${(playerStats.hitPoints.current / playerStats.hitPoints.max) * 100}%` }">
+                  </div>
+                </div>
+
+                <!-- Inventory -->
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">🎒 Inventory</h6>
+                  <div v-if="activeCharacter.inventory && activeCharacter.inventory.length > 0"
+                    class="space-y-2 max-h-32 overflow-y-auto">
+                    <div v-for="item in activeCharacter.inventory" :key="item.id"
+                      class="border border-gray-200 dark:border-gray-700 rounded p-2">
+                      <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ item.name }}</p>
+                          <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                            <span>Qty: {{ item.quantity || 1 }}</span>
+                            <span v-if="item.weight">• {{ item.weight }} lbs</span>
+                          </div>
+                        </div>
                       </div>
+                      <p v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{{ item.notes
+                      }}</p>
                     </div>
+                  </div>
+                  <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                    No items in inventory
                   </div>
                 </div>
 
-                <!-- Core Stats Grid -->
-                <div class="grid grid-cols-2 gap-3">
-                  <!-- Armor Class -->
-                  <div
-                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center">
-                    <div class="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">AC</div>
-                    <div class="text-lg font-bold text-blue-900 dark:text-blue-100">{{ playerStats.armorClass }}</div>
-                  </div>
-
-                  <!-- Level -->
-                  <div
-                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center">
-                    <div class="text-xs font-medium text-green-700 dark:text-green-300 mb-1">Level</div>
-                    <div class="text-lg font-bold text-green-900 dark:text-green-100">{{ playerStats.level }}</div>
-                  </div>
-
-                  <!-- Speed -->
-                  <div
-                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center">
-                    <div class="text-xs font-medium text-yellow-700 dark:text-yellow-300 mb-1">Speed</div>
-                    <div class="text-lg font-bold text-yellow-900 dark:text-yellow-100">{{ playerStats.speed }} ft</div>
-                  </div>
-
-                  <!-- Proficiency Bonus -->
-                  <div
-                    class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 text-center">
-                    <div class="text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">Prof. Bonus</div>
-                    <div class="text-lg font-bold text-purple-900 dark:text-purple-100">+{{ playerStats.proficiencyBonus
-                    }}
-                    </div>
-                  </div>
+                <!-- Notes -->
+                <div v-if="activeCharacter.notes" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">📝 Notes</h6>
+                  <p class="text-sm text-gray-700 dark:text-gray-300 max-h-24 overflow-y-auto">{{ activeCharacter.notes
+                  }}</p>
                 </div>
 
-                <!-- Initiative -->
-                <div
-                  class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                  <h6 class="text-sm font-medium text-orange-900 dark:text-orange-100 mb-2">Initiative</h6>
-                  <div class="text-center">
-                    <div class="text-xl font-bold text-orange-900 dark:text-orange-100">
-                      {{ playerStats.initiative >= 0 ? '+' : '' }}{{ playerStats.initiative }}
-                    </div>
-                    <div class="text-xs text-orange-700 dark:text-orange-300">DEX modifier</div>
-                  </div>
+                <!-- Reset Stats Button -->
+                <div v-if="!isOfflineMode" class="pt-2">
+                  <UButton color="gray" variant="outline" size="sm" @click="resetStats" class="w-full">
+                    🔄 Reset Stats
+                  </UButton>
                 </div>
               </div>
 
               <div v-else class="text-center py-8">
                 <div class="text-4xl mb-4">🎭</div>
                 <p class="text-gray-500 dark:text-gray-400">
-                  Select a character to view stats
+                  Select a character to view details
                 </p>
               </div>
             </div>
@@ -304,6 +313,8 @@
                       <p class="text-xs text-gray-500 dark:text-gray-400">Level {{ player.stats.level }}</p>
                     </div>
                     <div class="flex items-center space-x-1">
+                      <UButton color="blue" variant="outline" size="xs" icon="i-heroicons-eye"
+                        @click="showPlayerDetails(player)" title="View Character Details" />
                       <span
                         class="text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
                         AC {{ player.stats.armorClass }}
@@ -392,227 +403,146 @@
 
             <!-- Right Sidebar Content -->
             <div class="p-4 space-y-6">
-              <!-- Ability Scores (only for Players) -->
+              <!-- Ability Scores & Skills (only for Players) -->
               <div v-if="userRole === 'Player'">
-                <div v-if="playerStats" class="space-y-4">
-                  <!-- Ability Scores Grid -->
-                  <div class="space-y-3">
-                    <!-- Strength -->
-                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <div class="text-sm font-medium text-red-900 dark:text-red-100">Strength (STR)</div>
-                          <div class="text-xs text-red-700 dark:text-red-300">Physical power</div>
-                        </div>
-                        <div class="text-right">
-                          <div class="text-lg font-bold text-red-900 dark:text-red-100">{{
-                            playerStats.abilities.strength }}
-                          </div>
-                          <div class="text-xs text-red-700 dark:text-red-300">
-                            {{ Math.floor((playerStats.abilities.strength - 10) / 2) >= 0 ? '+' : '' }}{{
-                              Math.floor((playerStats.abilities.strength - 10) / 2) }} mod
-                          </div>
-                        </div>
+                <div v-if="activeCharacter" class="space-y-6">
+                  <!-- Ability Scores - Compact Version -->
+                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">⚡ Ability Scores</h6>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                      <div class="flex justify-between items-center p-2 bg-red-50 dark:bg-red-900/20 rounded">
+                        <span class="text-red-700 dark:text-red-300 font-medium">STR</span>
+                        <span class="font-mono text-red-900 dark:text-red-100">
+                          {{ activeCharacter.strength || 10 }} ({{
+                            formatModifier(calculateModifier(activeCharacter.strength
+                              || 10)) }})
+                        </span>
                       </div>
-                    </div>
-
-                    <!-- Dexterity -->
-                    <div
-                      class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <div class="text-sm font-medium text-green-900 dark:text-green-100">Dexterity (DEX)</div>
-                          <div class="text-xs text-green-700 dark:text-green-300">Agility & reflexes</div>
-                        </div>
-                        <div class="text-right">
-                          <div class="text-lg font-bold text-green-900 dark:text-green-100">{{
-                            playerStats.abilities.dexterity
-                          }}</div>
-                          <div class="text-xs text-green-700 dark:text-green-300">
-                            {{ Math.floor((playerStats.abilities.dexterity - 10) / 2) >= 0 ? '+' : '' }}{{
-                              Math.floor((playerStats.abilities.dexterity - 10) / 2) }} mod
-                          </div>
-                        </div>
+                      <div class="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                        <span class="text-green-700 dark:text-green-300 font-medium">DEX</span>
+                        <span class="font-mono text-green-900 dark:text-green-100">
+                          {{ activeCharacter.dexterity || 10 }} ({{
+                            formatModifier(calculateModifier(activeCharacter.dexterity
+                              || 10)) }})
+                        </span>
                       </div>
-                    </div>
-
-                    <!-- Constitution -->
-                    <div
-                      class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <div class="text-sm font-medium text-orange-900 dark:text-orange-100">Constitution (CON)</div>
-                          <div class="text-xs text-orange-700 dark:text-orange-300">Health & stamina</div>
-                        </div>
-                        <div class="text-right">
-                          <div class="text-lg font-bold text-orange-900 dark:text-orange-100">{{
-                            playerStats.abilities.constitution }}</div>
-                          <div class="text-xs text-orange-700 dark:text-orange-300">
-                            {{ Math.floor((playerStats.abilities.constitution - 10) / 2) >= 0 ? '+' : '' }}{{
-                              Math.floor((playerStats.abilities.constitution - 10) / 2) }} mod
-                          </div>
-                        </div>
+                      <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                        <span class="text-orange-700 dark:text-orange-300 font-medium">CON</span>
+                        <span class="font-mono text-orange-900 dark:text-orange-100">
+                          {{ activeCharacter.constitution || 10 }} ({{
+                            formatModifier(calculateModifier(activeCharacter.constitution || 10)) }})
+                        </span>
                       </div>
-                    </div>
-
-                    <!-- Intelligence -->
-                    <div
-                      class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <div class="text-sm font-medium text-purple-900 dark:text-purple-100">Intelligence (INT)</div>
-                          <div class="text-xs text-purple-700 dark:text-purple-300">Reasoning & memory</div>
-                        </div>
-                        <div class="text-right">
-                          <div class="text-lg font-bold text-purple-900 dark:text-purple-100">{{
-                            playerStats.abilities.intelligence }}</div>
-                          <div class="text-xs text-purple-700 dark:text-purple-300">
-                            {{ Math.floor((playerStats.abilities.intelligence - 10) / 2) >= 0 ? '+' : '' }}{{
-                              Math.floor((playerStats.abilities.intelligence - 10) / 2) }} mod
-                          </div>
-                        </div>
+                      <div class="flex justify-between items-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                        <span class="text-purple-700 dark:text-purple-300 font-medium">INT</span>
+                        <span class="font-mono text-purple-900 dark:text-purple-100">
+                          {{ activeCharacter.intelligence || 10 }} ({{
+                            formatModifier(calculateModifier(activeCharacter.intelligence || 10)) }})
+                        </span>
                       </div>
-                    </div>
-
-                    <!-- Wisdom -->
-                    <div
-                      class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <div class="text-sm font-medium text-blue-900 dark:text-blue-100">Wisdom (WIS)</div>
-                          <div class="text-xs text-blue-700 dark:text-blue-300">Awareness & insight</div>
-                        </div>
-                        <div class="text-right">
-                          <div class="text-lg font-bold text-blue-900 dark:text-blue-100">{{
-                            playerStats.abilities.wisdom }}
-                          </div>
-                          <div class="text-xs text-blue-700 dark:text-blue-300">
-                            {{ Math.floor((playerStats.abilities.wisdom - 10) / 2) >= 0 ? '+' : '' }}{{
-                              Math.floor((playerStats.abilities.wisdom - 10) / 2) }} mod
-                          </div>
-                        </div>
+                      <div class="flex justify-between items-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        <span class="text-blue-700 dark:text-blue-300 font-medium">WIS</span>
+                        <span class="font-mono text-blue-900 dark:text-blue-100">
+                          {{ activeCharacter.wisdom || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.wisdom
+                            ||
+                            10)) }})
+                        </span>
                       </div>
-                    </div>
-
-                    <!-- Charisma -->
-                    <div
-                      class="bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <div class="text-sm font-medium text-pink-900 dark:text-pink-100">Charisma (CHA)</div>
-                          <div class="text-xs text-pink-700 dark:text-pink-300">Force of personality</div>
-                        </div>
-                        <div class="text-right">
-                          <div class="text-lg font-bold text-pink-900 dark:text-pink-100">{{
-                            playerStats.abilities.charisma }}
-                          </div>
-                          <div class="text-xs text-pink-700 dark:text-pink-300">
-                            {{ Math.floor((playerStats.abilities.charisma - 10) / 2) >= 0 ? '+' : '' }}{{
-                              Math.floor((playerStats.abilities.charisma - 10) / 2) }} mod
-                          </div>
-                        </div>
+                      <div class="flex justify-between items-center p-2 bg-pink-50 dark:bg-pink-900/20 rounded">
+                        <span class="text-pink-700 dark:text-pink-300 font-medium">CHA</span>
+                        <span class="font-mono text-pink-900 dark:text-pink-100">
+                          {{ activeCharacter.charisma || 10 }} ({{
+                            formatModifier(calculateModifier(activeCharacter.charisma
+                              || 10)) }})
+                        </span>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Skills -->
-                <div v-if="activeCharacter && activeCharacter.skills && activeCharacter.skills.length > 0">
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Skills</h4>
-                  <div class="space-y-2">
-                    <div v-for="skill in activeCharacter.skills" :key="skill.name"
-                      class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-                      <div class="flex items-center space-x-2">
-                        <span class="text-sm font-medium text-gray-900 dark:text-white">{{ skill.name }}</span>
-                        <span v-if="skill.proficient"
-                          class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
-                        <span v-if="skill.expertise"
-                          class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">Expertise</span>
+                  <!-- Health Bar -->
+                  <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded">
+                    <div class="flex justify-between items-center text-sm mb-1">
+                      <span class="text-red-700 dark:text-red-300 font-medium">Hit Points</span>
+                      <span class="font-mono text-red-900 dark:text-red-100">
+                        {{ activeCharacter.currentHp || 0 }} / {{ activeCharacter.maxHp || 0 }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-2">
+                      <div class="bg-red-500 h-2 rounded-full transition-all duration-300"
+                        :style="{ width: `${calculateHealthPercentage(activeCharacter)}%` }">
                       </div>
-                      <span class="text-sm text-gray-600 dark:text-gray-400">{{ skill.ability }}</span>
                     </div>
                   </div>
-                </div>
 
-                <!-- Saving Throws -->
-                <div v-if="activeCharacter && activeCharacter.savingThrows && activeCharacter.savingThrows.length > 0">
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Saving Throws</h4>
-                  <div class="space-y-2">
-                    <div v-for="savingThrow in activeCharacter.savingThrows" :key="savingThrow.ability"
-                      class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-                      <div class="flex items-center space-x-2">
-                        <span class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{
-                          savingThrow.ability
+                  <!-- Combat Stats -->
+                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">⚔️ Combat Stats</h6>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                      <div class="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        <span class="text-blue-700 dark:text-blue-300">AC</span>
+                        <span class="font-mono text-blue-900 dark:text-blue-100">{{ activeCharacter.armorClass || 10
                         }}</span>
-                        <span v-if="savingThrow.proficient"
-                          class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
+                      </div>
+                      <div class="flex justify-between p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                        <span class="text-orange-700 dark:text-orange-300">Initiative</span>
+                        <span class="font-mono text-orange-900 dark:text-orange-100">{{
+                          formatModifier(activeCharacter.initiative || 0) }}</span>
+                      </div>
+                      <div class="flex justify-between p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
+                        <span class="text-yellow-700 dark:text-yellow-300">Speed</span>
+                        <span class="font-mono text-yellow-900 dark:text-yellow-100">{{ activeCharacter.speed || 30 }}
+                          ft</span>
+                      </div>
+                      <div class="flex justify-between p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                        <span class="text-purple-700 dark:text-purple-300">Prof</span>
+                        <span class="font-mono text-purple-900 dark:text-purple-100">+{{
+                          activeCharacter.proficiencyBonus || 2
+                        }}</span>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Attacks -->
-                <div v-if="activeCharacterAttacks && activeCharacterAttacks.length > 0">
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Attacks</h4>
-                  <div class="space-y-2">
-                    <div v-for="attack in activeCharacterAttacks" :key="attack.id"
-                      class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between mb-1">
-                        <span class="font-medium text-gray-900 dark:text-white">{{ attack.name }}</span>
-                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ attack.attackBonus >= 0 ? '+' : ''
-                        }}{{
-                            attack.attackBonus }}</span>
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ attack.damage }} {{ attack.rangeText || '' }}
-                      </div>
-                      <div v-if="attack.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {{ attack.notes }}
+                  <!-- Saving Throws -->
+                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">🛡️ Saving Throws</h6>
+                    <div class="space-y-2">
+                      <!-- Always show all 6 saving throws -->
+                      <div
+                        v-for="ability in ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']"
+                        :key="ability"
+                        class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
+                        <div class="flex items-center space-x-2">
+                          <span class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{
+                            ability.substring(0, 3).toUpperCase()
+                            }}</span>
+                          <span v-if="getSavingThrowProficiency(ability, activeCharacter)"
+                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Prof</span>
+                        </div>
+                        <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
+                          {{ formatModifier(calculateSavingThrowModifierByAbility(ability, activeCharacter)) }}
+                        </span>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Special Abilities -->
-                <div v-if="currentPlayerAbilities && currentPlayerAbilities.length > 0">
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Special Abilities</h4>
-                  <div class="space-y-2">
-                    <div v-for="ability in currentPlayerAbilities" :key="ability.id"
-                      class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between mb-1">
-                        <span class="font-medium text-gray-900 dark:text-white">{{ ability.name }}</span>
-                        <UButton v-if="ability.diceFormula" color="blue" variant="outline" size="xs"
-                          @click="rollAbilityDice(ability)" icon="i-heroicons-cube">
-                          Roll
-                        </UButton>
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ ability.description }}
-                      </div>
-                      <div v-if="ability.usesPerRest && ability.usesRemaining !== undefined"
-                        class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Uses: {{ ability.usesRemaining }}/{{ ability.usesPerRest }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Combat Actions -->
-                <div
-                  v-if="activeCharacter && activeCharacter.combatActions && activeCharacter.combatActions.length > 0">
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Combat Actions</h4>
-                  <div class="space-y-2">
-                    <div v-for="action in activeCharacter.combatActions" :key="action.id"
-                      class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                      <div class="flex items-center justify-between mb-1">
-                        <span class="font-medium text-gray-900 dark:text-white">{{ action.name }}</span>
-                        <span class="text-xs text-gray-600 dark:text-gray-400">{{ action.type }}</span>
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ action.description }}
-                      </div>
-                      <div v-if="action.maxUses > 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Uses: {{ action.currentUses }}/{{ action.maxUses }}
+                  <!-- Skills -->
+                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">🎯 Skills</h6>
+                    <div class="space-y-1 max-h-64 overflow-y-auto">
+                      <!-- Always show all standard D&D skills -->
+                      <div v-for="skill in getAllSkills(activeCharacter)" :key="skill.name"
+                        class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
+                        <div class="flex items-center space-x-2 flex-1 min-w-0">
+                          <span class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ skill.name
+                          }}</span>
+                          <span v-if="skill.proficient"
+                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded flex-shrink-0">Prof</span>
+                          <span v-if="skill.expertise"
+                            class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0">Exp</span>
+                        </div>
+                        <span class="text-xs font-mono text-gray-600 dark:text-gray-400 ml-2">
+                          {{ formatModifier(calculateSkillModifierForSkill(skill, activeCharacter)) }}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -621,7 +551,7 @@
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">⚡</div>
                   <p class="text-gray-500 dark:text-gray-400">
-                    Select a character to view ability scores
+                    Select a character to view details
                   </p>
                 </div>
               </div>
@@ -679,84 +609,84 @@
             </div>
           </div>
 
-           <!-- Main content area -->
-           <div class="transition-all duration-300 min-h-screen">
-             <div class="px-4 sm:px-6 lg:px-8">
+          <!-- Main content area -->
+          <div class="transition-all duration-300 min-h-screen">
+            <div class="px-4 sm:px-6 lg:px-8">
 
-               <!-- Roll History - Top Section (only for DM) -->
-               <UCard v-if="userRole === 'DM'" class="mb-8">
-                 <template #header>
-                   <div class="flex items-center justify-between">
-                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                       🎯 Roll History
-                     </h3>
-                     <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
-                       @click="clearHistory" icon="i-heroicons-trash">
-                       Clear
-                     </UButton>
-                   </div>
-                 </template>
+              <!-- Roll History - Top Section (only for DM) -->
+              <UCard v-if="userRole === 'DM'" class="mb-8">
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      🎯 Roll History
+                    </h3>
+                    <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs" @click="clearHistory"
+                      icon="i-heroicons-trash">
+                      Clear
+                    </UButton>
+                  </div>
+                </template>
 
-                 <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
-                   <div v-for="roll in rollHistory" :key="roll.id"
-                     class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                     :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
-                     <div class="flex items-start justify-between">
-                       <div class="flex-1">
-                         <div class="flex items-center space-x-2 mb-1">
-                           <span class="text-sm font-medium"
-                             :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
-                             {{ roll.userName }}
-                           </span>
-                           <span class="text-xs text-gray-500 dark:text-gray-400">
-                             {{ formatTime(roll.timestamp) }}
-                           </span>
-                         </div>
-                         <!-- Dice Visual Display -->
-                         <div class="flex flex-wrap gap-1 mb-2">
-                           <div v-for="(diceResult, index) in roll.diceResults" :key="index"
-                               class="relative inline-block">
-                             <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`"
-                                 :alt="diceResult.type"
-                                 class="w-8 h-8" />
-                             <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
-                               {{ diceResult.result }}
-                             </span>
-                           </div>
-                         </div>
+                <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                  <div v-for="roll in rollHistory" :key="roll.id"
+                    class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                    :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-1">
+                          <span class="text-sm font-medium"
+                            :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
+                            {{ roll.userName }}
+                          </span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ formatTime(roll.timestamp) }}
+                          </span>
+                        </div>
+                        <!-- Dice Visual Display -->
+                        <div class="flex flex-wrap gap-1 mb-2">
+                          <div v-for="(diceResult, index) in roll.diceResults" :key="index"
+                            class="relative inline-block">
+                            <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
+                              class="w-8 h-8" />
+                            <span
+                              class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                              {{ diceResult.result }}
+                            </span>
+                          </div>
+                        </div>
 
-                         <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                           ({{ roll.details.join(' + ') }})
-                         </div>
+                        <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          ({{ roll.details.join(' + ') }})
+                        </div>
 
-                         <div v-if="roll.isCritical"
-                           class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                           {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
-                         </div>
-                       </div>
-                       <!-- Sumatoria a la derecha -->
-                       <div class="ml-4">
-                         <span class="text-lg font-bold"
-                           :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
-                           {{ roll.total }}
-                         </span>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
+                        <div v-if="roll.isCritical" class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                          {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                        </div>
+                      </div>
+                      <!-- Sumatoria a la derecha -->
+                      <div class="ml-4">
+                        <span class="text-lg font-bold"
+                          :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
+                          {{ roll.total }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                 <div v-else class="text-center py-8">
-                   <div class="text-4xl mb-4">🎲</div>
-                   <p class="text-gray-500 dark:text-gray-400">
-                     No rolls yet. Start rolling some dice!
-                   </p>
-                 </div>
-               </UCard>
+                <div v-else class="text-center py-8">
+                  <div class="text-4xl mb-4">🎲</div>
+                  <p class="text-gray-500 dark:text-gray-400">
+                    No rolls yet. Start rolling some dice!
+                  </p>
+                </div>
+              </UCard>
 
-               <!-- Layout condicional: 2 columnas para players, 3 para DM -->
-               <div :class="userRole === 'DM' ? 'grid grid-cols-1 lg:grid-cols-3 gap-8' : 'grid grid-cols-1 lg:grid-cols-2 gap-8'">
-                 <!-- Dice Selection - Left column for both -->
-                 <div :class="userRole === 'DM' ? 'lg:col-span-2 space-y-6' : 'space-y-6'" class="order-1">
+              <!-- Layout condicional: 2 columnas para players, 3 para DM -->
+              <div
+                :class="userRole === 'DM' ? 'grid grid-cols-1 lg:grid-cols-3 gap-8' : 'grid grid-cols-1 lg:grid-cols-2 gap-8'">
+                <!-- Dice Selection - Left column for both -->
+                <div :class="userRole === 'DM' ? 'lg:col-span-2 space-y-6' : 'space-y-6'" class="order-1">
                   <!-- Dice Selection Card -->
                   <UCard>
                     <template #header>
@@ -775,11 +705,12 @@
                       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div v-for="dice in diceTypes" :key="dice.type" class="flex flex-col items-center space-y-2">
                           <div class="text-center">
-                            <div class="relative inline-block cursor-pointer hover:scale-110 transition-transform duration-200"
-                                 @click="rollSingleDiceType(dice.type)">
-                              <img :src="`/assets/dices/${dice.name}.svg`" :alt="dice.name"
-                                class="w-12 h-12" />
-                              <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                            <div
+                              class="relative inline-block cursor-pointer hover:scale-110 transition-transform duration-200"
+                              @click="rollSingleDiceType(dice.type)">
+                              <img :src="`/assets/dices/${dice.name}.svg`" :alt="dice.name" class="w-12 h-12" />
+                              <span
+                                class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
                                 {{ dice.sides }}
                               </span>
                             </div>
@@ -833,82 +764,82 @@
                       </div>
                     </div>
                   </UCard>
-                  </div>
+                </div>
 
-                  <!-- Right Column - Roll History (Players) -->
-                  <div v-if="userRole !== 'DM'" class="space-y-6 order-2">
-                    <UCard>
-                      <template #header>
-                        <div class="flex items-center justify-between">
-                          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                            🎯 Roll History
-                          </h3>
-                          <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
-                            @click="clearHistory" icon="i-heroicons-trash">
-                            Clear
-                          </UButton>
-                        </div>
-                      </template>
+                <!-- Right Column - Roll History (Players) -->
+                <div v-if="userRole !== 'DM'" class="space-y-6 order-2">
+                  <UCard>
+                    <template #header>
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                          🎯 Roll History
+                        </h3>
+                        <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
+                          @click="clearHistory" icon="i-heroicons-trash">
+                          Clear
+                        </UButton>
+                      </div>
+                    </template>
 
-                      <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
-                        <div v-for="roll in rollHistory" :key="roll.id"
-                          class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                          :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
-                          <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                              <div class="flex items-center space-x-2 mb-1">
-                                <span class="text-sm font-medium"
-                                  :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
-                                  {{ roll.userName }}
-                                </span>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">
-                                  {{ formatTime(roll.timestamp) }}
-                                </span>
-                              </div>
-                              <!-- Dice Visual Display -->
-                              <div class="flex flex-wrap gap-1 mb-2">
-                                <div v-for="(diceResult, index) in roll.diceResults" :key="index"
-                                    class="relative inline-block">
-                                  <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`"
-                                      :alt="diceResult.type"
-                                      class="w-8 h-8" />
-                                  <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
-                                    {{ diceResult.result }}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                ({{ roll.details.join(' + ') }})
-                              </div>
-
-                              <div v-if="roll.isCritical"
-                                class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                                {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
-                              </div>
-                            </div>
-                            <!-- Sumatoria a la derecha -->
-                            <div class="ml-4">
-                              <span class="text-lg font-bold"
-                                :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
-                                {{ roll.total }}
+                    <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                      <div v-for="roll in rollHistory" :key="roll.id"
+                        class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                        :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                              <span class="text-sm font-medium"
+                                :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
+                                {{ roll.userName }}
+                              </span>
+                              <span class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ formatTime(roll.timestamp) }}
                               </span>
                             </div>
+                            <!-- Dice Visual Display -->
+                            <div class="flex flex-wrap gap-1 mb-2">
+                              <div v-for="(diceResult, index) in roll.diceResults" :key="index"
+                                class="relative inline-block">
+                                <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
+                                  class="w-8 h-8" />
+                                <span
+                                  class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                                  {{ diceResult.result }}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                              ({{ roll.details.join(' + ') }})
+                            </div>
+
+                            <div v-if="roll.isCritical"
+                              class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                              {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                            </div>
+                          </div>
+                          <!-- Sumatoria a la derecha -->
+                          <div class="ml-4">
+                            <span class="text-lg font-bold"
+                              :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
+                              {{ roll.total }}
+                            </span>
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div v-else class="text-center py-8">
-                        <div class="text-4xl mb-4">🎲</div>
-                        <p class="text-gray-500 dark:text-gray-400">
-                          No rolls yet. Start rolling some dice!
-                        </p>
-                      </div>
-                    </UCard>
-                  </div>
+                    <div v-else class="text-center py-8">
+                      <div class="text-4xl mb-4">🎲</div>
+                      <p class="text-gray-500 dark:text-gray-400">
+                        No rolls yet. Start rolling some dice!
+                      </p>
+                    </div>
+                  </UCard>
+                </div>
 
-                  <!-- Right Column - DM Panel -->
-                 <div v-if="userRole === 'DM'" class="space-y-6">
+                <!-- Right Column - DM Panel -->
+                <div v-if="userRole === 'DM'" class="space-y-6">
                   <!-- Battle Mode Panel (DM Only) -->
                   <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
                     <template #header>
@@ -1886,6 +1817,12 @@
     <SpecialAbilitiesModal v-model="showSpecialAbilitiesModal" :character-name="currentPlayerName"
       :special-abilities="currentPlayerAbilities" @roll-ability="handleRollAbility" @use-ability="handleUseAbility" />
 
+    <!-- Character Detail Modal (for DM) -->
+    <CharacterDetailModal v-model="showCharacterDetailModal" :character="selectedCharacterForDetail" :ui="{
+      width: 'w-full',
+      height: 'h-auto'
+    }" class="modal-custom-size" />
+
     <!-- Critical Roll Animation Modal -->
     <Teleport to="body">
       <Transition enter-active-class="transition-opacity duration-300" enter-from-class="opacity-0"
@@ -1894,11 +1831,11 @@
         <div v-if="showCriticalAnimation"
           class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
           <div class="relative w-full h-full flex items-center justify-center p-4">
-            <video v-if="criticalAnimationType === 'success'" src="/assets/animations/d20-20.mp4"
-              autoplay muted class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            <video v-if="criticalAnimationType === 'success'" src="/assets/animations/d20-20.mp4" autoplay muted
+              class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
               @ended="showCriticalAnimation = false" />
-            <video v-else-if="criticalAnimationType === 'failure'" src="/assets/animations/d20-1.mp4"
-              autoplay muted class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            <video v-else-if="criticalAnimationType === 'failure'" src="/assets/animations/d20-1.mp4" autoplay muted
+              class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
               @ended="showCriticalAnimation = false" />
             <!-- Close button -->
             <UButton color="white" variant="ghost" size="sm" icon="i-heroicons-x-mark"
@@ -2004,17 +1941,17 @@ interface QuickRoll {
 }
 
 // Get authenticated user
-const user = useState<any>('user')
+const user = useState < any > ('user')
 
 // Reactive state
-const userRole = ref<'Player' | 'DM'>('Player')
+const userRole = ref < 'Player' | 'DM' > ('Player')
 const isConnected = ref(false)
 const isOfflineMode = ref(false)
 const isOfflineModePreference = ref(false) // Persistent offline mode preference
 const connectedUsers = ref(1)
 const isRolling = ref(false)
-const eventSource = ref<EventSource | null>(null)
-const animatingDice = ref<Set<string>>(new Set())
+const eventSource = ref < EventSource | null > (null)
+const animatingDice = ref < Set < string >> (new Set())
 
 // Sidebar state
 const isLeftSidebarOpen = ref(false)
@@ -2024,40 +1961,44 @@ const isRightSidebarOpen = ref(false)
 const isSidebarOpen = computed(() => isLeftSidebarOpen.value || isRightSidebarOpen.value)
 
 // User character data and role detection
-const userCharacters = ref<any[]>([])
-const activeCharacterId = ref<string | null>(null)
+const userCharacters = ref < any[] > ([])
+const activeCharacterId = ref < string | null > (null)
 const isRefreshingUserData = ref(false)
 
 // Room management state
-const currentRoom = ref<{ name: string; code: string; isOwner: boolean } | null>(null)
+const currentRoom = ref < { name: string; code: string; isOwner: boolean } | null > (null)
 const showCreateRoom = ref(false)
 const joinRoomCode = ref('')
 
 // Player stats (for current user if they're a player)
-const playerStats = ref<PlayerStats | null>(null)
+const playerStats = ref < PlayerStats | null > (null)
 
 // Character attacks and combat data
-const activeCharacterAttacks = ref<any[]>([])
+const activeCharacterAttacks = ref < any[] > ([])
 const showCharacterAttacks = ref(false)
 const isRollingAttack = ref(false)
 
 // All players stats (for DMs)
-const allPlayers = ref<Player[]>([])
+const allPlayers = ref < Player[] > ([])
 
 // DM editing modal state
 const isEditingPlayer = ref(false)
-const editingPlayer = ref<Player | null>(null)
-const editingPlayerStats = ref<PlayerStats | null>(null)
+const editingPlayer = ref < Player | null > (null)
+const editingPlayerStats = ref < PlayerStats | null > (null)
 
 // Battle mode state
-const battleMode = ref<BattleState | null>(null)
+const battleMode = ref < BattleState | null > (null)
 const isInBattle = computed(() => battleMode.value?.phase !== undefined)
 const showBattleUI = ref(false)
 const showAddEnemyModal = ref(false)
 const newEnemy = ref({ name: '', hitPoints: 10, armorClass: 10, initiative: 0 })
 const isBattleLoading = ref(false)
 const showSpecialAbilitiesModal = ref(false)
-const currentPlayerAbilities = ref<any[]>([])
+const currentPlayerAbilities = ref < any[] > ([])
+
+// Character Detail Modal state (for DM)
+const showCharacterDetailModal = ref(false)
+const selectedCharacterForDetail = ref<any>(null)
 
 // Active character data
 const activeCharacter = computed(() => {
@@ -2066,8 +2007,8 @@ const activeCharacter = computed(() => {
 const currentPlayerName = ref('')
 
 // Battle player management
-const selectedPlayers = ref<Array<{ userId: string; name: string }>>([])
-const unselectedPlayers = ref<Array<{ userId: string; name: string }>>([])
+const selectedPlayers = ref < Array < { userId: string; name: string } >> ([])
+const unselectedPlayers = ref < Array < { userId: string; name: string } >> ([])
 const isBattlePlayersLoading = ref(false)
 
 // Music system state
@@ -2078,7 +2019,7 @@ const musicState = ref({
   playlist: [] as any[],
   soundEffects: {
     soundEffectsVolume: 75,
-    playableTrackIds: new Set<string>(),
+    playableTrackIds: new Set < string > (),
     lastSoundEffectPlayed: null as Date | null
   }
 })
@@ -2086,9 +2027,9 @@ const newTrackUrl = ref('')
 const isAddingTrack = ref(false)
 
 // YouTube Player state
-const youtubePlayer = ref<any>(null)
+const youtubePlayer = ref < any > (null)
 const isYouTubeAPIReady = ref(false)
-const currentVideoId = ref<string | null>(null)
+const currentVideoId = ref < string | null > (null)
 
 // Fade transition configuration
 const fadeConfig = ref({
@@ -2099,7 +2040,7 @@ const fadeConfig = ref({
 })
 
 // Dice selection
-const selectedDice = ref<Record<string, number>>({
+const selectedDice = ref < Record < string, number>> ({
   d4: 0,
   d6: 0,
   d8: 0,
@@ -2114,28 +2055,28 @@ const modifier = ref(0)
 const rollType = ref('normal')
 
 // Roll history
-const rollHistory = ref<DiceRoll[]>([])
+const rollHistory = ref < DiceRoll[] > ([])
 
 // Roll request system
 const showRollRequestModal = ref(false)
-const selectedPlayerForRequest = ref<Player | null>(null)
-const requestedDiceType = ref<string>('')
+const selectedPlayerForRequest = ref < Player | null > (null)
+const requestedDiceType = ref < string > ('')
 const rollRequestMessage = ref('')
 const rollRequestModifier = ref(0)
 
 // Player roll request notification
 const showRollRequestNotification = ref(false)
-const pendingRollRequest = ref<{
+const pendingRollRequest = ref < {
   fromDM: string
   diceType: string
   message?: string
   modifier?: number
   requestId: string
-} | null>(null)
+} | null > (null)
 
 // Critical roll animation
 const showCriticalAnimation = ref(false)
-const criticalAnimationType = ref<'success' | 'failure' | null>(null)
+const criticalAnimationType = ref < 'success' | 'failure' | null > (null)
 
 // Constants
 const diceTypes: DiceType[] = [
@@ -2200,7 +2141,7 @@ async function loadUserCharacters() {
   }
 
   try {
-    const response = await $fetch<{ success: boolean, data: any[] }>(`/api/characters?player=${user.value.id}`)
+    const response = await $fetch < { success: boolean, data: any[] } > (`/api/characters?player=${user.value.id}`)
     if (response.success && Array.isArray(response.data)) {
       userCharacters.value = response.data
       // Auto-detect role based on characters
@@ -2358,6 +2299,184 @@ function getBattlePhaseLabel(phase: string): string {
     'ended': 'Battle Ended'
   }
   return labelMap[phase] || 'Unknown Phase'
+}
+
+function calculateTotalWealth(character: any): number {
+  if (!character) return 0
+
+  const copper = character.copperCoins || 0
+  const silver = character.silverCoins || 0
+  const electrum = character.electrumCoins || 0
+  const gold = character.goldCoins || 0
+  const platinum = character.platinumCoins || 0
+
+  // Convert everything to gold pieces
+  // 1 pp = 10 gp, 1 ep = 0.5 gp, 1 sp = 0.1 gp, 1 cp = 0.01 gp
+  const total = (platinum * 10) + gold + (electrum * 0.5) + (silver * 0.1) + (copper * 0.01)
+  return Math.round(total * 100) / 100 // Round to 2 decimal places
+}
+
+function calculateModifier(abilityScore: number): number {
+  return Math.floor((abilityScore - 10) / 2)
+}
+
+function formatModifier(modifier: number): string {
+  return modifier >= 0 ? `+${modifier}` : `${modifier}`
+}
+
+function calculateHealthPercentage(character: any): number {
+  if (!character || !character.maxHp || character.maxHp === 0) return 0
+  const current = character.currentHp || 0
+  return Math.max(0, Math.min(100, (current / character.maxHp) * 100))
+}
+
+function calculateSkillModifier(skill: any, character: any): number {
+  if (!skill || !character) return 0
+
+  // Get the base ability score
+  const abilityMap: Record<string, string> = {
+    'STR': 'strength',
+    'DEX': 'dexterity',
+    'CON': 'constitution',
+    'INT': 'intelligence',
+    'WIS': 'wisdom',
+    'CHA': 'charisma'
+  }
+
+  const abilityField = abilityMap[skill.ability] || skill.ability.toLowerCase()
+  const abilityScore = character[abilityField] || 10
+  const abilityModifier = calculateModifier(abilityScore)
+
+  // Add proficiency bonus if proficient
+  let proficiencyBonus = 0
+  if (skill.proficient) {
+    proficiencyBonus = character.proficiencyBonus || 2
+    // Double proficiency bonus if expertise
+    if (skill.expertise) {
+      proficiencyBonus *= 2
+    }
+  }
+
+  return abilityModifier + proficiencyBonus
+}
+
+function calculateSavingThrowModifier(savingThrow: any, character: any): number {
+  if (!savingThrow || !character) return 0
+
+  // Get the base ability score
+  const abilityMap: Record<string, string> = {
+    'strength': 'strength',
+    'dexterity': 'dexterity',
+    'constitution': 'constitution',
+    'intelligence': 'intelligence',
+    'wisdom': 'wisdom',
+    'charisma': 'charisma'
+  }
+
+  const abilityField = abilityMap[savingThrow.ability.toLowerCase()] || savingThrow.ability.toLowerCase()
+  const abilityScore = character[abilityField] || 10
+  const abilityModifier = calculateModifier(abilityScore)
+
+  // Add proficiency bonus if proficient
+  const proficiencyBonus = savingThrow.proficient ? (character.proficiencyBonus || 2) : 0
+
+  return abilityModifier + proficiencyBonus
+}
+
+// Helper function to calculate saving throw modifier by ability name
+function calculateSavingThrowModifierByAbility(ability: string, character: any): number {
+  if (!character) return 0
+
+  // Get the base ability score
+  const abilityScore = character[ability] || 10
+  const abilityModifier = calculateModifier(abilityScore)
+
+  // Check if proficient in this saving throw
+  const proficient = getSavingThrowProficiency(ability, character)
+  const proficiencyBonus = proficient ? (character.proficiencyBonus || 2) : 0
+
+  return abilityModifier + proficiencyBonus
+}
+
+// Helper function to check if character is proficient in a saving throw
+function getSavingThrowProficiency(ability: string, character: any): boolean {
+  if (!character || !character.savingThrows) return false
+
+  const savingThrow = character.savingThrows.find((st: any) =>
+    st.ability.toLowerCase() === ability.toLowerCase()
+  )
+
+  return savingThrow ? savingThrow.proficient : false
+}
+
+// Helper function to get all D&D skills with character's proficiency
+function getAllSkills(character: any): any[] {
+  // Standard D&D 5e skills
+  const standardSkills = [
+    { name: 'Acrobatics', ability: 'DEX' },
+    { name: 'Animal Handling', ability: 'WIS' },
+    { name: 'Arcana', ability: 'INT' },
+    { name: 'Athletics', ability: 'STR' },
+    { name: 'Deception', ability: 'CHA' },
+    { name: 'History', ability: 'INT' },
+    { name: 'Insight', ability: 'WIS' },
+    { name: 'Intimidation', ability: 'CHA' },
+    { name: 'Investigation', ability: 'INT' },
+    { name: 'Medicine', ability: 'WIS' },
+    { name: 'Nature', ability: 'INT' },
+    { name: 'Perception', ability: 'WIS' },
+    { name: 'Performance', ability: 'CHA' },
+    { name: 'Persuasion', ability: 'CHA' },
+    { name: 'Religion', ability: 'INT' },
+    { name: 'Sleight of Hand', ability: 'DEX' },
+    { name: 'Stealth', ability: 'DEX' },
+    { name: 'Survival', ability: 'WIS' }
+  ]
+
+  // Map character skills to standard skills
+  return standardSkills.map(standardSkill => {
+    const characterSkill = character?.skills?.find((skill: any) =>
+      skill.name.toLowerCase() === standardSkill.name.toLowerCase()
+    )
+
+    return {
+      name: standardSkill.name,
+      ability: standardSkill.ability,
+      proficient: characterSkill?.proficient || false,
+      expertise: characterSkill?.expertise || false
+    }
+  })
+}
+
+// Helper function to calculate skill modifier for a specific skill object
+function calculateSkillModifierForSkill(skill: any, character: any): number {
+  if (!skill || !character) return 0
+
+  // Get the base ability score
+  const abilityMap: Record<string, string> = {
+    'STR': 'strength',
+    'DEX': 'dexterity',
+    'CON': 'constitution',
+    'INT': 'intelligence',
+    'WIS': 'wisdom',
+    'CHA': 'charisma'
+  }
+
+  const abilityField = abilityMap[skill.ability] || skill.ability.toLowerCase()
+  const abilityScore = character[abilityField] || 10
+  const abilityModifier = calculateModifier(abilityScore)
+
+  // Add proficiency bonus if proficient
+  let proficiencyBonus = 0
+  if (skill.proficient) {
+    proficiencyBonus = character.proficiencyBonus || 2
+    // Double proficiency bonus if expertise
+    if (skill.expertise) {
+      proficiencyBonus *= 2
+    }
+  }
+
+  return abilityModifier + proficiencyBonus
 }
 
 function toggleDice(diceType: string) {
@@ -4357,6 +4476,64 @@ function handleUseAbility(ability: any) {
   handleRollAbility(ability)
 }
 
+// DM function to show player character details
+async function showPlayerDetails(player: Player) {
+  try {
+    // Fetch the full character data for the player
+    const response = await $fetch(`/api/characters?player=${player.userId}`)
+    if (response.success && response.data.length > 0) {
+      // Find the character that matches the participant name
+      let playerCharacter = response.data.find((char: any) => char.characterName === player.name)
+      // If no exact match, use the first character (assuming they only have one active)
+      if (!playerCharacter && response.data.length === 1) {
+        playerCharacter = response.data[0]
+      }
+
+      if (playerCharacter) {
+        // Map player stats to character object for consistency
+        playerCharacter.currentHp = player.stats.hitPoints.current
+        playerCharacter.maxHp = player.stats.hitPoints.max
+        playerCharacter.armorClass = player.stats.armorClass
+        playerCharacter.initiative = player.stats.initiative
+        playerCharacter.speed = player.stats.speed
+        playerCharacter.proficiencyBonus = player.stats.proficiencyBonus
+        playerCharacter.strength = player.stats.abilities.strength
+        playerCharacter.dexterity = player.stats.abilities.dexterity
+        playerCharacter.constitution = player.stats.abilities.constitution
+        playerCharacter.intelligence = player.stats.abilities.intelligence
+        playerCharacter.wisdom = player.stats.abilities.wisdom
+        playerCharacter.charisma = player.stats.abilities.charisma
+        playerCharacter.classLevel = player.stats.level
+
+        selectedCharacterForDetail.value = playerCharacter
+        showCharacterDetailModal.value = true
+      } else {
+        const toast = useToast()
+        toast.add({
+          title: 'Character Not Found',
+          description: `Could not find character data for ${player.name}`,
+          color: 'red'
+        })
+      }
+    } else {
+      const toast = useToast()
+      toast.add({
+        title: 'No Character Data',
+        description: `No character data available for ${player.name}`,
+        color: 'red'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to load player character details:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to load character details',
+      color: 'red'
+    })
+  }
+}
+
 async function dealDamageToEnemy(enemy: Enemy) {
   const damage = prompt(`How much damage to deal to ${enemy.name}?`)
   if (!damage || isNaN(parseInt(damage)) || !currentRoom.value) return
@@ -5781,3 +5958,23 @@ useHead({
   ]
 })
 </script>
+
+<style scoped>
+:deep(.modal-custom-size [id*="headlessui-dialog-panel-v-"] > div) {
+  width: 1800px !important;
+  max-width: 1800px !important;
+  height: 600px !important;
+  max-height: 600px !important;
+}
+
+/* :deep(.modal-custom-size [id*="headlessui-dialog-panel-v-"] > div) { */
+/*   width: 100% !important; */
+/*   max-width: none !important; */
+/*   min-width: 1750px !important; */
+/* } */
+
+:deep(.modal-custom-size .grid) {
+  width: 100% !important;
+  max-width: none !important;
+}
+</style>

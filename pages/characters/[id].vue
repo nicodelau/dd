@@ -72,8 +72,277 @@
       </div>
       
       <!-- Character Content -->
-      <div v-else-if="character" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column - Character Info -->
+      <div v-else-if="character" class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Left Sidebar - Portrait, Inventory & Currency -->
+        <div class="space-y-6">
+          <!-- Character Portrait -->
+          <UCard>
+            <template #header>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Character Portrait
+              </h3>
+            </template>
+            
+             <div class="text-center">
+               <!-- Avatar Image or Initials -->
+               <div class="relative h-32 w-32 mx-auto mb-4">
+                 <img
+                   v-if="character.avatar && !imageLoadError"
+                   :src="character.avatar"
+                   :alt="character.characterName || 'Character'"
+                   class="h-32 w-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
+                   @error="imageLoadError = true"
+                   @load="imageLoadError = false"
+                 />
+                 <div
+                   v-if="!character.avatar || imageLoadError"
+                   class="h-32 w-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-4xl border-4 border-gray-200 dark:border-gray-600"
+                 >
+                   {{ character.characterName?.charAt(0)?.toUpperCase() || '?' }}
+                 </div>
+               </div>
+              
+              <!-- Avatar URL Input in Edit Mode -->
+              <div v-if="editMode" class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Avatar URL
+                </label>
+                <UInput
+                  v-model="editForm.avatar"
+                  placeholder="https://example.com/avatar.jpg"
+                  type="url"
+                />
+              </div>
+              
+              <p class="text-sm text-gray-600 dark:text-gray-300">
+                {{ (character.race || 'Unknown') }} {{ (character.className || 'Unknown') }}
+              </p>
+            </div>
+          </UCard>
+
+          <!-- Currency -->
+          <UCard>
+            <template #header>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Currency
+              </h3>
+            </template>
+
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Copper (cp)
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.copperCoins"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+                <p v-else class="text-2xl font-bold text-orange-600">{{ character.copperCoins || 0 }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Silver (sp)
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.silverCoins"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+                <p v-else class="text-2xl font-bold text-gray-400">{{ character.silverCoins || 0 }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Electrum (ep)
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.electrumCoins"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+                <p v-else class="text-2xl font-bold text-blue-400">{{ character.electrumCoins || 0 }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Gold (gp)
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.goldCoins"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+                <p v-else class="text-2xl font-bold text-yellow-500">{{ character.goldCoins || 0 }}</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Platinum (pp)
+                </label>
+                <UInput
+                  v-if="editMode"
+                  v-model.number="editForm.platinumCoins"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+                <p v-else class="text-2xl font-bold text-gray-300">{{ character.platinumCoins || 0 }}</p>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Value (gp)</span>
+                <span class="text-lg font-bold text-gray-900 dark:text-white">
+                  {{ calculateTotalWealth() }}
+                </span>
+              </div>
+            </div>
+          </UCard>
+
+          <!-- Inventory -->
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  Inventory
+                </h3>
+                <UButton
+                  v-if="editMode && canEdit"
+                  color="primary"
+                  variant="soft"
+                  size="sm"
+                  icon="i-heroicons-plus"
+                  @click="addInventoryItem"
+                >
+                  Add Item
+                </UButton>
+              </div>
+            </template>
+
+             <div v-if="editMode ? (!editInventory || editInventory.length === 0) : (!character.inventory || character.inventory.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
+               No items in inventory.
+             </div>
+
+             <div v-else class="space-y-3">
+               <div
+                 v-for="(item, index) in editMode ? editInventory : character.inventory"
+                 :key="item.id || index"
+                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+               >
+                <div class="grid grid-cols-1 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Item Name
+                    </label>
+                    <UInput
+                      v-if="editMode"
+                      v-model="editInventory[index].name"
+                      placeholder="Item name"
+                    />
+                    <p v-else class="text-gray-900 dark:text-white font-medium">{{ item.name }}</p>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Quantity
+                      </label>
+                      <UInput
+                        v-if="editMode"
+                        v-model.number="editInventory[index].quantity"
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                      />
+                      <p v-else class="text-gray-900 dark:text-white">{{ item.quantity }}</p>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Weight (lbs)
+                      </label>
+                      <UInput
+                        v-if="editMode"
+                        v-model.number="editInventory[index].weight"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                      <p v-else class="text-gray-900 dark:text-white">{{ item.weight || 0 }} lbs</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Notes
+                    </label>
+                    <UTextarea
+                      v-if="editMode"
+                      v-model="editInventory[index].notes"
+                      placeholder="Item description or notes..."
+                      :rows="2"
+                    />
+                    <p v-else class="text-gray-900 dark:text-white text-sm">{{ item.notes || 'No notes' }}</p>
+                  </div>
+
+                  <div v-if="editMode" class="flex items-center justify-between">
+                    <UCheckbox
+                      v-model="editInventory[index].equipped"
+                      label="Equipped"
+                    />
+                    <UButton
+                      color="red"
+                      variant="ghost"
+                      size="sm"
+                      icon="i-heroicons-trash"
+                      @click="removeInventoryItem(index)"
+                    >
+                      Remove
+                    </UButton>
+                  </div>
+
+                  <div v-else-if="item.equipped" class="mt-2">
+                    <UBadge color="green" variant="soft" size="sm">Equipped</UBadge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </UCard>
+
+          <!-- Character Notes -->
+          <UCard>
+            <template #header>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Notes
+              </h3>
+            </template>
+            
+            <UTextarea
+              v-if="editMode"
+              v-model="characterNotes"
+              placeholder="Add character notes..."
+              :rows="4"
+            />
+            
+            <div v-else class="text-gray-600 dark:text-gray-300 min-h-[100px]">
+              {{ characterNotes || 'No notes added yet.' }}
+            </div>
+          </UCard>
+        </div>
+
+        <!-- Center Column - Character Info -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Basic Info Card -->
           <UCard>
@@ -733,127 +1002,7 @@
               </div>
             </div>
           </UCard>
-          
-           <!-- Saving Throws Card -->
-           <UCard>
-             <template #header>
-               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                 Saving Throws
-               </h3>
-             </template>
-
-             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-               <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <UCheckbox
-                     v-if="editMode"
-                     v-model="savingThrowProficient.strength"
-                     size="sm"
-                   />
-                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Strength</span>
-                 </div>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ getFormattedBonus(getSavingThrowModifier('strength')) }}
-                 </span>
-               </div>
-
-               <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <UCheckbox
-                     v-if="editMode"
-                     v-model="savingThrowProficient.dexterity"
-                     size="sm"
-                   />
-                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Dexterity</span>
-                 </div>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ getFormattedBonus(getSavingThrowModifier('dexterity')) }}
-                 </span>
-               </div>
-
-               <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <UCheckbox
-                     v-if="editMode"
-                     v-model="savingThrowProficient.constitution"
-                     size="sm"
-                   />
-                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Constitution</span>
-                 </div>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ getFormattedBonus(getSavingThrowModifier('constitution')) }}
-                 </span>
-               </div>
-
-               <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <UCheckbox
-                     v-if="editMode"
-                     v-model="savingThrowProficient.intelligence"
-                     size="sm"
-                   />
-                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Intelligence</span>
-                 </div>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ getFormattedBonus(getSavingThrowModifier('intelligence')) }}
-                 </span>
-               </div>
-
-               <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <UCheckbox
-                     v-if="editMode"
-                     v-model="savingThrowProficient.wisdom"
-                     size="sm"
-                   />
-                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Wisdom</span>
-                 </div>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ getFormattedBonus(getSavingThrowModifier('wisdom')) }}
-                 </span>
-               </div>
-
-               <div class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <UCheckbox
-                     v-if="editMode"
-                     v-model="savingThrowProficient.charisma"
-                     size="sm"
-                   />
-                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Charisma</span>
-                 </div>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ getFormattedBonus(getSavingThrowModifier('charisma')) }}
-                 </span>
-               </div>
-             </div>
-           </UCard>
-          
-           <!-- Skills Card -->
-           <UCard>
-             <template #header>
-               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                 Skills
-               </h3>
-             </template>
-
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-               <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center justify-between">
-                 <div class="flex items-center space-x-2">
-                   <UCheckbox
-                     v-if="editMode"
-                     v-model="skillProficient[skill.name]"
-                     size="sm"
-                   />
-                   <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ skill.label }}</span>
-                 </div>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ getFormattedBonus(getSkillModifier(skill.name, skill.ability)) }}
-                 </span>
-               </div>
-             </div>
-           </UCard>
-
+           
            <!-- Attacks Card -->
            <UCard>
              <template #header>
@@ -963,303 +1112,164 @@
                  </div>
                </div>
              </div>
-           </UCard>
+            </UCard>
+          </div>
+         
+         <!-- Right Sidebar - Skills & Saving Throws -->
+          <div class="space-y-6">
+            <!-- Saving Throws -->
+            <UCard>
+              <template #header>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  Saving Throws
+                </h3>
+              </template>
 
-           <!-- Inventory Card -->
-           <UCard>
-             <template #header>
-               <div class="flex items-center justify-between">
-                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                   Inventory
-                 </h3>
-                 <UButton
-                   v-if="editMode && canEdit"
-                   color="primary"
-                   variant="soft"
-                   size="sm"
-                   icon="i-heroicons-plus"
-                   @click="addInventoryItem"
-                 >
-                   Add Item
-                 </UButton>
-               </div>
-             </template>
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <UCheckbox
+                      v-if="editMode"
+                      v-model="savingThrowProficient.strength"
+                      size="sm"
+                    />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Strength</span>
+                  </div>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ getFormattedBonus(getSavingThrowModifier('strength')) }}
+                  </span>
+                </div>
 
-              <div v-if="editMode ? (!editInventory || editInventory.length === 0) : (!character.inventory || character.inventory.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                No items in inventory.
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <UCheckbox
+                      v-if="editMode"
+                      v-model="savingThrowProficient.dexterity"
+                      size="sm"
+                    />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Dexterity</span>
+                  </div>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ getFormattedBonus(getSavingThrowModifier('dexterity')) }}
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <UCheckbox
+                      v-if="editMode"
+                      v-model="savingThrowProficient.constitution"
+                      size="sm"
+                    />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Constitution</span>
+                  </div>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ getFormattedBonus(getSavingThrowModifier('constitution')) }}
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <UCheckbox
+                      v-if="editMode"
+                      v-model="savingThrowProficient.intelligence"
+                      size="sm"
+                    />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Intelligence</span>
+                  </div>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ getFormattedBonus(getSavingThrowModifier('intelligence')) }}
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <UCheckbox
+                      v-if="editMode"
+                      v-model="savingThrowProficient.wisdom"
+                      size="sm"
+                    />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Wisdom</span>
+                  </div>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ getFormattedBonus(getSavingThrowModifier('wisdom')) }}
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <UCheckbox
+                      v-if="editMode"
+                      v-model="savingThrowProficient.charisma"
+                      size="sm"
+                    />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Charisma</span>
+                  </div>
+                  <span class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ getFormattedBonus(getSavingThrowModifier('charisma')) }}
+                  </span>
+                </div>
               </div>
+            </UCard>
 
-              <div v-else class="space-y-3">
-                <div
-                  v-for="(item, index) in editMode ? editInventory : character.inventory"
-                  :key="item.id || index"
-                  class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                >
-                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                   <div class="md:col-span-2">
-                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                       Item Name
-                     </label>
-                     <UInput
-                       v-if="editMode"
-                       v-model="editInventory[index].name"
-                       placeholder="Item name"
-                     />
-                     <p v-else class="text-gray-900 dark:text-white font-medium">{{ item.name }}</p>
-                   </div>
+            <!-- Skills -->
+            <UCard>
+              <template #header>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  Skills
+                </h3>
+              </template>
 
-                   <div>
-                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                       Quantity
-                     </label>
-                     <UInput
-                       v-if="editMode"
-                       v-model.number="editInventory[index].quantity"
-                       type="number"
-                       min="1"
-                       placeholder="1"
-                     />
-                     <p v-else class="text-gray-900 dark:text-white">{{ item.quantity }}</p>
-                   </div>
+              <div class="space-y-2 max-h-96 overflow-y-auto">
+                <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <UCheckbox
+                      v-if="editMode"
+                      v-model="skillProficient[skill.name]"
+                      size="sm"
+                    />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ skill.label }}</span>
+                  </div>
+                  <span class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ getFormattedBonus(getSkillModifier(skill.name, skill.ability)) }}
+                  </span>
+                </div>
+              </div>
+            </UCard>
 
-                   <div>
-                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                       Weight (lbs)
-                     </label>
-                     <UInput
-                       v-if="editMode"
-                       v-model.number="editInventory[index].weight"
-                       type="number"
-                       step="0.1"
-                       min="0"
-                       placeholder="0.0"
-                     />
-                     <p v-else class="text-gray-900 dark:text-white">{{ item.weight || 0 }} lbs</p>
-                   </div>
-                 </div>
-
-                 <div class="mt-3">
-                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                     Notes
-                   </label>
-                   <UTextarea
-                     v-if="editMode"
-                     v-model="editInventory[index].notes"
-                     placeholder="Item description or notes..."
-                     :rows="2"
-                   />
-                   <p v-else class="text-gray-900 dark:text-white text-sm">{{ item.notes || 'No notes' }}</p>
-                 </div>
-
-                 <div v-if="editMode" class="mt-3 flex items-center justify-between">
-                   <UCheckbox
-                     v-model="editInventory[index].equipped"
-                     label="Equipped"
-                   />
-                   <UButton
-                     color="red"
-                     variant="ghost"
-                     size="sm"
-                     icon="i-heroicons-trash"
-                     @click="removeInventoryItem(index)"
-                   >
-                     Remove
-                   </UButton>
-                 </div>
-
-                 <div v-else-if="item.equipped" class="mt-2">
-                   <UBadge color="green" variant="soft" size="sm">Equipped</UBadge>
-                 </div>
-               </div>
-             </div>
-           </UCard>
-
-           <!-- Coins Card -->
-           <UCard>
-             <template #header>
-               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                 Currency
-               </h3>
-             </template>
-
-             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Copper (cp)
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.copperCoins"
-                   type="number"
-                   min="0"
-                   placeholder="0"
-                 />
-                 <p v-else class="text-2xl font-bold text-orange-600">{{ character.copperCoins || 0 }}</p>
-               </div>
-
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Silver (sp)
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.silverCoins"
-                   type="number"
-                   min="0"
-                   placeholder="0"
-                 />
-                 <p v-else class="text-2xl font-bold text-gray-400">{{ character.silverCoins || 0 }}</p>
-               </div>
-
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Electrum (ep)
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.electrumCoins"
-                   type="number"
-                   min="0"
-                   placeholder="0"
-                 />
-                 <p v-else class="text-2xl font-bold text-blue-400">{{ character.electrumCoins || 0 }}</p>
-               </div>
-
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Gold (gp)
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.goldCoins"
-                   type="number"
-                   min="0"
-                   placeholder="0"
-                 />
-                 <p v-else class="text-2xl font-bold text-yellow-500">{{ character.goldCoins || 0 }}</p>
-               </div>
-
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Platinum (pp)
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.platinumCoins"
-                   type="number"
-                   min="0"
-                   placeholder="0"
-                 />
-                 <p v-else class="text-2xl font-bold text-gray-300">{{ character.platinumCoins || 0 }}</p>
-               </div>
-             </div>
-
-             <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-               <div class="flex justify-between items-center">
-                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Value (gp)</span>
-                 <span class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ calculateTotalWealth() }}
-                 </span>
-               </div>
-             </div>
-           </UCard>
-         </div>
-        
-        <!-- Right Column - Quick Info & Actions -->
-        <div class="space-y-6">
-          <!-- Character Portrait -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Character Portrait
-              </h3>
-            </template>
-            
-             <div class="text-center">
-               <!-- Avatar Image or Initials -->
-               <div class="relative h-32 w-32 mx-auto mb-4">
-                 <img
-                   v-if="character.avatar && !imageLoadError"
-                   :src="character.avatar"
-                   :alt="character.characterName || 'Character'"
-                   class="h-32 w-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
-                   @error="imageLoadError = true"
-                   @load="imageLoadError = false"
-                 />
-                 <div
-                   v-if="!character.avatar || imageLoadError"
-                   class="h-32 w-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-4xl border-4 border-gray-200 dark:border-gray-600"
-                 >
-                   {{ character.characterName?.charAt(0)?.toUpperCase() || '?' }}
-                 </div>
-               </div>
+            <!-- Quick Stats -->
+            <UCard>
+              <template #header>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  Quick Stats
+                </h3>
+              </template>
               
-              <!-- Avatar URL Input in Edit Mode -->
-              <div v-if="editMode" class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Avatar URL
-                </label>
-                <UInput
-                  v-model="editForm.avatar"
-                  placeholder="https://example.com/avatar.jpg"
-                  type="url"
-                />
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Experience</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ (character.experience || 0).toLocaleString() }} XP</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Proficiency Bonus</span>
+                  <span class="font-medium text-gray-900 dark:text-white">+{{ character.proficiencyBonus || 2 }}</span>
+                </div>
+
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Passive Perception</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{{ character.passivePerception || 10 }}</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">Inspiration</span>
+                  <span class="font-medium text-gray-900 dark:text-white">
+                    {{ character.inspiration ? 'Yes' : 'No' }}
+                  </span>
+                </div>
               </div>
-              
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                {{ (character.race || 'Unknown') }} {{ (character.className || 'Unknown') }}
-              </p>
-            </div>
-          </UCard>
-          
-          <!-- Quick Stats -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Quick Stats
-              </h3>
-            </template>
-            
-            <div class="space-y-3">
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Experience</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ (character.experience || 0).toLocaleString() }} XP</span>
-              </div>
-              
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Proficiency Bonus</span>
-                <span class="font-medium text-gray-900 dark:text-white">+{{ character.proficiencyBonus || 2 }}</span>
-              </div>
-              
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Inspiration</span>
-                <span class="font-medium text-gray-900 dark:text-white">
-                  {{ character.inspiration ? 'Yes' : 'No' }}
-                </span>
-              </div>
-            </div>
-          </UCard>
-          
-          <!-- Character Notes -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Notes
-              </h3>
-            </template>
-            
-            <UTextarea
-              v-if="editMode"
-              v-model="characterNotes"
-              placeholder="Add character notes..."
-              :rows="4"
-            />
-            
-            <div v-else class="text-gray-600 dark:text-gray-300 min-h-[100px]">
-              {{ characterNotes || 'No notes added yet.' }}
-            </div>
-          </UCard>
-        </div>
+            </UCard>
+          </div>
       </div>
     </main>
   </div>

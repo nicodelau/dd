@@ -13,19 +13,32 @@
             {{ character.characterName }}
           </h3>
           <p class="text-sm text-gray-500 dark:text-gray-400">
-            {{ character.playerName || 'Unknown Player' }}
+            {{ character.race }} {{ character.className || character.characterClass }}
           </p>
         </div>
       </div>
       
-      <UDropdown :items="menuItems" :popper="{ placement: 'bottom-end' }">
+      <div class="flex items-center space-x-2">
+        <!-- DM Quick View Button -->
         <UButton
-          color="gray"
+          v-if="isDM"
+          color="blue"
           variant="ghost"
-          icon="i-heroicons-ellipsis-vertical"
+          icon="i-heroicons-eye"
           size="sm"
+          @click="showDetailModal = true"
+          class="hover:bg-blue-50 dark:hover:bg-blue-900/20"
         />
-      </UDropdown>
+        
+        <UDropdown :items="menuItems" :popper="{ placement: 'bottom-end' }">
+          <UButton
+            color="gray"
+            variant="ghost"
+            icon="i-heroicons-ellipsis-vertical"
+            size="sm"
+          />
+        </UDropdown>
+      </div>
     </div>
 
     <!-- Character Info -->
@@ -41,17 +54,29 @@
           {{ character.race }}
         </UBadge>
         <UBadge
-          v-if="character.className"
+          v-if="character.className || character.characterClass"
           color="purple"
           variant="soft"
           size="sm"
         >
-          {{ character.className }} {{ character.classLevel }}
+          {{ character.className || character.characterClass }} {{ character.classLevel || character.level || 1 }}
         </UBadge>
       </div>
 
-      <!-- Health and AC -->
-      <div class="grid grid-cols-2 gap-4">
+      <!-- Level and Background -->
+      <div class="space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600 dark:text-gray-400">Level:</span>
+          <span class="font-medium text-gray-900 dark:text-white">{{ character.classLevel || character.level || 1 }}</span>
+        </div>
+        <div v-if="character.background" class="flex justify-between text-sm">
+          <span class="text-gray-600 dark:text-gray-400">Background:</span>
+          <span class="font-medium text-gray-900 dark:text-white">{{ character.background }}</span>
+        </div>
+      </div>
+
+      <!-- Health and AC if available -->
+      <div v-if="character.currentHp !== undefined && character.maxHp" class="grid grid-cols-2 gap-4">
         <div class="flex items-center space-x-2">
           <UIcon name="i-heroicons-heart" class="h-4 w-4 text-red-500" />
           <span class="text-sm text-gray-600 dark:text-gray-300">
@@ -59,16 +84,16 @@
           </span>
         </div>
         
-        <div class="flex items-center space-x-2">
+        <div v-if="character.armorClass" class="flex items-center space-x-2">
           <UIcon name="i-heroicons-shield-check" class="h-4 w-4 text-blue-500" />
           <span class="text-sm text-gray-600 dark:text-gray-300">
-            {{ character.armorClass || 'N/A' }} AC
+            {{ character.armorClass }} AC
           </span>
         </div>
       </div>
 
-      <!-- Health Bar -->
-      <div class="w-full">
+      <!-- Health Bar if HP data available -->
+      <div v-if="character.currentHp !== undefined && character.maxHp" class="w-full">
         <div class="flex justify-between items-center mb-1">
           <span class="text-xs text-gray-500 dark:text-gray-400">Health</span>
           <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -83,36 +108,20 @@
       </div>
     </div>
 
-    <!-- Status Indicators -->
+    <!-- Assignment Status -->
     <div class="flex items-center justify-between mb-4">
-      <div class="flex space-x-1">
-        <UBadge
-          v-if="isUnconscious"
-          color="red"
-          variant="solid"
-          size="xs"
-        >
-          Unconscious
-        </UBadge>
-        <UBadge
-          v-else-if="isLowHealth"
-          color="yellow"
-          variant="solid"
-          size="xs"
-        >
-          Wounded
-        </UBadge>
-        <UBadge
-          v-else-if="isHealthy"
-          color="green"
-          variant="solid"
-          size="xs"
-        >
-          Healthy
-        </UBadge>
+      <div v-if="character.user" class="flex items-center space-x-2">
+        <div class="h-2 w-2 bg-green-500 rounded-full"></div>
+        <span class="text-sm text-gray-600 dark:text-gray-400">
+          Assigned to: <span class="font-medium text-gray-900 dark:text-white">{{ character.user.username }}</span>
+        </span>
+      </div>
+      <div v-else class="flex items-center space-x-2">
+        <div class="h-2 w-2 bg-yellow-500 rounded-full"></div>
+        <span class="text-sm text-gray-600 dark:text-gray-400">Unassigned</span>
       </div>
       
-      <span class="text-xs text-gray-400">
+      <span v-if="character.createdAt" class="text-xs text-gray-400">
         Created {{ formatDate(character.createdAt) }}
       </span>
     </div>
@@ -129,6 +138,12 @@
         View Sheet
       </UButton>
     </div>
+
+    <!-- Character Detail Modal -->
+    <CharacterDetailModal
+      v-model="showDetailModal"
+      :character="character"
+    />
   </UCard>
 </template>
 
@@ -139,9 +154,12 @@ interface Character {
   characterName: string
   race?: string
   className?: string
-  classLevel: number
-  currentHp: number
-  maxHp: number
+  characterClass?: string  // alias for className
+  classLevel?: number
+  level?: number  // alias for classLevel
+  background?: string
+  currentHp?: number
+  maxHp?: number
   armorClass?: number
   createdAt?: string
   avatar?: string
@@ -151,6 +169,11 @@ interface Character {
   intelligence?: number
   wisdom?: number
   charisma?: number
+  user?: {
+    id: number
+    username: string
+  }
+  userId?: number
 }
 
 interface Props {
@@ -165,10 +188,20 @@ const emit = defineEmits<{
   delete: [character: Character]
 }>()
 
+// Check if current user is DM
+const user = useState('user')
+const isDM = computed(() => {
+  const userRole = (user.value as any)?.role
+  return userRole === 'DM' || userRole === 'ADMIN'
+})
+
+// Modal state
+const showDetailModal = ref(false)
+
 // Computed properties
 const healthPercentage = computed(() => {
-  if (props.character.maxHp === 0) return 0
-  return Math.round((props.character.currentHp / props.character.maxHp) * 100)
+  if (!props.character.maxHp || props.character.maxHp === 0) return 0
+  return Math.round(((props.character.currentHp || 0) / props.character.maxHp) * 100)
 })
 
 const healthColor = computed(() => {
@@ -179,7 +212,7 @@ const healthColor = computed(() => {
   return 'green'
 })
 
-const isUnconscious = computed(() => props.character.currentHp === 0)
+const isUnconscious = computed(() => (props.character.currentHp || 0) === 0)
 const isLowHealth = computed(() => healthPercentage.value <= 25 && healthPercentage.value > 0)
 const isHealthy = computed(() => healthPercentage.value > 75)
 
