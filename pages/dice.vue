@@ -17,20 +17,14 @@
               </h1>
               <div v-if="currentRoom" class="flex items-center space-x-2">
                 <span class="text-sm text-gray-500 dark:text-gray-400">
-                  Room: {{ currentRoom.name }} 
+                  Room: {{ currentRoom.name }}
                 </span>
                 <div class="flex items-center space-x-1">
                   <span class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
                     {{ currentRoom.code }}
                   </span>
-                  <UButton 
-                    v-if="currentRoom.code !== 'default'" 
-                    color="gray" 
-                    variant="ghost" 
-                    size="xs"
-                    icon="i-heroicons-clipboard-document"
-                    @click="copyRoomCode"
-                  >
+                  <UButton v-if="currentRoom.code !== 'default'" color="gray" variant="ghost" size="xs"
+                    icon="i-heroicons-clipboard-document" @click="copyRoomCode">
                     Copy
                   </UButton>
                 </div>
@@ -48,7 +42,8 @@
               </UButton>
               <UButton color="green" variant="outline" size="sm" @click="isRightSidebarOpen = !isRightSidebarOpen"
                 :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
-                <span class="hidden sm:inline">{{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Request Dices' : 'Abilities' }}</span>
+                <span class="hidden sm:inline">{{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ?
+                  'Request Dices' : 'Abilities' }}</span>
                 <span class="sm:hidden">{{ userRole === 'DM' ? 'Request' : 'Stats' }}</span>
               </UButton>
             </div>
@@ -67,14 +62,9 @@
               <span class="text-sm text-gray-600 dark:text-gray-300">
                 {{ isConnected ? 'Connected' : isOfflineMode ? 'Offline Mode' : 'Disconnected' }}
               </span>
-              <UButton 
-                v-if="!isConnected || isOfflineMode"
-                color="yellow" 
-                variant="ghost" 
-                size="xs"
+              <UButton v-if="!isConnected || isOfflineMode" color="yellow" variant="ghost" size="xs"
                 :icon="isOfflineModePreference ? 'i-heroicons-wifi' : 'i-heroicons-wifi-slash'"
-                @click="toggleOfflineMode"
-              >
+                @click="toggleOfflineMode">
                 {{ isOfflineModePreference ? 'Go Online' : 'Stay Offline' }}
               </UButton>
             </div>
@@ -92,11 +82,11 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Sidebar toggle buttons for mobile -->
       <div class="lg:hidden mb-4 grid grid-cols-2 gap-2">
-        <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen" 
+        <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
           :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
           {{ isLeftSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Players Info' : 'Character' }}
         </UButton>
-        <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen" 
+        <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen"
           :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
           {{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Request Dices' : 'Abilities' }}
         </UButton>
@@ -147,12 +137,15 @@
             </div>
           </div>
 
-          <div v-if="userRole === 'Player'" class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+          <div v-if="userRole === 'Player'"
+            class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
             <div class="flex items-start space-x-2">
               <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
                 <span class="font-medium text-blue-900 dark:text-blue-100">Player Note:</span>
-                <span class="text-blue-800 dark:text-blue-200">Only DMs can create new rooms. Ask your DM for the room code to join their session.</span>
+                <span class="text-blue-800 dark:text-blue-200">Only DMs can create new rooms. Ask your DM for the room
+                  code to
+                  join their session.</span>
               </div>
             </div>
           </div>
@@ -175,7 +168,7 @@
           class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
           :class="isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
           <!-- Left Sidebar Header -->
-           <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+          <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ userRole === 'DM' ? '👥 Players Info' : '🧙‍♂️ Character Info' }}
@@ -209,10 +202,11 @@
                 <!-- Character Name -->
                 <div class="text-center">
                   <h5 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ userCharacters.find(c => c.id === activeCharacterId)?.characterName || 'Unknown Character' }}
+                    {{userCharacters.find(c => c.id === activeCharacterId)?.characterName || 'Unknown Character'}}
                   </h5>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Level {{ playerStats.level }} {{ userCharacters.find(c => c.id === activeCharacterId)?.className || 'Class' }}
+                    Level {{ playerStats.level }} {{userCharacters.find(c => c.id === activeCharacterId)?.className ||
+                      'Class'}}
                   </p>
                 </div>
 
@@ -237,32 +231,39 @@
                 <!-- Core Stats Grid -->
                 <div class="grid grid-cols-2 gap-3">
                   <!-- Armor Class -->
-                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center">
+                  <div
+                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center">
                     <div class="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">AC</div>
                     <div class="text-lg font-bold text-blue-900 dark:text-blue-100">{{ playerStats.armorClass }}</div>
                   </div>
-                  
+
                   <!-- Level -->
-                  <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center">
+                  <div
+                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-center">
                     <div class="text-xs font-medium text-green-700 dark:text-green-300 mb-1">Level</div>
                     <div class="text-lg font-bold text-green-900 dark:text-green-100">{{ playerStats.level }}</div>
                   </div>
-                  
+
                   <!-- Speed -->
-                  <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center">
+                  <div
+                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center">
                     <div class="text-xs font-medium text-yellow-700 dark:text-yellow-300 mb-1">Speed</div>
                     <div class="text-lg font-bold text-yellow-900 dark:text-yellow-100">{{ playerStats.speed }} ft</div>
                   </div>
-                  
+
                   <!-- Proficiency Bonus -->
-                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 text-center">
+                  <div
+                    class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 text-center">
                     <div class="text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">Prof. Bonus</div>
-                    <div class="text-lg font-bold text-purple-900 dark:text-purple-100">+{{ playerStats.proficiencyBonus }}</div>
+                    <div class="text-lg font-bold text-purple-900 dark:text-purple-100">+{{ playerStats.proficiencyBonus
+                    }}
+                    </div>
                   </div>
                 </div>
 
                 <!-- Initiative -->
-                <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                <div
+                  class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
                   <h6 class="text-sm font-medium text-orange-900 dark:text-orange-100 mb-2">Initiative</h6>
                   <div class="text-center">
                     <div class="text-xl font-bold text-orange-900 dark:text-orange-100">
@@ -286,8 +287,8 @@
               <div class="mb-4">
                 <div class="flex items-center justify-between">
                   <h4 class="font-medium text-gray-900 dark:text-white">Players Health</h4>
-                  <UButton v-if="!isOfflineMode" color="gray" variant="outline" size="xs" @click="loadAllPlayersStats(currentRoom?.code || 'default')"
-                    icon="i-heroicons-arrow-path">
+                  <UButton v-if="!isOfflineMode" color="gray" variant="outline" size="xs"
+                    @click="loadAllPlayersStats(currentRoom?.code || 'default')" icon="i-heroicons-arrow-path">
                     Refresh
                   </UButton>
                 </div>
@@ -303,7 +304,8 @@
                       <p class="text-xs text-gray-500 dark:text-gray-400">Level {{ player.stats.level }}</p>
                     </div>
                     <div class="flex items-center space-x-1">
-                      <span class="text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                      <span
+                        class="text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
                         AC {{ player.stats.armorClass }}
                       </span>
                     </div>
@@ -320,1327 +322,42 @@
                     <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-3">
                       <div class="bg-red-500 h-3 rounded-full transition-all duration-300"
                         :style="{ width: `${(player.stats.hitPoints.current / player.stats.hitPoints.max) * 100}%` }"
-                        :class="{ 
+                        :class="{
                           'bg-red-600': player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25,
                           'bg-yellow-500': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.25 && player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5,
                           'bg-green-500': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.5
                         }">
                       </div>
                     </div>
-                    
+
                     <!-- Health Status Indicator -->
-                    <div class="text-xs font-medium"
-                      :class="{ 
-                        'text-red-600 dark:text-red-400': player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25,
-                        'text-yellow-600 dark:text-yellow-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.25 && player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5,
-                        'text-green-600 dark:text-green-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.5
-                      }">
-                      {{ player.stats.hitPoints.current === 0 ? '💀 Unconscious' : 
-                         player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25 ? '🩸 Critical' :
-                         player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5 ? '⚠️ Wounded' : '💚 Healthy' }}
+                    <div class="text-xs font-medium" :class="{
+                      'text-red-600 dark:text-red-400': player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25,
+                      'text-yellow-600 dark:text-yellow-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.25 && player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5,
+                      'text-green-600 dark:text-green-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.5
+                    }">
+                      {{ player.stats.hitPoints.current === 0 ? '💀 Unconscious' :
+                        player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25 ? '🩸 Critical' :
+                          player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5 ? '⚠️ Wounded' : '💚 Healthy'
+                      }} </div>
                     </div>
-                  </div>
 
-                  <!-- Quick Stats Grid -->
-                  <div class="grid grid-cols-3 gap-2 mt-3">
-                    <div class="text-center">
-                      <div class="text-xs text-gray-500 dark:text-gray-400">Init</div>
-                      <div class="text-sm font-mono text-gray-900 dark:text-white">
-                        {{ player.stats.initiative >= 0 ? '+' : '' }}{{ player.stats.initiative }}
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <div class="text-xs text-gray-500 dark:text-gray-400">Speed</div>
-                      <div class="text-sm font-mono text-gray-900 dark:text-white">{{ player.stats.speed }} ft</div>
-                    </div>
-                    <div class="text-center">
-                      <div class="text-xs text-gray-500 dark:text-gray-400">Prof</div>
-                      <div class="text-sm font-mono text-gray-900 dark:text-white">+{{ player.stats.proficiencyBonus }}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="text-center py-8">
-                <div class="text-4xl mb-4">👥</div>
-                <h4 class="font-medium text-gray-900 dark:text-white mb-2">No Players Connected</h4>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ isOfflineMode ? 'Player health monitoring not available in offline mode' : 'Players will appear here once they join the room' }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Sidebar - Ability Scores -->
-        <div
-          class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
-          :class="isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'">
-          <!-- Right Sidebar Header -->
-           <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ userRole === 'DM' ? '🎲 Request Dices' : '⚡ Ability Scores' }}
-              </h3>
-              <UButton color="gray" variant="ghost" size="sm" @click="isRightSidebarOpen = false"
-                icon="i-heroicons-x-mark" />
-            </div>
-          </div>
-
-          <!-- Right Sidebar Content -->
-          <div class="p-4 space-y-6">
-            <!-- Ability Scores (only for Players) -->
-            <div v-if="userRole === 'Player'">
-              <div v-if="playerStats" class="space-y-4">
-                <!-- Ability Scores Grid -->
-                <div class="space-y-3">
-                  <!-- Strength -->
-                  <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-red-900 dark:text-red-100">Strength (STR)</div>
-                        <div class="text-xs text-red-700 dark:text-red-300">Physical power</div>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-lg font-bold text-red-900 dark:text-red-100">{{ playerStats.abilities.strength }}</div>
-                        <div class="text-xs text-red-700 dark:text-red-300">
-                          {{ Math.floor((playerStats.abilities.strength - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.strength - 10) / 2) }} mod
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Dexterity -->
-                  <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-green-900 dark:text-green-100">Dexterity (DEX)</div>
-                        <div class="text-xs text-green-700 dark:text-green-300">Agility & reflexes</div>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-lg font-bold text-green-900 dark:text-green-100">{{ playerStats.abilities.dexterity }}</div>
-                        <div class="text-xs text-green-700 dark:text-green-300">
-                          {{ Math.floor((playerStats.abilities.dexterity - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.dexterity - 10) / 2) }} mod
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Constitution -->
-                  <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-orange-900 dark:text-orange-100">Constitution (CON)</div>
-                        <div class="text-xs text-orange-700 dark:text-orange-300">Health & stamina</div>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-lg font-bold text-orange-900 dark:text-orange-100">{{ playerStats.abilities.constitution }}</div>
-                        <div class="text-xs text-orange-700 dark:text-orange-300">
-                          {{ Math.floor((playerStats.abilities.constitution - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.constitution - 10) / 2) }} mod
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Intelligence -->
-                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-purple-900 dark:text-purple-100">Intelligence (INT)</div>
-                        <div class="text-xs text-purple-700 dark:text-purple-300">Reasoning & memory</div>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-lg font-bold text-purple-900 dark:text-purple-100">{{ playerStats.abilities.intelligence }}</div>
-                        <div class="text-xs text-purple-700 dark:text-purple-300">
-                          {{ Math.floor((playerStats.abilities.intelligence - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.intelligence - 10) / 2) }} mod
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Wisdom -->
-                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-blue-900 dark:text-blue-100">Wisdom (WIS)</div>
-                        <div class="text-xs text-blue-700 dark:text-blue-300">Awareness & insight</div>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-lg font-bold text-blue-900 dark:text-blue-100">{{ playerStats.abilities.wisdom }}</div>
-                        <div class="text-xs text-blue-700 dark:text-blue-300">
-                          {{ Math.floor((playerStats.abilities.wisdom - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.wisdom - 10) / 2) }} mod
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Charisma -->
-                  <div class="bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 rounded-lg p-3">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <div class="text-sm font-medium text-pink-900 dark:text-pink-100">Charisma (CHA)</div>
-                        <div class="text-xs text-pink-700 dark:text-pink-300">Force of personality</div>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-lg font-bold text-pink-900 dark:text-pink-100">{{ playerStats.abilities.charisma }}</div>
-                        <div class="text-xs text-pink-700 dark:text-pink-300">
-                          {{ Math.floor((playerStats.abilities.charisma - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor((playerStats.abilities.charisma - 10) / 2) }} mod
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-               <!-- Skills -->
-               <div v-if="activeCharacter && activeCharacter.skills && activeCharacter.skills.length > 0">
-                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Skills</h4>
-                 <div class="space-y-2">
-                   <div v-for="skill in activeCharacter.skills" :key="skill.name"
-                     class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-                     <div class="flex items-center space-x-2">
-                       <span class="text-sm font-medium text-gray-900 dark:text-white">{{ skill.name }}</span>
-                       <span v-if="skill.proficient" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
-                       <span v-if="skill.expertise" class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">Expertise</span>
-                     </div>
-                     <span class="text-sm text-gray-600 dark:text-gray-400">{{ skill.ability }}</span>
-                   </div>
-                 </div>
-               </div>
-
-               <!-- Saving Throws -->
-               <div v-if="activeCharacter && activeCharacter.savingThrows && activeCharacter.savingThrows.length > 0">
-                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Saving Throws</h4>
-                 <div class="space-y-2">
-                   <div v-for="savingThrow in activeCharacter.savingThrows" :key="savingThrow.ability"
-                     class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-                     <div class="flex items-center space-x-2">
-                       <span class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{ savingThrow.ability }}</span>
-                       <span v-if="savingThrow.proficient" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-
-               <!-- Attacks -->
-               <div v-if="activeCharacterAttacks && activeCharacterAttacks.length > 0">
-                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Attacks</h4>
-                 <div class="space-y-2">
-                   <div v-for="attack in activeCharacterAttacks" :key="attack.id"
-                     class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                     <div class="flex items-center justify-between mb-1">
-                       <span class="font-medium text-gray-900 dark:text-white">{{ attack.name }}</span>
-                       <span class="text-sm text-gray-600 dark:text-gray-400">{{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}</span>
-                     </div>
-                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                       {{ attack.damage }} {{ attack.rangeText || '' }}
-                     </div>
-                     <div v-if="attack.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                       {{ attack.notes }}
-                     </div>
-                   </div>
-                 </div>
-               </div>
-
-               <!-- Special Abilities -->
-               <div v-if="currentPlayerAbilities && currentPlayerAbilities.length > 0">
-                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Special Abilities</h4>
-                 <div class="space-y-2">
-                   <div v-for="ability in currentPlayerAbilities" :key="ability.id"
-                     class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                     <div class="flex items-center justify-between mb-1">
-                       <span class="font-medium text-gray-900 dark:text-white">{{ ability.name }}</span>
-                       <UButton v-if="ability.diceFormula" color="blue" variant="outline" size="xs" @click="rollAbilityDice(ability)"
-                         icon="i-heroicons-cube">
-                         Roll
-                       </UButton>
-                     </div>
-                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                       {{ ability.description }}
-                     </div>
-                     <div v-if="ability.usesPerRest && ability.usesRemaining !== undefined" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                       Uses: {{ ability.usesRemaining }}/{{ ability.usesPerRest }}
-                     </div>
-                   </div>
-                 </div>
-               </div>
-
-               <!-- Combat Actions -->
-               <div v-if="activeCharacter && activeCharacter.combatActions && activeCharacter.combatActions.length > 0">
-                 <h4 class="font-medium text-gray-900 dark:text-white mb-3">Combat Actions</h4>
-                 <div class="space-y-2">
-                   <div v-for="action in activeCharacter.combatActions" :key="action.id"
-                     class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                     <div class="flex items-center justify-between mb-1">
-                       <span class="font-medium text-gray-900 dark:text-white">{{ action.name }}</span>
-                       <span class="text-xs text-gray-600 dark:text-gray-400">{{ action.type }}</span>
-                     </div>
-                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                       {{ action.description }}
-                     </div>
-                     <div v-if="action.maxUses > 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                       Uses: {{ action.currentUses }}/{{ action.maxUses }}
-                     </div>
-                   </div>
-                 </div>
-               </div>
-
-               <div v-else class="text-center py-8">
-                 <div class="text-4xl mb-4">⚡</div>
-                 <p class="text-gray-500 dark:text-gray-400">
-                   Select a character to view ability scores
-                 </p>
-               </div>
-             </div>
-
-            <!-- DM Player Management (only for DMs) -->
-            <div v-else>
-              <div class="mb-4">
-                <div class="flex items-center justify-between">
-                  <h4 class="font-medium text-gray-900 dark:text-white">Player Management</h4>
-                  <UButton color="blue" variant="outline" size="xs" @click="loadAllPlayersStats(currentRoom?.code || 'default')"
-                    icon="i-heroicons-arrow-path">
-                    Refresh
-                  </UButton>
-                </div>
-              </div>
-
-              <div v-if="allPlayers.length > 0" class="space-y-3">
-                <div v-for="player in allPlayers" :key="player.userId"
-                  class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-2">
-                      <span class="font-medium text-gray-900 dark:text-white">{{ player.name }}</span>
-                      <span class="text-xs text-gray-500 dark:text-gray-400">({{ player.userId }})</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <UButton color="green" variant="outline" size="xs" @click="requestRollFromPlayer(player)"
-                        icon="i-heroicons-cube">
-                        Request Roll
-                      </UButton>
-                      <UButton color="blue" variant="outline" size="xs" @click="editPlayerStats(player)"
-                        icon="i-heroicons-pencil">
-                        Edit
-                      </UButton>
-                    </div>
-                  </div>
-                  
-                  <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                    <div>STR: {{ player.stats.abilities.strength }} | DEX: {{ player.stats.abilities.dexterity }} | CON: {{ player.stats.abilities.constitution }}</div>
-                    <div>INT: {{ player.stats.abilities.intelligence }} | WIS: {{ player.stats.abilities.wisdom }} | CHA: {{ player.stats.abilities.charisma }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else class="text-center py-8">
-                <div class="text-4xl mb-4">👥</div>
-                <p class="text-gray-500 dark:text-gray-400">
-                  {{ isOfflineMode ? 'Player management not available in offline mode' : 'No players connected' }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Main content area -->
-        <div class="transition-all duration-300 min-h-screen">
-          <div class="px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column - Dice Rolling -->
-            <div class="lg:col-span-2 space-y-6">
-              <!-- Dice Selection Card -->
-              <UCard>
-                <template #header>
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      🎲 Select Dice
-                    </h3>
-                    <div v-if="totalDiceSelected > 0" class="text-sm text-gray-500 dark:text-gray-400">
-                      {{ totalDiceSelected }} dice selected
-                    </div>
-                  </div>
-                </template>
-
-                <div class="space-y-6">
-                  <!-- Dice Grid -->
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div v-for="dice in diceTypes" :key="dice.type" class="flex flex-col items-center space-y-2">
+                    <!-- Quick Stats Grid -->
+                    <div class="grid grid-cols-3 gap-2 mt-3">
                       <div class="text-center">
-                        <div class="text-2xl mb-1" :class="dice.color">{{ dice.symbol }}</div>
-                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ dice.name }}</div>
-                      </div>
-                      <div class="flex items-center space-x-2">
-                        <UButton color="gray" variant="outline" size="xs" @click="selectedDice[dice.type] = Math.max(0, selectedDice[dice.type] - 1)"
-                          icon="i-heroicons-minus" :disabled="selectedDice[dice.type] <= 0" />
-                        <span class="w-8 text-center text-sm font-mono">{{ selectedDice[dice.type] }}</span>
-                        <UButton color="gray" variant="outline" size="xs" @click="selectedDice[dice.type]++"
-                          icon="i-heroicons-plus" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Quick Roll Buttons -->
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Quick Rolls</h4>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      <UButton v-for="roll in quickRolls" :key="roll.label" color="gray" variant="outline" size="sm"
-                        @click="performQuickRoll(roll)" class="text-xs">
-                        {{ roll.label }}
-                      </UButton>
-                    </div>
-                  </div>
-
-                  <!-- Modifier and Roll Type -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <UFormGroup label="Modifier">
-                      <UInput v-model.number="modifier" type="number" placeholder="0" />
-                    </UFormGroup>
-                    <UFormGroup label="Roll Type">
-                      <USelect v-model="rollType" :options="rollTypeOptions" />
-                    </UFormGroup>
-                  </div>
-
-                  <!-- Roll Button -->
-                  <div class="text-center">
-                    <UButton color="primary" size="lg" @click="rollDice" :disabled="totalDiceSelected === 0 || isRolling"
-                      :loading="isRolling" icon="i-heroicons-play">
-                      Roll {{ totalDiceSelected }} {{ totalDiceSelected === 1 ? 'Die' : 'Dice' }}
-                    </UButton>
-                  </div>
-
-                  <!-- Clear Selection -->
-                  <div class="text-center">
-                    <UButton color="gray" variant="ghost" size="sm" @click="clearSelection" :disabled="totalDiceSelected === 0"
-                      icon="i-heroicons-x-mark">
-                      Clear Selection
-                    </UButton>
-                  </div>
-                </div>
-              </UCard>
-            </div>
-
-            <!-- Right Column - Roll History -->
-            <div class="space-y-6">
-                <!-- Battle Mode Panel (DM Only) -->
-              <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
-                <template #header>
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      ⚔️ Battle Mode
-                    </h3>
-                    <div class="flex items-center space-x-2">
-                      <UBadge v-if="isInBattle" :color="getBattlePhaseColor(battleMode.phase)" variant="soft">
-                        {{ getBattlePhaseLabel(battleMode.phase) }} 
-                      </UBadge>
-                      <UButton
-                        v-if="!isInBattle"
-                        color="red"
-                        size="sm"
-                        @click="startBattle"
-                        :loading="isBattleLoading"
-                        icon="i-heroicons-play"
-                      >
-                        Start Battle Setup
-                      </UButton>
-                      <UButton
-                        v-else
-                        color="gray"
-                        size="sm"
-                        @click="endBattle"
-                        :loading="isBattleLoading"
-                        icon="i-heroicons-stop"
-                      >
-                        End Battle
-                      </UButton>
-                    </div>
-                  </div>
-                </template>
-
-                <div v-if="!isInBattle" class="text-center py-8">
-                  <div class="text-4xl mb-4">⚔️</div>
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-2">Ready for Battle</h4>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Click "Start Battle Setup" to begin preparing for combat. You'll be able to add enemies and then roll initiative when ready.
-                  </p>
-                </div>
-
-                <!-- Battle Setup Phase -->
-                <div v-else-if="battleMode.phase === 'setup'" class="space-y-4">
-                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div class="flex items-start space-x-3">
-                      <UIcon name="i-heroicons-information-circle" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                      <div>
-                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">Battle Setup Phase</h4>
-                        <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                          Add all enemies that will participate in this battle, then click "Roll Initiative" to begin combat.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Player Management -->
-                  <div>
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Player Selection</h4>
-                      <UButton
-                        color="gray"
-                        variant="outline"
-                        size="xs"
-                        @click="loadBattlePlayers"
-                        :loading="isBattlePlayersLoading"
-                        icon="i-heroicons-arrow-path"
-                      >
-                        Refresh
-                      </UButton>
-                    </div>
-                    
-                    <!-- Selected Players -->
-                    <div v-if="selectedPlayers.length > 0" class="mb-3">
-                      <h5 class="text-xs font-medium text-green-900 dark:text-green-100 mb-2">Selected Players</h5>
-                      <div class="space-y-1">
-                        <div v-for="player in selectedPlayers" :key="player.userId"
-                          class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
-                          <div class="flex-1">
-                            <div class="font-medium text-green-900 dark:text-green-100">{{ player.name }}</div>
-                            <div class="text-xs text-green-700 dark:text-green-300">Ready for battle</div>
-                          </div>
-                          <UButton
-                            color="red"
-                            variant="ghost"
-                            size="xs"
-                            @click="removePlayerFromBattle(player.userId)"
-                            icon="i-heroicons-minus"
-                          >
-                          </UButton>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Init</div>
+                        <div class="text-sm font-mono text-gray-900 dark:text-white">
+                          {{ player.stats.initiative >= 0 ? '+' : '' }}{{ player.stats.initiative }}
                         </div>
                       </div>
-                    </div>
-                    
-                    <!-- Available Players -->
-                    <div v-if="unselectedPlayers.length > 0" class="mb-3">
-                      <h5 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Available Players</h5>
-                      <div class="space-y-1">
-                        <div v-for="player in unselectedPlayers" :key="player.userId"
-                          class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
-                          <div class="flex-1">
-                            <div class="font-medium text-gray-900 dark:text-gray-100">{{ player.name }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">Click to add to battle</div>
-                          </div>
-                          <UButton
-                            color="green"
-                            variant="ghost"
-                            size="xs"
-                            @click="addPlayerToBattle(player.userId)"
-                            icon="i-heroicons-plus"
-                          >
-                          </UButton>
-                        </div>
+                      <div class="text-center">
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Speed</div>
+                        <div class="text-sm font-mono text-gray-900 dark:text-white">{{ player.stats.speed }} ft</div>
                       </div>
-                    </div>
-                    
-                    <!-- No Players State -->
-                    <div v-if="selectedPlayers.length === 0 && unselectedPlayers.length === 0 && !isBattlePlayersLoading" 
-                      class="text-center py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                      <div class="text-2xl mb-2">👥</div>
-                      <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                        No players connected to this room
-                      </p>
-                      <p class="text-xs text-gray-400 dark:text-gray-500">
-                        Players need to join the room first
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Enemy Management -->
-                  <div>
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemy Setup</h4>
-                      <UButton
-                        color="green"
-                        variant="outline"
-                        size="xs"
-                        @click="showAddEnemyModal = true"
-                        icon="i-heroicons-plus"
-                      >
-                        Add Enemy
-                      </UButton>
-                    </div>
-                    
-                    <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
-                      <div v-for="enemy in Object.values(battleMode.enemies) as Enemy[]" :key="enemy.id"
-                        class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                        <div class="flex-1">
-                          <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
-                          <div class="text-xs text-red-700 dark:text-red-300">
-                            HP: {{ enemy.hitPoints.current }}/{{ enemy.hitPoints.max }} | AC: {{ enemy.armorClass }} | Init: {{ enemy.initiative >= 0 ? '+' : '' }}{{ enemy.initiative }}
-                          </div>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                          <UButton
-                            color="red"
-                            variant="ghost"
-                            size="xs"
-                            @click="removeEnemy(enemy.id)"
-                            icon="i-heroicons-trash"
-                          >
-                          </UButton>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div v-else class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                      <div class="text-2xl mb-2">👹</div>
-                      <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                        No enemies added yet
-                      </p>
-                      <UButton
-                        color="green"
-                        variant="outline"
-                        size="sm"
-                        @click="showAddEnemyModal = true"
-                        icon="i-heroicons-plus"
-                      >
-                        Add Your First Enemy
-                      </UButton>
-                    </div>
-                  </div>
-
-                  <!-- Ready to Roll Initiative -->
-                  <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0 && selectedPlayers.length > 0" 
-                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <div class="text-center">
-                      <div class="text-green-900 dark:text-green-100 font-medium mb-2">
-                        Ready to Start Combat!
-                      </div>
-                      <p class="text-sm text-green-700 dark:text-green-300 mb-3">
-                        {{ selectedPlayers.length }} players and {{ Object.keys(battleMode.enemies).length }} enemies ready. Click below to roll initiative and begin combat.
-                      </p>
-                      <UButton
-                        color="green"
-                        size="sm"
-                        @click="rollInitiative"
-                        icon="i-heroicons-play"
-                      >
-                        Roll Initiative & Start Combat
-                      </UButton>
-                    </div>
-                  </div>
-
-                  <!-- Missing Players or Enemies Warning -->
-                  <div v-else-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0 && selectedPlayers.length === 0" 
-                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                    <div class="text-center">
-                      <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
-                        Players Needed
-                      </div>
-                      <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                        Add at least one player before starting combat.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div v-else-if="selectedPlayers.length > 0 && (!battleMode.enemies || Object.keys(battleMode.enemies).length === 0)" 
-                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                    <div class="text-center">
-                      <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
-                        Enemies Needed
-                      </div>
-                      <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                        Add at least one enemy before starting combat.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Active Combat Phase -->
-                <div v-else-if="battleMode.phase === 'combat'" class="space-y-4">
-                  <!-- Enemy Management -->
-                  <div>
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemies</h4>
-                      <UButton
-                        color="green"
-                        variant="outline"
-                        size="xs"
-                        @click="showAddEnemyModal = true"
-                        icon="i-heroicons-plus"
-                      >
-                        Add Enemy
-                      </UButton>
-                    </div>
-                    
-                    <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
-                      <div v-for="enemy in Object.values(battleMode.enemies) as Enemy[]" :key="enemy.id"
-                        class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                        <div class="flex-1">
-                          <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
-                          <div class="text-xs text-red-700 dark:text-red-300">
-                            HP: {{ enemy.hitPoints.current }}/{{ enemy.hitPoints.max }} | AC: {{ enemy.armorClass }}
-                          </div>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                          <UButton
-                            color="red"
-                            variant="ghost"
-                            size="xs"
-                            @click="dealDamageToEnemy(enemy)"
-                            icon="i-heroicons-minus"
-                          >
-                          </UButton>
-                          <UButton
-                            color="red"
-                            variant="ghost"
-                            size="xs"
-                            @click="removeEnemy(enemy.id)"
-                            icon="i-heroicons-trash"
-                          >
-                          </UButton>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                      No enemies in battle
-                    </div>
-                  </div>
-
-                  <!-- Initiative Tracker -->
-                  <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Initiative Order</h4>
-                      <div class="flex items-center space-x-2">
-                        <UButton
-                          v-if="battleMode.phase === 'setup'"
-                          color="blue"
-                          variant="outline"
-                          size="xs"
-                          @click="rollInitiative"
-                          icon="i-heroicons-arrow-path"
-                        >
-                          Roll Initiative
-                        </UButton>
-                        <UButton
-                          v-else-if="battleMode.phase === 'combat'"
-                          color="green"
-                          variant="outline"
-                          size="xs"
-                          @click="nextTurn"
-                          icon="i-heroicons-arrow-right"
-                        >
-                          Next Turn
-                        </UButton>
-                      </div>
-                    </div>
-                    
-                    <div class="space-y-1">
-                      <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
-                        class="flex items-center justify-between p-2 rounded"
-                        :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
-                        <div class="flex items-center space-x-2">
-                          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                            :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
-                            {{ index + 1 }}
-                          </div>
-                          <span class="font-medium" 
-                            :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
-                            {{ participant.name }}
-                          </span>
-                          <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
-                            {{ participant.type }}
-                          </UBadge>
-                        </div>
-                        <div class="text-sm font-mono"
-                          :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
-                          {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{ participant.initiative }})
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </UCard>
-
-              <!-- Battle Status (Player View) -->
-              <UCard v-else-if="userRole === 'Player' && isInBattle">
-                <template #header>
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      ⚔️ Battle in Progress
-                    </h3>
-                    <UBadge color="green" variant="soft">
-                      {{ battleMode.phase }}
-                    </UBadge>
-                  </div>
-                </template>
-
-                <div class="space-y-4">
-                  <!-- Current Turn Display -->
-                  <div v-if="battleMode.phase === 'combat' && battleMode.initiativeOrder && battleMode.currentTurnIndex !== undefined" 
-                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <div class="text-center">
-                      <div class="text-lg font-bold text-green-900 dark:text-green-100">
-                        Current Turn
-                      </div>
-                      <div class="text-2xl font-bold text-green-700 dark:text-green-300 mt-1">
-                        {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.name || 'Unknown' }}
-                      </div>
-                      <UBadge 
-                        :color="battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type === 'player' ? 'blue' : 'red'" 
-                        variant="soft" 
-                        class="mt-2"
-                      >
-                        {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type || 'unknown' }}
-                      </UBadge>
-                     </div>
-                   </div>
-
-                  <!-- Character Attacks Section (only show during player's turn) -->
-                  <div v-if="battleMode.phase === 'combat' && battleMode.initiativeOrder && battleMode.currentTurnIndex !== undefined && isPlayerTurn()" 
-                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                        ⚔️ Your Attacks
-                      </h4>
-                      <UButton
-                        color="blue" 
-                        variant="ghost" 
-                        size="xs" 
-                        :icon="showCharacterAttacks ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
-                        @click="showCharacterAttacks = !showCharacterAttacks"
-                      >
-                        {{ showCharacterAttacks ? 'Hide' : 'Show' }}
-                      </UButton>
-                    </div>
-                    
-                    <div v-if="showCharacterAttacks">
-                      <div v-if="activeCharacterAttacks.length > 0" class="space-y-2">
-                        <div v-for="attack in activeCharacterAttacks" :key="attack.id || attack.name" 
-                          class="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded p-3">
-                          <div class="flex items-center justify-between mb-2">
-                            <h5 class="font-medium text-gray-900 dark:text-white">
-                              {{ attack.name || 'Unnamed Attack' }}
-                            </h5>
-                            <div class="flex items-center space-x-2">
-                              <UButton
-                                color="blue"
-                                size="xs"
-                                @click="rollAttack(attack)"
-                                :loading="isRollingAttack"
-                                icon="i-heroicons-cube"
-                              >
-                                Attack
-                              </UButton>
-                              <UButton
-                                v-if="attack.damage"
-                                color="red"
-                                size="xs"
-                                @click="rollDamage(attack)"
-                                :loading="isRollingAttack"
-                                icon="i-heroicons-fire"
-                              >
-                                Damage
-                              </UButton>
-                            </div>
-                          </div>
-                          <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                            <div v-if="attack.attackBonus !== undefined">
-                              <span class="font-medium">Attack Bonus:</span> 
-                              {{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}
-                            </div>
-                            <div v-if="attack.damage">
-                              <span class="font-medium">Damage:</span> {{ attack.damage }}
-                            </div>
-                            <div v-if="attack.rangeText">
-                              <span class="font-medium">Range:</span> {{ attack.rangeText }}
-                            </div>
-                            <div v-if="attack.notes" class="text-xs">
-                              {{ attack.notes }}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div v-else class="text-center py-4 text-blue-600 dark:text-blue-400 text-sm">
-                        No attacks configured. Edit your character sheet to add attacks.
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Initiative Order (Player View) -->
-                  <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Initiative Order</h4>
-                    <div class="space-y-1">
-                      <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
-                        class="flex items-center justify-between p-2 rounded"
-                        :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
-                        <div class="flex items-center space-x-2">
-                          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                            :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
-                            {{ index + 1 }}
-                          </div>
-                          <span class="font-medium" 
-                            :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
-                            {{ participant.name }}
-                          </span>
-                          <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
-                            {{ participant.type }}
-                          </UBadge>
-                        </div>
-                        <div class="text-sm font-mono"
-                          :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
-                          {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{ participant.initiative }})
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Battle Phase Info -->
-                  <div v-if="battleMode.phase === 'setup'" class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                    <div class="text-2xl mb-2">⏳</div>
-                    <p>Waiting for DM to roll initiative...</p>
-                  </div>
-                </div>
-              </UCard>
-
-               <!-- DJ Music Control Panel (DM Only) -->
-               <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default' && isConnected">
-                <template #header>
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      🎵 DJ Music Control
-                    </h3>
-                    <div class="flex items-center space-x-2">
-                      <UBadge v-if="musicState.isPlaying" color="green" variant="soft">
-                        Playing
-                      </UBadge>
-                      <UBadge v-else-if="musicState.currentTrack" color="yellow" variant="soft">
-                        Paused
-                      </UBadge>
-                      <UBadge v-else color="gray" variant="soft">
-                        No Track
-                      </UBadge>
-                    </div>
-                  </div>
-                </template>
-
-                <div class="space-y-4">
-                  <!-- Add YouTube Track Section -->
-                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">Add YouTube Track</h4>
-                    <div class="space-y-3">
-                      <UInput
-                        v-model="newTrackUrl"
-                        placeholder="Paste YouTube URL here..."
-                        icon="i-heroicons-musical-note"
-                      />
-                      <div class="flex flex-wrap gap-2">
-                        <UButton
-                          color="blue"
-                          size="sm"
-                          @click="addTrackToPlaylist"
-                          :disabled="!newTrackUrl || isAddingTrack"
-                          :loading="isAddingTrack"
-                          icon="i-heroicons-plus"
-                        >
-                          Add to Playlist
-                        </UButton>
-                        <UButton
-                          color="green"
-                          size="sm"
-                          @click="addAndPlayTrack"
-                          :disabled="!newTrackUrl || isAddingTrack"
-                          :loading="isAddingTrack"
-                          icon="i-heroicons-play"
-                        >
-                          Add & Play Now
-                        </UButton>
-                        <UButton
-                          color="purple"
-                          size="sm"
-                          @click="addTrackAsSoundEffect"
-                          :disabled="!newTrackUrl || isAddingTrack"
-                          :loading="isAddingTrack"
-                          icon="i-heroicons-speaker-wave"
-                        >
-                          Add as Sound Effect
-                        </UButton>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Sound Effects Control Panel -->
-                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                    <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🔊 Sound Effects Control</h4>
-                    <div class="space-y-3">
-                      <!-- Sound Effects Volume Control -->
-                      <div>
-                        <div class="flex items-center justify-between mb-2">
-                          <label class="text-sm text-purple-700 dark:text-purple-300">Sound Effects Volume</label>
-                          <span class="text-sm text-purple-600 dark:text-purple-400">{{ musicState.soundEffects.soundEffectsVolume }}%</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                          <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-purple-400" />
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            v-model="musicState.soundEffects.soundEffectsVolume"
-                            @input="setSoundEffectsVolume"
-                            class="flex-1 h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer dark:bg-purple-700"
-                          />
-                          <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-purple-400" />
-                        </div>
-                      </div>
-                      
-                      <!-- Quick Sound Effects -->
-                      <div v-if="musicState.playlist.filter(t => t.isSoundEffect).length > 0">
-                        <h5 class="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">Quick Sound Effects</h5>
-                        <div class="grid grid-cols-2 gap-2">
-                          <UButton
-                            v-for="track in musicState.playlist.filter(t => t.isSoundEffect).slice(0, 4)"
-                            :key="track.id"
-                            color="purple"
-                            variant="outline"
-                            size="xs"
-                            @click="playSoundEffect(track.id)"
-                            class="truncate text-xs"
-                          >
-                            🔊 {{ track.title.length > 12 ? track.title.substring(0, 12) + '...' : track.title }}
-                          </UButton>
-                        </div>
-                      </div>
-                      
-                      <div class="bg-purple-100 dark:bg-purple-800/30 border border-purple-200 dark:border-purple-700 rounded p-2">
-                        <p class="text-xs text-purple-700 dark:text-purple-300">
-                          Sound effects play simultaneously with background music and have separate volume control.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Fade Transition Settings -->
-                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                    <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🎚️ Audio Transitions</h4>
-                    <div class="space-y-3">
-                      <div class="flex items-center justify-between">
-                        <label class="text-sm text-purple-700 dark:text-purple-300">Enable Smooth Fades</label>
-                        <UToggle v-model="fadeConfig.enabled" />
-                      </div>
-                      
-                      <div v-if="fadeConfig.enabled" class="space-y-2 border-t border-purple-200 dark:border-purple-700 pt-3">
-                        <div class="flex items-center justify-between">
-                          <label class="text-xs text-purple-600 dark:text-purple-400">Track Switch (ms)</label>
-                          <UInput 
-                            v-model.number="fadeConfig.trackTransition" 
-                            type="number" 
-                            min="100" 
-                            max="2000" 
-                            size="xs"
-                            class="w-20"
-                          />
-                        </div>
-                        
-                        <div class="flex items-center justify-between">
-                          <label class="text-xs text-purple-600 dark:text-purple-400">Volume Change (ms)</label>
-                          <UInput 
-                            v-model.number="fadeConfig.volumeChange" 
-                            type="number" 
-                            min="100" 
-                            max="1000" 
-                            size="xs"
-                            class="w-20"
-                          />
-                        </div>
-                        
-                        <div class="flex items-center justify-between">
-                          <label class="text-xs text-purple-600 dark:text-purple-400">Play/Pause (ms)</label>
-                          <UInput 
-                            v-model.number="fadeConfig.playPause" 
-                            type="number" 
-                            min="100" 
-                            max="1000" 
-                            size="xs"
-                            class="w-20"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Current Track Display -->
-                  <div v-if="musicState.currentTrack" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <div class="flex items-start space-x-3">
-                      <!-- Thumbnail -->
-                      <div class="flex-shrink-0">
-                        <img 
-                          v-if="musicState.currentTrack.thumbnail" 
-                          :src="musicState.currentTrack.thumbnail" 
-                          :alt="musicState.currentTrack.title"
-                          class="w-16 h-12 object-cover rounded-lg"
-                        />
-                        <div 
-                          v-else 
-                          class="w-16 h-12 bg-green-200 dark:bg-green-800 rounded-lg flex items-center justify-center"
-                        >
-                          <UIcon name="i-heroicons-musical-note" class="h-6 w-6 text-green-600 dark:text-green-400" />
-                        </div>
-                      </div>
-                      
-                      <!-- Track info and controls -->
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between">
-                          <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-medium text-green-900 dark:text-green-100 truncate">
-                              🎵 {{ musicState.currentTrack.title || 'Unknown Track' }}
-                            </h4>
-                            <p class="text-xs text-green-700 dark:text-green-300 truncate mt-1">
-                              {{ musicState.currentTrack.artist || 'Unknown Artist' }}
-                            </p>
-                            <!-- Duration and metadata -->
-                            <div class="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400 mt-1">
-                              <span v-if="musicState.currentTrack.duration">{{ formatDuration(musicState.currentTrack.duration) }}</span>
-                              <span v-if="musicState.currentTrack.tags && musicState.currentTrack.tags.length > 0" class="truncate">
-                                #{{ musicState.currentTrack.tags.slice(0, 1).join(', #') }}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <!-- Control buttons -->
-                          <div class="flex items-center space-x-1 ml-3">
-                            <!-- Fade transition indicator -->
-                            <div 
-                              v-if="fadeTransition.isActive" 
-                              class="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 mr-2"
-                            >
-                              <UIcon name="i-heroicons-arrows-right-left" class="w-3 h-3 animate-pulse" />
-                              <span class="text-xs">Fading...</span>
-                            </div>
-                            
-                            <UButton
-                              v-if="musicState.isPlaying"
-                              color="yellow"
-                              variant="ghost"
-                              size="xs"
-                              @click="pauseMusic"
-                              icon="i-heroicons-pause"
-                            />
-                            <UButton
-                              v-else
-                              color="green"
-                              variant="ghost"
-                              size="xs"
-                              @click="resumeMusic"
-                              icon="i-heroicons-play"
-                            />
-                            <UButton
-                              color="red"
-                              variant="ghost"
-                              size="xs"
-                              @click="stopMusic"
-                              icon="i-heroicons-stop"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Volume Control -->
-                  <div class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Volume</h4>
-                      <span class="text-sm text-gray-600 dark:text-gray-400">{{ musicState.volume }}%</span>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                      <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-gray-400" />
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        v-model="musicState.volume"
-                        @input="setVolume"
-                        class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                      />
-                      <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-
-                  <!-- Playlist -->
-                  <div>
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-white">Playlist</h4>
-                      <UButton
-                        v-if="musicState.playlist.length > 0"
-                        color="gray"
-                        variant="ghost"
-                        size="xs"
-                        @click="clearPlaylist"
-                        icon="i-heroicons-trash"
-                      >
-                        Clear All
-                      </UButton>
-                    </div>
-                    
-                    <div v-if="musicState.playlist.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
-                      <div
-                        v-for="track in musicState.playlist"
-                        :key="track.id"
-                        class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-                        :class="{ 
-                          'ring-2 ring-green-500': track.id === musicState.currentTrack?.id,
-                          'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20': track.isSoundEffect
-                        }"
-                      >
-                        <!-- Thumbnail and track info -->
-                        <div class="flex items-center flex-1 min-w-0 space-x-3">
-                          <!-- Video thumbnail -->
-                          <div class="flex-shrink-0">
-                            <img 
-                              v-if="track.thumbnail" 
-                              :src="track.thumbnail" 
-                              :alt="track.title"
-                              class="w-12 h-9 object-cover rounded"
-                            />
-                            <div 
-                              v-else 
-                              class="w-12 h-9 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center"
-                              :class="track.isSoundEffect ? 'bg-purple-200 dark:bg-purple-800' : ''"
-                            >
-                              <UIcon 
-                                :name="track.isSoundEffect ? 'i-heroicons-speaker-wave' : 'i-heroicons-musical-note'" 
-                                class="h-4 w-4"
-                                :class="track.isSoundEffect ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'"
-                              />
-                            </div>
-                          </div>
-                          
-                          <!-- Track details -->
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center space-x-2">
-                              <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {{ track.title || 'Unknown Track' }}
-                              </div>
-                              <!-- Sound Effect Badge -->
-                              <UBadge v-if="track.isSoundEffect" color="purple" variant="soft" size="xs">
-                                SFX
-                              </UBadge>
-                            </div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {{ track.artist || 'Unknown Artist' }}
-                            </div>
-                            <!-- Duration and additional metadata -->
-                            <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-gray-500 mt-1">
-                              <span v-if="track.duration">{{ formatDuration(track.duration) }}</span>
-                              <span v-if="track.isSoundEffect && track.isPlayableWhileMusic" class="text-purple-500">
-                                • Can play with music
-                              </span>
-                              <span v-if="track.tags && track.tags.length > 0" class="truncate">
-                                {{ track.tags.slice(0, 2).join(', ') }}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <!-- Control buttons -->
-                        <div class="flex items-center space-x-1 ml-2">
-                          <!-- Sound Effect Play Button -->
-                          <UButton
-                            v-if="track.isSoundEffect"
-                            color="purple"
-                            variant="ghost"
-                            size="xs"
-                            @click="playSoundEffect(track.id)"
-                            icon="i-heroicons-speaker-wave"
-                            title="Play as sound effect"
-                          />
-                          <!-- Regular Play Button -->
-                          <UButton
-                            v-else
-                            color="green"
-                            variant="ghost"
-                            size="xs"
-                            @click="playTrackFromPlaylist(track)"
-                            icon="i-heroicons-play"
-                            :disabled="track.id === musicState.currentTrack?.id && musicState.isPlaying"
-                          />
-                          <!-- Remove Button -->
-                          <UButton
-                            color="red"
-                            variant="ghost"
-                            size="xs"
-                            @click="removeTrackFromPlaylist(track.id)"
-                            icon="i-heroicons-trash"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div v-else class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                      <div class="text-2xl mb-2">🎵</div>
-                      <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                        No tracks in playlist
-                      </p>
-                      <p class="text-gray-400 dark:text-gray-500 text-xs">
-                        Add YouTube tracks to create atmosphere for your session
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Music Sync Info for Participants -->
-                  <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                    <div class="flex items-start space-x-2">
-                      <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5" />
-                      <div>
-                        <h4 class="text-xs font-medium text-purple-900 dark:text-purple-100">Music Sync</h4>
-                        <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
-                          All participants will hear the music you play in real-time. Volume is controlled individually by each player.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </UCard>
-
-
-
-              <!-- Roll History -->
-              <UCard>
-                <template #header>
-                  <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      🎯 Roll History
-                    </h3>
-                    <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs" @click="clearHistory"
-                      icon="i-heroicons-trash">
-                      Clear
-                    </UButton>
-                  </div>
-                </template>
-
-                <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
-                  <div v-for="roll in rollHistory" :key="roll.id"
-                    class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                    :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
-                    <div class="flex items-start justify-between">
-                      <div class="flex-1">
-                        <div class="flex items-center space-x-2 mb-1">
-                          <span class="text-sm font-medium" :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
-                            {{ roll.userName }}
-                          </span>
-                          <span class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ formatTime(roll.timestamp) }}
-                          </span>
-                        </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-300 mb-1">{{ roll.description }}</div>
-                        <div class="flex items-center space-x-2">
-                          <span class="text-lg font-bold" :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
-                            {{ roll.total }}
-                          </span>
-                          <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400">
-                            ({{ roll.details.join(' + ') }})
-                          </div>
-                        </div>
-
-                        <div v-if="roll.isCritical" class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                          {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                      <div class="text-center">
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Prof</div>
+                        <div class="text-sm font-mono text-gray-900 dark:text-white">+{{ player.stats.proficiencyBonus
+                        }}
                         </div>
                       </div>
                     </div>
@@ -1648,49 +365,1278 @@
                 </div>
 
                 <div v-else class="text-center py-8">
-                  <div class="text-4xl mb-4">🎲</div>
-                  <p class="text-gray-500 dark:text-gray-400">
-                    No rolls yet. Start rolling some dice!
+                  <div class="text-4xl mb-4">👥</div>
+                  <h4 class="font-medium text-gray-900 dark:text-white mb-2">No Players Connected</h4>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ isOfflineMode ? 'Player health monitoring not available in offline mode' : 'Players will appear here once they join the room' }}
                   </p>
                 </div>
-              </UCard>
+              </div>
+            </div>
+          </div>
 
-              <!-- Room Stats -->
-              <UCard>
-                <template #header>
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Room Statistics
-                  </h3>
-                </template>
+          <!-- Right Sidebar - Ability Scores -->
+          <div
+            class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
+            :class="isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'">
+            <!-- Right Sidebar Header -->
+            <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ userRole === 'DM' ? '🎲 Request Dices' : '⚡ Ability Scores' }}
+                </h3>
+                <UButton color="gray" variant="ghost" size="sm" @click="isRightSidebarOpen = false"
+                  icon="i-heroicons-x-mark" />
+              </div>
+            </div>
 
-                <div class="space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Total Rolls</span>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ rollHistory.length }}</span>
-                  </div>
+            <!-- Right Sidebar Content -->
+            <div class="p-4 space-y-6">
+              <!-- Ability Scores (only for Players) -->
+              <div v-if="userRole === 'Player'">
+                <div v-if="playerStats" class="space-y-4">
+                  <!-- Ability Scores Grid -->
+                  <div class="space-y-3">
+                    <!-- Strength -->
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-medium text-red-900 dark:text-red-100">Strength (STR)</div>
+                          <div class="text-xs text-red-700 dark:text-red-300">Physical power</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-lg font-bold text-red-900 dark:text-red-100">{{
+                            playerStats.abilities.strength }}
+                          </div>
+                          <div class="text-xs text-red-700 dark:text-red-300">
+                            {{ Math.floor((playerStats.abilities.strength - 10) / 2) >= 0 ? '+' : '' }}{{
+                              Math.floor((playerStats.abilities.strength - 10) / 2) }} mod
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Your Rolls</span>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ userRollCount }}</span>
-                  </div>
+                    <!-- Dexterity -->
+                    <div
+                      class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-medium text-green-900 dark:text-green-100">Dexterity (DEX)</div>
+                          <div class="text-xs text-green-700 dark:text-green-300">Agility & reflexes</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-lg font-bold text-green-900 dark:text-green-100">{{
+                            playerStats.abilities.dexterity
+                          }}</div>
+                          <div class="text-xs text-green-700 dark:text-green-300">
+                            {{ Math.floor((playerStats.abilities.dexterity - 10) / 2) >= 0 ? '+' : '' }}{{
+                              Math.floor((playerStats.abilities.dexterity - 10) / 2) }} mod
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Connected Users</span>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ connectedUsers }}</span>
-                  </div>
+                    <!-- Constitution -->
+                    <div
+                      class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-medium text-orange-900 dark:text-orange-100">Constitution (CON)</div>
+                          <div class="text-xs text-orange-700 dark:text-orange-300">Health & stamina</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-lg font-bold text-orange-900 dark:text-orange-100">{{
+                            playerStats.abilities.constitution }}</div>
+                          <div class="text-xs text-orange-700 dark:text-orange-300">
+                            {{ Math.floor((playerStats.abilities.constitution - 10) / 2) >= 0 ? '+' : '' }}{{
+                              Math.floor((playerStats.abilities.constitution - 10) / 2) }} mod
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-300">Critical Hits</span>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ criticalHits }}</span>
+                    <!-- Intelligence -->
+                    <div
+                      class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-medium text-purple-900 dark:text-purple-100">Intelligence (INT)</div>
+                          <div class="text-xs text-purple-700 dark:text-purple-300">Reasoning & memory</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-lg font-bold text-purple-900 dark:text-purple-100">{{
+                            playerStats.abilities.intelligence }}</div>
+                          <div class="text-xs text-purple-700 dark:text-purple-300">
+                            {{ Math.floor((playerStats.abilities.intelligence - 10) / 2) >= 0 ? '+' : '' }}{{
+                              Math.floor((playerStats.abilities.intelligence - 10) / 2) }} mod
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Wisdom -->
+                    <div
+                      class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-medium text-blue-900 dark:text-blue-100">Wisdom (WIS)</div>
+                          <div class="text-xs text-blue-700 dark:text-blue-300">Awareness & insight</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-lg font-bold text-blue-900 dark:text-blue-100">{{
+                            playerStats.abilities.wisdom }}
+                          </div>
+                          <div class="text-xs text-blue-700 dark:text-blue-300">
+                            {{ Math.floor((playerStats.abilities.wisdom - 10) / 2) >= 0 ? '+' : '' }}{{
+                              Math.floor((playerStats.abilities.wisdom - 10) / 2) }} mod
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Charisma -->
+                    <div
+                      class="bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-medium text-pink-900 dark:text-pink-100">Charisma (CHA)</div>
+                          <div class="text-xs text-pink-700 dark:text-pink-300">Force of personality</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-lg font-bold text-pink-900 dark:text-pink-100">{{
+                            playerStats.abilities.charisma }}
+                          </div>
+                          <div class="text-xs text-pink-700 dark:text-pink-300">
+                            {{ Math.floor((playerStats.abilities.charisma - 10) / 2) >= 0 ? '+' : '' }}{{
+                              Math.floor((playerStats.abilities.charisma - 10) / 2) }} mod
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </UCard>
+
+                <!-- Skills -->
+                <div v-if="activeCharacter && activeCharacter.skills && activeCharacter.skills.length > 0">
+                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Skills</h4>
+                  <div class="space-y-2">
+                    <div v-for="skill in activeCharacter.skills" :key="skill.name"
+                      class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                      <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">{{ skill.name }}</span>
+                        <span v-if="skill.proficient"
+                          class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
+                        <span v-if="skill.expertise"
+                          class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">Expertise</span>
+                      </div>
+                      <span class="text-sm text-gray-600 dark:text-gray-400">{{ skill.ability }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Saving Throws -->
+                <div v-if="activeCharacter && activeCharacter.savingThrows && activeCharacter.savingThrows.length > 0">
+                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Saving Throws</h4>
+                  <div class="space-y-2">
+                    <div v-for="savingThrow in activeCharacter.savingThrows" :key="savingThrow.ability"
+                      class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                      <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{
+                          savingThrow.ability
+                        }}</span>
+                        <span v-if="savingThrow.proficient"
+                          class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Proficient</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Attacks -->
+                <div v-if="activeCharacterAttacks && activeCharacterAttacks.length > 0">
+                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Attacks</h4>
+                  <div class="space-y-2">
+                    <div v-for="attack in activeCharacterAttacks" :key="attack.id"
+                      class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="font-medium text-gray-900 dark:text-white">{{ attack.name }}</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ attack.attackBonus >= 0 ? '+' : ''
+                        }}{{
+                            attack.attackBonus }}</span>
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ attack.damage }} {{ attack.rangeText || '' }}
+                      </div>
+                      <div v-if="attack.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {{ attack.notes }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Special Abilities -->
+                <div v-if="currentPlayerAbilities && currentPlayerAbilities.length > 0">
+                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Special Abilities</h4>
+                  <div class="space-y-2">
+                    <div v-for="ability in currentPlayerAbilities" :key="ability.id"
+                      class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="font-medium text-gray-900 dark:text-white">{{ ability.name }}</span>
+                        <UButton v-if="ability.diceFormula" color="blue" variant="outline" size="xs"
+                          @click="rollAbilityDice(ability)" icon="i-heroicons-cube">
+                          Roll
+                        </UButton>
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ ability.description }}
+                      </div>
+                      <div v-if="ability.usesPerRest && ability.usesRemaining !== undefined"
+                        class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Uses: {{ ability.usesRemaining }}/{{ ability.usesPerRest }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Combat Actions -->
+                <div
+                  v-if="activeCharacter && activeCharacter.combatActions && activeCharacter.combatActions.length > 0">
+                  <h4 class="font-medium text-gray-900 dark:text-white mb-3">Combat Actions</h4>
+                  <div class="space-y-2">
+                    <div v-for="action in activeCharacter.combatActions" :key="action.id"
+                      class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="font-medium text-gray-900 dark:text-white">{{ action.name }}</span>
+                        <span class="text-xs text-gray-600 dark:text-gray-400">{{ action.type }}</span>
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ action.description }}
+                      </div>
+                      <div v-if="action.maxUses > 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Uses: {{ action.currentUses }}/{{ action.maxUses }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="text-center py-8">
+                  <div class="text-4xl mb-4">⚡</div>
+                  <p class="text-gray-500 dark:text-gray-400">
+                    Select a character to view ability scores
+                  </p>
+                </div>
+              </div>
+
+              <!-- DM Player Management (only for DMs) -->
+              <div v-else>
+                <div class="mb-4">
+                  <div class="flex items-center justify-between">
+                    <h4 class="font-medium text-gray-900 dark:text-white">Player Management</h4>
+                    <UButton color="blue" variant="outline" size="xs"
+                      @click="loadAllPlayersStats(currentRoom?.code || 'default')" icon="i-heroicons-arrow-path">
+                      Refresh
+                    </UButton>
+                  </div>
+                </div>
+
+                <div v-if="allPlayers.length > 0" class="space-y-3">
+                  <div v-for="player in allPlayers" :key="player.userId"
+                    class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center space-x-2">
+                        <span class="font-medium text-gray-900 dark:text-white">{{ player.name }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">({{ player.userId }})</span>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <UButton color="green" variant="outline" size="xs" @click="requestRollFromPlayer(player)"
+                          icon="i-heroicons-cube">
+                          Request Roll
+                        </UButton>
+                        <UButton color="blue" variant="outline" size="xs" @click="editPlayerStats(player)"
+                          icon="i-heroicons-pencil">
+                          Edit
+                        </UButton>
+                      </div>
+                    </div>
+
+                    <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                      <div>STR: {{ player.stats.abilities.strength }} | DEX: {{ player.stats.abilities.dexterity }} |
+                        CON: {{
+                          player.stats.abilities.constitution }}</div>
+                      <div>INT: {{ player.stats.abilities.intelligence }} | WIS: {{ player.stats.abilities.wisdom }} |
+                        CHA: {{
+                          player.stats.abilities.charisma }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="text-center py-8">
+                  <div class="text-4xl mb-4">👥</div>
+                  <p class="text-gray-500 dark:text-gray-400">
+                    {{ isOfflineMode ? 'Player management not available in offline mode' : 'No players connected' }}
+                  </p>
+                </div>
+              </div>
             </div>
-           </div>
-         </div>
-       </div>
-     </div>
-     </main>
+          </div>
+
+           <!-- Main content area -->
+           <div class="transition-all duration-300 min-h-screen">
+             <div class="px-4 sm:px-6 lg:px-8">
+
+               <!-- Roll History - Top Section (only for DM) -->
+               <UCard v-if="userRole === 'DM'" class="mb-8">
+                 <template #header>
+                   <div class="flex items-center justify-between">
+                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                       🎯 Roll History
+                     </h3>
+                     <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
+                       @click="clearHistory" icon="i-heroicons-trash">
+                       Clear
+                     </UButton>
+                   </div>
+                 </template>
+
+                 <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                   <div v-for="roll in rollHistory" :key="roll.id"
+                     class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                     :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
+                     <div class="flex items-start justify-between">
+                       <div class="flex-1">
+                         <div class="flex items-center space-x-2 mb-1">
+                           <span class="text-sm font-medium"
+                             :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
+                             {{ roll.userName }}
+                           </span>
+                           <span class="text-xs text-gray-500 dark:text-gray-400">
+                             {{ formatTime(roll.timestamp) }}
+                           </span>
+                         </div>
+                         <!-- Dice Visual Display -->
+                         <div class="flex flex-wrap gap-1 mb-2">
+                           <div v-for="(diceResult, index) in roll.diceResults" :key="index"
+                               class="relative inline-block">
+                             <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`"
+                                 :alt="diceResult.type"
+                                 class="w-8 h-8" />
+                             <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                               {{ diceResult.result }}
+                             </span>
+                           </div>
+                         </div>
+
+                         <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                           ({{ roll.details.join(' + ') }})
+                         </div>
+
+                         <div v-if="roll.isCritical"
+                           class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                           {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                         </div>
+                       </div>
+                       <!-- Sumatoria a la derecha -->
+                       <div class="ml-4">
+                         <span class="text-lg font-bold"
+                           :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
+                           {{ roll.total }}
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div v-else class="text-center py-8">
+                   <div class="text-4xl mb-4">🎲</div>
+                   <p class="text-gray-500 dark:text-gray-400">
+                     No rolls yet. Start rolling some dice!
+                   </p>
+                 </div>
+               </UCard>
+
+               <!-- Layout condicional: 2 columnas para players, 3 para DM -->
+               <div :class="userRole === 'DM' ? 'grid grid-cols-1 lg:grid-cols-3 gap-8' : 'grid grid-cols-1 lg:grid-cols-2 gap-8'">
+                 <!-- Dice Selection - Left column for both -->
+                 <div :class="userRole === 'DM' ? 'lg:col-span-2 space-y-6' : 'space-y-6'" class="order-1">
+                  <!-- Dice Selection Card -->
+                  <UCard>
+                    <template #header>
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                          🎲 Select Dice
+                        </h3>
+                        <div v-if="totalDiceSelected > 0" class="text-sm text-gray-500 dark:text-gray-400">
+                          {{ totalDiceSelected }} dice selected
+                        </div>
+                      </div>
+                    </template>
+
+                    <div class="space-y-6">
+                      <!-- Dice Grid -->
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div v-for="dice in diceTypes" :key="dice.type" class="flex flex-col items-center space-y-2">
+                          <div class="text-center">
+                            <div class="relative inline-block cursor-pointer hover:scale-110 transition-transform duration-200"
+                                 @click="rollSingleDiceType(dice.type)">
+                              <img :src="`/assets/dices/${dice.name}.svg`" :alt="dice.name"
+                                class="w-12 h-12" />
+                              <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                                {{ dice.sides }}
+                              </span>
+                            </div>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <UButton color="gray" variant="outline" size="xs"
+                              @click="selectedDice[dice.type] = Math.max(0, selectedDice[dice.type] - 1)"
+                              icon="i-heroicons-minus" :disabled="selectedDice[dice.type] <= 0" />
+                            <span class="w-8 text-center text-sm font-mono">{{ selectedDice[dice.type] }}</span>
+                            <UButton color="gray" variant="outline" size="xs" @click="selectedDice[dice.type]++"
+                              icon="i-heroicons-plus" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Quick Roll Buttons -->
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Quick Rolls</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <UButton v-for="roll in quickRolls" :key="roll.label" color="gray" variant="outline" size="sm"
+                            @click="performQuickRoll(roll)" class="text-xs">
+                            {{ roll.label }}
+                          </UButton>
+                        </div>
+                      </div>
+
+                      <!-- Modifier and Roll Type -->
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <UFormGroup label="Modifier">
+                          <UInput v-model.number="modifier" type="number" placeholder="0" />
+                        </UFormGroup>
+                        <UFormGroup label="Roll Type">
+                          <USelect v-model="rollType" :options="rollTypeOptions" />
+                        </UFormGroup>
+                      </div>
+
+                      <!-- Roll Button -->
+                      <div class="text-center">
+                        <UButton color="primary" size="lg" @click="rollDice"
+                          :disabled="totalDiceSelected === 0 || isRolling" :loading="isRolling" icon="i-heroicons-play">
+                          Roll {{ totalDiceSelected }} {{ totalDiceSelected === 1 ? 'Die' : 'Dice' }}
+                        </UButton>
+                      </div>
+
+                      <!-- Clear Selection -->
+                      <div class="text-center">
+                        <UButton color="gray" variant="ghost" size="sm" @click="clearSelection"
+                          :disabled="totalDiceSelected === 0" icon="i-heroicons-x-mark">
+                          Clear Selection
+                        </UButton>
+                      </div>
+                    </div>
+                  </UCard>
+                  </div>
+
+                  <!-- Right Column - Roll History (Players) -->
+                  <div v-if="userRole !== 'DM'" class="space-y-6 order-2">
+                    <UCard>
+                      <template #header>
+                        <div class="flex items-center justify-between">
+                          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            🎯 Roll History
+                          </h3>
+                          <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
+                            @click="clearHistory" icon="i-heroicons-trash">
+                            Clear
+                          </UButton>
+                        </div>
+                      </template>
+
+                      <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                        <div v-for="roll in rollHistory" :key="roll.id"
+                          class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                          :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
+                          <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                              <div class="flex items-center space-x-2 mb-1">
+                                <span class="text-sm font-medium"
+                                  :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
+                                  {{ roll.userName }}
+                                </span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                  {{ formatTime(roll.timestamp) }}
+                                </span>
+                              </div>
+                              <!-- Dice Visual Display -->
+                              <div class="flex flex-wrap gap-1 mb-2">
+                                <div v-for="(diceResult, index) in roll.diceResults" :key="index"
+                                    class="relative inline-block">
+                                  <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`"
+                                      :alt="diceResult.type"
+                                      class="w-8 h-8" />
+                                  <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                                    {{ diceResult.result }}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                ({{ roll.details.join(' + ') }})
+                              </div>
+
+                              <div v-if="roll.isCritical"
+                                class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                                {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                              </div>
+                            </div>
+                            <!-- Sumatoria a la derecha -->
+                            <div class="ml-4">
+                              <span class="text-lg font-bold"
+                                :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
+                                {{ roll.total }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div v-else class="text-center py-8">
+                        <div class="text-4xl mb-4">🎲</div>
+                        <p class="text-gray-500 dark:text-gray-400">
+                          No rolls yet. Start rolling some dice!
+                        </p>
+                      </div>
+                    </UCard>
+                  </div>
+
+                  <!-- Right Column - DM Panel -->
+                 <div v-if="userRole === 'DM'" class="space-y-6">
+                  <!-- Battle Mode Panel (DM Only) -->
+                  <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
+                    <template #header>
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                          ⚔️ Battle Mode
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                          <UBadge v-if="isInBattle" :color="getBattlePhaseColor(battleMode.phase)" variant="soft">
+                            {{ getBattlePhaseLabel(battleMode.phase) }}
+                          </UBadge>
+                          <UButton v-if="!isInBattle" color="red" size="sm" @click="startBattle"
+                            :loading="isBattleLoading" icon="i-heroicons-play">
+                            Start Battle Setup
+                          </UButton>
+                          <UButton v-else color="gray" size="sm" @click="endBattle" :loading="isBattleLoading"
+                            icon="i-heroicons-stop">
+                            End Battle
+                          </UButton>
+                        </div>
+                      </div>
+                    </template>
+
+                    <div v-if="!isInBattle" class="text-center py-8">
+                      <div class="text-4xl mb-4">⚔️</div>
+                      <h4 class="font-medium text-gray-900 dark:text-white mb-2">Ready for Battle</h4>
+                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Click "Start Battle Setup" to begin preparing for combat. You'll be able to add enemies and then
+                        roll
+                        initiative when ready.
+                      </p>
+                    </div>
+
+                    <!-- Battle Setup Phase -->
+                    <div v-else-if="battleMode.phase === 'setup'" class="space-y-4">
+                      <div
+                        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                          <UIcon name="i-heroicons-information-circle"
+                            class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                          <div>
+                            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">Battle Setup Phase</h4>
+                            <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                              Add all enemies that will participate in this battle, then click "Roll Initiative" to
+                              begin
+                              combat.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Player Management -->
+                      <div>
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Player Selection</h4>
+                          <UButton color="gray" variant="outline" size="xs" @click="loadBattlePlayers"
+                            :loading="isBattlePlayersLoading" icon="i-heroicons-arrow-path">
+                            Refresh
+                          </UButton>
+                        </div>
+
+                        <!-- Selected Players -->
+                        <div v-if="selectedPlayers.length > 0" class="mb-3">
+                          <h5 class="text-xs font-medium text-green-900 dark:text-green-100 mb-2">Selected Players</h5>
+                          <div class="space-y-1">
+                            <div v-for="player in selectedPlayers" :key="player.userId"
+                              class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+                              <div class="flex-1">
+                                <div class="font-medium text-green-900 dark:text-green-100">{{ player.name }}</div>
+                                <div class="text-xs text-green-700 dark:text-green-300">Ready for battle</div>
+                              </div>
+                              <UButton color="red" variant="ghost" size="xs"
+                                @click="removePlayerFromBattle(player.userId)" icon="i-heroicons-minus">
+                              </UButton>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Available Players -->
+                        <div v-if="unselectedPlayers.length > 0" class="mb-3">
+                          <h5 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Available Players</h5>
+                          <div class="space-y-1">
+                            <div v-for="player in unselectedPlayers" :key="player.userId"
+                              class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
+                              <div class="flex-1">
+                                <div class="font-medium text-gray-900 dark:text-gray-100">{{ player.name }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Click to add to battle</div>
+                              </div>
+                              <UButton color="green" variant="ghost" size="xs" @click="addPlayerToBattle(player.userId)"
+                                icon="i-heroicons-plus">
+                              </UButton>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- No Players State -->
+                        <div
+                          v-if="selectedPlayers.length === 0 && unselectedPlayers.length === 0 && !isBattlePlayersLoading"
+                          class="text-center py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                          <div class="text-2xl mb-2">👥</div>
+                          <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                            No players connected to this room
+                          </p>
+                          <p class="text-xs text-gray-400 dark:text-gray-500">
+                            Players need to join the room first
+                          </p>
+                        </div>
+                      </div>
+
+                      <!-- Enemy Management -->
+                      <div>
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemy Setup</h4>
+                          <UButton color="green" variant="outline" size="xs" @click="showAddEnemyModal = true"
+                            icon="i-heroicons-plus">
+                            Add Enemy
+                          </UButton>
+                        </div>
+
+                        <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
+                          <div v-for="enemy in Object.values(battleMode.enemies) as Enemy[]" :key="enemy.id"
+                            class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                            <div class="flex-1">
+                              <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
+                              <div class="text-xs text-red-700 dark:text-red-300">
+                                HP: {{ enemy.hitPoints.current }}/{{ enemy.hitPoints.max }} | AC: {{ enemy.armorClass }}
+                                |
+                                Init: {{ enemy.initiative >= 0 ? '+' : '' }}{{ enemy.initiative }}
+                              </div>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                              <UButton color="red" variant="ghost" size="xs" @click="removeEnemy(enemy.id)"
+                                icon="i-heroicons-trash">
+                              </UButton>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div v-else
+                          class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                          <div class="text-2xl mb-2">👹</div>
+                          <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                            No enemies added yet
+                          </p>
+                          <UButton color="green" variant="outline" size="sm" @click="showAddEnemyModal = true"
+                            icon="i-heroicons-plus">
+                            Add Your First Enemy
+                          </UButton>
+                        </div>
+                      </div>
+
+                      <!-- Ready to Roll Initiative -->
+                      <div
+                        v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0 && selectedPlayers.length > 0"
+                        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <div class="text-center">
+                          <div class="text-green-900 dark:text-green-100 font-medium mb-2">
+                            Ready to Start Combat!
+                          </div>
+                          <p class="text-sm text-green-700 dark:text-green-300 mb-3">
+                            {{ selectedPlayers.length }} players and {{ Object.keys(battleMode.enemies).length }}
+                            enemies
+                            ready. Click below to roll initiative and begin combat.
+                          </p>
+                          <UButton color="green" size="sm" @click="rollInitiative" icon="i-heroicons-play">
+                            Roll Initiative & Start Combat
+                          </UButton>
+                        </div>
+                      </div>
+
+                      <!-- Missing Players or Enemies Warning -->
+                      <div
+                        v-else-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0 && selectedPlayers.length === 0"
+                        class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                        <div class="text-center">
+                          <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
+                            Players Needed
+                          </div>
+                          <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                            Add at least one player before starting combat.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        v-else-if="selectedPlayers.length > 0 && (!battleMode.enemies || Object.keys(battleMode.enemies).length === 0)"
+                        class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                        <div class="text-center">
+                          <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
+                            Enemies Needed
+                          </div>
+                          <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                            Add at least one enemy before starting combat.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Active Combat Phase -->
+                    <div v-else-if="battleMode.phase === 'combat'" class="space-y-4">
+                      <!-- Enemy Management -->
+                      <div>
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemies</h4>
+                          <UButton color="green" variant="outline" size="xs" @click="showAddEnemyModal = true"
+                            icon="i-heroicons-plus">
+                            Add Enemy
+                          </UButton>
+                        </div>
+
+                        <div v-if="battleMode.enemies && Object.keys(battleMode.enemies).length > 0" class="space-y-2">
+                          <div v-for="enemy in Object.values(battleMode.enemies) as Enemy[]" :key="enemy.id"
+                            class="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                            <div class="flex-1">
+                              <div class="font-medium text-red-900 dark:text-red-100">{{ enemy.name }}</div>
+                              <div class="text-xs text-red-700 dark:text-red-300">
+                                HP: {{ enemy.hitPoints.current }}/{{ enemy.hitPoints.max }} | AC: {{ enemy.armorClass }}
+                              </div>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                              <UButton color="red" variant="ghost" size="xs" @click="dealDamageToEnemy(enemy)"
+                                icon="i-heroicons-minus">
+                              </UButton>
+                              <UButton color="red" variant="ghost" size="xs" @click="removeEnemy(enemy.id)"
+                                icon="i-heroicons-trash">
+                              </UButton>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                          No enemies in battle
+                        </div>
+                      </div>
+
+                      <!-- Initiative Tracker -->
+                      <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Initiative Order</h4>
+                          <div class="flex items-center space-x-2">
+                            <UButton v-if="battleMode.phase === 'setup'" color="blue" variant="outline" size="xs"
+                              @click="rollInitiative" icon="i-heroicons-arrow-path">
+                              Roll Initiative
+                            </UButton>
+                            <UButton v-else-if="battleMode.phase === 'combat'" color="green" variant="outline" size="xs"
+                              @click="nextTurn" icon="i-heroicons-arrow-right">
+                              Next Turn
+                            </UButton>
+                          </div>
+                        </div>
+
+                        <div class="space-y-1">
+                          <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
+                            class="flex items-center justify-between p-2 rounded"
+                            :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
+                            <div class="flex items-center space-x-2">
+                              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                                :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
+                                {{ index + 1 }}
+                              </div>
+                              <span class="font-medium"
+                                :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
+                                {{ participant.name }}
+                              </span>
+                              <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
+                                {{ participant.type }}
+                              </UBadge>
+                            </div>
+                            <div class="text-sm font-mono"
+                              :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
+                              {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{
+                                participant.initiative }})
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </UCard>
+
+                  <!-- Battle Status (Player View) -->
+                  <UCard v-else-if="userRole === 'Player' && isInBattle">
+                    <template #header>
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                          ⚔️ Battle in Progress
+                        </h3>
+                        <UBadge color="green" variant="soft">
+                          {{ battleMode.phase }}
+                        </UBadge>
+                      </div>
+                    </template>
+
+                    <div class="space-y-4">
+                      <!-- Current Turn Display -->
+                      <div
+                        v-if="battleMode.phase === 'combat' && battleMode.initiativeOrder && battleMode.currentTurnIndex !== undefined"
+                        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <div class="text-center">
+                          <div class="text-lg font-bold text-green-900 dark:text-green-100">
+                            Current Turn
+                          </div>
+                          <div class="text-2xl font-bold text-green-700 dark:text-green-300 mt-1">
+                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.name || 'Unknown' }}
+                          </div>
+                          <UBadge
+                            :color="battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type === 'player' ? 'blue' : 'red'"
+                            variant="soft" class="mt-2">
+                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type || 'unknown' }}
+                          </UBadge>
+                        </div>
+                      </div>
+
+                      <!-- Character Attacks Section (only show during player's turn) -->
+                      <div
+                        v-if="battleMode.phase === 'combat' && battleMode.initiativeOrder && battleMode.currentTurnIndex !== undefined && isPlayerTurn()"
+                        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            ⚔️ Your Attacks
+                          </h4>
+                          <UButton color="blue" variant="ghost" size="xs"
+                            :icon="showCharacterAttacks ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                            @click="showCharacterAttacks = !showCharacterAttacks">
+                            {{ showCharacterAttacks ? 'Hide' : 'Show' }}
+                          </UButton>
+                        </div>
+
+                        <div v-if="showCharacterAttacks">
+                          <div v-if="activeCharacterAttacks.length > 0" class="space-y-2">
+                            <div v-for="attack in activeCharacterAttacks" :key="attack.id || attack.name"
+                              class="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded p-3">
+                              <div class="flex items-center justify-between mb-2">
+                                <h5 class="font-medium text-gray-900 dark:text-white">
+                                  {{ attack.name || 'Unnamed Attack' }}
+                                </h5>
+                                <div class="flex items-center space-x-2">
+                                  <UButton color="blue" size="xs" @click="rollAttack(attack)" :loading="isRollingAttack"
+                                    icon="i-heroicons-cube">
+                                    Attack
+                                  </UButton>
+                                  <UButton v-if="attack.damage" color="red" size="xs" @click="rollDamage(attack)"
+                                    :loading="isRollingAttack" icon="i-heroicons-fire">
+                                    Damage
+                                  </UButton>
+                                </div>
+                              </div>
+                              <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                <div v-if="attack.attackBonus !== undefined">
+                                  <span class="font-medium">Attack Bonus:</span>
+                                  {{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}
+                                </div>
+                                <div v-if="attack.damage">
+                                  <span class="font-medium">Damage:</span> {{ attack.damage }}
+                                </div>
+                                <div v-if="attack.rangeText">
+                                  <span class="font-medium">Range:</span> {{ attack.rangeText }}
+                                </div>
+                                <div v-if="attack.notes" class="text-xs">
+                                  {{ attack.notes }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div v-else class="text-center py-4 text-blue-600 dark:text-blue-400 text-sm">
+                            No attacks configured. Edit your character sheet to add attacks.
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Initiative Order (Player View) -->
+                      <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Initiative Order</h4>
+                        <div class="space-y-1">
+                          <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
+                            class="flex items-center justify-between p-2 rounded"
+                            :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
+                            <div class="flex items-center space-x-2">
+                              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                                :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
+                                {{ index + 1 }}
+                              </div>
+                              <span class="font-medium"
+                                :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
+                                {{ participant.name }}
+                              </span>
+                              <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
+                                {{ participant.type }}
+                              </UBadge>
+                            </div>
+                            <div class="text-sm font-mono"
+                              :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
+                              {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{
+                                participant.initiative }})
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Battle Phase Info -->
+                      <div v-if="battleMode.phase === 'setup'"
+                        class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                        <div class="text-2xl mb-2">⏳</div>
+                        <p>Waiting for DM to roll initiative...</p>
+                      </div>
+                    </div>
+                  </UCard>
+
+                  <!-- DJ Music Control Panel (DM Only) -->
+                  <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default' && isConnected">
+                    <template #header>
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                          🎵 DJ Music Control
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                          <UBadge v-if="musicState.isPlaying" color="green" variant="soft">
+                            Playing
+                          </UBadge>
+                          <UBadge v-else-if="musicState.currentTrack" color="yellow" variant="soft">
+                            Paused
+                          </UBadge>
+                          <UBadge v-else color="gray" variant="soft">
+                            No Track
+                          </UBadge>
+                        </div>
+                      </div>
+                    </template>
+
+                    <div class="space-y-4">
+                      <!-- Add YouTube Track Section -->
+                      <div
+                        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">Add YouTube Track</h4>
+                        <div class="space-y-3">
+                          <UInput v-model="newTrackUrl" placeholder="Paste YouTube URL here..."
+                            icon="i-heroicons-musical-note" />
+                          <div class="flex flex-wrap gap-2">
+                            <UButton color="blue" size="sm" @click="addTrackToPlaylist"
+                              :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
+                              icon="i-heroicons-plus">
+                              Add to Playlist
+                            </UButton>
+                            <UButton color="green" size="sm" @click="addAndPlayTrack"
+                              :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
+                              icon="i-heroicons-play">
+                              Add & Play Now
+                            </UButton>
+                            <UButton color="purple" size="sm" @click="addTrackAsSoundEffect"
+                              :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
+                              icon="i-heroicons-speaker-wave">
+                              Add as Sound Effect
+                            </UButton>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Sound Effects Control Panel -->
+                      <div
+                        class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🔊 Sound Effects
+                          Control
+                        </h4>
+                        <div class="space-y-3">
+                          <!-- Sound Effects Volume Control -->
+                          <div>
+                            <div class="flex items-center justify-between mb-2">
+                              <label class="text-sm text-purple-700 dark:text-purple-300">Sound Effects Volume</label>
+                              <span class="text-sm text-purple-600 dark:text-purple-400">{{
+                                musicState.soundEffects.soundEffectsVolume }}%</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                              <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-purple-400" />
+                              <input type="range" min="0" max="100" v-model="musicState.soundEffects.soundEffectsVolume"
+                                @input="setSoundEffectsVolume"
+                                class="flex-1 h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer dark:bg-purple-700" />
+                              <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-purple-400" />
+                            </div>
+                          </div>
+
+                          <!-- Quick Sound Effects -->
+                          <div v-if="musicState.playlist.filter(t => t.isSoundEffect).length > 0">
+                            <h5 class="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">Quick Sound
+                              Effects</h5>
+                            <div class="grid grid-cols-2 gap-2">
+                              <UButton v-for="track in musicState.playlist.filter(t => t.isSoundEffect).slice(0, 4)"
+                                :key="track.id" color="purple" variant="outline" size="xs"
+                                @click="playSoundEffect(track.id)" class="truncate text-xs">
+                                🔊 {{ track.title.length > 12 ? track.title.substring(0, 12) + '...' : track.title }}
+                              </UButton>
+                            </div>
+                          </div>
+
+                          <div
+                            class="bg-purple-100 dark:bg-purple-800/30 border border-purple-200 dark:border-purple-700 rounded p-2">
+                            <p class="text-xs text-purple-700 dark:text-purple-300">
+                              Sound effects play simultaneously with background music and have separate volume control.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Fade Transition Settings -->
+                      <div
+                        class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🎚️ Audio Transitions
+                        </h4>
+                        <div class="space-y-3">
+                          <div class="flex items-center justify-between">
+                            <label class="text-sm text-purple-700 dark:text-purple-300">Enable Smooth Fades</label>
+                            <UToggle v-model="fadeConfig.enabled" />
+                          </div>
+
+                          <div v-if="fadeConfig.enabled"
+                            class="space-y-2 border-t border-purple-200 dark:border-purple-700 pt-3">
+                            <div class="flex items-center justify-between">
+                              <label class="text-xs text-purple-600 dark:text-purple-400">Track Switch (ms)</label>
+                              <UInput v-model.number="fadeConfig.trackTransition" type="number" min="100" max="2000"
+                                size="xs" class="w-20" />
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                              <label class="text-xs text-purple-600 dark:text-purple-400">Volume Change (ms)</label>
+                              <UInput v-model.number="fadeConfig.volumeChange" type="number" min="100" max="1000"
+                                size="xs" class="w-20" />
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                              <label class="text-xs text-purple-600 dark:text-purple-400">Play/Pause (ms)</label>
+                              <UInput v-model.number="fadeConfig.playPause" type="number" min="100" max="1000" size="xs"
+                                class="w-20" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Current Track Display -->
+                      <div v-if="musicState.currentTrack"
+                        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                          <!-- Thumbnail -->
+                          <div class="flex-shrink-0">
+                            <img v-if="musicState.currentTrack.thumbnail" :src="musicState.currentTrack.thumbnail"
+                              :alt="musicState.currentTrack.title" class="w-16 h-12 object-cover rounded-lg" />
+                            <div v-else
+                              class="w-16 h-12 bg-green-200 dark:bg-green-800 rounded-lg flex items-center justify-center">
+                              <UIcon name="i-heroicons-musical-note"
+                                class="h-6 w-6 text-green-600 dark:text-green-400" />
+                            </div>
+                          </div>
+
+                          <!-- Track info and controls -->
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between">
+                              <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-medium text-green-900 dark:text-green-100 truncate">
+                                  🎵 {{ musicState.currentTrack.title || 'Unknown Track' }}
+                                </h4>
+                                <p class="text-xs text-green-700 dark:text-green-300 truncate mt-1">
+                                  {{ musicState.currentTrack.artist || 'Unknown Artist' }}
+                                </p>
+                                <!-- Duration and metadata -->
+                                <div
+                                  class="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400 mt-1">
+                                  <span v-if="musicState.currentTrack.duration">{{
+                                    formatDuration(musicState.currentTrack.duration) }}</span>
+                                  <span v-if="musicState.currentTrack.tags && musicState.currentTrack.tags.length > 0"
+                                    class="truncate">
+                                    #{{ musicState.currentTrack.tags.slice(0, 1).join(', #') }}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <!-- Control buttons -->
+                              <div class="flex items-center space-x-1 ml-3">
+                                <!-- Fade transition indicator -->
+                                <div v-if="fadeTransition.isActive"
+                                  class="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 mr-2">
+                                  <UIcon name="i-heroicons-arrows-right-left" class="w-3 h-3 animate-pulse" />
+                                  <span class="text-xs">Fading...</span>
+                                </div>
+
+                                <UButton v-if="musicState.isPlaying" color="yellow" variant="ghost" size="xs"
+                                  @click="pauseMusic" icon="i-heroicons-pause" />
+                                <UButton v-else color="green" variant="ghost" size="xs" @click="resumeMusic"
+                                  icon="i-heroicons-play" />
+                                <UButton color="red" variant="ghost" size="xs" @click="stopMusic"
+                                  icon="i-heroicons-stop" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Volume Control -->
+                      <div
+                        class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Volume</h4>
+                          <span class="text-sm text-gray-600 dark:text-gray-400">{{ musicState.volume }}%</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                          <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-gray-400" />
+                          <input type="range" min="0" max="100" v-model="musicState.volume" @input="setVolume"
+                            class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+                          <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <!-- Playlist -->
+                      <div>
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Playlist</h4>
+                          <UButton v-if="musicState.playlist.length > 0" color="gray" variant="ghost" size="xs"
+                            @click="clearPlaylist" icon="i-heroicons-trash">
+                            Clear All
+                          </UButton>
+                        </div>
+
+                        <div v-if="musicState.playlist.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
+                          <div v-for="track in musicState.playlist" :key="track.id"
+                            class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                            :class="{
+                              'ring-2 ring-green-500': track.id === musicState.currentTrack?.id,
+                              'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20': track.isSoundEffect
+                            }">
+                            <!-- Thumbnail and track info -->
+                            <div class="flex items-center flex-1 min-w-0 space-x-3">
+                              <!-- Video thumbnail -->
+                              <div class="flex-shrink-0">
+                                <img v-if="track.thumbnail" :src="track.thumbnail" :alt="track.title"
+                                  class="w-12 h-9 object-cover rounded" />
+                                <div v-else
+                                  class="w-12 h-9 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center"
+                                  :class="track.isSoundEffect ? 'bg-purple-200 dark:bg-purple-800' : ''">
+                                  <UIcon
+                                    :name="track.isSoundEffect ? 'i-heroicons-speaker-wave' : 'i-heroicons-musical-note'"
+                                    class="h-4 w-4"
+                                    :class="track.isSoundEffect ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'" />
+                                </div>
+                              </div>
+
+                              <!-- Track details -->
+                              <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                  <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                    {{ track.title || 'Unknown Track' }}
+                                  </div>
+                                  <!-- Sound Effect Badge -->
+                                  <UBadge v-if="track.isSoundEffect" color="purple" variant="soft" size="xs">
+                                    SFX
+                                  </UBadge>
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                  {{ track.artist || 'Unknown Artist' }}
+                                </div>
+                                <!-- Duration and additional metadata -->
+                                <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                  <span v-if="track.duration">{{ formatDuration(track.duration) }}</span>
+                                  <span v-if="track.isSoundEffect && track.isPlayableWhileMusic"
+                                    class="text-purple-500">
+                                    • Can play with music
+                                  </span>
+                                  <span v-if="track.tags && track.tags.length > 0" class="truncate">
+                                    {{ track.tags.slice(0, 2).join(', ') }}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Control buttons -->
+                            <div class="flex items-center space-x-1 ml-2">
+                              <!-- Sound Effect Play Button -->
+                              <UButton v-if="track.isSoundEffect" color="purple" variant="ghost" size="xs"
+                                @click="playSoundEffect(track.id)" icon="i-heroicons-speaker-wave"
+                                title="Play as sound effect" />
+                              <!-- Regular Play Button -->
+                              <UButton v-else color="green" variant="ghost" size="xs"
+                                @click="playTrackFromPlaylist(track)" icon="i-heroicons-play"
+                                :disabled="track.id === musicState.currentTrack?.id && musicState.isPlaying" />
+                              <!-- Remove Button -->
+                              <UButton color="red" variant="ghost" size="xs" @click="removeTrackFromPlaylist(track.id)"
+                                icon="i-heroicons-trash" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div v-else
+                          class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                          <div class="text-2xl mb-2">🎵</div>
+                          <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                            No tracks in playlist
+                          </p>
+                          <p class="text-gray-400 dark:text-gray-500 text-xs">
+                            Add YouTube tracks to create atmosphere for your session
+                          </p>
+                        </div>
+                      </div>
+
+                      <!-- Music Sync Info for Participants -->
+                      <div
+                        class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                        <div class="flex items-start space-x-2">
+                          <UIcon name="i-heroicons-information-circle"
+                            class="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5" />
+                          <div>
+                            <h4 class="text-xs font-medium text-purple-900 dark:text-purple-100">Music Sync</h4>
+                            <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                              All participants will hear the music you play in real-time. Volume is controlled
+                              individually by
+                              each player.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </UCard>
+
+
+
+
+
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </main>
     <!-- Room Creation Modal -->
     <UModal v-model="showCreateRoom" :ui="{ width: 'max-w-md' }">
       <div class="p-6">
@@ -1739,15 +1685,11 @@
           <div>
             <UFormGroup label="Select Dice Type">
               <div class="grid grid-cols-2 gap-3">
-                <UButton
-                  v-for="diceType in diceTypes"
-                  :key="diceType.type"
+                <UButton v-for="diceType in diceTypes" :key="diceType.type"
                   :color="requestedDiceType === diceType.type ? 'primary' : 'gray'"
                   :variant="requestedDiceType === diceType.type ? 'solid' : 'outline'"
-                  class="flex flex-col items-center p-4 h-20"
-                  @click="requestedDiceType = diceType.type"
-                >
-                  <div class="text-2xl mb-1">🎲</div>
+                  class="flex flex-col items-center p-4 h-20" @click="requestedDiceType = diceType.type">
+                  <img :src="`/assets/dices/${diceType.name}.svg`" :alt="diceType.name" class="w-8 h-8 mb-1" />
                   <div class="text-xs">{{ diceType.name }}</div>
                 </UButton>
               </div>
@@ -1757,22 +1699,14 @@
           <!-- Optional Message -->
           <div>
             <UFormGroup label="Optional Message">
-              <UTextarea
-                v-model="rollRequestMessage"
-                placeholder="e.g., Make a Dexterity saving throw..."
-                rows="3"
-              />
+              <UTextarea v-model="rollRequestMessage" placeholder="e.g., Make a Dexterity saving throw..." rows="3" />
             </UFormGroup>
           </div>
 
           <!-- Modifier (optional) -->
           <div>
             <UFormGroup label="Modifier (optional)">
-              <UInput
-                v-model.number="rollRequestModifier"
-                type="number"
-                placeholder="0"
-              />
+              <UInput v-model.number="rollRequestModifier" type="number" placeholder="0" />
             </UFormGroup>
           </div>
         </div>
@@ -1781,12 +1715,8 @@
           <UButton color="gray" variant="outline" @click="closeRollRequestModal">
             Cancel
           </UButton>
-          <UButton
-            color="primary"
-            @click="sendRollRequest"
-            :disabled="!requestedDiceType"
-            icon="i-heroicons-paper-airplane"
-          >
+          <UButton color="primary" @click="sendRollRequest" :disabled="!requestedDiceType"
+            icon="i-heroicons-paper-airplane">
             Send Request
           </UButton>
         </div>
@@ -1892,14 +1822,15 @@
           <p class="text-gray-600 dark:text-gray-300 mb-4">
             The DM is requesting you to roll: <strong>{{ pendingRollRequest?.diceType }}</strong>
           </p>
-          
+
           <div v-if="pendingRollRequest?.message" class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4">
             <p class="text-sm text-blue-900 dark:text-blue-100">
               "{{ pendingRollRequest.message }}"
             </p>
           </div>
 
-          <div v-if="pendingRollRequest?.modifier && pendingRollRequest.modifier !== 0" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <div v-if="pendingRollRequest?.modifier && pendingRollRequest.modifier !== 0"
+            class="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Modifier: {{ pendingRollRequest.modifier > 0 ? '+' : '' }}{{ pendingRollRequest.modifier }}
           </div>
 
@@ -1921,24 +1852,24 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           👹 Add Enemy
         </h3>
-        
+
         <div class="space-y-4">
           <UFormGroup label="Enemy Name" required>
             <UInput v-model="newEnemy.name" placeholder="Goblin, Orc, Dragon..." />
           </UFormGroup>
-          
+
           <UFormGroup label="Hit Points" required>
             <UInput v-model.number="newEnemy.hitPoints" type="number" min="1" placeholder="10" />
           </UFormGroup>
-          
+
           <UFormGroup label="Armor Class">
             <UInput v-model.number="newEnemy.armorClass" type="number" min="1" placeholder="10" />
           </UFormGroup>
-          
+
           <UFormGroup label="Initiative Modifier">
             <UInput v-model.number="newEnemy.initiative" type="number" placeholder="0" />
           </UFormGroup>
-          
+
           <div class="flex justify-end space-x-3 mt-6">
             <UButton color="gray" variant="outline" @click="showAddEnemyModal = false">
               Cancel
@@ -1952,13 +1883,31 @@
     </UModal>
 
     <!-- Special Abilities Modal -->
-    <SpecialAbilitiesModal
-      v-model="showSpecialAbilitiesModal"
-      :character-name="currentPlayerName"
-      :special-abilities="currentPlayerAbilities"
-      @roll-ability="handleRollAbility"
-      @use-ability="handleUseAbility"
-    />
+    <SpecialAbilitiesModal v-model="showSpecialAbilitiesModal" :character-name="currentPlayerName"
+      :special-abilities="currentPlayerAbilities" @roll-ability="handleRollAbility" @use-ability="handleUseAbility" />
+
+    <!-- Critical Roll Animation Modal -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition-opacity duration-300" enter-from-class="opacity-0"
+        enter-to-class="opacity-100" leave-active-class="transition-opacity duration-300" leave-from-class="opacity-100"
+        leave-to-class="opacity-0">
+        <div v-if="showCriticalAnimation"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
+          <div class="relative w-full h-full flex items-center justify-center p-4">
+            <video v-if="criticalAnimationType === 'success'" src="/assets/animations/d20-20.mp4"
+              autoplay muted class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              @ended="showCriticalAnimation = false" />
+            <video v-else-if="criticalAnimationType === 'failure'" src="/assets/animations/d20-1.mp4"
+              autoplay muted class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              @ended="showCriticalAnimation = false" />
+            <!-- Close button -->
+            <UButton color="white" variant="ghost" size="sm" icon="i-heroicons-x-mark"
+              class="absolute top-4 right-4 z-10 text-white hover:bg-white hover:bg-opacity-20"
+              @click="showCriticalAnimation = false" />
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -2017,6 +1966,7 @@ interface DiceRoll {
   total: number
   details: (string | number)[]
   diceRolled: { type: string; count: number; results: number[] }[]
+  diceResults: { type: string; result: number }[]
   modifier: number
   rollType: string
   isCritical: boolean
@@ -2183,6 +2133,10 @@ const pendingRollRequest = ref<{
   requestId: string
 } | null>(null)
 
+// Critical roll animation
+const showCriticalAnimation = ref(false)
+const criticalAnimationType = ref<'success' | 'failure' | null>(null)
+
 // Constants
 const diceTypes: DiceType[] = [
   { type: 'd4', name: 'D4', sides: 4, color: 'text-blue-600', bgColor: 'bg-blue-100 border-blue-300 hover:bg-blue-200', symbol: '◆' },
@@ -2318,14 +2272,14 @@ async function loadCharacterStats() {
 
       playerStats.value = realStats
       console.log('📊 Loaded REAL character stats for:', character.characterName, realStats)
-      
+
       // Load character attacks
       activeCharacterAttacks.value = character.attacks || []
       console.log('⚔️ Loaded character attacks:', activeCharacterAttacks.value.length, 'attacks')
-      
+
       // Show attacks automatically when in combat and it's player's turn
       showCharacterAttacks.value = isInBattle.value && isPlayerTurn()
-      
+
       // Update the dice room store with the real character stats
       if (!isOfflineMode.value) {
         await updateStats()
@@ -2375,7 +2329,7 @@ async function onActiveCharacterChange() {
 function getBadgeColor(diceType: string): string {
   const colorMap: Record<string, string> = {
     'd4': 'bg-blue-600',
-    'd6': 'bg-green-600', 
+    'd6': 'bg-green-600',
     'd8': 'bg-purple-600',
     'd10': 'bg-pink-600',
     'd12': 'bg-red-600',
@@ -2389,7 +2343,7 @@ function getBadgeColor(diceType: string): string {
 function getBattlePhaseColor(phase: string): string {
   const colorMap: Record<string, string> = {
     'setup': 'blue',
-    'rolling_initiative': 'yellow', 
+    'rolling_initiative': 'yellow',
     'combat': 'red',
     'ended': 'gray'
   }
@@ -2433,13 +2387,16 @@ function rollSingleDie(sides: number): number {
   return Math.floor(Math.random() * sides) + 1
 }
 
-async function rollDice() {
-  if (totalDiceSelected.value === 0) return
+async function rollDice(customSelection?: Record<string, number>) {
+  const diceSelection = customSelection || selectedDice.value
+  const totalSelected = Object.values(diceSelection).reduce((sum, count) => sum + count, 0)
+
+  if (totalSelected === 0) return
 
   isRolling.value = true
 
-// Add dramatic animation  all selected dice
-  Object.entries(selectedDice.value).forEach(([diceType, count]) => {
+  // Add dramatic animation  all selected dice
+  Object.entries(diceSelection).forEach(([diceType, count]) => {
     if (count > 0) {
       animatingDice.value.add(diceType)
     }
@@ -2452,7 +2409,7 @@ async function rollDice() {
     const details: (string | number)[] = []
 
     // Roll each type of dice
-    for (const [diceType, count] of Object.entries(selectedDice.value)) {
+    for (const [diceType, count] of Object.entries(diceSelection)) {
       if (count > 0) {
         const dice = diceTypes.find(d => d.type === diceType)!
         const results: number[] = []
@@ -2533,6 +2490,14 @@ async function rollDice() {
       description += ` (${rollType.value})`
     }
 
+    // Create flat array of individual dice results
+    const diceResults: { type: string; result: number }[] = []
+    diceRolled.forEach(dice => {
+      dice.results.forEach(result => {
+        diceResults.push({ type: dice.type, result })
+      })
+    })
+
     const roll: DiceRoll = {
       id: Date.now().toString(),
       userName: userName.value || 'Anonymous',
@@ -2542,6 +2507,7 @@ async function rollDice() {
       total,
       details,
       diceRolled,
+      diceResults,
       modifier: modifier.value,
       rollType: rollType.value,
       isCritical,
@@ -2551,6 +2517,13 @@ async function rollDice() {
 
     // Add to history (newest first)
     rollHistory.value.unshift(roll)
+
+    // Show critical animation if it's a critical roll
+    if (isCritical && criticalType) {
+      criticalAnimationType.value = criticalType
+      showCriticalAnimation.value = true
+      // Video will auto-close when it ends via @ended event
+    }
 
     // Submit to server for other s (only if connected and not in offline mode)
     if (isConnected.value && !isOfflineMode.value) {
@@ -2582,19 +2555,19 @@ async function rollDice() {
 // Character Attack Functions
 async function rollAttack(attack: any) {
   if (!attack || isRollingAttack.value) return
-  
+
   isRollingAttack.value = true
-  
+
   try {
     // Calculate attack roll: 1d20 + attack bonus
     const d20Roll = rollSingleDie(20)
     const attackBonus = attack.attackBonus || 0
     const total = d20Roll + attackBonus
-    
+
     // Determine if it's a critical hit or miss
     let isCritical = false
     let criticalType: 'success' | 'failure' | undefined
-    
+
     if (d20Roll === 20) {
       isCritical = true
       criticalType = 'success'
@@ -2602,10 +2575,12 @@ async function rollAttack(attack: any) {
       isCritical = true
       criticalType = 'failure'
     }
-    
+
     const description = `${attack.name} Attack: 1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`
     const details = [`1d20=${d20Roll}`, attackBonus]
-    
+
+    const diceResults = [{ type: 'd20', result: d20Roll }]
+
     const roll: DiceRoll = {
       id: Date.now().toString(),
       userName: userName.value || 'Anonymous',
@@ -2615,16 +2590,17 @@ async function rollAttack(attack: any) {
       total,
       details,
       diceRolled: [{ type: 'd20', count: 1, results: [d20Roll] }],
+      diceResults,
       modifier: attackBonus,
       rollType: 'normal',
       isCritical,
       criticalType,
       isOwn: true
     }
-    
+
     // Add to history
     rollHistory.value.unshift(roll)
-    
+
     // Submit to server if connected
     if (isConnected.value && !isOfflineMode.value) {
       try {
@@ -2644,12 +2620,12 @@ async function rollAttack(attack: any) {
         console.error('⚔️ Failed to submit attack roll to server:', error)
       }
     }
-    
+
   } catch (error) {
     console.error('⚔️ Failed to roll attack:', error)
   } finally {
     isRollingAttack.value = false
-    
+
     // Automatically roll damage after attack (if attack has damage)
     if (attack.damage) {
       // Add a small delay to show attack roll first, then damage
@@ -2662,16 +2638,16 @@ async function rollAttack(attack: any) {
 
 async function rollDamage(attack: any) {
   if (!attack || !attack.damage || isRollingAttack.value) return
-  
+
   isRollingAttack.value = true
-  
+
   try {
     // Parse damage dice (e.g., "1d8+3", "2d6", "1d10+5")
     const damageString = attack.damage.toString()
     const total = rollDamageString(damageString)
-    
+
     const description = `${attack.name} Damage: ${damageString}`
-    
+
     const roll: DiceRoll = {
       id: Date.now().toString(),
       userName: userName.value || 'Anonymous',
@@ -2686,10 +2662,10 @@ async function rollDamage(attack: any) {
       isCritical: false,
       isOwn: true
     }
-    
+
     // Add to history
     rollHistory.value.unshift(roll)
-    
+
     // Submit to server if connected
     if (isConnected.value && !isOfflineMode.value) {
       try {
@@ -2709,7 +2685,7 @@ async function rollDamage(attack: any) {
         console.error('🔥 Failed to submit damage roll to server:', error)
       }
     }
-    
+
   } catch (error) {
     console.error('🔥 Failed to roll damage:', error)
   } finally {
@@ -2720,7 +2696,7 @@ async function rollDamage(attack: any) {
 function rollDamageString(damageString: string) {
   // Parse damage strings like "1d8+3", "2d6", "1d10+5", "8", etc.
   const match = damageString.match(/^(\d+)d(\d+)([+-]\d+)?$|^(\d+)$/)
-  
+
   if (!match) {
     // If parsing fails, treat as flat value
     const flatValue = parseInt(damageString) || 0
@@ -2731,7 +2707,7 @@ function rollDamageString(damageString: string) {
       modifier: 0
     }
   }
-  
+
   if (match[4]) {
     // Flat damage (no dice)
     const flatValue = parseInt(match[4])
@@ -2742,22 +2718,22 @@ function rollDamageString(damageString: string) {
       modifier: 0
     }
   }
-  
+
   // Dice damage - modifier applies to each die
   const count = parseInt(match[1])
   const sides = parseInt(match[2])
   const modifier = match[3] ? parseInt(match[3]) : 0
-  
+
   const results: number[] = []
   let total = 0
-  
+
   for (let i = 0; i < count; i++) {
     const roll = rollSingleDie(sides)
     const modifiedRoll = roll + modifier
     results.push(roll) // Store original roll for display
     total += modifiedRoll // Add modified roll to total
   }
-  
+
   // Build details to show the calculation clearly
   const details: (string | number)[] = []
   if (modifier !== 0) {
@@ -2773,7 +2749,7 @@ function rollDamageString(damageString: string) {
     // No modifier, just show the dice: "3d4=2,4,1"
     details.push(`${count}d${sides}=${results.join(',')}`)
   }
-  
+
   return {
     total,
     details,
@@ -2786,12 +2762,12 @@ function isPlayerTurn(): boolean {
   if (!battleMode.value?.initiativeOrder || battleMode.value.currentTurnIndex === undefined) {
     return false
   }
-  
+
   const currentParticipant = battleMode.value.initiativeOrder[battleMode.value.currentTurnIndex]
   if (!currentParticipant || currentParticipant.type !== 'player') {
     return false
   }
-  
+
   // Check if it's the current user's character
   const activeCharacter = userCharacters.value.find(c => c.id === activeCharacterId.value)
   return activeCharacter && currentParticipant.name === activeCharacter.characterName
@@ -2809,6 +2785,23 @@ function performQuickRoll(quickRoll: QuickRoll) {
 
   // Roll immediately
   rollDice()
+}
+
+function rollSingleDiceType(diceType: string) {
+  // Create a temporary selection for just this dice type
+  const tempSelection: Record<string, number> = {}
+
+  // Initialize all dice to 0
+  diceTypes.forEach(dice => {
+    tempSelection[dice.type] = 0
+  })
+
+  // Set the clicked dice to the current count, or 1 if 0
+  const count = selectedDice.value[diceType] > 0 ? selectedDice.value[diceType] : 1
+  tempSelection[diceType] = count
+
+  // Roll the dice with the temporary selection
+  rollDice(tempSelection)
 }
 
 async function updateUserName() {
@@ -3011,7 +3004,7 @@ function acceptRollRequest() {
 
   // Close the notification
   showRollRequestNotification.value = false
-  
+
   // Set up the dice selection
   selectedDice.value = { [diceType]: 1 }
   modifier.value = requestModifier
@@ -3065,7 +3058,7 @@ function showMusicToast(title: string, description: string, color: 'green' | 're
 }
 
 // Room Maagement Functions
-async function createRoom(){
+async function createRoom() {
   if (!userName.value.trim()) {
     const toast = useToast()
     toast.add({
@@ -3217,7 +3210,7 @@ async function copyRoomCode() {
       textArea.select()
       document.execCommand('copy')
       document.body.removeChild(textArea)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Room Code Copied',
@@ -3253,7 +3246,7 @@ async function kickPlayer(player: Player) {
 
     // Remove from local list
     allPlayers.value = allPlayers.value.filter(p => p.userId !== player.userId)
-  } catch (error) { 
+  } catch (error) {
     console.error('🏠 Failed to kick player:', error)
   }
 }
@@ -3329,11 +3322,25 @@ function initializeSSE(roomCode: string = 'default') {
       const existingIds = new Set(rollHistory.value.map(r => r.id))
       const newRolls = data.history
         .filter((r: DiceRoll) => !existingIds.has(r.id))
-        .map((r: DiceRoll) => ({
-          ...r,
-          timestamp: new Date(r.timestamp),
-          isOwn: r.userId === userId.value
-        }))
+        .map((r: DiceRoll) => {
+          // Ensure diceResults exists (for backward compatibility)
+          let diceResults = r.diceResults
+          if (!diceResults && r.diceRolled) {
+            diceResults = []
+            r.diceRolled.forEach(dice => {
+              dice.results.forEach(result => {
+                diceResults!.push({ type: dice.type, result })
+              })
+            })
+          }
+
+          return {
+            ...r,
+            timestamp: new Date(r.timestamp),
+            isOwn: r.userId === userId.value,
+            diceResults: diceResults || []
+          }
+        })
 
       rollHistory.value = [...rollHistory.value, ...newRolls]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -3345,13 +3352,32 @@ function initializeSSE(roomCode: string = 'default') {
 
       // Only add rolls from other users
       if (roll.userId !== userId.value) {
+        // Ensure diceResults exists (for backward compatibility)
+        let diceResults = roll.diceResults
+        if (!diceResults && roll.diceRolled) {
+          diceResults = []
+          roll.diceRolled.forEach(dice => {
+            dice.results.forEach(result => {
+              diceResults!.push({ type: dice.type, result })
+            })
+          })
+        }
+
         const processedRoll = {
           ...roll,
           timestamp: new Date(roll.timestamp),
-          isOwn: false
+          isOwn: false,
+          diceResults: diceResults || []
         }
 
         rollHistory.value.unshift(processedRoll)
+
+        // Show critical animation if it's a critical roll from another user
+        if (processedRoll.isCritical && processedRoll.criticalType) {
+          criticalAnimationType.value = processedRoll.criticalType
+          showCriticalAnimation.value = true
+          // Video will auto-close when it ends via @ended event
+        }
       }
     })
 
@@ -3420,7 +3446,7 @@ function initializeSSE(roomCode: string = 'default') {
       const data = JSON.parse(event.data)
       battleMode.value = data.battleState
       console.log('⚔️ Battle mode started by DM:', data)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Battle Started',
@@ -3433,7 +3459,7 @@ function initializeSSE(roomCode: string = 'default') {
       const data = JSON.parse(event.data)
       battleMode.value = null
       console.log('⚔️ Battle mode ended by DM:', data)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Battle Ended',
@@ -3448,7 +3474,7 @@ function initializeSSE(roomCode: string = 'default') {
         battleMode.value.enemies[data.enemy.id] = data.enemy
       }
       console.log('👹 Enemy added to battle:', data.enemy)
-      
+
       if (userRole.value === 'Player') {
         const toast = useToast()
         toast.add({
@@ -3465,7 +3491,7 @@ function initializeSSE(roomCode: string = 'default') {
         delete battleMode.value.enemies[data.enemyId]
       }
       console.log('👹 Enemy removed from battle:', data.enemyId)
-      
+
       if (userRole.value === 'Player') {
         const toast = useToast()
         toast.add({
@@ -3484,7 +3510,7 @@ function initializeSSE(roomCode: string = 'default') {
         battleMode.value.currentTurnIndex = 0
       }
       console.log('🎲 Initiative rolled:', data.participants)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Initiative Rolled',
@@ -3499,7 +3525,7 @@ function initializeSSE(roomCode: string = 'default') {
         battleMode.value.currentTurnIndex = data.currentTurnIndex
       }
       console.log('🔄 Turn changed:', data)
-      
+
       const currentParticipant = battleMode.value?.initiativeOrder?.[data.currentTurnIndex]
       if (currentParticipant) {
         const toast = useToast()
@@ -3520,7 +3546,7 @@ function initializeSSE(roomCode: string = 'default') {
     eventSource.value.addEventListener('battle:damage_dealt', (event) => {
       const data = JSON.parse(event.data)
       console.log('💥 Damage dealt:', data)
-      
+
       // Update local battle state if target is an enemy
       if (battleMode.value && battleMode.value.enemies && data.targetId in battleMode.value.enemies) {
         const enemy = battleMode.value.enemies[data.targetId]
@@ -3529,7 +3555,7 @@ function initializeSSE(roomCode: string = 'default') {
           enemy.isDefeated = true
         }
       }
-      
+
       const toast = useToast()
       toast.add({
         title: 'Damage Dealt',
@@ -3564,7 +3590,7 @@ function initializeSSE(roomCode: string = 'default') {
       } else {
         console.log('🎵 SSE: YouTube player not ready, cannot sync')
       }
-      
+
       const toast = useToast()
       if (data.isPlaying && data.currentTrack) {
         toast.add({
@@ -3585,7 +3611,7 @@ function initializeSSE(roomCode: string = 'default') {
       const data = JSON.parse(event.data)
       musicState.value.playlist = data.playlist
       console.log('🎵 Playlist updated:', data.playlist)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Playlist Updated',
@@ -3662,7 +3688,7 @@ function initializeSSE(roomCode: string = 'default') {
       const data = JSON.parse(event.data)
       musicState.value.playlist = musicState.value.playlist.filter(track => track.id !== data.trackId)
       console.log('🎵 Track removed from playlist:', data.trackId)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Track Removed',
@@ -3680,7 +3706,7 @@ function initializeSSE(roomCode: string = 'default') {
     eventSource.value.addEventListener('music:playlist_cleared', (event) => {
       musicState.value.playlist = []
       console.log('🎵 Playlist cleared')
-      
+
       const toast = useToast()
       toast.add({
         title: 'Playlist Cleared',
@@ -3691,19 +3717,19 @@ function initializeSSE(roomCode: string = 'default') {
 
     eventSource.value.addEventListener('music:track_added', (event) => {
       const data = JSON.parse(event.data)
-      
+
       // Check if track already exists to prevent duplicates
       const existingTrack = musicState.value.playlist.find(t => t.id === data.track.id)
       if (!existingTrack) {
         musicState.value.playlist.push(data.track)
-        
+
         // If it's a sound effect, add it to the playable track IDs
         if (data.track.isSoundEffect || data.track.isPlayableWhileMusic) {
           musicState.value.soundEffects.playableTrackIds.add(data.track.id)
         }
-        
+
         console.log('🎵 Track added to playlist:', data.track.title)
-        
+
         const toast = useToast()
         toast.add({
           title: data.track.isSoundEffect ? 'Sound Effect Added' : 'Track Added',
@@ -3725,10 +3751,10 @@ function initializeSSE(roomCode: string = 'default') {
       console.log('🔊 Sound effect played event received:', data)
       console.log('🔊 Track data:', data.track)
       console.log('🔊 Volume data:', data.volume)
-      
+
       // Update last played timestamp
       musicState.value.soundEffects.lastSoundEffectPlayed = new Date(data.timestamp)
-      
+
       // Actually play the sound effect audio
       if (data.track?.url) {
         console.log('🔊 Calling playSoundEffectAudio with:', data.track.url, data.volume || musicState.value.soundEffects.soundEffectsVolume)
@@ -3736,7 +3762,7 @@ function initializeSSE(roomCode: string = 'default') {
       } else {
         console.error('🔊 No track URL found in sound effect data:', data)
       }
-      
+
       const toast = useToast()
       toast.add({
         title: 'Sound Effect',
@@ -3816,7 +3842,7 @@ function disconnectSSE() {
 
 function toggleOfflineMode() {
   isOfflineModePreference.value = !isOfflineModePreference.value
-  
+
   if (isOfflineModePreference.value) {
     // Switch to offline mode
     disconnectSSE()
@@ -3824,7 +3850,7 @@ function toggleOfflineMode() {
     isOfflineMode.value = true
     connectedUsers.value = 1
     console.log('🎲 Switched to persistent offline mode')
-    
+
     const toast = useToast()
     toast.add({
       title: 'Offline Mode',
@@ -3835,14 +3861,14 @@ function toggleOfflineMode() {
     // Switch back to online mode
     isOfflineMode.value = false
     console.log('🎲 Switching back to online mode')
-    
+
     const toast = useToast()
     toast.add({
       title: 'Online Mode',
       description: 'Attempting to reconnect to the server...',
       color: 'blue'
     })
-    
+
     // Reconnect with current room
     const roomCode = currentRoom.value?.code || 'default'
     initializeSSE(roomCode)
@@ -3852,7 +3878,7 @@ function toggleOfflineMode() {
 // Battle Mode Functions
 async function startBattle() {
   if (!currentRoom.value || currentRoom.value.code === 'default') return
-  
+
   isBattleLoading.value = true
   try {
     const response = await $fetch('/api/battle/start', {
@@ -3861,14 +3887,14 @@ async function startBattle() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       battleMode.value = response.battleState
       console.log('⚔️ Battle mode started:', response.battleState)
-      
+
       // Load available players for battle selection
       await loadBattlePlayers()
-      
+
       const toast = useToast()
       toast.add({
         title: 'Battle Started',
@@ -3891,7 +3917,7 @@ async function startBattle() {
 
 async function endBattle() {
   if (!currentRoom.value || currentRoom.value.code === 'default') return
-  
+
   isBattleLoading.value = true
   try {
     const response = await $fetch('/api/battle/end', {
@@ -3900,11 +3926,11 @@ async function endBattle() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       battleMode.value = null
       console.log('⚔️ Battle mode ended')
-      
+
       const toast = useToast()
       toast.add({
         title: 'Battle Ended',
@@ -3927,7 +3953,7 @@ async function endBattle() {
 
 async function addEnemy() {
   if (!newEnemy.value.name || !newEnemy.value.hitPoints || !currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/battle/enemy/add', {
       method: 'POST',
@@ -3939,19 +3965,19 @@ async function addEnemy() {
         initiative: newEnemy.value.initiative
       }
     })
-    
+
     if (response.success) {
       console.log('👹 Enemy added:', response.enemy)
-      
+
       // Update local state immediately for instant UI feedback
       if (battleMode.value && battleMode.value.enemies) {
         battleMode.value.enemies[response.enemy.id] = response.enemy
       }
-      
+
       // Reset form
       newEnemy.value = { name: '', hitPoints: 10, armorClass: 10, initiative: 0 }
       showAddEnemyModal.value = false
-      
+
       const toast = useToast()
       toast.add({
         title: 'Enemy Added',
@@ -3972,7 +3998,7 @@ async function addEnemy() {
 
 async function removeEnemy(enemyId: string) {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/battle/enemy/remove', {
       method: 'POST',
@@ -3981,15 +4007,15 @@ async function removeEnemy(enemyId: string) {
         enemyId: enemyId
       }
     })
-    
+
     if (response.success) {
       console.log('👹 Enemy removed:', enemyId)
-      
+
       // Update local state immediately for instant UI feedback
       if (battleMode.value && battleMode.value.enemies) {
         delete battleMode.value.enemies[enemyId]
       }
-      
+
       const toast = useToast()
       toast.add({
         title: 'Enemy Removed',
@@ -4010,7 +4036,7 @@ async function removeEnemy(enemyId: string) {
 
 async function rollInitiative() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/battle/initiative', {
       method: 'POST',
@@ -4018,10 +4044,10 @@ async function rollInitiative() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       console.log('🎲 Initiative rolled:', response.initiativeOrder)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Initiative Rolled',
@@ -4043,11 +4069,11 @@ async function rollInitiative() {
 // Battle Player Management Functions
 async function loadBattlePlayers() {
   if (!currentRoom.value) return
-  
+
   isBattlePlayersLoading.value = true
   try {
     const response = await $fetch(`/api/battle/players?roomCode=${currentRoom.value.code}`)
-    
+
     if (response.success) {
       selectedPlayers.value = response.data.selectedPlayers
       unselectedPlayers.value = response.data.unselectedPlayers
@@ -4064,7 +4090,7 @@ async function loadBattlePlayers() {
 // During active combat, we would use add/remove endpoints for mid-battle additions
 async function addPlayerToBattle(playerId: string) {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/battle/player/select', {
       method: 'POST',
@@ -4073,11 +4099,11 @@ async function addPlayerToBattle(playerId: string) {
         playerId: playerId
       }
     })
-    
+
     if (response.success) {
       // Reload the player lists to reflect changes
       await loadBattlePlayers()
-      
+
       const toast = useToast()
       toast.add({
         title: 'Player Added',
@@ -4098,7 +4124,7 @@ async function addPlayerToBattle(playerId: string) {
 
 async function removePlayerFromBattle(playerId: string) {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/battle/player/deselect', {
       method: 'POST',
@@ -4107,11 +4133,11 @@ async function removePlayerFromBattle(playerId: string) {
         playerId: playerId
       }
     })
-    
+
     if (response.success) {
       // Reload the player lists to reflect changes
       await loadBattlePlayers()
-      
+
       const toast = useToast()
       toast.add({
         title: 'Player Removed',
@@ -4132,7 +4158,7 @@ async function removePlayerFromBattle(playerId: string) {
 
 async function nextTurn() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/battle/next-turn', {
       method: 'POST',
@@ -4140,10 +4166,10 @@ async function nextTurn() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       console.log('🔄 Next turn:', response.currentTurn)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Next Turn',
@@ -4167,7 +4193,7 @@ async function loadPlayerSpecialAbilities(participant: any) {
     // For players, load their actual character attacks
     if (participant.type === 'player' && participant.userId) {
       let playerCharacter = null
-      
+
       // If it's the current user, use their active character
       if (participant.userId === userId.value) {
         playerCharacter = userCharacters.value.find(c => c.id === activeCharacterId.value)
@@ -4187,7 +4213,7 @@ async function loadPlayerSpecialAbilities(participant: any) {
           console.warn('Could not fetch character data for participant:', participant.name, apiError)
         }
       }
-      
+
       if (playerCharacter && playerCharacter.attacks) {
         // Convert character attacks to special abilities format
         const characterAttacks = playerCharacter.attacks.map((attack: any, index: number) => ({
@@ -4202,28 +4228,28 @@ async function loadPlayerSpecialAbilities(participant: any) {
           rangeText: attack.rangeText,
           notes: attack.notes
         }))
-        
+
         currentPlayerAbilities.value = characterAttacks
         currentPlayerName.value = participant.name
         showSpecialAbilitiesModal.value = true
-        
+
         console.log('🗡️ Loaded character attacks for', participant.name, characterAttacks)
         return
       }
     }
-    
+
     // Fallback: Show empty state with helpful message
     currentPlayerAbilities.value = []
     currentPlayerName.value = participant.name
     showSpecialAbilitiesModal.value = true
-    
+
     const toast = useToast()
     toast.add({
       title: 'No Attacks Found',
       description: `No attacks found for ${participant.name}. They may need to add attacks to their character sheet.`,
       color: 'amber'
     })
-    
+
   } catch (error) {
     console.error('Failed to load special abilities:', error)
     const toast = useToast()
@@ -4238,9 +4264,9 @@ async function loadPlayerSpecialAbilities(participant: any) {
 function handleRollAbility(ability: any) {
   // Close the special abilities modal
   showSpecialAbilitiesModal.value = false
-  
+
   console.log('Rolling ability:', ability.name, ability.diceFormula)
-  
+
   // If this is a character attack (has attackBonus), treat it as an attack
   if (ability.attackBonus !== undefined) {
     // Roll attack first
@@ -4256,10 +4282,10 @@ function handleRollAbility(ability: any) {
     if (ability.diceFormula) {
       try {
         const result = rollDamageString(ability.diceFormula)
-        
+
         const roll: DiceRoll = {
           id: Date.now().toString(),
-          userName: userName.value || 'Anonymous', 
+          userName: userName.value || 'Anonymous',
           userId: 'local-user',
           timestamp: new Date(),
           description: `${ability.name}: ${ability.diceFormula}`,
@@ -4271,10 +4297,17 @@ function handleRollAbility(ability: any) {
           isCritical: false,
           isOwn: true
         }
-        
+
         // Add to history
         rollHistory.value.unshift(roll)
-        
+
+        // Show critical animation if it's a critical roll
+        if (isCritical && criticalType) {
+          criticalAnimationType.value = criticalType
+          showCriticalAnimation.value = true
+          // Video will auto-close when it ends via @ended event
+        }
+
         // Submit to server if connected
         if (isConnected.value && !isOfflineMode.value) {
           submitDiceRoll({
@@ -4302,7 +4335,7 @@ function handleRollAbility(ability: any) {
       }
     }
   }
-  
+
   const toast = useToast()
   toast.add({
     title: 'Ability Used',
@@ -4314,12 +4347,12 @@ function handleRollAbility(ability: any) {
 function handleUseAbility(ability: any) {
   // Handle using an ability (might reduce uses, apply effects, etc.)
   console.log('Using ability:', ability.name)
-  
+
   // For abilities with limited uses, decrease the remaining count
   if (ability.usesPerRest && ability.usesRemaining > 0) {
     ability.usesRemaining--
   }
-  
+
   // Trigger the roll automatically when using an ability
   handleRollAbility(ability)
 }
@@ -4327,7 +4360,7 @@ function handleUseAbility(ability: any) {
 async function dealDamageToEnemy(enemy: Enemy) {
   const damage = prompt(`How much damage to deal to ${enemy.name}?`)
   if (!damage || isNaN(parseInt(damage)) || !currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/battle/damage', {
       method: 'POST',
@@ -4337,10 +4370,10 @@ async function dealDamageToEnemy(enemy: Enemy) {
         damage: parseInt(damage)
       }
     })
-    
+
     if (response.success) {
       console.log('💥 Damage dealt:', response.result)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Damage Dealt',
@@ -4385,7 +4418,7 @@ async function addTrackToPlaylist() {
   const sseStatus = eventSource.value?.readyState
   const sseStatusText = sseStatus === 0 ? 'CONNECTING' : sseStatus === 1 ? 'OPEN' : sseStatus === 2 ? 'CLOSED' : 'UNKNOWN'
   console.log('🎵 Starting to add track:', newTrackUrl.value.trim(), `(timestamp: ${startTime}) SSE Status: ${sseStatusText} (${sseStatus}) Room: ${currentRoom.value.code}`)
-  
+
   // Add a fallback timeout to reset isAddingTrack in case something goes wrong
   const fallbackTimeout = setTimeout(() => {
     if (isAddingTrack.value) {
@@ -4393,7 +4426,7 @@ async function addTrackToPlaylist() {
       isAddingTrack.value = false
     }
   }, 10000) // 10 second fallback
-  
+
   try {
     const response = await $fetch('/api/music/add-track', {
       method: 'POST',
@@ -4402,17 +4435,17 @@ async function addTrackToPlaylist() {
         url: newTrackUrl.value.trim()
       }
     })
-    
+
     const apiResponseTime = Date.now()
     console.log('🎵 API Response:', response, `(response time: ${apiResponseTime - startTime}ms)`)
-    
+
     if (response && response.success) {
       console.log('🎵 Track added to playlist:', response.track, `(api completed in ${apiResponseTime - startTime}ms)`)
-      
+
       // Don't update local state manually - let SSE handle it
       // This prevents conflicts between local updates and server events
       newTrackUrl.value = ''
-      
+
       showMusicToast('Track Added', `Added "${response.track.title}" to playlist`, 'green')
     } else {
       console.error('🎵 API returned unsuccessful response:', response)
@@ -4420,7 +4453,7 @@ async function addTrackToPlaylist() {
     }
   } catch (error: any) {
     console.error('🎵 Failed to add track:', error)
-    
+
     showMusicToast('Error', error.data?.statusMessage || error.message || 'Failed to add track to playlist', 'red')
   } finally {
     clearTimeout(fallbackTimeout) // Clear the fallback timeout
@@ -4433,7 +4466,7 @@ async function addTrackToPlaylist() {
 // Sound Effects Functions
 async function setSoundEffectsVolume() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/sound-effects-volume', {
       method: 'POST',
@@ -4442,7 +4475,7 @@ async function setSoundEffectsVolume() {
         soundEffectsVolume: musicState.value.soundEffects.soundEffectsVolume
       }
     })
-    
+
     if (response.success) {
       console.log('🔊 Sound effects volume set to:', musicState.value.soundEffects.soundEffectsVolume)
     }
@@ -4454,7 +4487,7 @@ async function setSoundEffectsVolume() {
 
 async function playSoundEffect(trackId: string) {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/play-sound-effect', {
       method: 'POST',
@@ -4463,10 +4496,10 @@ async function playSoundEffect(trackId: string) {
         trackId: trackId
       }
     })
-    
+
     if (response.success) {
       console.log('🔊 Sound effect played:', trackId)
-      
+
       showMusicToast('Sound Effect Played', '🔊 Sound effect triggered for all players', 'blue')
     }
   } catch (error) {
@@ -4484,7 +4517,7 @@ function ensureYouTubeAPIForSoundEffects(): Promise<boolean> {
       resolve(true)
       return
     }
-    
+
     // If the main music player has already loaded the API, it should be available
     if (isYouTubeAPIReady.value) {
       console.log('🔊 YouTube API marked as ready')
@@ -4499,7 +4532,7 @@ function ensureYouTubeAPIForSoundEffects(): Promise<boolean> {
       }, 100)
       return
     }
-    
+
     // Try to wait for the API to become available
     let attempts = 0
     const checkAPI = () => {
@@ -4514,7 +4547,7 @@ function ensureYouTubeAPIForSoundEffects(): Promise<boolean> {
         resolve(false)
       }
     }
-    
+
     checkAPI()
   })
 }
@@ -4527,9 +4560,9 @@ function playSoundEffectAudio(youtubeUrl: string, volume: number = 50) {
       console.error('🔊 Invalid YouTube URL for sound effect:', youtubeUrl)
       return
     }
-    
+
     console.log('🔊 Playing sound effect:', videoId, 'at volume:', volume)
-    
+
     // Ensure YouTube API is available, then create player
     ensureYouTubeAPIForSoundEffects().then((apiReady) => {
       if (apiReady) {
@@ -4539,7 +4572,7 @@ function playSoundEffectAudio(youtubeUrl: string, volume: number = 50) {
         // Could add a fallback here, but for volume control we need the API
       }
     })
-    
+
   } catch (error) {
     console.error('🔊 Error playing sound effect audio:', error)
   }
@@ -4549,7 +4582,7 @@ function playSoundEffectAudio(youtubeUrl: string, volume: number = 50) {
 function createSoundEffectPlayer(videoId: string, volume: number) {
   // Create unique ID for this sound effect player
   const playerId = `sound-effect-player-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  
+
   // Create container div
   const playerDiv = document.createElement('div')
   playerDiv.id = playerId
@@ -4560,7 +4593,7 @@ function createSoundEffectPlayer(videoId: string, volume: number) {
   playerDiv.style.height = '1px'
   playerDiv.style.opacity = '0'
   playerDiv.style.pointerEvents = 'none'
-  
+
   // Add to sound effects container
   let container = document.getElementById('sound-effects-container')
   if (!container) {
@@ -4572,10 +4605,10 @@ function createSoundEffectPlayer(videoId: string, volume: number) {
     container.style.left = '-9999px'
     document.body.appendChild(container)
   }
-  
+
   container.appendChild(playerDiv)
   console.log('🔊 Sound effect player container created:', playerId)
-  
+
   // Add small delay to avoid conflicts with main player
   setTimeout(() => {
     try {
@@ -4586,7 +4619,7 @@ function createSoundEffectPlayer(videoId: string, volume: number) {
         }
         return
       }
-      
+
       console.log('🔊 Creating YouTube Player for sound effect')
       const player = new window.YT.Player(playerId, {
         height: '1',
@@ -4630,13 +4663,13 @@ function createSoundEffectPlayer(videoId: string, volume: number) {
           }
         }
       })
-      
+
       // Safety cleanup after 15 seconds
       setTimeout(() => {
         console.log('🔊 Safety cleanup for sound effect player')
         cleanupPlayer(player, playerDiv)
       }, 15000)
-      
+
     } catch (error) {
       console.error('🔊 Error creating YouTube player for sound effect:', error)
       // Remove the div if player creation failed
@@ -4657,7 +4690,7 @@ function cleanupPlayer(player: any, playerDiv: HTMLElement) {
   } catch (e) {
     console.log('🔊 Error destroying player:', e.message)
   }
-  
+
   try {
     if (playerDiv && playerDiv.parentNode) {
       playerDiv.parentNode.removeChild(playerDiv)
@@ -4676,20 +4709,20 @@ function extractYouTubeVideoId(url: string): string | null {
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
     /youtube\.com\/watch\?.*v=([^&\n?#]+)/
   ]
-  
+
   for (const pattern of patterns) {
     const match = url.match(pattern)
     if (match && match[1]) {
       return match[1]
     }
   }
-  
+
   return null
 }
 
 async function addTrackAsSoundEffect() {
   if (!newTrackUrl.value.trim() || !currentRoom.value) return
-  
+
   isAddingTrack.value = true
   try {
     const response = await $fetch('/api/music/add-track', {
@@ -4701,13 +4734,13 @@ async function addTrackAsSoundEffect() {
         isPlayableWhileMusic: true
       }
     })
-    
+
     if (response.success) {
       console.log('🔊 Sound effect added:', response.track)
-      
+
       // Clear the input field
       newTrackUrl.value = ''
-      
+
       // The track will be added to playlist via SSE event
       showMusicToast('Sound Effect Added', `Added "${response.track.title}" as sound effect`, 'green')
     }
@@ -4721,7 +4754,7 @@ async function addTrackAsSoundEffect() {
 
 async function addAndPlayTrack() {
   if (!newTrackUrl.value.trim() || !currentRoom.value) return
-  
+
   isAddingTrack.value = true
   try {
     const response = await $fetch('/api/music/add-track', {
@@ -4732,13 +4765,13 @@ async function addAndPlayTrack() {
         playImmediately: true
       }
     })
-    
+
     if (response.success) {
       console.log('🎵 Track added and playing:', response.track)
-      
+
       // Clear the input field
       newTrackUrl.value = ''
-      
+
       // The track and playback state will be updated via SSE events
       showMusicToast('Track Added & Playing', `🎵 ${response.track.title}`, 'green')
     }
@@ -4752,7 +4785,7 @@ async function addAndPlayTrack() {
 
 async function pauseMusic() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/pause', {
       method: 'POST',
@@ -4760,11 +4793,11 @@ async function pauseMusic() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       musicState.value.isPlaying = false
       console.log('🎵 Music paused')
-      
+
       showMusicToast('Music Paused', 'Music has been paused for all participants', 'yellow')
     }
   } catch (error) {
@@ -4775,7 +4808,7 @@ async function pauseMusic() {
 
 async function resumeMusic() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/resume', {
       method: 'POST',
@@ -4783,11 +4816,11 @@ async function resumeMusic() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       musicState.value.isPlaying = true
       console.log('🎵 Music resumed')
-      
+
       showMusicToast('Music Resumed', 'Music has been resumed for all participants', 'green')
     }
   } catch (error) {
@@ -4798,7 +4831,7 @@ async function resumeMusic() {
 
 async function stopMusic() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/stop', {
       method: 'POST',
@@ -4806,12 +4839,12 @@ async function stopMusic() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       musicState.value.isPlaying = false
       musicState.value.currentTrack = null
       console.log('🎵 Music stopped')
-      
+
       showMusicToast('Music Stopped', 'Music has been stopped for all participants', 'blue')
     }
   } catch (error) {
@@ -4822,7 +4855,7 @@ async function stopMusic() {
 
 async function setVolume() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/volume', {
       method: 'POST',
@@ -4831,7 +4864,7 @@ async function setVolume() {
         volume: musicState.value.volume
       }
     })
-    
+
     if (response.success) {
       console.log('🎵 Volume set to:', musicState.value.volume)
     }
@@ -4843,7 +4876,7 @@ async function setVolume() {
 
 async function clearPlaylist() {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/clear', {
       method: 'POST',
@@ -4851,13 +4884,13 @@ async function clearPlaylist() {
         roomCode: currentRoom.value.code
       }
     })
-    
+
     if (response.success) {
       musicState.value.playlist = []
       musicState.value.currentTrack = null
       musicState.value.isPlaying = false
       console.log('🎵 Playlist cleared')
-      
+
       showMusicToast('Playlist Cleared', 'All tracks have been removed from the playlist', 'blue')
     }
   } catch (error) {
@@ -4868,7 +4901,7 @@ async function clearPlaylist() {
 
 async function playTrackFromPlaylist(track: any) {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/play', {
       method: 'POST',
@@ -4877,12 +4910,12 @@ async function playTrackFromPlaylist(track: any) {
         trackId: track.id
       }
     })
-    
+
     if (response.success) {
       musicState.value.currentTrack = track
       musicState.value.isPlaying = true
       console.log('🎵 Playing track from playlist:', track.title)
-      
+
       showMusicToast('Now Playing', `Playing "${track.title}"`, 'green')
     }
   } catch (error) {
@@ -4893,7 +4926,7 @@ async function playTrackFromPlaylist(track: any) {
 
 async function removeTrackFromPlaylist(trackId: string) {
   if (!currentRoom.value) return
-  
+
   try {
     const response = await $fetch('/api/music/remove-track', {
       method: 'POST',
@@ -4902,22 +4935,22 @@ async function removeTrackFromPlaylist(trackId: string) {
         trackId: trackId
       }
     })
-    
+
     if (response.success) {
       // Update local state
       musicState.value.playlist = musicState.value.playlist.filter(t => t.id !== trackId)
-      
+
       // Clean up sound effects tracking
       musicState.value.soundEffects.playableTrackIds.delete(trackId)
-      
+
       // If the removed track was currently playing, stop playback
       if (musicState.value.currentTrack?.id === trackId) {
         musicState.value.currentTrack = null
         musicState.value.isPlaying = false
       }
-      
+
       console.log('🎵 Track removed from playlist:', trackId)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Track Removed',
@@ -4934,7 +4967,7 @@ async function removeTrackFromPlaylist(trackId: string) {
 // Utility function to format duration in seconds to MM:SS format
 function formatDuration(seconds: number): string {
   if (!seconds || seconds <= 0) return '0:00'
-  
+
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins}:${secs.toString().padStart(2, '0')}`
@@ -4949,36 +4982,36 @@ async function loadInitialMusicState(roomCode: string = 'default') {
 
   try {
     console.log('🎵 Loading initial music state for room:', roomCode)
-    
+
     const response = await $fetch(`/api/music/state?roomCode=${encodeURIComponent(roomCode)}`)
-    
+
     if (response.success && response.musicState) {
       console.log('🎵 Initial music state loaded:', response.musicState)
-      
+
       // Update local music state
       musicState.value.isPlaying = response.musicState.isPlaying || false
       musicState.value.currentTrack = response.musicState.currentTrack || null
       musicState.value.volume = response.musicState.volume || 50
       musicState.value.playlist = response.musicState.playlist || []
-      
+
       if (response.musicState.soundEffects) {
         musicState.value.soundEffects.soundEffectsVolume = response.musicState.soundEffects.soundEffectsVolume || 75
         musicState.value.soundEffects.playableTrackIds = new Set(response.musicState.soundEffects.playableTrackIds || [])
         musicState.value.soundEffects.lastSoundEffectPlayed = response.musicState.soundEffects.lastSoundEffectPlayed || null
       }
-      
+
       console.log('🎵 Updated local music state:', musicState.value)
-      
+
       // Initialize YouTube player with current track if available
       if (response.musicState.currentTrack && isYouTubePlayerReady()) {
         console.log('🎵 Syncing YouTube player with loaded music state')
         syncPlayerWithMusicState()
       }
-      
+
     } else {
       console.log('🎵 No initial music state found for room:', roomCode)
     }
-    
+
   } catch (error) {
     console.error('🎵 Failed to load initial music state:', error)
   }
@@ -5065,12 +5098,12 @@ function getYouTubeVideoId(url: string): string | null {
     console.warn('🎵 Invalid URL provided to getYouTubeVideoId:', url)
     return null
   }
-  
+
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
     /youtube\.com\/watch\?.*v=([^&\n?#]+)/
   ]
-  
+
   for (const pattern of patterns) {
     const match = url.match(pattern)
     if (match && match[1]) {
@@ -5084,7 +5117,7 @@ function getYouTubeVideoId(url: string): string | null {
       }
     }
   }
-  
+
   console.warn('🎵 Could not extract valid video ID from URL:', url)
   return null
 }
@@ -5092,13 +5125,13 @@ function getYouTubeVideoId(url: string): string | null {
 async function initializeYouTubePlayer() {
   try {
     console.log('🎵 Starting YouTube player initialization...')
-    
+
     const apiLoaded = await loadYouTubeAPI()
     if (!apiLoaded) {
       console.error('🎵 Failed to load YouTube API')
       return
     }
-    
+
     if (!isYouTubeAPIReady.value) {
       console.error('🎵 YouTube API not ready after loading')
       return
@@ -5108,7 +5141,7 @@ async function initializeYouTubePlayer() {
     let retries = 0
     const maxRetries = 10
     let playerElement = null
-    
+
     while (retries < maxRetries && !playerElement) {
       await nextTick()
       playerElement = document.getElementById('youtube-player')
@@ -5118,7 +5151,7 @@ async function initializeYouTubePlayer() {
         retries++
       }
     }
-    
+
     if (!playerElement) {
       console.error('🎵 YouTube player element not found in DOM after retries')
       return
@@ -5148,12 +5181,12 @@ async function initializeYouTubePlayer() {
       events: {
         onReady: (event: any) => {
           console.log('🎵 YouTube player ready, setting initial volume to:', musicState.value.volume)
-          
+
           // Set initial volume
           try {
             event.target.setVolume(musicState.value.volume)
             console.log('🎵 Initial volume set successfully')
-            
+
             // If there's already a current track, sync it
             if (musicState.value.currentTrack) {
               console.log('🎵 Syncing existing track:', musicState.value.currentTrack.title)
@@ -5170,17 +5203,17 @@ async function initializeYouTubePlayer() {
           console.error('🎵 YouTube player error:', event.data)
           console.error('🎵 Current video ID:', currentVideoId.value)
           console.error('🎵 Music state:', musicState.value)
-          
+
           // Filter out CORS-related tracking errors which are safe to ignore
-          if (event.data && typeof event.data === 'object' && 
-              (event.data.toString().includes('doubleclick') || 
-               event.data.toString().includes('googleads'))) {
+          if (event.data && typeof event.data === 'object' &&
+            (event.data.toString().includes('doubleclick') ||
+              event.data.toString().includes('googleads'))) {
             console.log('🎵 Ignoring YouTube tracking/ads error (safe):', event.data)
             return
           }
-          
+
           let errorMessage = 'There was an error playing the video'
-          
+
           // More specific error messages
           switch (event.data) {
             case 2:
@@ -5197,7 +5230,7 @@ async function initializeYouTubePlayer() {
               errorMessage = 'Video cannot be embedded'
               break
           }
-          
+
           const toast = useToast()
           toast.add({
             title: 'Playback Error',
@@ -5207,7 +5240,7 @@ async function initializeYouTubePlayer() {
         }
       }
     })
-    
+
     console.log('🎵 YouTube player initialization completed')
   } catch (error) {
     console.error('🎵 Failed to initialize YouTube player:', error)
@@ -5223,12 +5256,12 @@ async function initializeYouTubePlayer() {
 function handlePlayerStateChange(event: any) {
   const YT = window.YT
   if (!YT) return
-  
+
   const state = event.data
   const isPlaying = state === YT.PlayerState.PLAYING
   const isPaused = state === YT.PlayerState.PAUSED
   const isEnded = state === YT.PlayerState.ENDED
-  
+
   // Only DMs can control music state via the player
   if (userRole.value === 'DM') {
     if (isPlaying && !musicState.value.isPlaying) {
@@ -5260,30 +5293,30 @@ function fadeVolume(fromVolume: number, toVolume: number, duration: number = 100
       resolve()
       return
     }
-    
+
     const startTime = Date.now()
     const volumeRange = toVolume - fromVolume
-    
+
     fadeTransition.value.isActive = true
     fadeTransition.value.currentVolume = fromVolume
     fadeTransition.value.targetVolume = toVolume
-    
+
     const fadeStep = () => {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
-      
+
       // Use easeInOut curve for smoother transition
-      const easedProgress = progress < 0.5 
-        ? 2 * progress * progress 
+      const easedProgress = progress < 0.5
+        ? 2 * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 2) / 2
-      
+
       const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
       fadeTransition.value.currentVolume = currentVolume
-      
+
       if (isYouTubePlayerReady()) {
         youtubePlayer.value.setVolume(currentVolume)
       }
-      
+
       if (progress >= 1) {
         fadeTransition.value.isActive = false
         fadeTransition.value.currentVolume = toVolume
@@ -5292,19 +5325,19 @@ function fadeVolume(fromVolume: number, toVolume: number, duration: number = 100
         requestAnimationFrame(fadeStep)
       }
     }
-    
+
     fadeStep()
   })
 }
 
 // Helper function to check if YouTube player is ready and has required methods
 function isYouTubePlayerReady(): boolean {
-  const isReady = !!(youtubePlayer.value && 
-           typeof youtubePlayer.value.setVolume === 'function' &&
-           typeof youtubePlayer.value.playVideo === 'function' &&
-           typeof youtubePlayer.value.pauseVideo === 'function' &&
-           typeof youtubePlayer.value.loadVideoById === 'function')
-  
+  const isReady = !!(youtubePlayer.value &&
+    typeof youtubePlayer.value.setVolume === 'function' &&
+    typeof youtubePlayer.value.playVideo === 'function' &&
+    typeof youtubePlayer.value.pauseVideo === 'function' &&
+    typeof youtubePlayer.value.loadVideoById === 'function')
+
   if (!isReady) {
     console.log('🎵 YouTube player readiness check failed:', {
       playerExists: !!youtubePlayer.value,
@@ -5314,14 +5347,14 @@ function isYouTubePlayerReady(): boolean {
       hasLoadVideoById: youtubePlayer.value && typeof youtubePlayer.value.loadVideoById === 'function'
     })
   }
-  
+
   return isReady
 }
 
 // Diagnostic function for troubleshooting
 function diagnoseMusicSystem() {
   const playerElement = document.getElementById('youtube-player')
-  
+
   console.log('🎵 Music System Diagnostic:', {
     isYouTubeAPIReady: isYouTubeAPIReady.value,
     isPlayerReady: isYouTubePlayerReady(),
@@ -5338,7 +5371,7 @@ function diagnoseMusicSystem() {
     youtubePlayerValue: youtubePlayer.value,
     fadeConfig: fadeConfig.value
   })
-  
+
   // Try to get player state if available
   if (youtubePlayer.value && typeof youtubePlayer.value.getPlayerState === 'function') {
     try {
@@ -5348,7 +5381,7 @@ function diagnoseMusicSystem() {
       console.log('🎵 Error getting player state:', error)
     }
   }
-  
+
   return {
     isReady: isYouTubePlayerReady(),
     hasAPI: isYouTubeAPIReady.value,
@@ -5361,43 +5394,43 @@ function diagnoseMusicSystem() {
 // Force reinitialize YouTube player
 async function forceReinitializePlayer() {
   console.log('🎵 Force reinitializing YouTube player...')
-  
+
   // Reset state
   youtubePlayer.value = null
   isYouTubeAPIReady.value = false
   currentVideoId.value = ''
-  
+
   // Remove existing script
   const existingScript = document.getElementById('youtube-api-script')
   if (existingScript) {
     existingScript.remove()
   }
-  
+
   // Wait a moment
   await new Promise(resolve => setTimeout(resolve, 500))
-  
+
   // Reinitialize
   await initializeYouTubePlayer()
-  
+
   console.log('🎵 Force reinitialization complete')
 }
 
 async function switchTrackWithFade(newVideoId: string) {
   console.log('🎵 Switching to track:', newVideoId)
-  
+
   // Validate video ID format
   if (!newVideoId || typeof newVideoId !== 'string' || newVideoId.length < 10) {
     console.error('🎵 Invalid video ID:', newVideoId)
     return
   }
-  
+
   // YouTube video IDs are 11 characters long and contain only alphanumeric characters, hyphens, and underscores
   const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/
   if (!videoIdPattern.test(newVideoId)) {
     console.error('🎵 Video ID format invalid:', newVideoId)
     return
   }
-  
+
   if (!isYouTubePlayerReady()) {
     console.log('🎵 Player not ready, using instant switch')
     currentVideoId.value = newVideoId
@@ -5411,20 +5444,20 @@ async function switchTrackWithFade(newVideoId: string) {
     }
     return
   }
-  
+
   const currentVolume = musicState.value.volume
   console.log('🎵 Starting smooth track transition with volume:', currentVolume)
-  
+
   try {
     // Store current player state
     const wasPlaying = youtubePlayer.value.getPlayerState() === 1 // PLAYING = 1
-    
+
     // Create a temporary second player for crossfading
     const tempPlayerDiv = document.createElement('div')
     tempPlayerDiv.id = 'youtube-player-temp'
     tempPlayerDiv.style.display = 'none'
     document.body.appendChild(tempPlayerDiv)
-    
+
     const tempPlayer = new window.YT.Player('youtube-player-temp', {
       height: '1',
       width: '1',
@@ -5441,40 +5474,40 @@ async function switchTrackWithFade(newVideoId: string) {
       events: {
         onReady: async (event) => {
           console.log('🎵 Temp player ready for crossfade')
-          
+
           // Start new track at 0 volume
           event.target.setVolume(0)
           if (wasPlaying) {
             event.target.playVideo()
           }
-          
+
           // Crossfade: fade out current, fade in new simultaneously
           const fadeDuration = fadeConfig.value.trackTransition
           const promises = []
-          
+
           // Fade out current track
           if (currentVideoId.value) {
             promises.push(fadeVolume(currentVolume, 0, fadeDuration))
           }
-          
+
           // Fade in new track on temp player
           promises.push(new Promise(async (resolve) => {
             await new Promise(r => setTimeout(r, 50)) // Slight delay for smoother transition
             await fadeVolumeForPlayer(event.target, 0, currentVolume, fadeDuration)
             resolve(true)
           }))
-          
+
           // Wait for both fades to complete
           await Promise.all(promises)
-          
+
           // Switch to new player
           currentVideoId.value = newVideoId
           youtubePlayer.value.stopVideo()
-          
+
           // Replace main player with new video
           youtubePlayer.value.loadVideoById(newVideoId)
           youtubePlayer.value.setVolume(currentVolume)
-          
+
           if (wasPlaying) {
             // Small delay to ensure video is loaded
             setTimeout(() => {
@@ -5483,7 +5516,7 @@ async function switchTrackWithFade(newVideoId: string) {
               }
             }, 100)
           }
-          
+
           // Cleanup temp player
           setTimeout(() => {
             event.target.destroy()
@@ -5491,7 +5524,7 @@ async function switchTrackWithFade(newVideoId: string) {
               tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
             }
           }, 500)
-          
+
           console.log('🎵 Crossfade transition completed')
         },
         onError: (event) => {
@@ -5500,7 +5533,7 @@ async function switchTrackWithFade(newVideoId: string) {
           currentVideoId.value = newVideoId
           youtubePlayer.value.loadVideoById(newVideoId)
           youtubePlayer.value.setVolume(currentVolume)
-          
+
           // Cleanup
           if (tempPlayerDiv.parentNode) {
             tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
@@ -5508,7 +5541,7 @@ async function switchTrackWithFade(newVideoId: string) {
         }
       }
     })
-    
+
   } catch (error) {
     console.error('🎵 Error during crossfade transition:', error)
     // Fallback to instant switch
@@ -5525,34 +5558,34 @@ function fadeVolumeForPlayer(player: any, fromVolume: number, toVolume: number, 
       resolve()
       return
     }
-    
+
     const startTime = Date.now()
     const volumeRange = toVolume - fromVolume
-    
+
     const fadeStep = () => {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
-      
+
       // Use easeInOut curve for smoother transition
-      const easedProgress = progress < 0.5 
-        ? 2 * progress * progress 
+      const easedProgress = progress < 0.5
+        ? 2 * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 2) / 2
-      
+
       const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
-      
+
       try {
         player.setVolume(currentVolume)
       } catch (e) {
         console.error('🎵 Error setting volume during fade:', e)
       }
-      
+
       if (progress >= 1) {
         resolve()
       } else {
         requestAnimationFrame(fadeStep)
       }
     }
-    
+
     fadeStep()
   })
 }
@@ -5562,29 +5595,29 @@ function syncPlayerWithMusicState() {
     console.log('🎵 Skipping sync - player not ready or no current track')
     return
   }
-  
+
   console.log('🎵 Syncing player with music state:', {
     track: musicState.value.currentTrack.title,
     isPlaying: musicState.value.isPlaying,
     volume: musicState.value.volume,
     url: musicState.value.currentTrack.url
   })
-  
+
   const videoId = getYouTubeVideoId(musicState.value.currentTrack.url)
   if (!videoId) {
     console.error('🎵 Invalid YouTube URL:', musicState.value.currentTrack.url)
     console.error('🎵 Current track data:', musicState.value.currentTrack)
     return
   }
-  
+
   console.log('🎵 Extracted video ID:', videoId)
-  
+
   // Load video with fade transition if different from current
   if (currentVideoId.value !== videoId) {
     console.log('🎵 Loading new video:', videoId)
     switchTrackWithFade(videoId)
   }
-  
+
   // Sync play/pause state
   try {
     if (musicState.value.isPlaying) {
@@ -5594,7 +5627,7 @@ function syncPlayerWithMusicState() {
       console.log('🎵 Pausing playback')
       youtubePlayer.value.pauseVideo()
     }
-    
+
     // Sync volume with smooth transition if not already fading
     if (!fadeTransition.value.isActive) {
       console.log('🎵 Setting volume to:', musicState.value.volume)
@@ -5617,12 +5650,12 @@ watch(() => musicState.value.currentTrack, (newTrack) => {
 
 watch(() => musicState.value.isPlaying, async (isPlaying, wasPlaying) => {
   if (!isYouTubePlayerReady()) return
-  
+
   if (fadeConfig.value.enabled) {
     if (isPlaying && !wasPlaying) {
       // Starting playback - fade in
       youtubePlayer.value.playVideo()
-      
+
       // Add small fade in effect
       const currentVolume = musicState.value.volume
       await fadeVolume(Math.max(0, currentVolume - 20), currentVolume, fadeConfig.value.playPause)
@@ -5631,7 +5664,7 @@ watch(() => musicState.value.isPlaying, async (isPlaying, wasPlaying) => {
       const currentVolume = musicState.value.volume
       await fadeVolume(currentVolume, Math.max(0, currentVolume - 15), fadeConfig.value.playPause * 0.75)
       youtubePlayer.value.pauseVideo()
-      
+
       // Restore volume for when playback resumes
       setTimeout(() => {
         if (isYouTubePlayerReady()) {
@@ -5653,7 +5686,7 @@ watch(() => musicState.value.volume, (newVolume, oldVolume) => {
   if (isYouTubePlayerReady() && !fadeTransition.value.isActive && fadeConfig.value.enabled) {
     // Use smooth transition for volume changes if the change is significant
     const volumeDifference = Math.abs(newVolume - (oldVolume || 0))
-    
+
     if (volumeDifference > 10) {
       // Large volume change - use fade transition
       fadeVolume(oldVolume || 0, newVolume, fadeConfig.value.volumeChange)
@@ -5670,21 +5703,21 @@ watch(() => musicState.value.volume, (newVolume, oldVolume) => {
 // Initialize with SSE connection
 onMounted(async () => {
   console.log('🎲 Dice room component mounted')
-  
+
   // Add global error handler to filter out YouTube CORS tracking errors
   const originalConsoleError = console.error
   console.error = (...args) => {
     const errorStr = args.join(' ')
-    if (errorStr.includes('doubleclick.net') || 
-        errorStr.includes('googleads.g.doubleclick.net') ||
-        errorStr.includes('CORS policy') && errorStr.includes('youtube')) {
+    if (errorStr.includes('doubleclick.net') ||
+      errorStr.includes('googleads.g.doubleclick.net') ||
+      errorStr.includes('CORS policy') && errorStr.includes('youtube')) {
       // Silently ignore YouTube tracking/ads CORS errors
       return
     }
     // Log all other errors normally
     originalConsoleError.apply(console, args)
   }
-  
+
   // Set initial room state (default room)
   currentRoom.value = {
     name: 'Default Room',
@@ -5702,20 +5735,20 @@ onMounted(async () => {
   // Add global diagnostic function for debugging
   window.diagnoseMusicSystem = diagnoseMusicSystem
   window.forceReinitializePlayer = forceReinitializePlayer
-  
+
   // Add debug function for testing sound effects volume
   window.testSoundEffectVolume = (url: string, volume: number = 50) => {
     console.log(`🔊 Testing sound effect at volume ${volume}%:`, url)
     playSoundEffectAudio(url, volume)
   }
-  
+
   // Add debug function to test with a sample YouTube URL
   window.testSoundEffect = (volume: number = 50) => {
     const sampleUrl = 'https://www.youtube.com/watch?v=2WPCLda_erI' // Short sound effect
     console.log(`🔊 Testing with sample URL at volume ${volume}%`)
     playSoundEffectAudio(sampleUrl, volume)
   }
-  
+
   // Add function to check YouTube API status
   window.checkYouTubeAPI = () => {
     console.log('YouTube API status:', {
@@ -5736,7 +5769,7 @@ onUnmounted(() => {
     fadeTransition.value.intervalId = null
     fadeTransition.value.isActive = false
   }
-  
+
   disconnectSSE()
 })
 
