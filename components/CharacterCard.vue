@@ -186,6 +186,7 @@ const emit = defineEmits<{
   view: [character: Character]
   edit: [character: Character]
   delete: [character: Character]
+  assign: [character: Character]
 }>()
 
 // Check if current user is DM
@@ -229,6 +230,13 @@ const menuItems = computed(() => [
       click: () => emit('edit', props.character)
     }
   ],
+  ...(isDM.value ? [[
+    {
+      label: props.character.user ? 'Reassign' : 'Assign',
+      icon: 'i-heroicons-user-plus',
+      click: () => emit('assign', props.character)
+    }
+  ]] : []),
   [
     {
       label: 'Delete Character',

@@ -138,6 +138,7 @@
               @view="navigateTo(`/characters/${character.id}`)"
               @edit="navigateTo(`/characters/${character.id}?edit=true`)"
               @delete="deleteCharacter(character.id)"
+              @assign="openAssignModal(character)"
             />
           </div>
         </div>
@@ -402,30 +403,6 @@ const unassignCharacter = async () => {
   } finally {
     assignmentLoading.value = false
   }
-}
-
-const getCharacterActions = (character) => {
-  return [
-    [{
-      label: 'View Details',
-      icon: 'i-heroicons-eye-20-solid',
-      click: () => navigateTo(`/characters/${character.id}`)
-    }],
-    [{
-      label: character.user ? 'Reassign' : 'Assign',
-      icon: 'i-heroicons-user-plus-20-solid',
-      click: () => openAssignModal(character)
-    }],
-    [{
-      label: 'Edit',
-      icon: 'i-heroicons-pencil-20-solid',
-      click: () => navigateTo(`/characters/${character.id}?edit=true`)
-    }, {
-      label: 'Delete',
-      icon: 'i-heroicons-trash-20-solid',
-      click: () => deleteCharacter(character.id)
-    }]
-  ]
 }
 
 const deleteCharacter = async (characterId) => {
