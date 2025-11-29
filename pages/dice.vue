@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-zinc-950 bg-zinc-950">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <header class="bg-zinc-900 bg-zinc-900 shadow-sm border-b border-zinc-800 border-zinc-800">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-4">
@@ -12,15 +12,16 @@
             <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
 
             <div>
-              <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                🎲 Collaborative Dice Room
+              <h1 class="text-2xl font-bold text-white flex items-center">
+                <UIcon name="i-heroicons-cube" class="w-8 h-8 text-red-500 mr-2" />
+                Collaborative Dice Room
               </h1>
               <div v-if="currentRoom" class="flex items-center space-x-2">
-                <span class="text-sm text-gray-500 dark:text-gray-400">
+                <span class="text-sm text-zinc-400 text-zinc-400">
                   Room: {{ currentRoom.name }}
                 </span>
                 <div class="flex items-center space-x-1">
-                  <span class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                  <span class="text-sm font-mono bg-gray-100 bg-zinc-900 px-2 py-1 rounded">
                     {{ currentRoom.code }}
                   </span>
                   <UButton v-if="currentRoom.code !== 'default'" color="gray" variant="ghost" size="xs"
@@ -113,8 +114,9 @@
       <!-- Room Selection/Creation Card -->
       <UCard v-if="!currentRoom || !isConnected || currentRoom.code === 'default'" class="mb-6">
         <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            🏠 Room Management
+          <h3 class="text-lg font-semibold text-white flex items-center">
+            <UIcon name="i-heroicons-home" class="w-5 h-5 text-red-500 mr-2" />
+            Room Management
           </h3>
         </template>
 
@@ -125,7 +127,7 @@
               Create New Room
             </UButton>
 
-            <div v-if="userRole === 'DM'" class="text-gray-400 dark:text-gray-500">or</div>
+            <div v-if="userRole === 'DM'" class="text-gray-400 dark:text-zinc-400">or</div>
 
             <div class="flex items-center space-x-2 flex-1">
               <UInput v-model="joinRoomCode" placeholder="Enter room code..." class="flex-1"
@@ -138,7 +140,7 @@
           </div>
 
           <div v-if="userRole === 'Player'"
-            class="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            class="text-sm text-gray-600 text-zinc-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
             <div class="flex items-start space-x-2">
               <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
@@ -150,7 +152,7 @@
             </div>
           </div>
 
-          <div v-if="!isConnected" class="text-sm text-gray-500 dark:text-gray-400">
+          <div v-if="!isConnected" class="text-sm text-zinc-400 text-zinc-400">
             Connect to create or join rooms for multiplayer functionality.
           </div>
         </div>
@@ -165,13 +167,14 @@
 
         <!-- Left Sidebar - Character Info -->
         <div
-          class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
+          class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-zinc-900 bg-zinc-900 shadow-lg border-r border-zinc-800 border-zinc-800 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
           :class="isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
           <!-- Left Sidebar Header -->
-          <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+          <div class="sticky top-0 bg-zinc-900 bg-zinc-900 border-b border-zinc-800 border-zinc-800 p-4">
             <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ userRole === 'DM' ? '👥 Players Info' : '🧙‍♂️ Character Info' }}
+              <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <UIcon :name="userRole === 'DM' ? 'i-heroicons-users' : 'i-heroicons-user'" class="w-5 h-5 text-red-500" />
+                {{ userRole === 'DM' ? 'Players Info' : 'Character Info' }}
               </h3>
               <UButton color="gray" variant="ghost" size="sm" @click="isLeftSidebarOpen = false"
                 icon="i-heroicons-x-mark" />
@@ -189,28 +192,31 @@
                   <div class="relative h-24 w-24 mx-auto mb-3">
                     <img v-if="activeCharacter.avatar" :src="activeCharacter.avatar"
                       :alt="activeCharacter.characterName || 'Character'"
-                      class="h-24 w-24 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
+                      class="h-24 w-24 rounded-full object-cover border-4 border-zinc-800 dark:border-gray-600"
                       @error="$event.target.style.display = 'none'" />
                     <div v-if="!activeCharacter.avatar"
-                      class="h-24 w-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-gray-200 dark:border-gray-600">
+                      class="h-24 w-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-zinc-800 dark:border-gray-600">
                       {{ activeCharacter.characterName?.charAt(0)?.toUpperCase() || '?' }}
                     </div>
                   </div>
 
-                  <h5 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h5 class="text-lg font-semibold text-white text-white">
                     {{ activeCharacter.characterName || 'Unknown Character' }}
                   </h5>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                  <p class="text-sm text-zinc-400 text-zinc-400">
                     Level {{ activeCharacter.classLevel || 1 }} {{ activeCharacter.className || 'Class' }}
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                  <p class="text-xs text-zinc-400 text-zinc-400">
                     {{ (activeCharacter.race || 'Unknown') }}
                   </p>
                 </div>
 
                 <!-- Currency -->
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">💰 Currency</h6>
+                <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                    <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4 text-yellow-500" />
+                    Currency
+                  </h6>
                   <div class="grid grid-cols-2 gap-2 text-xs">
                     <div class="flex justify-between">
                       <span class="text-orange-600">Copper:</span>
@@ -233,10 +239,10 @@
                       <span class="font-mono">{{ activeCharacter.platinumCoins || 0 }} pp</span>
                     </div>
                   </div>
-                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div class="mt-2 pt-2 border-t border-zinc-800 border-zinc-800">
                     <div class="flex justify-between items-center text-sm">
                       <span class="font-medium text-gray-700 dark:text-gray-300">Total Value:</span>
-                      <span class="font-bold text-gray-900 dark:text-white">
+                      <span class="font-bold text-white text-white">
                         {{ calculateTotalWealth(activeCharacter) }} gp
                       </span>
                     </div>
@@ -244,33 +250,39 @@
                 </div>
 
                 <!-- Inventory -->
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">🎒 Inventory</h6>
+                <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                    <UIcon name="i-heroicons-briefcase" class="w-4 h-4 text-zinc-400" />
+                    Inventory
+                  </h6>
                   <div v-if="activeCharacter.inventory && activeCharacter.inventory.length > 0"
                     class="space-y-2 max-h-32 overflow-y-auto">
                     <div v-for="item in activeCharacter.inventory" :key="item.id"
-                      class="border border-gray-200 dark:border-gray-700 rounded p-2">
+                      class="border border-zinc-800 border-zinc-800 rounded p-2">
                       <div class="flex justify-between items-start">
                         <div class="flex-1 min-w-0">
-                          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ item.name }}</p>
-                          <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                          <p class="text-sm font-medium text-white text-white truncate">{{ item.name }}</p>
+                          <div class="flex items-center space-x-2 text-xs text-zinc-400 text-zinc-400">
                             <span>Qty: {{ item.quantity || 1 }}</span>
                             <span v-if="item.weight">• {{ item.weight }} lbs</span>
                           </div>
                         </div>
                       </div>
-                      <p v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{{ item.notes
+                      <p v-if="item.notes" class="text-xs text-zinc-400 text-zinc-400 mt-1 truncate">{{ item.notes
                       }}</p>
                     </div>
                   </div>
-                  <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                  <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
                     No items in inventory
                   </div>
                 </div>
 
                 <!-- Notes -->
-                <div v-if="activeCharacter.notes" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">📝 Notes</h6>
+                <div v-if="activeCharacter.notes" class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                  <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                    <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-zinc-400" />
+                    Notes
+                  </h6>
                   <p class="text-sm text-gray-700 dark:text-gray-300 max-h-24 overflow-y-auto">{{ activeCharacter.notes
                   }}</p>
                 </div>
@@ -278,14 +290,15 @@
                 <!-- Reset Stats Button -->
                 <div v-if="!isOfflineMode" class="pt-2">
                   <UButton color="gray" variant="outline" size="sm" @click="resetStats" class="w-full">
-                    🔄 Reset Stats
+                    <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-1" />
+                    Reset Stats
                   </UButton>
                 </div>
               </div>
 
               <div v-else class="text-center py-8">
-                <div class="text-4xl mb-4">🎭</div>
-                <p class="text-gray-500 dark:text-gray-400">
+                <UIcon name="i-heroicons-face-smile" class="text-4xl mb-4 text-zinc-600" />
+                <p class="text-zinc-500">
                   Select a character to view details
                 </p>
               </div>
@@ -295,7 +308,7 @@
             <div v-else>
               <div class="mb-4">
                 <div class="flex items-center justify-between">
-                  <h4 class="font-medium text-gray-900 dark:text-white">Players Health</h4>
+                  <h4 class="font-medium text-white text-white">Players Health</h4>
                   <UButton v-if="!isOfflineMode && currentRoom && currentRoom.code !== 'default'" color="gray" variant="outline" size="xs"
                     @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
                     Refresh
@@ -305,12 +318,12 @@
 
               <div v-if="allPlayers.length > 0" class="space-y-4">
                 <div v-for="player in allPlayers" :key="player.userId"
-                  class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  class="bg-zinc-950 bg-zinc-900 border border-zinc-800 border-zinc-800 rounded-lg p-4">
                   <!-- Player Name and Level -->
                   <div class="flex items-center justify-between mb-3">
                     <div>
-                      <h5 class="text-sm font-medium text-gray-900 dark:text-white">{{ player.name }}</h5>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">Level {{ player.stats.level }}</p>
+                      <h5 class="text-sm font-medium text-white text-white">{{ player.name }}</h5>
+                      <p class="text-xs text-zinc-400 text-zinc-400">Level {{ player.stats.level }}</p>
                     </div>
                     <div class="flex items-center space-x-1">
                       <UButton color="blue" variant="outline" size="xs" icon="i-heroicons-eye"
@@ -356,18 +369,18 @@
                     <!-- Quick Stats Grid -->
                     <div class="grid grid-cols-3 gap-2 mt-3">
                       <div class="text-center">
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Init</div>
-                        <div class="text-sm font-mono text-gray-900 dark:text-white">
+                        <div class="text-xs text-zinc-400 text-zinc-400">Init</div>
+                        <div class="text-sm font-mono text-white text-white">
                           {{ player.stats.initiative >= 0 ? '+' : '' }}{{ player.stats.initiative }}
                         </div>
                       </div>
                       <div class="text-center">
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Speed</div>
-                        <div class="text-sm font-mono text-gray-900 dark:text-white">{{ player.stats.speed }} ft</div>
+                        <div class="text-xs text-zinc-400 text-zinc-400">Speed</div>
+                        <div class="text-sm font-mono text-white text-white">{{ player.stats.speed }} ft</div>
                       </div>
                       <div class="text-center">
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Prof</div>
-                        <div class="text-sm font-mono text-gray-900 dark:text-white">+{{ player.stats.proficiencyBonus
+                        <div class="text-xs text-zinc-400 text-zinc-400">Prof</div>
+                        <div class="text-sm font-mono text-white text-white">+{{ player.stats.proficiencyBonus
                         }}
                         </div>
                       </div>
@@ -377,8 +390,8 @@
 
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">👥</div>
-                  <h4 class="font-medium text-gray-900 dark:text-white mb-2">No Players Connected</h4>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                  <h4 class="font-medium text-white text-white mb-2">No Players Connected</h4>
+                  <p class="text-sm text-zinc-400 text-zinc-400">
                     {{ isOfflineMode ? 'Player health monitoring not available in offline mode' : 'Players will appear here once they join the room' }}
                   </p>
                 </div>
@@ -388,12 +401,12 @@
 
           <!-- Right Sidebar - Ability Scores -->
           <div
-            class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
+            class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-zinc-900 bg-zinc-900 shadow-lg border-l border-zinc-800 border-zinc-800 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
             :class="isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'">
             <!-- Right Sidebar Header -->
-            <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+            <div class="sticky top-0 bg-zinc-900 bg-zinc-900 border-b border-zinc-800 border-zinc-800 p-4">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 class="text-lg font-semibold text-white text-white">
                   {{ userRole === 'DM' ? '🎲 Request Dices' : '⚡ Ability Scores' }}
                 </h3>
                 <UButton color="gray" variant="ghost" size="sm" @click="isRightSidebarOpen = false"
@@ -407,8 +420,8 @@
               <div v-if="userRole === 'Player'">
                 <div v-if="activeCharacter" class="space-y-6">
                   <!-- Ability Scores - Compact Version -->
-                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">⚡ Ability Scores</h6>
+                  <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-white text-white mb-3">⚡ Ability Scores</h6>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="flex justify-between items-center p-2 bg-red-50 dark:bg-red-900/20 rounded">
                         <span class="text-red-700 dark:text-red-300 font-medium">STR</span>
@@ -475,8 +488,8 @@
                   </div>
 
                   <!-- Combat Stats -->
-                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">⚔️ Combat Stats</h6>
+                  <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-white text-white mb-3">⚔️ Combat Stats</h6>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
                         <span class="text-blue-700 dark:text-blue-300">AC</span>
@@ -503,8 +516,8 @@
                   </div>
 
                   <!-- Saving Throws -->
-                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">🛡️ Saving Throws</h6>
+                  <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-white text-white mb-3">🛡️ Saving Throws</h6>
                     <div class="space-y-2">
                       <!-- Always show all 6 saving throws -->
                       <div
@@ -512,13 +525,13 @@
                         :key="ability"
                         class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
                         <div class="flex items-center space-x-2">
-                          <span class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{
+                          <span class="text-sm font-medium text-white text-white capitalize">{{
                             ability.substring(0, 3).toUpperCase()
                             }}</span>
                           <span v-if="getSavingThrowProficiency(ability, activeCharacter)"
                             class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Prof</span>
                         </div>
-                        <span class="text-sm font-mono text-gray-600 dark:text-gray-400">
+                        <span class="text-sm font-mono text-gray-600 text-zinc-400">
                           {{ formatModifier(calculateSavingThrowModifierByAbility(ability, activeCharacter)) }}
                         </span>
                       </div>
@@ -526,21 +539,21 @@
                   </div>
 
                   <!-- Skills -->
-                  <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3">🎯 Skills</h6>
+                  <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                    <h6 class="text-sm font-medium text-white text-white mb-3">🎯 Skills</h6>
                     <div class="space-y-1 max-h-64 overflow-y-auto">
                       <!-- Always show all standard D&D skills -->
                       <div v-for="skill in getAllSkills(activeCharacter)" :key="skill.name"
                         class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
                         <div class="flex items-center space-x-2 flex-1 min-w-0">
-                          <span class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ skill.name
+                          <span class="text-sm font-medium text-white text-white truncate">{{ skill.name
                           }}</span>
                           <span v-if="skill.proficient"
                             class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded flex-shrink-0">Prof</span>
                           <span v-if="skill.expertise"
                             class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0">Exp</span>
                         </div>
-                        <span class="text-xs font-mono text-gray-600 dark:text-gray-400 ml-2">
+                        <span class="text-xs font-mono text-gray-600 text-zinc-400 ml-2">
                           {{ formatModifier(calculateSkillModifierForSkill(skill, activeCharacter)) }}
                         </span>
                       </div>
@@ -550,7 +563,7 @@
 
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">⚡</div>
-                  <p class="text-gray-500 dark:text-gray-400">
+                  <p class="text-zinc-400 text-zinc-400">
                     Select a character to view details
                   </p>
                 </div>
@@ -560,7 +573,7 @@
               <div v-else>
                 <div class="mb-4">
                   <div class="flex items-center justify-between">
-                    <h4 class="font-medium text-gray-900 dark:text-white">Player Management</h4>
+                    <h4 class="font-medium text-white text-white">Player Management</h4>
                     <UButton v-if="currentRoom && currentRoom.code !== 'default'" color="blue" variant="outline" size="xs"
                       @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
                       Refresh
@@ -570,11 +583,11 @@
 
                 <div v-if="allPlayers.length > 0" class="space-y-3">
                   <div v-for="player in allPlayers" :key="player.userId"
-                    class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                    class="border border-zinc-800 border-zinc-800 rounded-lg p-3">
                     <div class="flex items-center justify-between mb-2">
                       <div class="flex items-center space-x-2">
-                        <span class="font-medium text-gray-900 dark:text-white">{{ player.name }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">({{ player.userId }})</span>
+                        <span class="font-medium text-white text-white">{{ player.name }}</span>
+                        <span class="text-xs text-zinc-400 text-zinc-400">({{ player.userId }})</span>
                       </div>
                       <div class="flex items-center space-x-2">
                         <UButton color="green" variant="outline" size="xs" @click="requestRollFromPlayer(player)"
@@ -588,7 +601,7 @@
                       </div>
                     </div>
 
-                    <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                    <div class="text-xs text-zinc-400 text-zinc-400 space-y-1">
                       <div>STR: {{ player.stats.abilities.strength }} | DEX: {{ player.stats.abilities.dexterity }} |
                         CON: {{
                           player.stats.abilities.constitution }}</div>
@@ -601,7 +614,7 @@
 
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">👥</div>
-                  <p class="text-gray-500 dark:text-gray-400">
+                  <p class="text-zinc-400 text-zinc-400">
                     {{ isOfflineMode ? 'Player management not available in offline mode' : 'No players connected' }}
                   </p>
                 </div>
@@ -617,7 +630,7 @@
               <UCard v-if="userRole === 'DM'" class="mb-8">
                 <template #header>
                   <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 class="text-lg font-semibold text-white text-white">
                       🎯 Roll History
                     </h3>
                     <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs" @click="clearHistory"
@@ -629,16 +642,16 @@
 
                 <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
                   <div v-for="roll in rollHistory" :key="roll.id"
-                    class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                    class="border border-zinc-800 border-zinc-800 rounded-lg p-3"
                     :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
                         <div class="flex items-center space-x-2 mb-1">
                           <span class="text-sm font-medium"
-                            :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
+                            :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-white text-white'">
                             {{ roll.userName }}
                           </span>
-                          <span class="text-xs text-gray-500 dark:text-gray-400">
+                          <span class="text-xs text-zinc-400 text-zinc-400">
                             {{ formatTime(roll.timestamp) }}
                           </span>
                         </div>
@@ -655,7 +668,7 @@
                           </div>
                         </div>
 
-                        <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <div v-if="roll.details.length > 1" class="text-xs text-zinc-400 text-zinc-400 mb-1">
                           ({{ roll.details.join(' + ') }})
                         </div>
 
@@ -666,7 +679,7 @@
                       <!-- Sumatoria a la derecha -->
                       <div class="ml-4">
                         <span class="text-lg font-bold"
-                          :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
+                          :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-white text-white'">
                           {{ roll.total }}
                         </span>
                       </div>
@@ -676,7 +689,7 @@
 
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">🎲</div>
-                  <p class="text-gray-500 dark:text-gray-400">
+                  <p class="text-zinc-400 text-zinc-400">
                     No rolls yet. Start rolling some dice!
                   </p>
                 </div>
@@ -692,10 +705,10 @@
                   <UCard>
                     <template #header>
                       <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 class="text-lg font-semibold text-white text-white">
                           🎲 Select Dice
                         </h3>
-                        <div v-if="totalDiceSelected > 0" class="text-sm text-gray-500 dark:text-gray-400">
+                        <div v-if="totalDiceSelected > 0" class="text-sm text-zinc-400 text-zinc-400">
                           {{ totalDiceSelected }} dice selected
                         </div>
                       </div>
@@ -729,7 +742,7 @@
 
                       <!-- Quick Roll Buttons -->
                       <div>
-                        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Quick Rolls</h4>
+                        <h4 class="text-sm font-medium text-white text-white mb-3">Quick Rolls</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                           <UButton v-for="roll in quickRolls" :key="roll.label" color="gray" variant="outline" size="sm"
                             @click="performQuickRoll(roll)" class="text-xs">
@@ -772,7 +785,7 @@
                   <UCard>
                     <template #header>
                       <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 class="text-lg font-semibold text-white text-white">
                           🎯 Roll History
                         </h3>
                         <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
@@ -784,16 +797,16 @@
 
                     <div v-if="rollHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
                       <div v-for="roll in rollHistory" :key="roll.id"
-                        class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                        class="border border-zinc-800 border-zinc-800 rounded-lg p-3"
                         :class="{ 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20': roll.isOwn }">
                         <div class="flex items-start justify-between">
                           <div class="flex-1">
                             <div class="flex items-center space-x-2 mb-1">
                               <span class="text-sm font-medium"
-                                :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'">
+                                :class="roll.isOwn ? 'text-blue-900 dark:text-blue-100' : 'text-white text-white'">
                                 {{ roll.userName }}
                               </span>
-                              <span class="text-xs text-gray-500 dark:text-gray-400">
+                              <span class="text-xs text-zinc-400 text-zinc-400">
                                 {{ formatTime(roll.timestamp) }}
                               </span>
                             </div>
@@ -810,7 +823,7 @@
                               </div>
                             </div>
 
-                            <div v-if="roll.details.length > 1" class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <div v-if="roll.details.length > 1" class="text-xs text-zinc-400 text-zinc-400 mb-1">
                               ({{ roll.details.join(' + ') }})
                             </div>
 
@@ -822,7 +835,7 @@
                           <!-- Sumatoria a la derecha -->
                           <div class="ml-4">
                             <span class="text-lg font-bold"
-                              :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'">
+                              :class="roll.isCritical ? (roll.criticalType === 'success' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') : 'text-white text-white'">
                               {{ roll.total }}
                             </span>
                           </div>
@@ -832,7 +845,7 @@
 
                     <div v-else class="text-center py-8">
                       <div class="text-4xl mb-4">🎲</div>
-                      <p class="text-gray-500 dark:text-gray-400">
+                      <p class="text-zinc-400 text-zinc-400">
                         No rolls yet. Start rolling some dice!
                       </p>
                     </div>
@@ -845,7 +858,7 @@
                   <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
                     <template #header>
                       <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 class="text-lg font-semibold text-white text-white">
                           ⚔️ Battle Mode
                         </h3>
                         <div class="flex items-center space-x-2">
@@ -866,8 +879,8 @@
 
                     <div v-if="!isInBattle" class="text-center py-8">
                       <div class="text-4xl mb-4">⚔️</div>
-                      <h4 class="font-medium text-gray-900 dark:text-white mb-2">Ready for Battle</h4>
-                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      <h4 class="font-medium text-white text-white mb-2">Ready for Battle</h4>
+                      <p class="text-sm text-zinc-400 text-zinc-400 mb-4">
                         Click "Start Battle Setup" to begin preparing for combat. You'll be able to add enemies and then
                         roll
                         initiative when ready.
@@ -895,7 +908,7 @@
                       <!-- Player Management -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Player Selection</h4>
+                          <h4 class="text-sm font-medium text-white text-white">Player Selection</h4>
                           <UButton color="gray" variant="outline" size="xs" @click="loadBattlePlayers"
                             :loading="isBattlePlayersLoading" icon="i-heroicons-arrow-path">
                             Refresh
@@ -921,13 +934,13 @@
 
                         <!-- Available Players -->
                         <div v-if="unselectedPlayers.length > 0" class="mb-3">
-                          <h5 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Available Players</h5>
+                          <h5 class="text-xs font-medium text-gray-600 text-zinc-400 mb-2">Available Players</h5>
                           <div class="space-y-1">
                             <div v-for="player in unselectedPlayers" :key="player.userId"
-                              class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
+                              class="flex items-center justify-between p-2 bg-zinc-950 bg-zinc-900 border border-zinc-800 border-zinc-800 rounded">
                               <div class="flex-1">
-                                <div class="font-medium text-gray-900 dark:text-gray-100">{{ player.name }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Click to add to battle</div>
+                                <div class="font-medium text-white dark:text-gray-100">{{ player.name }}</div>
+                                <div class="text-xs text-zinc-400 text-zinc-400">Click to add to battle</div>
                               </div>
                               <UButton color="green" variant="ghost" size="xs" @click="addPlayerToBattle(player.userId)"
                                 icon="i-heroicons-plus">
@@ -941,10 +954,10 @@
                           v-if="selectedPlayers.length === 0 && unselectedPlayers.length === 0 && !isBattlePlayersLoading"
                           class="text-center py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                           <div class="text-2xl mb-2">👥</div>
-                          <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                          <p class="text-zinc-400 text-zinc-400 text-sm mb-3">
                             No players connected to this room
                           </p>
-                          <p class="text-xs text-gray-400 dark:text-gray-500">
+                          <p class="text-xs text-gray-400 dark:text-zinc-400">
                             Players need to join the room first
                           </p>
                         </div>
@@ -953,7 +966,7 @@
                       <!-- Enemy Management -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemy Setup</h4>
+                          <h4 class="text-sm font-medium text-white text-white">Enemy Setup</h4>
                           <UButton color="green" variant="outline" size="xs" @click="showAddEnemyModal = true"
                             icon="i-heroicons-plus">
                             Add Enemy
@@ -982,7 +995,7 @@
                         <div v-else
                           class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                           <div class="text-2xl mb-2">👹</div>
-                          <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                          <p class="text-zinc-400 text-zinc-400 text-sm mb-3">
                             No enemies added yet
                           </p>
                           <UButton color="green" variant="outline" size="sm" @click="showAddEnemyModal = true"
@@ -1044,7 +1057,7 @@
                       <!-- Enemy Management -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Enemies</h4>
+                          <h4 class="text-sm font-medium text-white text-white">Enemies</h4>
                           <UButton color="green" variant="outline" size="xs" @click="showAddEnemyModal = true"
                             icon="i-heroicons-plus">
                             Add Enemy
@@ -1071,7 +1084,7 @@
                           </div>
                         </div>
 
-                        <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                        <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
                           No enemies in battle
                         </div>
                       </div>
@@ -1079,7 +1092,7 @@
                       <!-- Initiative Tracker -->
                       <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Initiative Order</h4>
+                          <h4 class="text-sm font-medium text-white text-white">Initiative Order</h4>
                           <div class="flex items-center space-x-2">
                             <UButton v-if="battleMode.phase === 'setup'" color="blue" variant="outline" size="xs"
                               @click="rollInitiative" icon="i-heroicons-arrow-path">
@@ -1095,14 +1108,14 @@
                         <div class="space-y-1">
                           <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
                             class="flex items-center justify-between p-2 rounded"
-                            :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
+                            :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-zinc-950 bg-zinc-900 border border-zinc-800 border-zinc-800'">
                             <div class="flex items-center space-x-2">
                               <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                                 :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
                                 {{ index + 1 }}
                               </div>
                               <span class="font-medium"
-                                :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
+                                :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-white text-white'">
                                 {{ participant.name }}
                               </span>
                               <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
@@ -1110,7 +1123,7 @@
                               </UBadge>
                             </div>
                             <div class="text-sm font-mono"
-                              :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
+                              :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-zinc-400 text-zinc-400'">
                               {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{
                                 participant.initiative }})
                             </div>
@@ -1124,7 +1137,7 @@
                   <UCard v-else-if="userRole === 'Player' && isInBattle">
                     <template #header>
                       <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 class="text-lg font-semibold text-white text-white">
                           ⚔️ Battle in Progress
                         </h3>
                         <UBadge color="green" variant="soft">
@@ -1171,9 +1184,9 @@
                         <div v-if="showCharacterAttacks">
                           <div v-if="activeCharacterAttacks.length > 0" class="space-y-2">
                             <div v-for="attack in activeCharacterAttacks" :key="attack.id || attack.name"
-                              class="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded p-3">
+                              class="bg-zinc-900 bg-zinc-900 border border-blue-200 dark:border-blue-700 rounded p-3">
                               <div class="flex items-center justify-between mb-2">
-                                <h5 class="font-medium text-gray-900 dark:text-white">
+                                <h5 class="font-medium text-white text-white">
                                   {{ attack.name || 'Unnamed Attack' }}
                                 </h5>
                                 <div class="flex items-center space-x-2">
@@ -1187,7 +1200,7 @@
                                   </UButton>
                                 </div>
                               </div>
-                              <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                              <div class="text-sm text-gray-600 text-zinc-400 space-y-1">
                                 <div v-if="attack.attackBonus !== undefined">
                                   <span class="font-medium">Attack Bonus:</span>
                                   {{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}
@@ -1212,18 +1225,18 @@
 
                       <!-- Initiative Order (Player View) -->
                       <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
-                        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Initiative Order</h4>
+                        <h4 class="text-sm font-medium text-white text-white mb-3">Initiative Order</h4>
                         <div class="space-y-1">
                           <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
                             class="flex items-center justify-between p-2 rounded"
-                            :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'">
+                            :class="index === battleMode.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-zinc-950 bg-zinc-900 border border-zinc-800 border-zinc-800'">
                             <div class="flex items-center space-x-2">
                               <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                                 :class="index === battleMode.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
                                 {{ index + 1 }}
                               </div>
                               <span class="font-medium"
-                                :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-gray-900 dark:text-white'">
+                                :class="index === battleMode.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-white text-white'">
                                 {{ participant.name }}
                               </span>
                               <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
@@ -1231,7 +1244,7 @@
                               </UBadge>
                             </div>
                             <div class="text-sm font-mono"
-                              :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'">
+                              :class="index === battleMode.currentTurnIndex ? 'text-green-700 dark:text-green-300' : 'text-zinc-400 text-zinc-400'">
                               {{ participant.initiativeRoll }} ({{ participant.initiative >= 0 ? '+' : '' }}{{
                                 participant.initiative }})
                             </div>
@@ -1241,7 +1254,7 @@
 
                       <!-- Battle Phase Info -->
                       <div v-if="battleMode.phase === 'setup'"
-                        class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                        class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
                         <div class="text-2xl mb-2">⏳</div>
                         <p>Waiting for DM to roll initiative...</p>
                       </div>
@@ -1252,7 +1265,7 @@
                   <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default' && isConnected">
                     <template #header>
                       <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 class="text-lg font-semibold text-white text-white">
                           🎵 DJ Music Control
                         </h3>
                         <div class="flex items-center space-x-2">
@@ -1436,10 +1449,10 @@
 
                       <!-- Volume Control -->
                       <div
-                        class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        class="bg-zinc-950 bg-zinc-900/50 border border-zinc-800 border-zinc-800 rounded-lg p-4">
                         <div class="flex items-center justify-between mb-2">
-                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Volume</h4>
-                          <span class="text-sm text-gray-600 dark:text-gray-400">{{ musicState.volume }}%</span>
+                          <h4 class="text-sm font-medium text-white text-white">Volume</h4>
+                          <span class="text-sm text-gray-600 text-zinc-400">{{ musicState.volume }}%</span>
                         </div>
                         <div class="flex items-center space-x-3">
                           <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-gray-400" />
@@ -1452,7 +1465,7 @@
                       <!-- Playlist -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-gray-900 dark:text-white">Playlist</h4>
+                          <h4 class="text-sm font-medium text-white text-white">Playlist</h4>
                           <UButton v-if="musicState.playlist.length > 0" color="gray" variant="ghost" size="xs"
                             @click="clearPlaylist" icon="i-heroicons-trash">
                             Clear All
@@ -1461,7 +1474,7 @@
 
                         <div v-if="musicState.playlist.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
                           <div v-for="track in musicState.playlist" :key="track.id"
-                            class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                            class="flex items-center justify-between p-3 bg-zinc-900 bg-zinc-900 border border-zinc-800 border-zinc-800 rounded-lg"
                             :class="{
                               'ring-2 ring-green-500': track.id === musicState.currentTrack?.id,
                               'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20': track.isSoundEffect
@@ -1485,7 +1498,7 @@
                               <!-- Track details -->
                               <div class="flex-1 min-w-0">
                                 <div class="flex items-center space-x-2">
-                                  <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  <div class="text-sm font-medium text-white text-white truncate">
                                     {{ track.title || 'Unknown Track' }}
                                   </div>
                                   <!-- Sound Effect Badge -->
@@ -1493,11 +1506,11 @@
                                     SFX
                                   </UBadge>
                                 </div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                <div class="text-xs text-zinc-400 text-zinc-400 truncate">
                                   {{ track.artist || 'Unknown Artist' }}
                                 </div>
                                 <!-- Duration and additional metadata -->
-                                <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-zinc-400 mt-1">
                                   <span v-if="track.duration">{{ formatDuration(track.duration) }}</span>
                                   <span v-if="track.isSoundEffect && track.isPlayableWhileMusic"
                                     class="text-purple-500">
@@ -1530,10 +1543,10 @@
                         <div v-else
                           class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                           <div class="text-2xl mb-2">🎵</div>
-                          <p class="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                          <p class="text-zinc-400 text-zinc-400 text-sm mb-3">
                             No tracks in playlist
                           </p>
-                          <p class="text-gray-400 dark:text-gray-500 text-xs">
+                          <p class="text-gray-400 dark:text-zinc-400 text-xs">
                             Add YouTube tracks to create atmosphere for your session
                           </p>
                         </div>
@@ -1569,18 +1582,18 @@
               <!-- Mensaje cuando no hay sesión activa -->
               <div v-else class="text-center py-16">
                 <div class="text-8xl mb-6">🎲</div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                <h2 class="text-2xl font-bold text-white text-white mb-4">
                   No Active Dice Session
                 </h2>
                 <div v-if="userRole === 'DM'" class="space-y-4">
-                  <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                  <p class="text-lg text-gray-600 text-zinc-400 mb-6">
                     As a DM, you need to create or join a room to start rolling dice.
                   </p>
                   <div class="flex justify-center space-x-4">
                     <UButton color="primary" size="lg" @click="showCreateRoom = true" icon="i-heroicons-plus">
                       Create New Room
                     </UButton>
-                    <div class="text-gray-400 dark:text-gray-500 flex items-center">or</div>
+                    <div class="text-gray-400 dark:text-zinc-400 flex items-center">or</div>
                     <div class="flex items-center space-x-2">
                       <UInput v-model="joinRoomCode" placeholder="Enter room code..." class="w-48"
                         @keyup.enter="joinExistingRoom" />
@@ -1592,7 +1605,7 @@
                   </div>
                 </div>
                 <div v-else class="space-y-4">
-                  <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                  <p class="text-lg text-gray-600 text-zinc-400 mb-6">
                     You need to join a dice room created by a DM to start rolling dice.
                   </p>
                   <div class="flex justify-center">
@@ -1623,13 +1636,13 @@
         </div>
 
         <!-- Topographical Map Section -->
-        <div class="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
+        <div class="mt-12 border-t border-zinc-800 border-zinc-800 pt-8">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-6">
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h2 class="text-2xl font-bold text-white text-white mb-2">
                 🗺️ Campaign Map
               </h2>
-              <p class="text-gray-600 dark:text-gray-400">
+              <p class="text-gray-600 text-zinc-400">
                 Explore the world of your campaign. Click on different regions to learn more about them.
               </p>
             </div>
@@ -1644,7 +1657,7 @@
     <UModal v-model="showCreateRoom" :ui="{ width: 'max-w-md' }">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-lg font-semibold text-white text-white">
             🏠 Create New Room
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="showCreateRoom = false" />
@@ -1656,7 +1669,7 @@
             <p class="text-gray-600 dark:text-gray-300 mb-4">
               Create a new private room for your D&D session
             </p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+            <p class="text-sm text-zinc-400 text-zinc-400">
               You'll get a unique room code that others can use to join
             </p>
           </div>
@@ -1677,7 +1690,7 @@
     <UModal v-model="showRollRequestModal" :ui="{ width: 'max-w-md' }">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-lg font-semibold text-white text-white">
             🎲 Request Roll from {{ selectedPlayerForRequest?.name }}
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="closeRollRequestModal" />
@@ -1730,7 +1743,7 @@
     <UModal v-model="isEditingPlayer" :ui="{ width: 'max-w-2xl' }">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-lg font-semibold text-white text-white">
             Edit Stats for {{ editingPlayer?.name }}
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="closeEditModal" />
@@ -1739,7 +1752,7 @@
         <div v-if="editingPlayerStats" class="space-y-6">
           <!-- Hit Points -->
           <div>
-            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Health</h4>
+            <h4 class="text-sm font-medium text-white text-white mb-3">Health</h4>
             <div class="grid grid-cols-2 gap-4">
               <UFormGroup label="Current HP">
                 <UInput v-model.number="editingPlayerStats.hitPoints.current" type="number" min="0"
@@ -1753,7 +1766,7 @@
 
           <!-- Core Stats -->
           <div>
-            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Core Stats</h4>
+            <h4 class="text-sm font-medium text-white text-white mb-3">Core Stats</h4>
             <div class="grid grid-cols-2 gap-4">
               <UFormGroup label="Armor Class">
                 <UInput v-model.number="editingPlayerStats.armorClass" type="number" min="1" />
@@ -1772,7 +1785,7 @@
 
           <!-- Abilities -->
           <div>
-            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Ability Scores</h4>
+            <h4 class="text-sm font-medium text-white text-white mb-3">Ability Scores</h4>
             <div class="grid grid-cols-3 gap-4">
               <UFormGroup label="Strength (STR)">
                 <UInput v-model.number="editingPlayerStats.abilities.strength" type="number" min="1" max="30" />
@@ -1819,7 +1832,7 @@
       <div class="p-6">
         <div class="text-center">
           <div class="text-6xl mb-4">🎲</div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <h3 class="text-lg font-semibold text-white text-white mb-2">
             Roll Request from DM
           </h3>
           <p class="text-gray-600 dark:text-gray-300 mb-4">
@@ -1833,7 +1846,7 @@
           </div>
 
           <div v-if="pendingRollRequest?.modifier && pendingRollRequest.modifier !== 0"
-            class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            class="text-sm text-gray-600 text-zinc-400 mb-4">
             Modifier: {{ pendingRollRequest.modifier > 0 ? '+' : '' }}{{ pendingRollRequest.modifier }}
           </div>
 
@@ -1852,7 +1865,7 @@
     <!-- Add Enemy Modal -->
     <UModal v-model="showAddEnemyModal" :ui="{ width: 'max-w-md' }">
       <div class="p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 class="text-lg font-semibold text-white text-white mb-4">
           👹 Add Enemy
         </h3>
 
@@ -1911,7 +1924,7 @@
               @ended="showCriticalAnimation = false" />
             <!-- Close button -->
             <UButton color="white" variant="ghost" size="sm" icon="i-heroicons-x-mark"
-              class="absolute top-4 right-4 z-10 text-white hover:bg-white hover:bg-opacity-20"
+              class="absolute top-4 right-4 z-10 text-white hover:bg-zinc-900 hover:bg-opacity-20"
               @click="showCriticalAnimation = false" />
           </div>
         </div>
@@ -3321,7 +3334,7 @@ function getCriticalClass(roll: DiceRoll): string {
       ? 'text-green-600 dark:text-green-400'
       : 'text-red-600 dark:text-red-400'
   }
-  return 'text-gray-900 dark:text-white'
+  return 'text-white text-white'
 }
 
 // Helper function to show music-related toasts only to DMs

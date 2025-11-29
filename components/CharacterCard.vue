@@ -9,10 +9,10 @@
           size="lg"
         />
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-lg font-semibold text-white text-white">
             {{ character.characterName }}
           </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-sm text-zinc-400 text-zinc-400">
             {{ character.race }} {{ character.className || character.characterClass }}
           </p>
         </div>
@@ -22,12 +22,12 @@
         <!-- DM Quick View Button -->
         <UButton
           v-if="isDM"
-          color="blue"
+          color="red"
           variant="ghost"
           icon="i-heroicons-eye"
           size="sm"
           @click="showDetailModal = true"
-          class="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          class="hover:bg-zinc-800 hover:bg-zinc-800"
         />
         
         <UDropdown :items="menuItems" :popper="{ placement: 'bottom-end' }">
@@ -47,7 +47,7 @@
       <div class="flex items-center space-x-2">
         <UBadge
           v-if="character.race"
-          color="blue"
+          color="red"
           variant="soft"
           size="sm"
         >
@@ -55,7 +55,7 @@
         </UBadge>
         <UBadge
           v-if="character.className || character.characterClass"
-          color="purple"
+          color="gray"
           variant="soft"
           size="sm"
         >
@@ -66,12 +66,12 @@
       <!-- Level and Background -->
       <div class="space-y-2">
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600 dark:text-gray-400">Level:</span>
-          <span class="font-medium text-gray-900 dark:text-white">{{ character.classLevel || character.level || 1 }}</span>
+          <span class="text-zinc-400 text-zinc-400">Level:</span>
+          <span class="font-medium text-white text-white">{{ character.classLevel || character.level || 1 }}</span>
         </div>
         <div v-if="character.background" class="flex justify-between text-sm">
-          <span class="text-gray-600 dark:text-gray-400">Background:</span>
-          <span class="font-medium text-gray-900 dark:text-white">{{ character.background }}</span>
+          <span class="text-zinc-400 text-zinc-400">Background:</span>
+          <span class="font-medium text-white text-white">{{ character.background }}</span>
         </div>
       </div>
 
@@ -79,14 +79,14 @@
       <div v-if="character.currentHp !== undefined && character.maxHp" class="grid grid-cols-2 gap-4">
         <div class="flex items-center space-x-2">
           <UIcon name="i-heroicons-heart" class="h-4 w-4 text-red-500" />
-          <span class="text-sm text-gray-600 dark:text-gray-300">
+          <span class="text-sm text-zinc-400 text-zinc-300">
             {{ character.currentHp }}/{{ character.maxHp }} HP
           </span>
         </div>
         
         <div v-if="character.armorClass" class="flex items-center space-x-2">
-          <UIcon name="i-heroicons-shield-check" class="h-4 w-4 text-blue-500" />
-          <span class="text-sm text-gray-600 dark:text-gray-300">
+          <UIcon name="i-heroicons-shield-check" class="h-4 w-4 text-zinc-400" />
+          <span class="text-sm text-zinc-400 text-zinc-300">
             {{ character.armorClass }} AC
           </span>
         </div>
@@ -95,8 +95,8 @@
       <!-- Health Bar if HP data available -->
       <div v-if="character.currentHp !== undefined && character.maxHp" class="w-full">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs text-gray-500 dark:text-gray-400">Health</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">
+          <span class="text-xs text-zinc-400 text-zinc-400">Health</span>
+          <span class="text-xs text-zinc-400 text-zinc-400">
             {{ healthPercentage }}%
           </span>
         </div>
@@ -112,13 +112,13 @@
     <div class="flex items-center justify-between mb-4">
       <div v-if="character.user" class="flex items-center space-x-2">
         <div class="h-2 w-2 bg-green-500 rounded-full"></div>
-        <span class="text-sm text-gray-600 dark:text-gray-400">
-          Assigned to: <span class="font-medium text-gray-900 dark:text-white">{{ character.user.username }}</span>
+        <span class="text-sm text-zinc-400 text-zinc-400">
+          Assigned to: <span class="font-medium text-white text-white">{{ character.user.username }}</span>
         </span>
       </div>
       <div v-else class="flex items-center space-x-2">
         <div class="h-2 w-2 bg-yellow-500 rounded-full"></div>
-        <span class="text-sm text-gray-600 dark:text-gray-400">Unassigned</span>
+        <span class="text-sm text-zinc-400 text-zinc-400">Unassigned</span>
       </div>
       
       <span v-if="character.createdAt" class="text-xs text-gray-400">

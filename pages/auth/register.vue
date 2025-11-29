@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex">
     <!-- Left side - Hero section with D&D theme -->
-    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div class="hidden lg:flex lg:w-1/2 bg-zinc-950 relative overflow-hidden">
       <!-- Background pattern -->
       <div class="absolute inset-0 opacity-10">
         <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=0 0 60 60 xmlns=http://www.w3.org/2000/svg%3E%3Cg fill=none fill-rule=evenodd%3E%3Cg fill=%23ffffff fill-opacity=0.1%3E%3Cpath d=M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"></div>
@@ -11,7 +11,7 @@
       <div class="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
         <div class="mb-8">
           <!-- D&D Logo/Icon -->
-          <div class="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl flex items-center justify-center mb-6 shadow-2xl">
+          <div class="w-16 h-16 bg-red-700 rounded-xl flex items-center justify-center mb-6 shadow-2xl">
             <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
@@ -19,27 +19,27 @@
           
           <h1 class="text-4xl font-bold leading-tight mb-4">
             Begin Your
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
+            <span class="text-transparent bg-clip-text bg-red-700">
               Epic Journey
             </span>
           </h1>
           
-          <p class="text-xl text-slate-300 leading-relaxed mb-8">
+          <p class="text-xl text-zinc-400 leading-relaxed mb-8">
             Create your account and join thousands of adventurers managing their D&D campaigns in the digital realm.
           </p>
           
           <div class="space-y-4">
             <div class="flex items-center space-x-3">
-              <div class="w-2 h-2 bg-emerald-400 rounded-full"></div>
-              <span class="text-slate-300">Choose your role: Player or DM</span>
+              <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+              <span class="text-zinc-400">Choose your role: Player or DM</span>
             </div>
             <div class="flex items-center space-x-3">
-              <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span class="text-slate-300">Create unlimited characters</span>
+              <div class="w-2 h-2 bg-zinc-500 rounded-full"></div>
+              <span class="text-zinc-400">Create unlimited characters</span>
             </div>
             <div class="flex items-center space-x-3">
-              <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <span class="text-slate-300">Join campaigns and adventures</span>
+              <div class="w-2 h-2 bg-zinc-500 rounded-full"></div>
+              <span class="text-zinc-400">Join campaigns and adventures</span>
             </div>
           </div>
         </div>
@@ -51,25 +51,25 @@
     </div>
     
     <!-- Right side - Register form -->
-    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white dark:bg-gray-900">
+    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-zinc-900 bg-zinc-900">
       <div class="mx-auto w-full max-w-sm lg:w-96">
         <!-- Mobile hero header -->
         <div class="lg:hidden mb-8 text-center">
-          <div class="w-12 h-12 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div class="w-12 h-12 bg-red-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Join the Adventure</h2>
+          <h2 class="text-2xl font-bold text-white text-white">Join the Adventure</h2>
         </div>
         
         <div class="hidden lg:block">
-          <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+          <h2 class="text-3xl font-bold text-white text-white">
             Create your account
           </h2>
-          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p class="mt-2 text-sm text-zinc-400 text-zinc-400">
             Or
-            <NuxtLink to="/auth/login" class="font-medium text-emerald-600 hover:text-emerald-500 transition-colors">
+            <NuxtLink to="/auth/login" class="font-medium text-red-500 hover:text-red-400 transition-colors">
               sign in to your existing account
             </NuxtLink>
           </p>
@@ -79,7 +79,7 @@
           <form class="space-y-6" @submit.prevent="handleRegister">
             <div class="space-y-4">
               <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="username" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
                   Username
                 </label>
                 <UInput
@@ -96,7 +96,7 @@
               </div>
               
               <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="email" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
                   Email address
                 </label>
                 <UInput
@@ -114,7 +114,7 @@
               
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label for="firstName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label for="firstName" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
                     First name
                   </label>
                   <UInput
@@ -130,7 +130,7 @@
                 </div>
                 
                 <div>
-                  <label for="lastName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label for="lastName" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
                     Last name
                   </label>
                   <UInput
@@ -147,7 +147,7 @@
               </div>
               
               <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="password" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
                   Password
                 </label>
                 <UInput
@@ -164,7 +164,7 @@
               </div>
               
               <div>
-                <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="confirmPassword" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
                   Confirm password
                 </label>
                 <UInput
@@ -181,7 +181,7 @@
               </div>
               
               <div>
-                <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="role" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
                   I want to be a...
                 </label>
                 <USelect
@@ -193,7 +193,7 @@
                   :class="{ 'border-red-500': errors.role }"
                   class="transition-all duration-200"
                 />
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <p class="mt-2 text-xs text-gray-500 text-zinc-400">
                   Players can create and manage their own characters. DMs can manage all characters and create campaigns.
                 </p>
                 <p v-if="errors.role" class="mt-1 text-sm text-red-600">{{ errors.role }}</p>
@@ -210,13 +210,13 @@
                 />
               </div>
               <div class="ml-3 text-sm">
-                <label for="agree-terms" class="text-gray-700 dark:text-gray-300">
+                <label for="agree-terms" class="text-zinc-300 text-zinc-300">
                   I agree to the 
-                  <NuxtLink to="/terms" class="font-medium text-emerald-600 hover:text-emerald-500 transition-colors">
+                  <NuxtLink to="/terms" class="font-medium text-red-500 hover:text-red-400 transition-colors">
                     Terms of Service
                   </NuxtLink>
                   and 
-                  <NuxtLink to="/privacy" class="font-medium text-emerald-600 hover:text-emerald-500 transition-colors">
+                  <NuxtLink to="/privacy" class="font-medium text-red-500 hover:text-red-400 transition-colors">
                     Privacy Policy
                   </NuxtLink>
                 </label>
@@ -261,9 +261,9 @@
 
           <!-- Mobile login link -->
           <div class="lg:hidden mt-6 text-center">
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+            <p class="text-sm text-zinc-400 text-zinc-400">
               Already have an account?
-              <NuxtLink to="/auth/login" class="font-medium text-emerald-600 hover:text-emerald-500 transition-colors">
+              <NuxtLink to="/auth/login" class="font-medium text-red-500 hover:text-red-400 transition-colors">
                 Sign in here
               </NuxtLink>
             </p>

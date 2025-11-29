@@ -9,12 +9,12 @@
     <UCard
       :ui="{
         ring: '',
-        divide: 'divide-y divide-gray-100 dark:divide-gray-800'
+        divide: 'divide-y divide-zinc-800 divide-zinc-800'
       }"
     >
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-lg font-semibold text-white text-white">
             Create New Character
           </h3>
           <UButton
@@ -123,7 +123,7 @@
         <UAccordion :items="abilityScoreItems" multiple>
           <template #ability-scores>
             <div class="p-4 space-y-4">
-              <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">
+              <h4 class="text-md font-semibold text-white text-white mb-4">
                 Ability Scores
               </h4>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -277,7 +277,7 @@
           <template #skills>
             <div class="p-4 space-y-4">
               <div class="flex items-center justify-between mb-4">
-                <h4 class="text-md font-semibold text-gray-900 dark:text-white">
+                <h4 class="text-md font-semibold text-white text-white">
                   Skills & Abilities
                 </h4>
                 <UButton

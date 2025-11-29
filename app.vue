@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="min-h-screen bg-zinc-950 text-zinc-200 selection:bg-red-500 selection:text-white">
     <NuxtPage />
     <UNotifications />
   </div>
@@ -15,13 +15,16 @@ useHead({
     { name: 'description', content: 'A modern D&D character management dashboard' }
   ],
   link: [
-    { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-  ]
+    { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+  ],
+  bodyAttrs: {
+    class: 'bg-zinc-950 text-zinc-200'
+  }
 })
 
 // Color mode
 const colorMode = useColorMode()
 
 // Set default theme
-colorMode.preference = 'system'
+colorMode.preference = 'dark'
 </script>

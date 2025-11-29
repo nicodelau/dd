@@ -10,7 +10,7 @@
     }">
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-xl font-semibold text-white text-white">
             {{ character?.characterName || 'Character Details' }}
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="close" />
@@ -23,32 +23,32 @@
           <!-- Basic Info -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Basic Information</h4>
+              <h4 class="font-semibold text-white text-white">Basic Information</h4>
             </template>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <span class="text-gray-500">Character Name:</span>
+                <span class="text-zinc-400">Character Name:</span>
                 <p class="font-medium">{{ character.characterName || 'Unknown' }}</p>
               </div>
               <div>
-                <span class="text-gray-500">Player:</span>
+                <span class="text-zinc-400">Player:</span>
                 <p class="font-medium">{{ character.playerName || 'Unassigned' }}</p>
               </div>
               <div>
-                <span class="text-gray-500">Race:</span>
+                <span class="text-zinc-400">Race:</span>
                 <p class="font-medium">{{ character.race || 'Unknown' }}</p>
               </div>
               <div>
-                <span class="text-gray-500">Class & Level:</span>
+                <span class="text-zinc-400">Class & Level:</span>
                 <p class="font-medium">{{ (character.className || 'Unknown') }} {{ character.classLevel || 1 }}</p>
               </div>
               <div>
-                <span class="text-gray-500">Background:</span>
+                <span class="text-zinc-400">Background:</span>
                 <p class="font-medium">{{ character.background || 'Not set' }}</p>
               </div>
               <div>
-                <span class="text-gray-500">Alignment:</span>
+                <span class="text-zinc-400">Alignment:</span>
                 <p class="font-medium">{{ character.alignment || 'Not set' }}</p>
               </div>
             </div>
@@ -57,24 +57,24 @@
           <!-- Combat Stats -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Combat Statistics</h4>
+              <h4 class="font-semibold text-white text-white">Combat Statistics</h4>
             </template>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div class="text-center">
-                <span class="text-gray-500 text-sm">AC</span>
-                <p class="text-2xl font-bold text-blue-600">{{ character.armorClass || 10 }}</p>
+                <span class="text-zinc-400 text-sm">AC</span>
+                <p class="text-2xl font-bold text-zinc-200">{{ character.armorClass || 10 }}</p>
               </div>
               <div class="text-center">
-                <span class="text-gray-500 text-sm">Speed</span>
+                <span class="text-zinc-400 text-sm">Speed</span>
                 <p class="text-lg font-bold">{{ character.speed || 30 }} ft</p>
               </div>
               <div class="text-center">
-                <span class="text-gray-500 text-sm">HP</span>
-                <p class="text-lg font-bold text-red-600">{{ character.currentHp }}/{{ character.maxHp }}</p>
+                <span class="text-zinc-400 text-sm">HP</span>
+                <p class="text-lg font-bold text-red-500">{{ character.currentHp }}/{{ character.maxHp }}</p>
               </div>
               <div class="text-center">
-                <span class="text-gray-500 text-sm">Initiative</span>
+                <span class="text-zinc-400 text-sm">Initiative</span>
                 <p class="text-lg font-bold">{{ formatModifier(character.initiative) }}</p>
               </div>
             </div>
@@ -82,10 +82,10 @@
             <!-- Health Bar -->
             <div class="mt-4">
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs text-gray-500">Health</span>
-                <span class="text-xs text-gray-500">{{ healthPercentage }}%</span>
+                <span class="text-xs text-zinc-400">Health</span>
+                <span class="text-xs text-zinc-400">{{ healthPercentage }}%</span>
               </div>
-              <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="w-full bg-zinc-800 rounded-full h-2">
                 <div class="h-2 rounded-full transition-all duration-300" :class="healthColor"
                   :style="`width: ${healthPercentage}%`"></div>
               </div>
@@ -95,12 +95,12 @@
           <!-- Ability Scores -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Ability Scores</h4>
+              <h4 class="font-semibold text-white text-white">Ability Scores</h4>
             </template>
 
             <div class="grid grid-cols-3 md:grid-cols-6 gap-4">
               <div class="text-center" v-for="(ability, key) in abilities" :key="key">
-                <span class="text-xs text-gray-500 uppercase">{{ key }}</span>
+                <span class="text-xs text-zinc-400 uppercase">{{ key }}</span>
                 <div class="text-lg font-bold">{{ character[ability] || 10 }}</div>
                 <div class="text-sm text-gray-600">{{ formatModifier(getAbilityModifier(character[ability] || 10)) }}
                 </div>
@@ -111,7 +111,7 @@
           <!-- Saving Throws -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Saving Throws</h4>
+              <h4 class="font-semibold text-white text-white">Saving Throws</h4>
             </template>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -125,7 +125,7 @@
           <!-- Skills -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Skills</h4>
+              <h4 class="font-semibold text-white text-white">Skills</h4>
             </template>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-1">
@@ -139,7 +139,7 @@
           <!-- Attacks -->
           <UCard v-if="character.attacks && character.attacks.length > 0">
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Attacks</h4>
+              <h4 class="font-semibold text-white text-white">Attacks</h4>
             </template>
 
             <div class="space-y-3">
@@ -147,20 +147,20 @@
                 class="border border-gray-200 dark:border-gray-700 rounded p-3">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div>
-                    <span class="text-gray-500 text-sm">Name:</span>
+                    <span class="text-zinc-400 text-sm">Name:</span>
                     <p class="font-medium">{{ attack.name }}</p>
                   </div>
                   <div>
-                    <span class="text-gray-500 text-sm">Attack Bonus:</span>
+                    <span class="text-zinc-400 text-sm">Attack Bonus:</span>
                     <p class="font-medium">{{ formatModifier(attack.attackBonus) }}</p>
                   </div>
                   <div>
-                    <span class="text-gray-500 text-sm">Damage:</span>
+                    <span class="text-zinc-400 text-sm">Damage:</span>
                     <p class="font-medium">{{ attack.damage || 'N/A' }}</p>
                   </div>
                 </div>
                 <div v-if="attack.notes" class="mt-2">
-                  <span class="text-gray-500 text-sm">Notes:</span>
+                  <span class="text-zinc-400 text-sm">Notes:</span>
                   <p class="text-sm">{{ attack.notes }}</p>
                 </div>
               </div>
@@ -173,7 +173,7 @@
           <!-- Character Portrait -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Portrait</h4>
+              <h4 class="font-semibold text-white text-white">Portrait</h4>
             </template>
 
             <div class="text-center">
@@ -197,7 +197,7 @@
           <!-- Quick Stats -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Quick Stats</h4>
+              <h4 class="font-semibold text-white text-white">Quick Stats</h4>
             </template>
 
             <div class="space-y-3">
@@ -219,7 +219,7 @@
           <!-- Currency -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Currency</h4>
+              <h4 class="font-semibold text-white text-white">Currency</h4>
             </template>
 
             <div class="space-y-2">
@@ -255,7 +255,7 @@
           <!-- Inventory -->
           <UCard v-if="character.inventory && character.inventory.length > 0">
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Inventory</h4>
+              <h4 class="font-semibold text-white text-white">Inventory</h4>
             </template>
 
             <div class="space-y-2 max-h-60 overflow-y-auto">
@@ -263,7 +263,7 @@
                 class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
                 <div class="flex-1">
                   <p class="font-medium text-sm">{{ item.name }}</p>
-                  <p class="text-xs text-gray-500">{{ item.quantity }} × {{ item.weight || 0 }} lbs</p>
+                  <p class="text-xs text-zinc-400">{{ item.quantity }} × {{ item.weight || 0 }} lbs</p>
                   <UBadge v-if="item.equipped" color="green" variant="soft" size="xs" class="mt-1">Equipped</UBadge>
                 </div>
               </div>
@@ -273,7 +273,7 @@
           <!-- Notes -->
           <UCard v-if="character.notes">
             <template #header>
-              <h4 class="font-semibold text-gray-900 dark:text-white">Notes</h4>
+              <h4 class="font-semibold text-white text-white">Notes</h4>
             </template>
 
             <div class="text-sm text-gray-600 dark:text-gray-300 max-h-32 overflow-y-auto">
@@ -285,7 +285,7 @@
 
       <template #footer>
         <div class="flex justify-between items-center">
-          <div class="text-sm text-gray-500">
+          <div class="text-sm text-zinc-400">
             Character ID: {{ character?.id }}
           </div>
           <div class="flex space-x-2">

@@ -6,6 +6,14 @@ export default defineNuxtConfig({
   // CSS configuration
   css: ['~/assets/css/main.css'],
 
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+      ]
+    }
+  },
+
   // Make sure color mode is enabled
   colorMode: {
     preference: 'system'
