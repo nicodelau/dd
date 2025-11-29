@@ -34,29 +34,6 @@
           </div>
 
           <div class="flex items-center space-x-3">
-            <!-- Sidebar Toggle Buttons -->
-            <div class="flex items-center space-x-2">
-              <UButton color="blue" variant="outline" size="sm" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
-                :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
-                <span class="hidden sm:inline">{{ isLeftSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Players Info' : 'Character' }}</span>
-                <span class="sm:hidden">{{ userRole === 'DM' ? 'Players' : 'Char' }}</span>
-              </UButton>
-              <UButton color="green" variant="outline" size="sm" @click="isRightSidebarOpen = !isRightSidebarOpen"
-                :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
-                <span class="hidden sm:inline">{{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ?
-                  'Request Dices' : 'Abilities' }}</span>
-                <span class="sm:hidden">{{ userRole === 'DM' ? 'Request' : 'Stats' }}</span>
-              </UButton>
-            </div>
-
-            <!-- Room Actions -->
-            <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
-              <UButton color="red" variant="outline" size="sm" icon="i-heroicons-arrow-right-on-rectangle"
-                @click="leaveRoom">
-                Leave Room
-              </UButton>
-            </div>
-
             <div class="flex items-center space-x-2">
               <div class="h-3 w-3 rounded-full"
                 :class="isConnected ? 'bg-green-500' : isOfflineMode ? 'bg-yellow-500' : 'bg-red-500'"></div>
@@ -81,16 +58,31 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Sidebar toggle buttons for mobile -->
-      <div class="lg:hidden mb-4 grid grid-cols-2 gap-2">
-        <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
-          :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
-          {{ isLeftSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Players Info' : 'Character' }}
-        </UButton>
-        <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen"
-          :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
-          {{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Request Dices' : 'Abilities' }}
-        </UButton>
+      <!-- Toolbar (Sidebar Toggles & Room Actions) -->
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+        <!-- Sidebar Toggles -->
+        <div class="flex items-center space-x-2">
+          <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
+            :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
+            {{ isLeftSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Players Info' : 'Character' }}
+          </UButton>
+          <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen"
+            :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
+            {{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Request Dices' : 'Abilities' }}
+          </UButton>
+          <UButton v-if="userRole === 'DM'" color="purple" variant="outline" icon="i-heroicons-photo"
+            @click="showDmImageModal = true">
+            Show Image
+          </UButton>
+        </div>
+
+        <!-- Room Actions -->
+        <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
+          <UButton color="red" variant="outline" icon="i-heroicons-arrow-right-on-rectangle"
+            @click="leaveRoom">
+            Leave Room
+          </UButton>
+        </div>
       </div>
 
       <!-- Offline Mode Banner -->
@@ -407,7 +399,7 @@
             <div class="sticky top-0 bg-zinc-900 bg-zinc-900 border-b border-zinc-800 border-zinc-800 p-4">
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-white text-white">
-                  {{ userRole === 'DM' ? '🎲 Request Dices' : '⚡ Ability Scores' }}
+                  {{ userRole === 'DM' ? 'Request Dices' : 'Ability Scores' }}
                 </h3>
                 <UButton color="gray" variant="ghost" size="sm" @click="isRightSidebarOpen = false"
                   icon="i-heroicons-x-mark" />
@@ -421,7 +413,7 @@
                 <div v-if="activeCharacter" class="space-y-6">
                   <!-- Ability Scores - Compact Version -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-white text-white mb-3">⚡ Ability Scores</h6>
+                    <h6 class="text-sm font-medium text-white text-white mb-3">Ability Scores</h6>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="flex justify-between items-center p-2 bg-red-50 dark:bg-red-900/20 rounded">
                         <span class="text-red-700 dark:text-red-300 font-medium">STR</span>
@@ -489,7 +481,7 @@
 
                   <!-- Combat Stats -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-white text-white mb-3">⚔️ Combat Stats</h6>
+                    <h6 class="text-sm font-medium text-white text-white mb-3">Combat Stats</h6>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
                         <span class="text-blue-700 dark:text-blue-300">AC</span>
@@ -517,7 +509,7 @@
 
                   <!-- Saving Throws -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-white text-white mb-3">🛡️ Saving Throws</h6>
+                    <h6 class="text-sm font-medium text-white text-white mb-3">Saving Throws</h6>
                     <div class="space-y-2">
                       <!-- Always show all 6 saving throws -->
                       <div
@@ -540,10 +532,15 @@
 
                   <!-- Skills -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-white text-white mb-3">🎯 Skills</h6>
+                    <div class="flex items-center justify-between mb-3">
+                      <h6 class="text-sm font-medium text-white text-white">Skills</h6>
+                    </div>
+                    <div class="mb-3">
+                      <UInput v-model="skillSearchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search skills..." size="xs" color="gray" variant="outline" />
+                    </div>
                     <div class="space-y-1 max-h-64 overflow-y-auto">
                       <!-- Always show all standard D&D skills -->
-                      <div v-for="skill in getAllSkills(activeCharacter)" :key="skill.name"
+                      <div v-for="skill in filteredSkills" :key="skill.name"
                         class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
                         <div class="flex items-center space-x-2 flex-1 min-w-0">
                           <span class="text-sm font-medium text-white text-white truncate">{{ skill.name
@@ -562,7 +559,9 @@
                 </div>
 
                 <div v-else class="text-center py-8">
-                  <div class="text-4xl mb-4">⚡</div>
+                  <div class="text-4xl mb-4 flex justify-center">
+                    <UIcon name="i-heroicons-user" class="w-12 h-12 text-zinc-600" />
+                  </div>
                   <p class="text-zinc-400 text-zinc-400">
                     Select a character to view details
                   </p>
@@ -619,15 +618,6 @@
                   </p>
                 </div>
 
-                <!-- DM Tools -->
-                <div class="mt-6 pt-6 border-t border-zinc-800">
-                  <h4 class="font-medium text-white mb-4">DM Tools</h4>
-                  <div class="space-y-2">
-                    <UButton block color="purple" variant="outline" icon="i-heroicons-photo" @click="showDmImageModal = true">
-                      Show Image to Players
-                    </UButton>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -2217,6 +2207,18 @@ const selectedCharacterForDetail = ref<any>(null)
 const activeCharacter = computed(() => {
   return userCharacters.value.find(c => c.id === activeCharacterId.value) || null
 })
+
+const skillSearchQuery = ref('')
+
+const filteredSkills = computed(() => {
+  if (!activeCharacter.value) return []
+  const skills = getAllSkills(activeCharacter.value)
+  if (!skillSearchQuery.value) return skills
+  
+  const query = skillSearchQuery.value.toLowerCase()
+  return skills.filter((skill: any) => skill.name.toLowerCase().includes(query))
+})
+
 const currentPlayerName = ref('')
 
 // Battle player management
