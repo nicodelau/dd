@@ -1621,6 +1621,24 @@
             </div>
           </div>
         </div>
+
+        <!-- Topographical Map Section -->
+        <div class="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                🗺️ Campaign Map
+              </h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                Explore the world of your campaign. Click on different regions to learn more about them.
+              </p>
+            </div>
+            <TopoMap 
+              @zone-selected="handleMapZoneSelected"
+              :zones="campaignZones"
+            />
+          </div>
+        </div>
     </main>
     <!-- Room Creation Modal -->
     <UModal v-model="showCreateRoom" :ui="{ width: 'max-w-md' }">
@@ -1994,8 +2012,57 @@ interface QuickRoll {
   modifier?: number
 }
 
+// Component imports
+import TopoMap from '~/components/TopoMap.vue'
+
 // Get authenticated user
 const user = useState < any > ('user')
+
+// Campaign zones for the topographical map - Updated for Pilotes
+const campaignZones = ref([
+  { 
+    name: "PALERMO", 
+    description: "Elegante distrito residencial donde vive la nobleza y los comerciantes prósperos. Sus calles empedradas y mansiones reflejan el poder económico de la ciudad.", 
+    x: -6, 
+    z: 0, 
+    color: 0x8B4513 
+  },
+  { 
+    name: "OPUS", 
+    description: "Vibrante centro artesanal donde los mejores craftsmen de Pilotes crean obras maestras. El sonido de martillos y el olor a metal forjado llenan el aire.", 
+    x: 6, 
+    z: 0, 
+    color: 0x4A4A4A 
+  },
+  { 
+    name: "PUERTO", 
+    description: "Bullicioso distrito portuario donde llegan mercancías de tierras lejanas. Los muelles nunca descansan y siempre hay historias de aventura en las tabernas.", 
+    x: 8, 
+    z: 8, 
+    color: 0x1E90FF 
+  },
+  { 
+    name: "Castillo Central", 
+    description: "Imponente fortaleza real que domina el corazón de Pilotes. Desde sus torres se puede ver toda la ciudad y las tierras circundantes.", 
+    x: 0, 
+    z: -4, 
+    color: 0xFFD700 
+  },
+  { 
+    name: "LAFE", 
+    description: "Sereno lago de aguas cristalinas ubicado fuera de las murallas. Es un lugar de paz donde los ciudadanos van a reflexionar y los pescadores buscan su sustento.", 
+    x: -10, 
+    z: 10, 
+    color: 0x20B2AA 
+  },
+  { 
+    name: "Las Murallas", 
+    description: "Poderosas fortificaciones de piedra que han protegido Pilotes durante siglos. Sus torres de vigilancia mantienen guardia constante contra cualquier amenaza.", 
+    x: 0, 
+    z: 6, 
+    color: 0x696969 
+  }
+])
 
 // Reactive state
 const userRole = ref < 'Player' | 'DM' > ('Player')
@@ -2986,6 +3053,32 @@ function rollSingleDiceType(diceType: string) {
 
   // Roll the dice with the temporary selection
   rollDice(tempSelection)
+}
+
+// Handle topographical map zone selection
+function handleMapZoneSelected(zone: { name: string; description: string }) {
+  console.log('Zone selected:', zone)
+  
+  // Could trigger different actions based on user role
+  if (userRole.value === 'DM') {
+    // DMs might get additional options like setting scene music or ambience
+    showZoneInfoToast(zone, 'DM mode: Consider setting ambience for this location')
+  } else {
+    // Players get basic zone information
+    showZoneInfoToast(zone)
+  }
+}
+
+function showZoneInfoToast(zone: { name: string; description: string }, additionalInfo?: string) {
+  const toast = useToast()
+  toast.add({
+    title: `📍 ${zone.name}`,
+    description: zone.description + (additionalInfo ? `\n\n${additionalInfo}` : ''),
+    timeout: 5000,
+    ui: {
+      icon: 'i-heroicons-map-pin'
+    }
+  })
 }
 
 async function updateUserName() {
@@ -4111,10 +4204,18 @@ async function startBattle() {
 }
 
 async function endBattle() {
-  if (!currentRoom.value || currentRoom.value.code === 'default') return
+  console.log('⚔️ Attempting to end battle...')
+  console.log('Current room:', currentRoom.value)
+  console.log('Battle mode:', battleMode.value)
+
+  if (!currentRoom.value || currentRoom.value.code === 'default') {
+    console.log('⚔️ Cannot end battle: no valid room')
+    return
+  }
 
   isBattleLoading.value = true
   try {
+    console.log('⚔️ Making API call to end battle...')
     const response = await $fetch('/api/battle/end', {
       method: 'POST',
       body: {
@@ -4122,15 +4223,25 @@ async function endBattle() {
       }
     })
 
-    if (response.success) {
+    console.log('⚔️ API response:', response)
+
+    if (response.success && response.ended) {
       battleMode.value = null
-      console.log('⚔️ Battle mode ended')
+      console.log('⚔️ Battle mode ended successfully')
 
       const toast = useToast()
       toast.add({
         title: 'Battle Ended',
         description: 'Battle mode has been deactivated',
         color: 'blue'
+      })
+    } else {
+      console.log('⚔️ Battle end failed:', response)
+      const toast = useToast()
+      toast.add({
+        title: 'Error',
+        description: 'Failed to end battle mode',
+        color: 'red'
       })
     }
   } catch (error) {
