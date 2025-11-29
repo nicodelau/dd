@@ -1,4 +1,4 @@
-import { writeFile } from 'fs/promises'
+import { writeFile, unlink } from 'fs/promises'
 import { resolve, join } from 'path'
 import { randomUUID } from 'crypto'
 
@@ -35,6 +35,16 @@ export default defineEventHandler(async (event) => {
   const filePath = join(uploadDir, fileName)
 
   await writeFile(filePath, file.data)
+
+  // Delete file after 10 seconds
+  setTimeout(async () => {
+    try {
+      await unlink(filePath)
+      console.log(`Deleted temporary file: ${filePath}`)
+    } catch (error) {
+      console.error(`Failed to delete temporary file: ${filePath}`, error)
+    }
+  }, 10000)
 
   return {
     url: `/uploads/${fileName}`
