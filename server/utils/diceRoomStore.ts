@@ -819,21 +819,33 @@ class DiceRoomStore {
     return participant
   }
 
-  endBattle(dmUserId: string, roomCode: string): void {
+  endBattle(dmUserId: string, roomCode: string): boolean {
+    console.log(`⚔️ Attempting to end battle in room ${roomCode} by user ${dmUserId}`)
+
     const room = this.getRoom(roomCode)
-    if (!room || !room.battleState) {
-      throw new Error('Battle mode not active')
+    if (!room) {
+      console.log(`⚔️ Room ${roomCode} not found`)
+      return false
+    }
+
+    if (!room.battleState) {
+      console.log(`⚔️ No battle state in room ${roomCode}`)
+      return false
     }
 
     if (!this.isDM(dmUserId, roomCode)) {
-      throw new Error('Only DMs can end battle')
+      console.log(`⚔️ User ${dmUserId} is not a DM in room ${roomCode}`)
+      return false
     }
+
+    console.log(`⚔️ Ending battle - current phase: ${room.battleState.phase}, isActive: ${room.battleState.isActive}`)
 
     room.battleState.isActive = false
     room.battleState.phase = 'ended'
-    
+
     this.broadcastEvent('battle:ended', {}, roomCode)
     console.log(`⚔️ Battle ended in room ${roomCode}`)
+    return true
   }
 
   getBattleState(roomCode: string): BattleState | null {
