@@ -618,6 +618,16 @@
                     {{ isOfflineMode ? 'Player management not available in offline mode' : 'No players connected' }}
                   </p>
                 </div>
+
+                <!-- DM Tools -->
+                <div class="mt-6 pt-6 border-t border-zinc-800">
+                  <h4 class="font-medium text-white mb-4">DM Tools</h4>
+                  <div class="space-y-2">
+                    <UButton block color="purple" variant="outline" icon="i-heroicons-photo" @click="showDmImageModal = true">
+                      Show Image to Players
+                    </UButton>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1908,6 +1918,75 @@
       height: 'h-auto'
     }" class="modal-custom-size" />
 
+    <!-- DM Show Image Modal -->
+    <UModal v-model="showDmImageModal">
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-white">Show Image to Players</h3>
+            <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="showDmImageModal = false" />
+          </div>
+        </template>
+
+        <div class="space-y-4">
+          <UFormGroup label="Upload Image" help="Select an image from your device">
+            <input type="file" accept="image/*" @change="handleImageUpload" class="block w-full text-sm text-gray-400
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-purple-50 file:text-purple-700
+              hover:file:bg-purple-100
+              dark:file:bg-purple-900/20 dark:file:text-purple-300
+            "/>
+          </UFormGroup>
+
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-gray-700"></div>
+            </div>
+            <div class="relative flex justify-center">
+              <span class="bg-zinc-900 px-2 text-sm text-gray-500">OR</span>
+            </div>
+          </div>
+
+          <UFormGroup label="Image URL">
+            <UInput v-model="dmImageUrl" placeholder="https://example.com/image.jpg" />
+          </UFormGroup>
+
+          <UFormGroup label="Caption (Optional)">
+            <UInput v-model="dmImageCaption" placeholder="A mysterious map..." />
+          </UFormGroup>
+
+          <div v-if="dmImageUrl" class="mt-4">
+            <p class="text-sm text-gray-400 mb-2">Preview:</p>
+            <img :src="dmImageUrl" class="w-full h-48 object-contain rounded bg-black/50" />
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end space-x-2">
+            <UButton color="gray" variant="ghost" @click="showDmImageModal = false">Cancel</UButton>
+            <UButton color="purple" :loading="isSendingImage" @click="sendDmImage">Show to Players</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
+
+    <!-- Player Image Display Modal -->
+    <UModal v-model="showImageDisplayModal" :ui="{ width: 'max-w-4xl' }">
+      <div class="relative bg-black rounded-lg overflow-hidden">
+        <img :src="displayedImageUrl" class="w-full h-auto max-h-[80vh] object-contain" />
+        
+        <div v-if="displayedImageCaption" class="absolute bottom-0 left-0 right-0 bg-black/70 p-4 text-center">
+          <p class="text-white text-lg font-medium">{{ displayedImageCaption }}</p>
+        </div>
+
+        <UButton color="white" variant="ghost" icon="i-heroicons-x-mark" 
+          class="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full"
+          @click="showImageDisplayModal = false" />
+      </div>
+    </UModal>
+
     <!-- Critical Roll Animation Modal -->
     <Teleport to="body">
       <Transition enter-active-class="transition-opacity duration-300" enter-from-class="opacity-0"
@@ -2197,6 +2276,83 @@ const selectedPlayerForRequest = ref < Player | null > (null)
 const requestedDiceType = ref < string > ('')
 const rollRequestMessage = ref('')
 const rollRequestModifier = ref(0)
+
+// DM Show Image state
+const showDmImageModal = ref(false)
+const dmImageUrl = ref('')
+const dmImageCaption = ref('')
+const dmImageFile = ref<File | null>(null)
+const isSendingImage = ref(false)
+
+// Player Image Display state
+const showImageDisplayModal = ref(false)
+const displayedImageUrl = ref('')
+const displayedImageCaption = ref('')
+const imageDisplayTimeout = ref<any>(null)
+
+function handleImageUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (input.files && input.files[0]) {
+    dmImageFile.value = input.files[0]
+    // Create a preview URL
+    dmImageUrl.value = URL.createObjectURL(input.files[0])
+  }
+}
+
+async function sendDmImage() {
+  const toast = useToast()
+  if ((!dmImageUrl.value && !dmImageFile.value) || !currentRoom.value) return
+
+  isSendingImage.value = true
+  try {
+    let finalImageUrl = dmImageUrl.value
+
+    // If a file is selected, upload it first
+    if (dmImageFile.value) {
+      const formData = new FormData()
+      formData.append('file', dmImageFile.value)
+      
+      const uploadResponse = await $fetch<{ url: string }>('/api/upload', {
+        method: 'POST',
+        body: formData
+      } as any)
+      
+      finalImageUrl = uploadResponse.url
+    }
+
+    await $fetch('/api/dice/show-image', {
+      method: 'POST',
+      body: {
+        userId: userId.value,
+        roomCode: currentRoom.value.code,
+        imageUrl: finalImageUrl,
+        caption: dmImageCaption.value
+      }
+    })
+    showDmImageModal.value = false
+    dmImageUrl.value = ''
+    dmImageCaption.value = ''
+    dmImageFile.value = null
+    
+    // Show success toast
+    toast.add({
+      title: 'Image Sent',
+      description: 'The image has been shown to all players.',
+      icon: 'i-heroicons-check-circle',
+      color: 'green'
+    })
+  } catch (error) {
+    console.error('Failed to send image:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to send image.',
+      icon: 'i-heroicons-exclamation-circle',
+      color: 'red'
+    })
+  } finally {
+    isSendingImage.value = false
+  }
+}
 
 // Player roll request notification
 const showRollRequestNotification = ref(false)
@@ -3697,6 +3853,25 @@ function initializeSSE(roomCode?: string) {
         playerStats.value = data.stats
         console.log('🎲 Received player stats')
       }
+    })
+
+    // Handle DM show image event
+    eventSource.value.addEventListener('dm:show_image', (event) => {
+      const data = JSON.parse(event.data)
+      displayedImageUrl.value = data.imageUrl
+      displayedImageCaption.value = data.caption || ''
+      showImageDisplayModal.value = true
+
+      // Clear existing timeout if any
+      if (imageDisplayTimeout.value) {
+        clearTimeout(imageDisplayTimeout.value)
+      }
+
+      // Auto close after 5 seconds
+      imageDisplayTimeout.value = setTimeout(() => {
+        showImageDisplayModal.value = false
+        imageDisplayTimeout.value = null
+      }, 5000)
     })
 
     eventSource.value.addEventListener('players:stats', (event) => {
