@@ -296,8 +296,8 @@
               <div class="mb-4">
                 <div class="flex items-center justify-between">
                   <h4 class="font-medium text-gray-900 dark:text-white">Players Health</h4>
-                  <UButton v-if="!isOfflineMode" color="gray" variant="outline" size="xs"
-                    @click="loadAllPlayersStats(currentRoom?.code || 'default')" icon="i-heroicons-arrow-path">
+                  <UButton v-if="!isOfflineMode && currentRoom && currentRoom.code !== 'default'" color="gray" variant="outline" size="xs"
+                    @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
                     Refresh
                   </UButton>
                 </div>
@@ -561,8 +561,8 @@
                 <div class="mb-4">
                   <div class="flex items-center justify-between">
                     <h4 class="font-medium text-gray-900 dark:text-white">Player Management</h4>
-                    <UButton color="blue" variant="outline" size="xs"
-                      @click="loadAllPlayersStats(currentRoom?.code || 'default')" icon="i-heroicons-arrow-path">
+                    <UButton v-if="currentRoom && currentRoom.code !== 'default'" color="blue" variant="outline" size="xs"
+                      @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
                       Refresh
                     </UButton>
                   </div>
@@ -683,7 +683,8 @@
               </UCard>
 
               <!-- Layout condicional: 2 columnas para players, 3 para DM -->
-              <div
+              <!-- Solo mostrar dados si hay una sesión válida -->
+              <div v-if="shouldShowDiceInterface"
                 :class="userRole === 'DM' ? 'grid grid-cols-1 lg:grid-cols-3 gap-8' : 'grid grid-cols-1 lg:grid-cols-2 gap-8'">
                 <!-- Dice Selection - Left column for both -->
                 <div :class="userRole === 'DM' ? 'lg:col-span-2 space-y-6' : 'space-y-6'" class="order-1">
@@ -1564,6 +1565,59 @@
 
                 </div>
               </div>
+
+              <!-- Mensaje cuando no hay sesión activa -->
+              <div v-else class="text-center py-16">
+                <div class="text-8xl mb-6">🎲</div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  No Active Dice Session
+                </h2>
+                <div v-if="userRole === 'DM'" class="space-y-4">
+                  <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                    As a DM, you need to create or join a room to start rolling dice.
+                  </p>
+                  <div class="flex justify-center space-x-4">
+                    <UButton color="primary" size="lg" @click="showCreateRoom = true" icon="i-heroicons-plus">
+                      Create New Room
+                    </UButton>
+                    <div class="text-gray-400 dark:text-gray-500 flex items-center">or</div>
+                    <div class="flex items-center space-x-2">
+                      <UInput v-model="joinRoomCode" placeholder="Enter room code..." class="w-48"
+                        @keyup.enter="joinExistingRoom" />
+                      <UButton color="gray" @click="joinExistingRoom" :disabled="!joinRoomCode.trim()"
+                        icon="i-heroicons-arrow-right-on-rectangle">
+                        Join Room
+                      </UButton>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="space-y-4">
+                  <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                    You need to join a dice room created by a DM to start rolling dice.
+                  </p>
+                  <div class="flex justify-center">
+                    <div class="flex items-center space-x-2">
+                      <UInput v-model="joinRoomCode" placeholder="Enter room code from your DM..." class="w-64"
+                        @keyup.enter="joinExistingRoom" />
+                      <UButton color="primary" @click="joinExistingRoom" :disabled="!joinRoomCode.trim()"
+                        icon="i-heroicons-arrow-right-on-rectangle">
+                        Join Room
+                      </UButton>
+                    </div>
+                  </div>
+                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mx-auto max-w-md">
+                    <div class="flex items-start space-x-2">
+                      <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div>
+                        <span class="font-medium text-blue-900 dark:text-blue-100">Need a room code?</span>
+                        <span class="text-blue-800 dark:text-blue-200 block text-sm mt-1">
+                          Ask your Dungeon Master for the room code to join their dice session.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2132,6 +2186,15 @@ const userId = computed(() => user.value?.id || `guest_${Date.now()}_${Math.rand
 const userInitials = computed(() => user.value?.username?.charAt(0)?.toUpperCase() || 'A')
 const userEmail = computed(() => user.value?.email || '')
 
+// Determine if dice interface should be shown
+const shouldShowDiceInterface = computed(() => {
+  // Show dice interface only if:
+  // 1. User is connected AND
+  // 2. There's a current room AND 
+  // 3. It's NOT the default room (only show dice in DM-created rooms)
+  return isConnected.value && currentRoom.value && currentRoom.value.code !== 'default'
+})
+
 // User role and character management functions
 async function loadUserCharacters() {
   if (!user.value?.id) {
@@ -2240,16 +2303,18 @@ async function refreshUserData() {
   try {
     await loadUserCharacters()
 
-    // Update rond stats based on new data
-    if (userRole.value === 'Player') {
-      await loadPlayerStats(currentRoom.value?.code || 'default')
-    } else {
-      await loadAllPlayersStats(currentRoom.value?.code || 'default')
-    }
+    // Only update stats if we're in a valid room
+    if (currentRoom.value && currentRoom.value.code !== 'default') {
+      if (userRole.value === 'Player') {
+        await loadPlayerStats(currentRoom.value.code)
+      } else {
+        await loadAllPlayersStats(currentRoom.value.code)
+      }
 
-    // Re-join room  updated role
-    if (isConnected.value && !isOfflineMode.value) {
-      await joinRoom(currentRoom.value?.code || 'default')
+      // Re-join room with updated role
+      if (isConnected.value && !isOfflineMode.value) {
+        await joinRoom(currentRoom.value.code)
+      }
     }
   } catch (error) {
     console.error('Failed to refresh user data:', error)
@@ -2928,16 +2993,16 @@ async function updateUserName() {
     // Load characters for the new user name and auto-detect role
     await loadUserCharacters()
 
-    if (isConnected.value && !isOfflineMode.value) {
+    if (isConnected.value && !isOfflineMode.value && currentRoom.value && currentRoom.value.code !== 'default') {
       try {
-        await joinRoom(currentRoom.value?.code || 'default') // Re-join with updated name and role
+        await joinRoom(currentRoom.value.code) // Re-join with updated name and role
         console.log('Updated user name to:', userName.value)
       } catch (error) {
         console.error('Failed to update user name:', error)
         console.log('Updated user name to:', userName.value, '(locally only)')
       }
     } else {
-      console.log('Updated user name to:', userName.value, '(offline mode)')
+      console.log('Updated user name to:', userName.value, '(offline mode or no valid room)')
     }
   }
 }
@@ -2964,7 +3029,7 @@ function createDefaultStats(): PlayerStats {
 }
 
 async function updateStats() {
-  if (isOfflineMode.value || !playerStats.value) return
+  if (isOfflineMode.value || !playerStats.value || !currentRoom.value || currentRoom.value.code === 'default') return
 
   try {
     await $fetch(`/api/dice/stats/${userId.value}`, {
@@ -2972,7 +3037,7 @@ async function updateStats() {
       body: {
         modifierUserId: userId.value,
         stats: playerStats.value,
-        roomCode: currentRoom.value?.code || 'default'
+        roomCode: currentRoom.value.code
       }
     })
     console.log('Stats updated successfully')
@@ -2981,7 +3046,9 @@ async function updateStats() {
   }
 }
 
-async function loadPlayerStats(roomCode: string = 'default') {
+async function loadPlayerStats(roomCode?: string) {
+  if (!roomCode) return // Don't load stats if no room code provided
+  
   if (isOfflineMode.value) {
     // In offline mode, load character stats directly from the character data
     await loadCharacterStats()
@@ -3007,8 +3074,8 @@ async function loadPlayerStats(roomCode: string = 'default') {
   }
 }
 
-async function loadAllPlayersStats(roomCode: string = 'default') {
-  if (isOfflineMode.value || userRole.value !== 'DM') return
+async function loadAllPlayersStats(roomCode?: string) {
+  if (!roomCode || isOfflineMode.value || userRole.value !== 'DM') return
 
   try {
     const response = await $fetch(`/api/dice/stats?viewerUserId=${userId.value}&roomCode=${roomCode}`)
@@ -3036,7 +3103,7 @@ function editPlayerStats(player: Player) {
 }
 
 async function savePlayerStats() {
-  if (!editingPlayer.value || !editingPlayerStats.value) return
+  if (!editingPlayer.value || !editingPlayerStats.value || !currentRoom.value || currentRoom.value.code === 'default') return
 
   try {
     await $fetch(`/api/dice/stats/${editingPlayer.value.userId}`, {
@@ -3044,7 +3111,7 @@ async function savePlayerStats() {
       body: {
         modifierUserId: userId.value,
         stats: editingPlayerStats.value,
-        roomCode: currentRoom.value?.code || 'default'
+        roomCode: currentRoom.value.code
       }
     })
 
@@ -3089,13 +3156,13 @@ function closeRollRequestModal() {
 }
 
 async function sendRollRequest() {
-  if (!selectedPlayerForRequest.value || !requestedDiceType.value) return
+  if (!selectedPlayerForRequest.value || !requestedDiceType.value || !currentRoom.value || currentRoom.value.code === 'default') return
 
   try {
     const response = await $fetch('/api/dice/request-roll', {
       method: 'POST',
       body: {
-        roomCode: currentRoom.value?.code || 'default',
+        roomCode: currentRoom.value.code,
         targetUserId: selectedPlayerForRequest.value.userId,
         diceType: requestedDiceType.value,
         message: rollRequestMessage.value || undefined,
@@ -3295,8 +3362,9 @@ async function leaveRoom() {
       color: 'green'
     })
 
-    // Reconnect to default room
-    await reconnectWithRoom('default')
+    // Disconnect from SSE and clear room state
+    disconnectSSE()
+    isConnected.value = false
   } catch (error) {
     console.error('🏠 Failed to leave room:', error)
     const toast = useToast()
@@ -3388,7 +3456,10 @@ async function reconnectWithRoom(roomCode: string) {
 const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 'undefined' && window.location.hostname !== 'localhost'
 
 // SSE Functions - Server-Sent Events for real-time updates
-function initializeSSE(roomCode: string = 'default') {
+function initializeSSE(roomCode?: string) {
+  // Don't connect if no room code provided
+  if (!roomCode) return
+  
   // Check if user has explicitly chosen offline mode
   if (isOfflineModePreference.value) {
     console.log('🎲 Staying in offline mode per user preference')
@@ -3899,7 +3970,9 @@ function initializeSSE(roomCode: string = 'default') {
   }
 }
 
-async function joinRoom(roomCode: string = 'default') {
+async function joinRoom(roomCode?: string) {
+  if (!roomCode) return // Don't join if no room code provided
+  
   try {
     const response = await $fetch('/api/dice/join', {
       method: 'POST',
@@ -3930,6 +4003,8 @@ async function joinRoom(roomCode: string = 'default') {
 }
 
 async function submitDiceRoll(roll: Omit<DiceRoll, 'id' | 'timestamp' | 'isOwn'>) {
+  if (!currentRoom.value || currentRoom.value.code === 'default') return null
+  
   try {
     const response = await $fetch('/api/dice/roll', {
       method: 'POST',
@@ -3937,7 +4012,7 @@ async function submitDiceRoll(roll: Omit<DiceRoll, 'id' | 'timestamp' | 'isOwn'>
         ...roll,
         userId: userId.value,
         userName: userName.value,
-        roomCode: currentRoom.value?.code || 'default'
+        roomCode: currentRoom.value.code
       }
     })
 
@@ -3988,9 +4063,10 @@ function toggleOfflineMode() {
       color: 'blue'
     })
 
-    // Reconnect with current room
-    const roomCode = currentRoom.value?.code || 'default'
-    initializeSSE(roomCode)
+    // Reconnect with current room (if we have a valid room)
+    if (currentRoom.value && currentRoom.value.code !== 'default') {
+      initializeSSE(currentRoom.value.code)
+    }
   }
 }
 
@@ -4427,12 +4503,12 @@ function handleRollAbility(ability: any) {
           // Video will auto-close when it ends via @ended event
         }
 
-        // Submit to server if connected
-        if (isConnected.value && !isOfflineMode.value) {
+        // Submit to server if connected and in valid room
+        if (isConnected.value && !isOfflineMode.value && currentRoom.value && currentRoom.value.code !== 'default') {
           submitDiceRoll({
             userName: roll.userName,
             userId: roll.userId,
-            roomCode: currentRoom.value?.code || 'default',
+            roomCode: currentRoom.value.code,
             description: roll.description,
             total: roll.total,
             details: roll.details,
@@ -5151,9 +5227,9 @@ function formatDuration(seconds: number): string {
 }
 
 // Load initial music state when joining a room
-async function loadInitialMusicState(roomCode: string = 'default') {
-  if (!userRole.value || userRole.value === 'Player') {
-    console.log('🎵 Skipping music state load - not DM')
+async function loadInitialMusicState(roomCode?: string) {
+  if (!roomCode || !userRole.value || userRole.value === 'Player') {
+    console.log('🎵 Skipping music state load - no room or not DM')
     return
   }
 
@@ -5895,12 +5971,9 @@ onMounted(async () => {
     originalConsoleError.apply(console, args)
   }
 
-  // Set initial room state (default room)
-  currentRoom.value = {
-    name: 'Default Room',
-    code: 'default',
-    isOwner: false
-  }
+  // Don't set any initial room state
+  // Users must create or join a room explicitly
+  currentRoom.value = null
 
   // Load user characters and auto-detect role
   await loadUserCharacters()
@@ -5936,7 +6009,8 @@ onMounted(async () => {
     })
   }
 
-  initializeSSE('default')
+  // Don't automatically connect to any room
+  // Users must create or join a room explicitly
 })
 
 onUnmounted(() => {
