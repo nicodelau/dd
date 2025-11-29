@@ -324,7 +324,7 @@ const initThreeJS = async (): Promise<void> => {
 
     // Agregar luces con tonalidad natural medieval
     const ambientLight = new THREE.AmbientLight(0xF5F5DC, 0.6) // Luz ambiente beige suave
-    scene.add(ambientLight)
+    scene?.add(ambientLight)
 
     const directionalLight = new THREE.DirectionalLight(0xFFF8DC, 0.8) // Luz dorada suave
     directionalLight.position.set(12, 15, 8)
@@ -337,12 +337,12 @@ const initThreeJS = async (): Promise<void> => {
     directionalLight.shadow.camera.right = 25
     directionalLight.shadow.camera.top = 25
     directionalLight.shadow.camera.bottom = -25
-    scene.add(directionalLight)
+    scene?.add(directionalLight)
     
     // Luz adicional suave para rellenar sombras
     const fillLight = new THREE.DirectionalLight(0xE6E6FA, 0.2)  // Lavanda muy suave
     fillLight.position.set(-8, 10, -5)
-    scene.add(fillLight)
+    scene?.add(fillLight)
 
     // Crear ciudad 3D procedural completa
     await create3DProceduralCity()
@@ -356,14 +356,14 @@ const initThreeJS = async (): Promise<void> => {
       new THREE.MeshLambertMaterial({ color: 0xff0000 })
     )
     testCube1.position.set(10, 2.5, 10)
-    scene.add(testCube1)
+    scene?.add(testCube1)
 
     const testCube2 = new THREE.Mesh(
       new THREE.BoxGeometry(5, 5, 5),
       new THREE.MeshLambertMaterial({ color: 0x00ff00 })
     )
     testCube2.position.set(-10, 2.5, -10)
-    scene.add(testCube2)
+    scene?.add(testCube2)
 
     // Add a large reference marker at the lake position
     const lakeMarker = new THREE.Mesh(
@@ -371,7 +371,7 @@ const initThreeJS = async (): Promise<void> => {
       new THREE.MeshLambertMaterial({ color: 0xff00ff }) // Magenta marker
     )
     lakeMarker.position.set(0, 10, -400)
-    scene.add(lakeMarker)
+    scene?.add(lakeMarker)
 
     console.log('Lake marker added at (0, 10, -400)')
 
@@ -444,7 +444,7 @@ const createDetailedMap = async (): Promise<void> => {
     mapMesh.rotation.x = -Math.PI / 2
     mapMesh.receiveShadow = true
 
-    scene.add(mapMesh)
+    scene?.add(mapMesh)
     console.log('Detailed map created with displacement mapping')
 
   } catch (error) {
@@ -703,7 +703,7 @@ const createBasicMap = async (): Promise<void> => {
   mapMesh.rotation.x = -Math.PI / 2 // Acostar el plano
   mapMesh.receiveShadow = true
 
-  scene.add(mapMesh)
+  scene?.add(mapMesh)
   console.log('Basic fallback map created')
 
   // Add a test cube to ensure rendering works
@@ -711,7 +711,7 @@ const createBasicMap = async (): Promise<void> => {
   const testMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 })
   const testCube = new THREE.Mesh(testGeometry, testMaterial)
   testCube.position.set(0, 1, 0)
-  scene.add(testCube)
+  scene?.add(testCube)
   console.log('Test cube added at (0, 1, 0)')
 }
 
@@ -720,7 +720,7 @@ const createInteractiveZones = (): void => {
 
   const zones = props.zones || defaultZones
 
-  zones.forEach((zone, index) => {
+  zones.forEach((zone: MapZone, index: number) => {
     try {
       // Crear geometría visible para la zona
       const zoneGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.5, 8)
@@ -737,7 +737,7 @@ const createInteractiveZones = (): void => {
         zoneMesh.position.set(zone.x, 0.8, zone.z)
         zoneMesh.userData = { zone }
 
-        scene.add(zoneMesh)
+        scene?.add(zoneMesh)
         interactables.push(zoneMesh)
 
         console.log(`Created zone ${zone.name} at position (${zone.x}, ${zone.z})`)
@@ -778,9 +778,17 @@ const onMapClick = (event: MouseEvent): void => {
           setTimeout(() => {
             if (selectedZone.value === zone) {
               selectedZone.value = null
+            }
+          }, 5000)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error handling click:', error)
+  }
 }
 
-const createUrbanInfrastructure = async (): Promise<void> => {
+async function createUrbanInfrastructure(): Promise<void> {
   if (!scene) return
   
   const streetMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 })  // Piedra gris
@@ -794,13 +802,13 @@ const createUrbanInfrastructure = async (): Promise<void> => {
   const imperialAvenueGeometry = new THREE.BoxGeometry(8, 0.2, 120)
   const imperialAvenue = new THREE.Mesh(imperialAvenueGeometry, cobbleMaterial)
   imperialAvenue.position.set(5, 0.05, 0)
-  scene.add(imperialAvenue)
+  scene?.add(imperialAvenue)
   
   // AVENIDA COMERCIAL - Arteria Este-Oeste (Palermo -> Opus)
   const commercialAvenueGeometry = new THREE.BoxGeometry(120, 0.2, 6)
   const commercialAvenue = new THREE.Mesh(commercialAvenueGeometry, streetMaterial)
   commercialAvenue.position.set(0, 0.05, 0)
-  scene.add(commercialAvenue)
+  scene?.add(commercialAvenue)
   
   // CALLES SECUNDARIAS - Red de distribución
   const secondaryStreets = [
@@ -823,7 +831,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
     const streetMesh = new THREE.Mesh(streetGeometry, streetMaterial)
     streetMesh.position.set(street.x, 0.04, street.z)
     streetMesh.rotation.y = street.rotation
-    scene.add(streetMesh)
+    scene?.add(streetMesh)
   })
   
   // ============ PLAZA MAYOR CENTRAL - Corazón de la ciudad ============
@@ -832,20 +840,20 @@ const createUrbanInfrastructure = async (): Promise<void> => {
   const grandPlaza = new THREE.Mesh(grandPlazaGeometry, grandPlazaMaterial)
   grandPlaza.rotation.x = -Math.PI / 2
   grandPlaza.position.set(0, 0.08, 0)
-  scene.add(grandPlaza)
+  scene?.add(grandPlaza)
   
   // Fuente monumental central
   const grandFountainGeometry = new THREE.CylinderGeometry(5, 6, 3, 24)
   const grandFountain = new THREE.Mesh(grandFountainGeometry, fountainMaterial)
   grandFountain.position.set(0, 1.5, 0)
-  scene.add(grandFountain)
+  scene?.add(grandFountain)
   
   // Obelisco central (símbolo de la ciudad)
   const obeliskGeometry = new THREE.ConeGeometry(1, 12, 4)
   const obeliskMaterial = new THREE.MeshLambertMaterial({ color: 0xC0C0C0 })  // Piedra clara
   const obelisk = new THREE.Mesh(obeliskGeometry, obeliskMaterial)
   obelisk.position.set(0, 9, 0)
-  scene.add(obelisk)
+  scene?.add(obelisk)
   
   // Bancos ornamentales alrededor de la plaza
   for (let i = 0; i < 16; i++) {
@@ -858,13 +866,13 @@ const createUrbanInfrastructure = async (): Promise<void> => {
     const bench = new THREE.Mesh(benchGeometry, benchMaterial)
     bench.position.set(benchX, 0.4, benchZ)
     bench.rotation.y = angle + Math.PI / 2
-    scene.add(bench)
+    scene?.add(bench)
     
     // Farolas
     const lamppostGeometry = new THREE.CylinderGeometry(0.2, 0.3, 4, 8)
     const lamppost = new THREE.Mesh(lamppostGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
     lamppost.position.set(benchX * 1.3, 2, benchZ * 1.3)
-    scene.add(lamppost)
+    scene?.add(lamppost)
     
     const lampGeometry = new THREE.SphereGeometry(0.5, 8, 6)
     const lampMaterial = new THREE.MeshLambertMaterial({ 
@@ -874,14 +882,14 @@ const createUrbanInfrastructure = async (): Promise<void> => {
     })
     const lamp = new THREE.Mesh(lampGeometry, lampMaterial)
     lamp.position.set(benchX * 1.3, 4.5, benchZ * 1.3)
-    scene.add(lamp)
+    scene?.add(lamp)
   }
   
   // ============ MERCADO CENTRAL - Zona comercial ============
   const marketPlazaGeometry = new THREE.BoxGeometry(25, 0.1, 20)
   const marketPlaza = new THREE.Mesh(marketPlazaGeometry, new THREE.MeshLambertMaterial({ color: 0xDEB887 }))
   marketPlaza.position.set(-8, 0.06, 18)
-  scene.add(marketPlaza)
+  scene?.add(marketPlaza)
   
   // Puestos de mercado masivos
   const marketStalls = [
@@ -915,7 +923,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
     const stallMaterial = new THREE.MeshLambertMaterial({ color: stallColor })
     const stallMesh = new THREE.Mesh(stallGeometry, stallMaterial)
     stallMesh.position.set(stall.x, 1.5, stall.z)
-    scene.add(stallMesh)
+    scene?.add(stallMesh)
     
     // Toldo
     const canopyGeometry = new THREE.BoxGeometry(4, 0.2, 4)
@@ -925,7 +933,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
     })
     const canopy = new THREE.Mesh(canopyGeometry, canopyMaterial)
     canopy.position.set(stall.x, 3.5, stall.z)
-    scene.add(canopy)
+    scene?.add(canopy)
     
     // Postes del toldo
     for (let i = -1; i <= 1; i += 2) {
@@ -933,7 +941,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
         const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 6)
         const pole = new THREE.Mesh(poleGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
         pole.position.set(stall.x + i * 1.8, 2.5, stall.z + j * 1.8)
-        scene.add(pole)
+        scene?.add(pole)
       }
     }
     
@@ -948,7 +956,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
           0.4,
           stall.z + (Math.floor(i / 2) - 0.5) * 2
         )
-        scene.add(barrel)
+        scene?.add(barrel)
       }
     }
     
@@ -962,7 +970,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
           1,
           stall.z
         )
-        scene.add(tool)
+        scene?.add(tool)
       }
     }
     
@@ -980,7 +988,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
           stall.z + Math.sin(i) * 1
         )
         fabric.rotation.z = Math.PI / 2
-        scene.add(fabric)
+        scene?.add(fabric)
       }
     }
   })
@@ -1006,34 +1014,34 @@ const createUrbanInfrastructure = async (): Promise<void> => {
     const innMesh = new THREE.Mesh(innGeometry, innMaterial)
     innMesh.position.set(inn.x, height/2, inn.z)
     innMesh.castShadow = true
-    scene.add(innMesh)
+    scene?.add(innMesh)
     
     // Tejado distintivo
     const roofGeometry = new THREE.BoxGeometry(width + 0.5, 1, depth + 0.5)
     const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
     const roof = new THREE.Mesh(roofGeometry, roofMaterial)
     roof.position.set(inn.x, height + 0.5, inn.z)
-    scene.add(roof)
+    scene?.add(roof)
     
     // Cartel de la posada
     const signGeometry = new THREE.BoxGeometry(2, 1.2, 0.2)
     const signMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })  // Madera natural
     const sign = new THREE.Mesh(signGeometry, signMaterial)
     sign.position.set(inn.x, height - 0.5, inn.z + depth/2 + 0.5)
-    scene.add(sign)
+    scene?.add(sign)
     
     // Chimenea (posadas siempre tienen fogón)
     const chimneyGeometry = new THREE.BoxGeometry(1, 3, 1)
     const chimney = new THREE.Mesh(chimneyGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
     chimney.position.set(inn.x + width/3, height + 2, inn.z)
-    scene.add(chimney)
+    scene?.add(chimney)
     
     // Establos adjuntos para posadas grandes
     if (inn.size === 'large') {
       const stableGeometry = new THREE.BoxGeometry(5, 3, 8)
       const stable = new THREE.Mesh(stableGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
       stable.position.set(inn.x + width + 3, 1.5, inn.z)
-      scene.add(stable)
+      scene?.add(stable)
     }
   })
   
@@ -1058,7 +1066,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
     const bridgeMesh = new THREE.Mesh(bridgeGeometry, bridgeMaterial)
     bridgeMesh.position.set(midX, 0.4, midZ)
     bridgeMesh.rotation.y = angle
-    scene.add(bridgeMesh)
+    scene?.add(bridgeMesh)
     
     // Barandillas
     for (let side = -1; side <= 1; side += 2) {
@@ -1066,7 +1074,7 @@ const createUrbanInfrastructure = async (): Promise<void> => {
       const railing = new THREE.Mesh(railingGeometry, bridgeMaterial)
       railing.position.set(midX, 1.3, midZ + side * 1.9)
       railing.rotation.y = angle
-      scene.add(railing)
+      scene?.add(railing)
     }
     
     // Pilares de soporte
@@ -1078,20 +1086,11 @@ const createUrbanInfrastructure = async (): Promise<void> => {
       const pierGeometry = new THREE.CylinderGeometry(1, 1.5, 4, 8)
       const pier = new THREE.Mesh(pierGeometry, bridgeMaterial)
       pier.position.set(pierX, 1.5, pierZ)
-      scene.add(pier)
+      scene?.add(pier)
     }
   })
 }
-          }, 4000)
-        }
-      } else {
-        selectedZone.value = null
-      }
-    }
-  } catch (error) {
-    console.error('Error handling map click:', error)
-  }
-}
+
 
 const animate = (): void => {
   if (hasError.value) return
@@ -1242,29 +1241,77 @@ const create3DProceduralCity = async (): Promise<void> => {
 const createTerrain = async (): Promise<void> => {
   if (!scene) return
   
-  // ============ TERRENO BASE ÉPICAMENTE MASIVO - 5x más grande que antes ============
-  const terrainGeometry = new THREE.CircleGeometry(500, 512) // 500 unidades de radio = área GIGANTESCA
-  const terrainMaterial = new THREE.MeshLambertMaterial({
-    color: 0x8B7D6B, // Color tierra natural
+  console.log('Creating procedural terrain (New Objects)...')
+  
+  // ============ TERRENO BASE (TIERRA GENERAL) ============
+  // Un gran disco de tierra que sostiene la ciudad
+  const groundGeometry = new THREE.CircleGeometry(800, 128)
+  const groundMaterial = new THREE.MeshLambertMaterial({ 
+    color: 0xE6D3A3, // Color pergamino/tierra clara base
+    side: THREE.DoubleSide
   })
+  const ground = new THREE.Mesh(groundGeometry, groundMaterial)
+  ground.rotation.x = -Math.PI / 2
+  ground.position.y = -0.5
+  ground.receiveShadow = true
+  scene?.add(ground)
   
-  const terrain = new THREE.Mesh(terrainGeometry, terrainMaterial)
-  terrain.rotation.x = -Math.PI / 2
-  terrain.receiveShadow = true
-  scene.add(terrain)
-  
-  // ============ OCÉANO ÉPICO CIRCUNDANTE ============
-  const oceanGeometry = new THREE.CircleGeometry(800, 512) // Océano masivo
-  const oceanMaterial = new THREE.MeshLambertMaterial({
-    color: 0x4682B4,  // Azul acero natural
-    transparent: true,
-    opacity: 0.85
+  // ============ ZONAS DIFERENCIADAS POR SUELO (REMOVIDAS POR PETICIÓN DE USUARIO) ============
+  /*
+  // 1. ZONA PALERMO (Oeste - Noble/Verde)
+  // Suelo más cuidado, césped/jardines
+  const palermoGroundGeo = new THREE.CircleGeometry(300, 64, Math.PI * 0.5, Math.PI) // Semicírculo izquierdo aprox
+  const palermoGroundMat = new THREE.MeshLambertMaterial({ color: 0x9ACD32 }) // Verde suave
+  const palermoGround = new THREE.Mesh(palermoGroundGeo, palermoGroundMat)
+  palermoGround.rotation.x = -Math.PI / 2
+  palermoGround.rotation.z = Math.PI / 2 // Rotar para que quede a la izquierda
+  palermoGround.position.set(-50, -0.4, 0)
+  palermoGround.receiveShadow = true
+  scene?.add(palermoGround)
+
+  // 2. ZONA OPUS (Este - Industrial/Tierra)
+  // Suelo oscuro, tierra batida, hollín
+  const opusGroundGeo = new THREE.CircleGeometry(320, 64, Math.PI * 1.5, Math.PI) // Semicírculo derecho aprox
+  const opusGroundMat = new THREE.MeshLambertMaterial({ color: 0x8B7355 }) // Marrón tierra oscuro
+  const opusGround = new THREE.Mesh(opusGroundGeo, opusGroundMat)
+  opusGround.rotation.x = -Math.PI / 2
+  opusGround.rotation.z = Math.PI / 2
+  opusGround.position.set(50, -0.4, 0)
+  opusGround.receiveShadow = true
+  scene?.add(opusGround)
+
+  // 3. ZONA CASTILLO (Centro - Piedra)
+  const castleGroundGeo = new THREE.CircleGeometry(90, 64)
+  const castleGroundMat = new THREE.MeshLambertMaterial({ color: 0xA9A9A9 }) // Gris piedra
+  const castleGround = new THREE.Mesh(castleGroundGeo, castleGroundMat)
+  castleGround.rotation.x = -Math.PI / 2
+  castleGround.position.set(0, -0.3, 0)
+  castleGround.receiveShadow = true
+  scene?.add(castleGround)
+
+  // 4. ZONA PUERTO (Sureste - Pavimento/Madera)
+  const portGroundGeo = new THREE.PlaneGeometry(300, 200)
+  const portGroundMat = new THREE.MeshLambertMaterial({ color: 0xD2B48C }) // Arena/Pavimento claro
+  const portGround = new THREE.Mesh(portGroundGeo, portGroundMat)
+  portGround.rotation.x = -Math.PI / 2
+  portGround.position.set(150, -0.35, 150)
+  portGround.receiveShadow = true
+  scene?.add(portGround)
+  */
+
+  // ============ OCÉANO MASIVO ============
+  const oceanGeometry = new THREE.PlaneGeometry(4000, 4000)
+  const oceanMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x1E90FF, 
+    roughness: 0.1,
+    metalness: 0.1,
+    transparent: true, 
+    opacity: 0.8 
   })
-  
   const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial)
   ocean.rotation.x = -Math.PI / 2
-  ocean.position.y = -3
-  scene.add(ocean)
+  ocean.position.y = -4
+  scene?.add(ocean)
   
   // ============ ISLAS CIRCUNDANTES - Archipiélago masivo ============
   const outerIslands = [
@@ -1297,6 +1344,23 @@ const createTerrain = async (): Promise<void> => {
     { x: 250, z: -300, radius: 8, height: 0.8, name: 'Peñasco Oriental' }
   ]
   
+  // OPTIMIZACIÓN: Usar InstancedMesh para vegetación y casas en islas
+  const islandTrunkGeometry = new THREE.CylinderGeometry(0.3, 0.5, 3, 8)
+  const islandTrunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+  const islandLeavesGeometry = new THREE.SphereGeometry(1.5, 12, 8)
+  const islandLeavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 })
+  
+  const islandHouseGeometry = new THREE.BoxGeometry(2, 2.5, 2.5)
+  const islandHouseMaterial = new THREE.MeshLambertMaterial({ color: 0x8B7D6B })
+  const islandRoofGeometry = new THREE.ConeGeometry(1.8, 1.5, 4)
+  const islandRoofMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+
+  // Arrays para almacenar matrices de transformación
+  const trunkMatrices: THREE.Matrix4[] = []
+  const leavesMatrices: THREE.Matrix4[] = []
+  const houseMatrices: THREE.Matrix4[] = []
+  const roofMatrices: THREE.Matrix4[] = []
+
   outerIslands.forEach(island => {
     const islandGeometry = new THREE.CircleGeometry(island.radius, 32)
     const islandMaterial = new THREE.MeshLambertMaterial({ 
@@ -1307,7 +1371,7 @@ const createTerrain = async (): Promise<void> => {
     const islandMesh = new THREE.Mesh(islandGeometry, islandMaterial)
     islandMesh.rotation.x = -Math.PI / 2
     islandMesh.position.set(island.x, island.height, island.z)
-    scene.add(islandMesh)
+    scene?.add(islandMesh)
     
     // Vegetación en cada isla
     const numTrees = Math.floor(island.radius / 3)
@@ -1317,15 +1381,17 @@ const createTerrain = async (): Promise<void> => {
       const treeX = island.x + Math.cos(angle) * distance
       const treeZ = island.z + Math.sin(angle) * distance
       
-      const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.5, 3, 8)
-      const trunk = new THREE.Mesh(trunkGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
-      trunk.position.set(treeX, island.height + 1.5, treeZ)
-      scene.add(trunk)
+      const dummy = new THREE.Object3D()
       
-      const leavesGeometry = new THREE.SphereGeometry(1.5, 12, 8)
-      const leaves = new THREE.Mesh(leavesGeometry, new THREE.MeshLambertMaterial({ color: 0x228B22 }))
-      leaves.position.set(treeX, island.height + 4, treeZ)
-      scene.add(leaves)
+      // Tronco
+      dummy.position.set(treeX, island.height + 1.5, treeZ)
+      dummy.updateMatrix()
+      trunkMatrices.push(dummy.matrix.clone())
+      
+      // Hojas
+      dummy.position.set(treeX, island.height + 4, treeZ)
+      dummy.updateMatrix()
+      leavesMatrices.push(dummy.matrix.clone())
     }
     
     // Pequeños pueblos en las islas grandes
@@ -1337,22 +1403,46 @@ const createTerrain = async (): Promise<void> => {
         const houseX = island.x + Math.cos(angle) * houseDistance
         const houseZ = island.z + Math.sin(angle) * houseDistance
         
-        const houseGeometry = new THREE.BoxGeometry(2, 2.5, 2.5)
-        const house = new THREE.Mesh(houseGeometry, new THREE.MeshLambertMaterial({ color: 0x8B7D6B }))
-        house.position.set(houseX, island.height + 1.25, houseZ)
-        scene.add(house)
+        const dummy = new THREE.Object3D()
+
+        // Casa
+        dummy.position.set(houseX, island.height + 1.25, houseZ)
+        dummy.updateMatrix()
+        houseMatrices.push(dummy.matrix.clone())
         
-        const roofGeometry = new THREE.ConeGeometry(1.8, 1.5, 4)
-        const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
-        roof.position.set(houseX, island.height + 3.25, houseZ)
-        roof.rotation.y = Math.PI / 4
-        scene.add(roof)
+        // Techo
+        dummy.position.set(houseX, island.height + 3.25, houseZ)
+        dummy.rotation.y = Math.PI / 4
+        dummy.updateMatrix()
+        roofMatrices.push(dummy.matrix.clone())
+        dummy.rotation.y = 0 // Reset rotation
       }
     }
   })
+
+  // Crear InstancedMeshes
+  if (trunkMatrices.length > 0) {
+    const trunkMesh = new THREE.InstancedMesh(islandTrunkGeometry, islandTrunkMaterial, trunkMatrices.length)
+    trunkMatrices.forEach((matrix, i) => trunkMesh.setMatrixAt(i, matrix))
+    scene?.add(trunkMesh)
+
+    const leavesMesh = new THREE.InstancedMesh(islandLeavesGeometry, islandLeavesMaterial, leavesMatrices.length)
+    leavesMatrices.forEach((matrix, i) => leavesMesh.setMatrixAt(i, matrix))
+    scene?.add(leavesMesh)
+  }
+
+  if (houseMatrices.length > 0) {
+    const houseMesh = new THREE.InstancedMesh(islandHouseGeometry, islandHouseMaterial, houseMatrices.length)
+    houseMatrices.forEach((matrix, i) => houseMesh.setMatrixAt(i, matrix))
+    scene?.add(houseMesh)
+
+    const roofMesh = new THREE.InstancedMesh(islandRoofGeometry, islandRoofMaterial, roofMatrices.length)
+    roofMatrices.forEach((matrix, i) => roofMesh.setMatrixAt(i, matrix))
+    scene?.add(roofMesh)
+  }
   
-  // ============ REGIONES CONTINENTALES ESPECIALIZADAS ============
-  
+  // ============ REGIONES CONTINENTALES ESPECIALIZADAS (Bases removidas) ============
+  /*
   // REGIÓN NORTE - Tierras Altas (Montañas y Fortalezas)
   const northRegion = { x: 0, z: -300, radius: 80, height: 8 }
   const northRegionGeometry = new THREE.CircleGeometry(northRegion.radius, 32)
@@ -1360,7 +1450,7 @@ const createTerrain = async (): Promise<void> => {
   const northRegionMesh = new THREE.Mesh(northRegionGeometry, northRegionMaterial)
   northRegionMesh.rotation.x = -Math.PI / 2
   northRegionMesh.position.set(northRegion.x, northRegion.height, northRegion.z)
-  scene.add(northRegionMesh)
+  scene?.add(northRegionMesh)
   
   // REGIÓN ESTE - Tierras de Comercio (Colinas doradas)
   const eastRegion = { x: 300, z: 0, radius: 70, height: 4 }
@@ -1369,7 +1459,7 @@ const createTerrain = async (): Promise<void> => {
   const eastRegionMesh = new THREE.Mesh(eastRegionGeometry, eastRegionMaterial)
   eastRegionMesh.rotation.x = -Math.PI / 2
   eastRegionMesh.position.set(eastRegion.x, eastRegion.height, eastRegion.z)
-  scene.add(eastRegionMesh)
+  scene?.add(eastRegionMesh)
   
   // REGIÓN SUR - Tierras Agrícolas (Llanuras verdes)
   const southRegion = { x: 0, z: 300, radius: 90, height: 2 }
@@ -1378,7 +1468,7 @@ const createTerrain = async (): Promise<void> => {
   const southRegionMesh = new THREE.Mesh(southRegionGeometry, southRegionMaterial)
   southRegionMesh.rotation.x = -Math.PI / 2
   southRegionMesh.position.set(southRegion.x, southRegion.height, southRegion.z)
-  scene.add(southRegionMesh)
+  scene?.add(southRegionMesh)
   
   // REGIÓN OESTE - Bosques Antiguos (Verde oscuro)
   const westRegion = { x: -300, z: 0, radius: 85, height: 3 }
@@ -1387,17 +1477,18 @@ const createTerrain = async (): Promise<void> => {
   const westRegionMesh = new THREE.Mesh(westRegionGeometry, westRegionMaterial)
   westRegionMesh.rotation.x = -Math.PI / 2
   westRegionMesh.position.set(westRegion.x, westRegion.height, westRegion.z)
-  scene.add(westRegionMesh)
+  scene?.add(westRegionMesh)
+  */
   
-  // ============ ELEVACIONES DENTRO DE LA CIUDAD PRINCIPAL ============
-  
+  // ============ ELEVACIONES DENTRO DE LA CIUDAD PRINCIPAL (Bases removidas) ============
+  /*
   // Colina noble masiva (Palermo Alto) - MÁS GRANDE
   const noblehillGeometry = new THREE.CircleGeometry(60, 32) // Duplicado el tamaño
   const noblehillMaterial = new THREE.MeshLambertMaterial({ color: 0x9ACD32 })  // Verde oliva natural
   const nobleHill = new THREE.Mesh(noblehillGeometry, noblehillMaterial)
   nobleHill.rotation.x = -Math.PI / 2
   nobleHill.position.set(-120, 4, -100) // Movido más lejos
-  scene.add(nobleHill)
+  scene?.add(nobleHill)
   
   // Meseta industrial masiva (Opus) - MÁS GRANDE
   const industrialPlateauGeometry = new THREE.CircleGeometry(80, 32) // Duplicado
@@ -1405,15 +1496,17 @@ const createTerrain = async (): Promise<void> => {
   const industrialPlateau = new THREE.Mesh(industrialPlateauGeometry, industrialPlateauMaterial)
   industrialPlateau.rotation.x = -Math.PI / 2
   industrialPlateau.position.set(140, 3, 120) // Movido más lejos
-  scene.add(industrialPlateau)
+  scene?.add(industrialPlateau)
+  */
   
   // Colina del castillo masiva (elevación máxima) - MÁS GRANDE
+  /*
   const castleHillGeometry = new THREE.CircleGeometry(50, 32) // Duplicado
   const castleHillMaterial = new THREE.MeshLambertMaterial({ color: 0x708090 })  // Gris pizarra
   const castleHill = new THREE.Mesh(castleHillGeometry, castleHillMaterial)
   castleHill.rotation.x = -Math.PI / 2
   castleHill.position.set(0, 8, -160) // Movido mucho más al norte
-  scene.add(castleHill)
+  scene?.add(castleHill)
   
   // ============ NUEVAS ELEVACIONES ADICIONALES ============
   
@@ -1423,7 +1516,7 @@ const createTerrain = async (): Promise<void> => {
   const templeHill = new THREE.Mesh(templeHillGeometry, templeHillMaterial)
   templeHill.rotation.x = -Math.PI / 2
   templeHill.position.set(80, 6, -80)
-  scene.add(templeHill)
+  scene?.add(templeHill)
   
   // Meseta Militar (nueva)
   const militaryPlateauGeometry = new THREE.CircleGeometry(45, 32)
@@ -1431,7 +1524,7 @@ const createTerrain = async (): Promise<void> => {
   const militaryPlateau = new THREE.Mesh(militaryPlateauGeometry, militaryPlateauMaterial)
   militaryPlateau.rotation.x = -Math.PI / 2
   militaryPlateau.position.set(-80, 5, 100)
-  scene.add(militaryPlateau)
+  scene?.add(militaryPlateau)
   
   // Colina Académica (nueva)
   const academicHillGeometry = new THREE.CircleGeometry(35, 32)
@@ -1439,7 +1532,8 @@ const createTerrain = async (): Promise<void> => {
   const academicHill = new THREE.Mesh(academicHillGeometry, academicHillMaterial)
   academicHill.rotation.x = -Math.PI / 2
   academicHill.position.set(-60, 4, -120)
-  scene.add(academicHill)
+  scene?.add(academicHill)
+  */
 }
 
 const createCityWalls = async (): Promise<void> => {
@@ -1509,49 +1603,66 @@ async function createWallRing(radius: {x: number, z: number}, wallMaterial: any,
     wallSegment.position.set((startX + endX) / 2, wallHeight / 2, (startZ + endZ) / 2)
     wallSegment.rotation.y = segmentAngle
     wallSegment.castShadow = true
-    scene.add(wallSegment)
+    scene?.add(wallSegment)
   }
   
-  // TORRES DEFENSIVAS MASIVAS
+  // TORRES DEFENSIVAS MASIVAS (OPTIMIZADO CON INSTANCED MESH)
+  const towerRadius = type === 'inner' ? 4 : type === 'middle' ? 3.5 : 3
+  const towerGeometry = new THREE.CylinderGeometry(towerRadius, towerRadius + 1, towerHeight, 16)
+  const towersMesh = new THREE.InstancedMesh(towerGeometry, towerMaterial, numTowers)
+  towersMesh.castShadow = true
+  towersMesh.receiveShadow = true
+  
+  // TEJADOS (OPTIMIZADO CON INSTANCED MESH)
+  const roofGeometry = new THREE.ConeGeometry(towerRadius + 1.5, 4, 16)
+  const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+  const roofsMesh = new THREE.InstancedMesh(roofGeometry, roofMaterial, numTowers)
+  
+  // ALMENAS (OPTIMIZADO CON INSTANCED MESH)
+  const numMerlons = 16
+  const totalMerlons = numTowers * numMerlons
+  const merlonGeometry = new THREE.BoxGeometry(1, 2, 0.8)
+  const merlonsMesh = new THREE.InstancedMesh(merlonGeometry, wallMaterial, totalMerlons)
+  merlonsMesh.castShadow = true
+  
+  const dummy = new THREE.Object3D()
+  let merlonIndex = 0
+  
   for (let i = 0; i < numTowers; i++) {
     const angle = (i / numTowers) * Math.PI * 2
     const x = Math.cos(angle) * radius.x
     const z = Math.sin(angle) * radius.z
     
     // Torre principal
-    const towerRadius = type === 'inner' ? 4 : type === 'middle' ? 3.5 : 3
-    const towerGeometry = new THREE.CylinderGeometry(towerRadius, towerRadius + 1, towerHeight, 16)
-    const tower = new THREE.Mesh(towerGeometry, towerMaterial)
-    tower.position.set(x, towerHeight / 2, z)
-    tower.castShadow = true
-    scene.add(tower)
+    dummy.position.set(x, towerHeight / 2, z)
+    dummy.rotation.set(0, 0, 0)
+    dummy.scale.set(1, 1, 1)
+    dummy.updateMatrix()
+    towersMesh.setMatrixAt(i, dummy.matrix)
+    
+    // Tejado cónico
+    dummy.position.set(x, towerHeight + 3, z)
+    dummy.updateMatrix()
+    roofsMesh.setMatrixAt(i, dummy.matrix)
     
     // Almenas en la parte superior
-    const numMerlons = 16
     for (let j = 0; j < numMerlons; j++) {
       const merlonAngle = (j / numMerlons) * Math.PI * 2
       const merlonX = x + Math.cos(merlonAngle) * (towerRadius + 0.5)
       const merlonZ = z + Math.sin(merlonAngle) * (towerRadius + 0.5)
       
-      const merlonGeometry = new THREE.BoxGeometry(1, 2, 0.8)
-      const merlon = new THREE.Mesh(merlonGeometry, wallMaterial)
-      merlon.position.set(merlonX, towerHeight + 1, merlonZ)
-      scene.add(merlon)
+      dummy.position.set(merlonX, towerHeight + 1, merlonZ)
+      dummy.rotation.set(0, -merlonAngle, 0) // Rotar para alinear con el borde
+      dummy.updateMatrix()
+      merlonsMesh.setMatrixAt(merlonIndex++, dummy.matrix)
     }
     
-    // Tejado cónico
-    const roofGeometry = new THREE.ConeGeometry(towerRadius + 1.5, 4, 16)
-    const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
-    const roof = new THREE.Mesh(roofGeometry, roofMaterial)
-    roof.position.set(x, towerHeight + 3, z)
-    scene.add(roof)
-    
-    // Bandera en torres importantes
+    // Bandera en torres importantes (Mantenemos como Mesh individual por ser pocas)
     if (i % 4 === 0) {
       const flagPoleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 6, 8)
       const flagPole = new THREE.Mesh(flagPoleGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
       flagPole.position.set(x, towerHeight + 8, z)
-      scene.add(flagPole)
+      scene?.add(flagPole)
       
       const flagGeometry = new THREE.PlaneGeometry(4, 3)
       const flagColors = [0xFF0000, 0x0000FF, 0xFFD700, 0x800080]
@@ -1559,9 +1670,13 @@ async function createWallRing(radius: {x: number, z: number}, wallMaterial: any,
         color: flagColors[Math.floor(i / 4) % flagColors.length] 
       }))
       flag.position.set(x + 2, towerHeight + 8, z)
-      scene.add(flag)
+      scene?.add(flag)
     }
   }
+  
+  scene?.add(towersMesh)
+  scene?.add(roofsMesh)
+  scene?.add(merlonsMesh)
   
   // PUERTAS MONUMENTALES (cada anillo tiene 8 puertas principales)
   const numGates = 8
@@ -1578,9 +1693,10 @@ async function createWallRing(radius: {x: number, z: number}, wallMaterial: any,
     const gateArch = new THREE.Mesh(gateArchGeometry, gateMaterial)
     gateArch.position.set(gateX, gateHeight / 2, gateZ)
     gateArch.rotation.y = angle
-    scene.add(gateArch)
+    scene?.add(gateArch)
     
     // Torres gemelas flanqueando cada puerta
+    const towerRadius = 3
     for (let side = -1; side <= 1; side += 2) {
       const gateTowerRadius = towerRadius + 1
       const gateTowerGeometry = new THREE.CylinderGeometry(gateTowerRadius, gateTowerRadius + 0.5, towerHeight + 3, 12)
@@ -1588,7 +1704,7 @@ async function createWallRing(radius: {x: number, z: number}, wallMaterial: any,
       const offsetX = gateX + Math.cos(angle + Math.PI / 2) * side * (gateWidth / 2 + gateTowerRadius)
       const offsetZ = gateZ + Math.sin(angle + Math.PI / 2) * side * (gateWidth / 2 + gateTowerRadius)
       gateTower.position.set(offsetX, (towerHeight + 3) / 2, offsetZ)
-      scene.add(gateTower)
+      scene?.add(gateTower)
       
       // Puente levadizo para puertas interiores
       if (type === 'inner' || type === 'middle') {
@@ -1600,7 +1716,7 @@ async function createWallRing(radius: {x: number, z: number}, wallMaterial: any,
           gateZ + Math.sin(angle) * 6
         )
         drawbridge.rotation.y = angle
-        scene.add(drawbridge)
+        scene?.add(drawbridge)
       }
     }
   }
@@ -1631,7 +1747,7 @@ async function createPortWalls(): Promise<void> {
     )
     wallMesh.rotation.y = angle
     wallMesh.castShadow = true
-    scene.add(wallMesh)
+    scene?.add(wallMesh)
     
     // Torres de vigilancia costera
     const numTowers = Math.floor(length / 30)
@@ -1643,7 +1759,7 @@ async function createPortWalls(): Promise<void> {
       const coastalTowerGeometry = new THREE.CylinderGeometry(2.5, 3, wall.height + 4, 12)
       const coastalTower = new THREE.Mesh(coastalTowerGeometry, new THREE.MeshLambertMaterial({ color: 0x778899 }))
       coastalTower.position.set(towerX, (wall.height + 4) / 2, towerZ)
-      scene.add(coastalTower)
+      scene?.add(coastalTower)
     }
   })
 }
@@ -1681,7 +1797,7 @@ async function createDistrictWalls(): Promise<void> {
       (boundary.start.z + boundary.end.z) / 2
     )
     wallMesh.rotation.y = angle
-    scene.add(wallMesh)
+    scene?.add(wallMesh)
   })
 }
 
@@ -1716,26 +1832,26 @@ async function createWatchTowers(): Promise<void> {
     const baseGeometry = new THREE.CylinderGeometry(5, 6, 8, 12)
     const base = new THREE.Mesh(baseGeometry, towerMaterial)
     base.position.set(tower.x, 4, tower.z)
-    scene.add(base)
+    scene?.add(base)
     
     // Torre principal
     const towerGeometry = new THREE.CylinderGeometry(3, 4, tower.height, 12)
     const towerMesh = new THREE.Mesh(towerGeometry, towerMaterial)
     towerMesh.position.set(tower.x, 8 + tower.height / 2, tower.z)
     towerMesh.castShadow = true
-    scene.add(towerMesh)
+    scene?.add(towerMesh)
     
     // Plataforma de observación
     const platformGeometry = new THREE.CylinderGeometry(4.5, 4.5, 1, 16)
     const platform = new THREE.Mesh(platformGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
     platform.position.set(tower.x, 8 + tower.height + 0.5, tower.z)
-    scene.add(platform)
+    scene?.add(platform)
     
     // Brazero/señal de fuego
     const brazierGeometry = new THREE.CylinderGeometry(1, 1.2, 2, 8)
     const brazier = new THREE.Mesh(brazierGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
     brazier.position.set(tower.x, 8 + tower.height + 2, tower.z)
-    scene.add(brazier)
+    scene?.add(brazier)
     
     // "Fuego" en el brazero
     const fireGeometry = new THREE.ConeGeometry(0.8, 2, 6)
@@ -1746,7 +1862,7 @@ async function createWatchTowers(): Promise<void> {
     })
     const fire = new THREE.Mesh(fireGeometry, fireMaterial)
     fire.position.set(tower.x, 8 + tower.height + 3.5, tower.z)
-    scene.add(fire)
+    scene?.add(fire)
   })
 }
 
@@ -1768,56 +1884,57 @@ const createCastle = async (): Promise<void> => {
   
   console.log('Creating CENTRAL CORE - Castle + Main Structures inside inner wall...')
   
-  // ========== CASTILLO IMPERIAL CENTRAL ==========
+  // ========== CASTILLO IMPERIAL CENTRAL (AUMENTADO 2.5x) ==========
   const castleCenter = { x: 0, z: 0 }
   
   // TORRE DEL HOMENAJE PRINCIPAL - El corazón del poder
-  const keepGeometry = new THREE.CylinderGeometry(8, 10, 25, 16)
+  const keepGeometry = new THREE.CylinderGeometry(20, 25, 60, 32) // Aumentado de 8/10/25
   const keep = new THREE.Mesh(keepGeometry, materials.stone)
-  keep.position.set(castleCenter.x, 12.5, castleCenter.z)
+  keep.position.set(castleCenter.x, 30, castleCenter.z) // Aumentado de 12.5
   keep.castShadow = true
-  scene.add(keep)
+  scene?.add(keep)
   
   // Corona dorada del keep
-  const crownGeometry = new THREE.CylinderGeometry(9, 8.5, 2, 16)
+  const crownGeometry = new THREE.CylinderGeometry(22, 21, 5, 32) // Aumentado
   const crown = new THREE.Mesh(crownGeometry, materials.gold)
-  crown.position.set(castleCenter.x, 26, castleCenter.z)
-  scene.add(crown)
+  crown.position.set(castleCenter.x, 62.5, castleCenter.z) // Aumentado de 26
+  scene?.add(crown)
   
   // ========== TORRES PRINCIPALES DEL CASTILLO (6 torres) ==========
+  // Posiciones expandidas ~2.5x
   const mainTowers = [
-    { name: 'Torre del Rey', x: 15, z: 0, height: 22 },
-    { name: 'Torre de la Reina', x: -15, z: 0, height: 20 },
-    { name: 'Torre del Príncipe', x: 0, z: 15, height: 18 },
-    { name: 'Torre del Tesoro', x: 0, z: -15, height: 21 },
-    { name: 'Torre Norte', x: 10, z: 12, height: 19 },
-    { name: 'Torre Sur', x: -10, z: -12, height: 19 }
+    { name: 'Torre del Rey', x: 38, z: 0, height: 55 },
+    { name: 'Torre de la Reina', x: -38, z: 0, height: 50 },
+    { name: 'Torre del Príncipe', x: 0, z: 38, height: 45 },
+    { name: 'Torre del Tesoro', x: 0, z: -38, height: 52 },
+    { name: 'Torre Norte', x: 25, z: 30, height: 48 },
+    { name: 'Torre Sur', x: -25, z: -30, height: 48 }
   ]
   
   mainTowers.forEach(tower => {
-    const towerGeometry = new THREE.CylinderGeometry(4, 5, tower.height, 12)
+    const towerGeometry = new THREE.CylinderGeometry(10, 12, tower.height, 24) // Aumentado de 4/5
     const towerMesh = new THREE.Mesh(towerGeometry, materials.stone)
     towerMesh.position.set(tower.x, tower.height/2, tower.z)
-    scene.add(towerMesh)
+    scene?.add(towerMesh)
     
     // Techo cónico
-    const roofGeometry = new THREE.ConeGeometry(5, 6, 12)
+    const roofGeometry = new THREE.ConeGeometry(12, 15, 24) // Aumentado
     const roof = new THREE.Mesh(roofGeometry, materials.roof)
-    roof.position.set(tower.x, tower.height + 3, tower.z)
-    scene.add(roof)
+    roof.position.set(tower.x, tower.height + 7.5, tower.z)
+    scene?.add(roof)
     
     // Bandera
-    const flagPoleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 4, 8)
+    const flagPoleGeometry = new THREE.CylinderGeometry(0.3, 0.3, 10, 8)
     const flagPole = new THREE.Mesh(flagPoleGeometry, materials.bronze)
-    flagPole.position.set(tower.x, tower.height + 8, tower.z)
-    scene.add(flagPole)
+    flagPole.position.set(tower.x, tower.height + 20, tower.z)
+    scene?.add(flagPole)
   })
   
   // ========== MURALLAS DEL CASTILLO ==========
   // Muralla hexagonal conectando las torres
   const castleWallVertices = [
-    { x: 15, z: 0 }, { x: 10, z: 12 }, { x: 0, z: 15 },
-    { x: -15, z: 0 }, { x: -10, z: -12 }, { x: 0, z: -15 }
+    { x: 38, z: 0 }, { x: 25, z: 30 }, { x: 0, z: 38 },
+    { x: -38, z: 0 }, { x: -25, z: -30 }, { x: 0, z: -38 }
   ]
   
   for (let i = 0; i < castleWallVertices.length; i++) {
@@ -1827,51 +1944,51 @@ const createCastle = async (): Promise<void> => {
     const wallLength = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.z - start.z, 2))
     const wallAngle = Math.atan2(end.z - start.z, end.x - start.x)
     
-    const wallGeometry = new THREE.BoxGeometry(wallLength, 12, 2)
+    const wallGeometry = new THREE.BoxGeometry(wallLength, 30, 5) // Aumentado altura y grosor
     const wall = new THREE.Mesh(wallGeometry, materials.stone)
-    wall.position.set((start.x + end.x)/2, 6, (start.z + end.z)/2)
+    wall.position.set((start.x + end.x)/2, 15, (start.z + end.z)/2)
     wall.rotation.y = wallAngle
-    scene.add(wall)
+    scene?.add(wall)
   }
   
   // ========== PATIO DE ARMAS CENTRAL ==========
-  const courtyardGeometry = new THREE.CircleGeometry(12, 24)
+  const courtyardGeometry = new THREE.CircleGeometry(30, 32) // Aumentado de 12
   const courtyard = new THREE.Mesh(courtyardGeometry, materials.stone)
   courtyard.rotation.x = -Math.PI / 2
   courtyard.position.set(0, 0.1, 0)
-  scene.add(courtyard)
+  scene?.add(courtyard)
   
   // ========== ESTRUCTURAS INTERNAS DEL CASTILLO ==========
   
   // GRAN SALÓN REAL
-  const throneHallGeometry = new THREE.BoxGeometry(12, 8, 20)
+  const throneHallGeometry = new THREE.BoxGeometry(30, 20, 50) // Aumentado de 12/8/20
   const throneHall = new THREE.Mesh(throneHallGeometry, materials.marble)
-  throneHall.position.set(-8, 4, 0)
-  scene.add(throneHall)
+  throneHall.position.set(-20, 10, 0)
+  scene?.add(throneHall)
   
   // CAPILLA REAL
-  const chapelGeometry = new THREE.BoxGeometry(8, 10, 12)
+  const chapelGeometry = new THREE.BoxGeometry(20, 25, 30) // Aumentado de 8/10/12
   const chapel = new THREE.Mesh(chapelGeometry, materials.marble)
-  chapel.position.set(8, 5, 8)
-  scene.add(chapel)
+  chapel.position.set(20, 12.5, 20)
+  scene?.add(chapel)
   
   // Cruz en la capilla
   const crossGeometry = new THREE.BoxGeometry(0.5, 6, 0.5)
   const cross = new THREE.Mesh(crossGeometry, materials.gold)
   cross.position.set(8, 13, 8)
-  scene.add(cross)
+  scene?.add(cross)
   
   // ESTABLOS REALES
   const stablesGeometry = new THREE.BoxGeometry(15, 5, 8)
   const stables = new THREE.Mesh(stablesGeometry, materials.wood)
   stables.position.set(-8, 2.5, -12)
-  scene.add(stables)
+  scene?.add(stables)
   
   // ARMERÍA
   const armoryGeometry = new THREE.BoxGeometry(10, 6, 8)
   const armory = new THREE.Mesh(armoryGeometry, materials.stone)
   armory.position.set(12, 3, -8)
-  scene.add(armory)
+  scene?.add(armory)
   
   // ========== ESTRUCTURAS SECUNDARIAS DENTRO DE LA MURALLA INTERIOR ==========
   
@@ -1879,33 +1996,33 @@ const createCastle = async (): Promise<void> => {
   const barracksNorthGeometry = new THREE.BoxGeometry(20, 6, 10)
   const barracksNorth = new THREE.Mesh(barracksNorthGeometry, materials.stone)
   barracksNorth.position.set(30, 3, -25)
-  scene.add(barracksNorth)
+  scene?.add(barracksNorth)
   
   // RESIDENCIAS NOBLES (Sur)
   const nobleQuarterGeometry = new THREE.BoxGeometry(25, 8, 15)
   const nobleQuarter = new THREE.Mesh(nobleQuarterGeometry, materials.marble)
   nobleQuarter.position.set(-35, 4, 20)
-  scene.add(nobleQuarter)
+  scene?.add(nobleQuarter)
   
   // JARDINES REALES (Este)
   const royalGardenGeometry = new THREE.CircleGeometry(18, 24)
   const royalGarden = new THREE.Mesh(royalGardenGeometry, materials.grass)
   royalGarden.rotation.x = -Math.PI / 2
   royalGarden.position.set(40, 0.05, 0)
-  scene.add(royalGarden)
+  scene?.add(royalGarden)
   
   // Fuente central del jardín
   const fountainGeometry = new THREE.CylinderGeometry(3, 4, 4, 16)
   const fountain = new THREE.Mesh(fountainGeometry, materials.marble)
   fountain.position.set(40, 2, 0)
-  scene.add(fountain)
+  scene?.add(fountain)
   
   // PLAZA DE ARMAS (Oeste)
   const weaponsPlazaGeometry = new THREE.CircleGeometry(15, 24)
   const weaponsPlaza = new THREE.Mesh(weaponsPlazaGeometry, materials.stone)
   weaponsPlaza.rotation.x = -Math.PI / 2
   weaponsPlaza.position.set(-40, 0.1, 0)
-  scene.add(weaponsPlaza)
+  scene?.add(weaponsPlaza)
   
   // TORRES DE VIGILANCIA EN EL PERÍMETRO INTERIOR
   const innerWatchTowers = [
@@ -1917,199 +2034,21 @@ const createCastle = async (): Promise<void> => {
     const watchTowerGeometry = new THREE.CylinderGeometry(2, 2.5, 15, 8)
     const watchTower = new THREE.Mesh(watchTowerGeometry, materials.stone)
     watchTower.position.set(pos.x, 7.5, pos.z)
-    scene.add(watchTower)
+    scene?.add(watchTower)
     
     // Techo puntiagudo
     const watchRoofGeometry = new THREE.ConeGeometry(2.5, 4, 8)
     const watchRoof = new THREE.Mesh(watchRoofGeometry, materials.roof)
     watchRoof.position.set(pos.x, 17, pos.z)
-    scene.add(watchRoof)
+    scene?.add(watchRoof)
   })
 }
 
-const createPalermoDistrict = async (): Promise<void> => {
-  if (!scene) return
-  
-  console.log('Creating PALERMO District with 3 massive sub-districts...')
-  
-  // ============ MATERIALES REALISTAS MEDIEVALES ============
-  const luxuryMaterials = {
-    imperial: new THREE.MeshLambertMaterial({ color: 0x8B8B83 }),      // Piedra gris clara imperial
-    ducal: new THREE.MeshLambertMaterial({ color: 0x778899 }),         // Piedra azul-gris noble  
-    noble: new THREE.MeshLambertMaterial({ color: 0x696969 }),         // Piedra gris medio
-    wealthy: new THREE.MeshLambertMaterial({ color: 0x8B7D6B }),       // Piedra beige-marrón
-    merchant: new THREE.MeshLambertMaterial({ color: 0x654321 }),      // Madera oscura
-    marble: new THREE.MeshLambertMaterial({ color: 0xC0C0C0 }),        // Piedra clara natural
-    gold: new THREE.MeshLambertMaterial({ color: 0xB8860B }),          // Bronce envejecido
-    bronze: new THREE.MeshLambertMaterial({ color: 0x8C6239 })         // Cobre oxidado
-  }
-  
-  const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x5D4E37 })  // Madera castaña oscura
-  const streetMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 })  // Piedra gris para calles
-  
-  // ============ PALERMO ALTO - DISTRITO DUCAL (Zona más noble) ============
-  await createPalermoAlto(luxuryMaterials)
-  // ============ PALERMO MEDIO - BARRIO NOBLE (Nobleza media) ============  
-  await createPalermoMedio(luxuryMaterials)
-  
-  // ============ PALERMO BAJO - COMERCIANTES RICOS (Burguesía próspera) ============
-  await createPalermoBajo(luxuryMaterials)
-  
-  // ============ INFRAESTRUCTURA UNIFICADA DE PALERMO ============
-  await createPalermoInfrastructure(luxuryMaterials)
-  
-  console.log('PALERMO District with 3 sub-districts completed!')
-}
 
-// ============ PALERMO ALTO - DISTRITO DUCAL SUPREMO ============
-async function createPalermoAlto(materials: any): Promise<void> {
-  if (!scene) return
-  
-  console.log('Creating PALERMO ALTO - Supreme Ducal District...')
-  
-  const palermoAltoCenter = { x: -90, z: -70 }
-  const radius = 25
-  
-  // Materiales
-  const { stoneMaterial, goldMaterial, marbleMaterial, roofMaterial, darkStoneMaterial } = materials
-  
-  // Base territorial elevada
-  const districtBaseGeometry = new THREE.CircleGeometry(radius, 32)
-  const districtBaseMaterial = new THREE.MeshLambertMaterial({ color: 0x8B8B83 })
-  const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
-  districtBase.rotation.x = -Math.PI / 2
-  districtBase.position.set(palermoAltoCenter.x, 2, palermoAltoCenter.z)
-  scene.add(districtBase)
-  
-  // Palacio Ducal Central
-  const ducalPalaceGeometry = new THREE.BoxGeometry(15, 20, 12)
-  const ducalPalace = new THREE.Mesh(ducalPalaceGeometry, marbleMaterial)
-  ducalPalace.position.set(palermoAltoCenter.x, 10, palermoAltoCenter.z)
-  ducalPalace.castShadow = true
-  scene.add(ducalPalace)
-  
-  // Torres del palacio ducal
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2
-    const towerX = palermoAltoCenter.x + Math.cos(angle) * 8
-    const towerZ = palermoAltoCenter.z + Math.sin(angle) * 8
-    
-    const towerGeometry = new THREE.CylinderGeometry(2, 2.5, 25, 12)
-    const tower = new THREE.Mesh(towerGeometry, materials.ducal)
-    tower.position.set(towerX, 12.5, towerZ)
-    scene.add(tower)
-    
-    // Tejado cónico
-    const roofGeometry = new THREE.ConeGeometry(3, 4, 12)
-    const roof = new THREE.Mesh(roofGeometry, roofMaterial)
-    roof.position.set(towerX, 27, towerZ)
-    scene.add(roof)
-  }
-  
-  // Mansiones nobles circundantes
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2
-    const mansionX = palermoAltoCenter.x + Math.cos(angle) * 18
-    const mansionZ = palermoAltoCenter.z + Math.sin(angle) * 18
-    
-    const mansionGeometry = new THREE.BoxGeometry(6, 12, 8)
-    const mansion = new THREE.Mesh(mansionGeometry, materials.noble)
-    mansion.position.set(mansionX, 6, mansionZ)
-    mansion.castShadow = true
-    scene.add(mansion)
-    
-    // Tejado de mansión
-    const mansionRoofGeometry = new THREE.BoxGeometry(7, 2, 9)
-    const mansionRoof = new THREE.Mesh(mansionRoofGeometry, roofMaterial)
-    mansionRoof.position.set(mansionX, 13, mansionZ)
-    scene.add(mansionRoof)
-}
 
-// ============ PALERMO MEDIO - BARRIO NOBLE ============
-async function createPalermoMedio(materials: any): Promise<void> {
-  if (!scene) return
-  
-  console.log('Creating PALERMO MEDIO - Noble District...')
-  
-  const palermoMedioCenter = { x: -140, z: -70 }
-  const radius = 22
-  
-  // Base territorial
-  const districtBaseGeometry = new THREE.CircleGeometry(radius, 32)
-  const districtBaseMaterial = new THREE.MeshLambertMaterial({ color: 0x778899 })
-  const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
-  districtBase.rotation.x = -Math.PI / 2
-  districtBase.position.set(palermoMedioCenter.x, 1.5, palermoMedioCenter.z)
-  scene.add(districtBase)
-  
-  // Mansiones nobles medianas
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2
-    const mansionX = palermoMedioCenter.x + Math.cos(angle) * 15
-    const mansionZ = palermoMedioCenter.z + Math.sin(angle) * 15
-    
-    const mansionGeometry = new THREE.BoxGeometry(5, 10, 6)
-    const mansion = new THREE.Mesh(mansionGeometry, materials.wealthy)
-    mansion.position.set(mansionX, 5, mansionZ)
-    mansion.castShadow = true
-    scene.add(mansion)
-  }
-}
 
-// ============ PALERMO BAJO - COMERCIANTES RICOS ============
-async function createPalermoBajo(materials: any): Promise<void> {
-  if (!scene) return
-  
-  console.log('Creating PALERMO BAJO - Wealthy Merchants District...')
-  
-  const palermoBajoCenter = { x: -190, z: -70 }
-  const radius = 20
-  
-  // Base territorial
-  const districtBaseGeometry = new THREE.CircleGeometry(radius, 32)
-  const districtBaseMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 })
-  const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
-  districtBase.rotation.x = -Math.PI / 2
-  districtBase.position.set(palermoBajoCenter.x, 1, palermoBajoCenter.z)
-  scene.add(districtBase)
-  
-  // Casas comerciales
-  for (let i = 0; i < 16; i++) {
-    const angle = (i / 16) * Math.PI * 2
-    const houseX = palermoBajoCenter.x + Math.cos(angle) * 12
-    const houseZ = palermoBajoCenter.z + Math.sin(angle) * 12
-    
-    const houseGeometry = new THREE.BoxGeometry(4, 8, 5)
-    const house = new THREE.Mesh(houseGeometry, materials.merchant)
-    house.position.set(houseX, 4, houseZ)
-    house.castShadow = true
-    scene.add(house)
-  }
-}
 
-// ============ INFRAESTRUCTURA DE PALERMO ============
-async function createPalermoInfrastructure(materials: any): Promise<void> {
-  if (!scene) return
-  
-  console.log('Creating PALERMO Infrastructure...')
-  
-  // Carreteras principales conectando los 3 distritos
-  const roadMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 })
-  
-  // Carretera entre Alto y Medio
-  const road1Geometry = new THREE.BoxGeometry(50, 0.2, 4)
-  const road1 = new THREE.Mesh(road1Geometry, roadMaterial)
-  road1.position.set(-115, 0.1, -70)
-  scene.add(road1)
-  
-  // Carretera entre Medio y Bajo
-  const road2Geometry = new THREE.BoxGeometry(50, 0.2, 4)
-  const road2 = new THREE.Mesh(road2Geometry, roadMaterial)
-  road2.position.set(-165, 0.1, -70)
-  scene.add(road2)
-}
-
-const createPalermoDistrict = async (): Promise<void> => {
+async function createPalermoDistrict(): Promise<void> {
   if (!scene) return
 
   console.log('Creating PALERMO District with 3 massive sub-districts...')
@@ -2153,7 +2092,8 @@ async function createPalermoAlto(materials: any): Promise<void> {
   const palermoAltoCenter = { x: -90, z: -70 }
   const radius = 25
   
-  // Base territorial elevada
+  // Base territorial elevada (REMOVIDA POR PETICIÓN DE USUARIO)
+  /*
   const districtBaseGeometry = new THREE.CircleGeometry(radius, 32)
   const districtBaseMaterial = new THREE.MeshLambertMaterial({ 
     color: 0x8FBC8F, // Verde mar pálido natural
@@ -2163,7 +2103,8 @@ async function createPalermoAlto(materials: any): Promise<void> {
   const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
   districtBase.rotation.x = -Math.PI / 2
   districtBase.position.set(palermoAltoCenter.x, 0.1, palermoAltoCenter.z)
-  scene.add(districtBase)
+  scene?.add(districtBase)
+  */
   
   // PALACIOS DUCALES - Los más magnificos de la ciudad
   const ducalPalaces = [
@@ -2230,13 +2171,13 @@ async function createPalermoAlto(materials: any): Promise<void> {
     const palaceMesh = new THREE.Mesh(palaceGeometry, palaceMaterial)
     palaceMesh.position.set(palace.x, palace.height/2, palace.z)
     palaceMesh.castShadow = true
-    scene.add(palaceMesh)
+    scene?.add(palaceMesh)
     
     // Cúpula dorada central
     const domeGeometry = new THREE.SphereGeometry(palace.width * 0.3, 16, 12)
     const dome = new THREE.Mesh(domeGeometry, materials.gold)
     dome.position.set(palace.x, palace.height + palace.width * 0.2, palace.z)
-    scene.add(dome)
+    scene?.add(dome)
     
     // Torres de esquina múltiples
     const numTowers = palace.type === 'grand_palace' ? 8 : 6
@@ -2249,19 +2190,19 @@ async function createPalermoAlto(materials: any): Promise<void> {
       const towerGeometry = new THREE.CylinderGeometry(2, 2.5, palace.height + 4, 12)
       const tower = new THREE.Mesh(towerGeometry, palaceMaterial)
       tower.position.set(towerX, (palace.height + 4)/2, towerZ)
-      scene.add(tower)
+      scene?.add(tower)
       
       // Cúpula de torre
       const towerDomeGeometry = new THREE.SphereGeometry(2.5, 12, 8)
       const towerDome = new THREE.Mesh(towerDomeGeometry, materials.gold)
       towerDome.position.set(towerX, palace.height + 6, towerZ)
-      scene.add(towerDome)
+      scene?.add(towerDome)
       
       // Bandera ducal
       const flagPoleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 4, 8)
       const flagPole = new THREE.Mesh(flagPoleGeometry, materials.bronze)
       flagPole.position.set(towerX, palace.height + 8.5, towerZ)
-      scene.add(flagPole)
+      scene?.add(flagPole)
       
       const flagGeometry = new THREE.PlaneGeometry(3, 2)
       const flagColors = [0xFF0000, 0x0000FF, 0xFFD700, 0x800080]
@@ -2270,7 +2211,7 @@ async function createPalermoAlto(materials: any): Promise<void> {
       })
       const flag = new THREE.Mesh(flagGeometry, flagMaterial)
       flag.position.set(towerX + 1.5, palace.height + 9, towerZ)
-      scene.add(flag)
+      scene?.add(flag)
     }
     
     // Jardines palatinos masivos
@@ -2283,7 +2224,7 @@ async function createPalermoAlto(materials: any): Promise<void> {
     const garden = new THREE.Mesh(gardenGeometry, gardenMaterial)
     garden.rotation.x = -Math.PI / 2
     garden.position.set(palace.x + palace.width * 1.2, 0.02, palace.z)
-    scene.add(garden)
+    scene?.add(garden)
     
     // Fuentes ornamentales en jardines
     for (let i = 0; i < 3; i++) {
@@ -2294,13 +2235,13 @@ async function createPalermoAlto(materials: any): Promise<void> {
       const fountainGeometry = new THREE.CylinderGeometry(2, 2.5, 2, 16)
       const fountain = new THREE.Mesh(fountainGeometry, materials.marble)
       fountain.position.set(fountainX, 1, fountainZ)
-      scene.add(fountain)
+      scene?.add(fountain)
       
       // Estatua en la fuente
       const statueGeometry = new THREE.CylinderGeometry(0.5, 0.8, 3, 8)
       const statue = new THREE.Mesh(statueGeometry, materials.bronze)
       statue.position.set(fountainX, 3.5, fountainZ)
-      scene.add(statue)
+      scene?.add(statue)
     }
     
     // Establos ducales de lujo
@@ -2308,14 +2249,14 @@ async function createPalermoAlto(materials: any): Promise<void> {
     const stableMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
     const stable = new THREE.Mesh(stableGeometry, stableMaterial)
     stable.position.set(palace.x - palace.width - 8, 2.5, palace.z)
-    scene.add(stable)
+    scene?.add(stable)
     
     // Carroza ducal
     const carriageGeometry = new THREE.BoxGeometry(4, 3, 6)
     const carriageMaterial = new THREE.MeshLambertMaterial({ color: 0xFFD700 })
     const carriage = new THREE.Mesh(carriageGeometry, carriageMaterial)
     carriage.position.set(stable.position.x, 1.5, stable.position.z + 6)
-    scene.add(carriage)
+    scene?.add(carriage)
   }
   
   // Plaza Ducal Central
@@ -2324,19 +2265,19 @@ async function createPalermoAlto(materials: any): Promise<void> {
   const ducalPlaza = new THREE.Mesh(ducalPlazaGeometry, ducalPlazaMaterial)
   ducalPlaza.rotation.x = -Math.PI / 2
   ducalPlaza.position.set(palermoAltoCenter.x, 0.05, palermoAltoCenter.z + 20)
-  scene.add(ducalPlaza)
+  scene?.add(ducalPlaza)
   
   // Monumento al Gran Duque
   const monumentGeometry = new THREE.CylinderGeometry(3, 4, 8, 16)
   const monument = new THREE.Mesh(monumentGeometry, materials.marble)
   monument.position.set(ducalPlaza.position.x, 4, ducalPlaza.position.z)
-  scene.add(monument)
+  scene?.add(monument)
   
   // Estatua ecuestre del Gran Duque
   const equestrianStatueGeometry = new THREE.BoxGeometry(4, 6, 2)
   const equestrianStatue = new THREE.Mesh(equestrianStatueGeometry, materials.bronze)
   equestrianStatue.position.set(monument.position.x, 9, monument.position.z)
-  scene.add(equestrianStatue)
+  scene?.add(equestrianStatue)
 }
 
 // ============ PALERMO MEDIO - BARRIO NOBLE PRINCIPAL ============
@@ -2348,7 +2289,8 @@ async function createPalermoMedio(materials: any): Promise<void> {
   const palermoMedioCenter = { x: -60, z: -40 }
   const radius = 30
   
-  // Base territorial 
+  // Base territorial (REMOVIDA POR PETICIÓN DE USUARIO)
+  /*
   const districtBaseGeometry = new THREE.CircleGeometry(radius, 32)
   const districtBaseMaterial = new THREE.MeshLambertMaterial({ 
     color: 0x9ACD32, // Verde oliva natural
@@ -2358,7 +2300,8 @@ async function createPalermoMedio(materials: any): Promise<void> {
   const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
   districtBase.rotation.x = -Math.PI / 2
   districtBase.position.set(palermoMedioCenter.x, 0.08, palermoMedioCenter.z)
-  scene.add(districtBase)
+  scene?.add(districtBase)
+  */
   
   // MANSIONES NOBILIARIAS - Condes, Marqueses y Barones
   const nobleMansions = [
@@ -2384,7 +2327,7 @@ async function createPalermoMedio(materials: any): Promise<void> {
     const mansionMesh = new THREE.Mesh(mansionGeometry, buildingMaterial)
     mansionMesh.position.set(mansion.x, mansion.height/2, mansion.z)
     mansionMesh.castShadow = true
-    scene.add(mansionMesh)
+    scene?.add(mansionMesh)
     
     // Torres según rango (más torres = mayor rango)
     const numTowers = mansion.rank === 'count' ? 4 : mansion.rank === 'marquis' ? 3 : 2
@@ -2397,13 +2340,13 @@ async function createPalermoMedio(materials: any): Promise<void> {
       const towerGeometry = new THREE.CylinderGeometry(1.5, 2, mansion.height + 2, 8)
       const tower = new THREE.Mesh(towerGeometry, buildingMaterial)
       tower.position.set(towerX, (mansion.height + 2)/2, towerZ)
-      scene.add(tower)
+      scene?.add(tower)
       
       // Tejado cónico
       const roofGeometry = new THREE.ConeGeometry(2.2, 3, 8)
       const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
       roof.position.set(towerX, mansion.height + 3.5, towerZ)
-      scene.add(roof)
+      scene?.add(roof)
     }
     
     // Jardín privado
@@ -2416,20 +2359,20 @@ async function createPalermoMedio(materials: any): Promise<void> {
     const garden = new THREE.Mesh(gardenGeometry, gardenMaterial)
     garden.rotation.x = -Math.PI / 2
     garden.position.set(mansion.x + mansion.width * 1.1, 0.02, mansion.z)
-    scene.add(garden)
+    scene?.add(garden)
     
     // Fuente en jardín privado
     const fountainGeometry = new THREE.CylinderGeometry(1.5, 1.8, 1.2, 12)
     const fountain = new THREE.Mesh(fountainGeometry, materials.marble)
     fountain.position.set(garden.position.x, 0.6, garden.position.z)
-    scene.add(fountain)
+    scene?.add(fountain)
     
     // Establos nobiliarios
     const stableGeometry = new THREE.BoxGeometry(6, 4, 8)
     const stableMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
     const stable = new THREE.Mesh(stableGeometry, stableMaterial)
     stable.position.set(mansion.x - mansion.width - 4, 2, mansion.z)
-    scene.add(stable)
+    scene?.add(stable)
   }
   
   // EMBAJADAS Y RESIDENCIAS DIPLOMÁTICAS
@@ -2444,13 +2387,13 @@ async function createPalermoMedio(materials: any): Promise<void> {
     const embassyMaterial = new THREE.MeshLambertMaterial({ color: 0xF5F5DC })
     const embassyMesh = new THREE.Mesh(embassyGeometry, embassyMaterial)
     embassyMesh.position.set(embassy.x, embassy.height/2, embassy.z)
-    scene.add(embassyMesh)
+    scene?.add(embassyMesh)
     
     // Bandera nacional
     const flagPoleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 8, 8)
     const flagPole = new THREE.Mesh(flagPoleGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
     flagPole.position.set(embassy.x, embassy.height + 4, embassy.z + embassy.depth/2 + 2)
-    scene.add(flagPole)
+    scene?.add(flagPole)
     
     const flagGeometry = new THREE.PlaneGeometry(4, 3)
     const flagColors = [0xFF0000, 0x00FF00, 0x0000FF]
@@ -2459,7 +2402,7 @@ async function createPalermoMedio(materials: any): Promise<void> {
     })
     const flag = new THREE.Mesh(flagGeometry, flagMaterial)
     flag.position.set(embassy.x + 2, embassy.height + 6, embassy.z + embassy.depth/2 + 2)
-    scene.add(flag)
+    scene?.add(flag)
   }
 }
 
@@ -2472,7 +2415,8 @@ async function createPalermoBajo(materials: any): Promise<void> {
   const palermoBajoCenter = { x: -40, z: -10 }
   const radius = 25
   
-  // Base territorial
+  // Base territorial (REMOVIDA POR PETICIÓN DE USUARIO)
+  /*
   const districtBaseGeometry = new THREE.CircleGeometry(radius, 32)
   const districtBaseMaterial = new THREE.MeshLambertMaterial({ 
     color: 0xDEB887, 
@@ -2482,7 +2426,8 @@ async function createPalermoBajo(materials: any): Promise<void> {
   const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
   districtBase.rotation.x = -Math.PI / 2
   districtBase.position.set(palermoBajoCenter.x, 0.06, palermoBajoCenter.z)
-  scene.add(districtBase)
+  scene?.add(districtBase)
+  */
   
   // RESIDENCIAS DE COMERCIANTES PRÓSPEROS
   const merchantHouses = [
@@ -2507,7 +2452,7 @@ async function createPalermoBajo(materials: any): Promise<void> {
     const houseMesh = new THREE.Mesh(houseGeometry, buildingMaterial)
     houseMesh.position.set(house.x, house.height/2, house.z)
     houseMesh.castShadow = true
-    scene.add(houseMesh)
+    scene?.add(houseMesh)
     
     // Torre comercial (para mostrar prosperidad)
     const towerGeometry = new THREE.CylinderGeometry(1.2, 1.5, house.height + 1.5, 8)
@@ -2517,13 +2462,13 @@ async function createPalermoBajo(materials: any): Promise<void> {
       (house.height + 1.5)/2,
       house.z + house.depth/3
     )
-    scene.add(tower)
+    scene?.add(tower)
     
     // Tejado de torre
     const towerRoofGeometry = new THREE.ConeGeometry(1.8, 2, 8)
     const towerRoof = new THREE.Mesh(towerRoofGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
     towerRoof.position.set(tower.position.x, house.height + 2.5, tower.position.z)
-    scene.add(towerRoof)
+    scene?.add(towerRoof)
     
     // Almacén/taller según el comercio
     const warehouseGeometry = new THREE.BoxGeometry(6, 4, house.depth + 2)
@@ -2532,7 +2477,7 @@ async function createPalermoBajo(materials: any): Promise<void> {
     
     const warehouse = new THREE.Mesh(warehouseGeometry, warehouseMaterial)
     warehouse.position.set(house.x - house.width - 4, 2, house.z)
-    scene.add(warehouse)
+    scene?.add(warehouse)
     
     // Características específicas según comercio
     if (house.trade === 'silk' || house.trade === 'furs') {
@@ -2546,7 +2491,7 @@ async function createPalermoBajo(materials: any): Promise<void> {
           3.5,
           warehouse.position.z + (i - 1) * 1.5
         )
-        scene.add(line)
+        scene?.add(line)
         
         // "Telas" colgando
         const fabricGeometry = new THREE.PlaneGeometry(1, 1.5)
@@ -2556,7 +2501,7 @@ async function createPalermoBajo(materials: any): Promise<void> {
         })
         const fabric = new THREE.Mesh(fabricGeometry, fabricMaterial)
         fabric.position.set(line.position.x + 1, 2.8, line.position.z)
-        scene.add(fabric)
+        scene?.add(fabric)
       }
     }
     
@@ -2565,7 +2510,7 @@ async function createPalermoBajo(materials: any): Promise<void> {
       const anvilGeometry = new THREE.BoxGeometry(1.5, 0.8, 1)
       const anvil = new THREE.Mesh(anvilGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
       anvil.position.set(warehouse.position.x + 2, 0.4, warehouse.position.z)
-      scene.add(anvil)
+      scene?.add(anvil)
       
       // Bastidores de armas
       for (let i = 0; i < 4; i++) {
@@ -2576,7 +2521,7 @@ async function createPalermoBajo(materials: any): Promise<void> {
           1.5,
           warehouse.position.z + (i - 1.5) * 1.2
         )
-        scene.add(rack)
+        scene?.add(rack)
       }
     }
     
@@ -2590,7 +2535,7 @@ async function createPalermoBajo(materials: any): Promise<void> {
           0.5,
           warehouse.position.z + Math.floor(i / 3) * 2 - 1
         )
-        scene.add(barrel)
+        scene?.add(barrel)
       }
     }
     
@@ -2604,16 +2549,18 @@ async function createPalermoBajo(materials: any): Promise<void> {
     const garden = new THREE.Mesh(gardenGeometry, gardenMaterial)
     garden.rotation.x = -Math.PI / 2
     garden.position.set(house.x + house.width * 0.8, 0.02, house.z + house.depth * 0.8)
-    scene.add(garden)
+    scene?.add(garden)
   }
   
-  // MERCADO EXCLUSIVO DE LUJO
+  // MERCADO EXCLUSIVO DE LUJO (Base removida)
+  /*
   const luxuryMarketGeometry = new THREE.CircleGeometry(8, 16)
   const luxuryMarketMaterial = new THREE.MeshLambertMaterial({ color: 0xF0E68C })
   const luxuryMarket = new THREE.Mesh(luxuryMarketGeometry, luxuryMarketMaterial)
   luxuryMarket.rotation.x = -Math.PI / 2
   luxuryMarket.position.set(palermoBajoCenter.x, 0.08, palermoBajoCenter.z + 15)
-  scene.add(luxuryMarket)
+  scene?.add(luxuryMarket)
+  */
   
   // Puestos de lujo especializados
   const luxuryStalls = [
@@ -2628,14 +2575,14 @@ async function createPalermoBajo(materials: any): Promise<void> {
     const stallMaterial = new THREE.MeshLambertMaterial({ color: stall.color })
     const stallMesh = new THREE.Mesh(stallGeometry, stallMaterial)
     stallMesh.position.set(stall.x, 1.5, stall.z)
-    scene.add(stallMesh)
+    scene?.add(stallMesh)
     
     // Toldo elegante
     const canopyGeometry = new THREE.BoxGeometry(4, 0.2, 4)
     const canopyMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF })
     const canopy = new THREE.Mesh(canopyGeometry, canopyMaterial)
     canopy.position.set(stall.x, 3.5, stall.z)
-    scene.add(canopy)
+    scene?.add(canopy)
   }
 }
 
@@ -2651,7 +2598,7 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
   const grandAvenueMaterial = new THREE.MeshLambertMaterial({ color: 0xC0C0C0 })
   const grandAvenue = new THREE.Mesh(grandAvenueGeometry, grandAvenueMaterial)
   grandAvenue.position.set(-60, 0.05, -40)
-  scene.add(grandAvenue)
+  scene?.add(grandAvenue)
   
   // ============ PLAZA MAYOR DE PALERMO ============
   // Plaza central del distrito noble
@@ -2660,7 +2607,7 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
   const majorPlaza = new THREE.Mesh(majorPlazaGeometry, majorPlazaMaterial)
   majorPlaza.rotation.x = -Math.PI / 2
   majorPlaza.position.set(-60, 0.1, -40)
-  scene.add(majorPlaza)
+  scene?.add(majorPlaza)
   
   // ============ CATEDRAL DE PALERMO ============
   // Magnífica catedral del distrito
@@ -2668,14 +2615,14 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
   const cathedral = new THREE.Mesh(cathedralGeometry, materials.marble)
   cathedral.position.set(-60, 10, -65)
   cathedral.castShadow = true
-  scene.add(cathedral)
+  scene?.add(cathedral)
   
   // Torres gemelas de la catedral
   for (let side = -1; side <= 1; side += 2) {
     const towerGeometry = new THREE.BoxGeometry(4, 30, 4)
     const tower = new THREE.Mesh(towerGeometry, materials.marble)
     tower.position.set(-60 + side * 8, 15, -52)
-    scene.add(tower)
+    scene?.add(tower)
     
     // Campanas en torres
     for (let i = 0; i < 3; i++) {
@@ -2683,21 +2630,21 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
       const bellMaterial = new THREE.MeshLambertMaterial({ color: 0xB8860B })
       const bell = new THREE.Mesh(bellGeometry, bellMaterial)
       bell.position.set(-60 + side * 8, 25 + i * 2, -52)
-      scene.add(bell)
+      scene?.add(bell)
     }
     
     // Tejado puntiagudo
     const spireGeometry = new THREE.ConeGeometry(3, 8, 8)
     const spire = new THREE.Mesh(spireGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
     spire.position.set(-60 + side * 8, 34, -52)
-    scene.add(spire)
+    scene?.add(spire)
   }
   
   // Cúpula central de la catedral
   const cathedralDomeGeometry = new THREE.SphereGeometry(8, 16, 12)
   const cathedralDome = new THREE.Mesh(cathedralDomeGeometry, materials.gold)
   cathedralDome.position.set(-60, 25, -65)
-  scene.add(cathedralDome)
+  scene?.add(cathedralDome)
   
   // ============ UNIVERSIDAD DE PALERMO ============
   // Centro de educación nobiliaria
@@ -2705,23 +2652,23 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
   const universityMaterial = new THREE.MeshLambertMaterial({ color: 0xF5F5DC })
   const university = new THREE.Mesh(universityGeometry, universityMaterial)
   university.position.set(-80, 4, -15)
-  scene.add(university)
+  scene?.add(university)
   
   // Torre del reloj de la universidad
   const clockTowerGeometry = new THREE.CylinderGeometry(2, 3, 15, 12)
   const clockTower = new THREE.Mesh(clockTowerGeometry, universityMaterial)
   clockTower.position.set(-80, 7.5, -8)
-  scene.add(clockTower)
+  scene?.add(clockTower)
   
   // Reloj
   const clockGeometry = new THREE.CircleGeometry(2, 16)
   const clockMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF })
   const clock = new THREE.Mesh(clockGeometry, clockMaterial)
   clock.position.set(-78, 12, -8)
-  scene.add(clock)
+  scene?.add(clock)
   
-  // ============ JARDINES PÚBLICOS DE PALERMO ============
-  // Extensos jardines para la nobleza
+  // ============ JARDINES PÚBLICOS DE PALERMO (Base removida) ============
+  /*
   const publicGardensGeometry = new THREE.CircleGeometry(25, 32)
   const publicGardensMaterial = new THREE.MeshLambertMaterial({ 
     color: 0x228B22, 
@@ -2731,7 +2678,8 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
   const publicGardens = new THREE.Mesh(publicGardensGeometry, publicGardensMaterial)
   publicGardens.rotation.x = -Math.PI / 2
   publicGardens.position.set(-30, 0.02, -40)
-  scene.add(publicGardens)
+  scene?.add(publicGardens)
+  */
   
   // Fuentes ornamentales en jardines
   for (let i = 0; i < 5; i++) {
@@ -2742,7 +2690,7 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
     const fountainGeometry = new THREE.CylinderGeometry(3, 3.5, 2, 16)
     const fountain = new THREE.Mesh(fountainGeometry, materials.marble)
     fountain.position.set(fountainX, 1, fountainZ)
-    scene.add(fountain)
+    scene?.add(fountain)
   }
   
   // Árboles ornamentales
@@ -2755,18 +2703,18 @@ async function createPalermoInfrastructure(materials: any): Promise<void> {
     const trunkGeometry = new THREE.CylinderGeometry(0.4, 0.6, 6, 8)
     const trunk = new THREE.Mesh(trunkGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
     trunk.position.set(treeX, 3, treeZ)
-    scene.add(trunk)
+    scene?.add(trunk)
     
     const leavesGeometry = new THREE.SphereGeometry(2.5, 12, 8)
     const leaves = new THREE.Mesh(leavesGeometry, new THREE.MeshLambertMaterial({ color: 0x228B22 }))
     leaves.position.set(treeX, 7, treeZ)
-    scene.add(leaves)
+    scene?.add(leaves)
   }
   
   console.log('PALERMO infrastructure completed!')
 }
 
-const createOpusDistrict = async (): Promise<void> => {
+async function createOpusDistrict(): Promise<void> {
   if (!scene) return
 
   const materials = {
@@ -2782,24 +2730,12 @@ const createOpusDistrict = async (): Promise<void> => {
     })  // Fuego de forjas
   }
 
-  // ============ DISTRITO OPUS MASIVO - ZONA INDUSTRIAL ÉPICA ============
+  // ============ DISTRITO OPUS MASIVO - ZONA INDUSTRIAL ÉPICA (OPTIMIZADO) ============
   // Posicionado fuera de la muralla exterior (oeste)
   const opusCenter = { x: -350, z: 0 }
   const opusRadius = 85 // Ligeramente más grande que el castillo
 
-  console.log('Creating MASSIVE OPUS INDUSTRIAL DISTRICT outside city walls...')
-
-  // Base del distrito industrial
-  const opusBaseGeometry = new THREE.CircleGeometry(opusRadius, 32)
-  const opusBaseMaterial = new THREE.MeshLambertMaterial({ 
-    color: 0x654321,  // Tierra industrial marrón
-    transparent: true, 
-    opacity: 0.7 
-  })
-  const opusBase = new THREE.Mesh(opusBaseGeometry, opusBaseMaterial)
-  opusBase.rotation.x = -Math.PI / 2
-  opusBase.position.set(opusCenter.x, 0.1, opusCenter.z)
-  scene.add(opusBase)
+  console.log('Creating MASSIVE OPUS INDUSTRIAL DISTRICT (OPTIMIZED)...')
 
   // ========== ZONA NORTE - FORJAS IMPERIALES MASIVAS ==========
   const forgeZoneCenter = { x: opusCenter.x, z: opusCenter.z - 40 }
@@ -2808,23 +2744,70 @@ const createOpusDistrict = async (): Promise<void> => {
   const grandForgeGeometry = new THREE.BoxGeometry(50, 20, 30)
   const grandForge = new THREE.Mesh(grandForgeGeometry, materials.stone)
   grandForge.position.set(forgeZoneCenter.x, 10, forgeZoneCenter.z)
-  scene.add(grandForge)
+  scene?.add(grandForge)
+
+  // INSTANCED MESHES SETUP
+  const dummy = new THREE.Object3D()
+  
+  // Chimeneas (Ladrillo)
+  const chimneyGeometry = new THREE.CylinderGeometry(1, 1, 1, 8) // Unit cylinder
+  const chimneysMesh = new THREE.InstancedMesh(chimneyGeometry, materials.brick, 30)
+  chimneysMesh.castShadow = true
+  let chimneyIndex = 0
+  
+  // Humo/Fuego (Fuego)
+  const fireGeometry = new THREE.CylinderGeometry(1, 1, 1, 6) // Unit cylinder
+  const fireMesh = new THREE.InstancedMesh(fireGeometry, materials.fire, 30)
+  let fireIndex = 0
+  
+  // Yunques (Base Piedra + Top Hierro)
+  const anvilBaseGeometry = new THREE.BoxGeometry(2, 1, 1.5)
+  const anvilTopGeometry = new THREE.BoxGeometry(1.5, 0.5, 1)
+  const anvilBasesMesh = new THREE.InstancedMesh(anvilBaseGeometry, materials.stone, 60)
+  const anvilTopsMesh = new THREE.InstancedMesh(anvilTopGeometry, materials.iron, 60)
+  let anvilIndex = 0
+  
+  // Mástiles (Madera)
+  const mastGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 8) // Unit height
+  const mastsMesh = new THREE.InstancedMesh(mastGeometry, materials.wood, 9)
+  let mastIndex = 0
 
   // Chimeneas masivas de la gran forja (12 chimeneas)
   for (let i = 0; i < 12; i++) {
     const chimneyX = forgeZoneCenter.x - 20 + (i % 6) * 8
     const chimneyZ = forgeZoneCenter.z - 10 + Math.floor(i / 6) * 20
 
-    const chimneyGeometry = new THREE.CylinderGeometry(2, 3, 35, 8)
-    const chimney = new THREE.Mesh(chimneyGeometry, materials.brick)
-    chimney.position.set(chimneyX, 37.5, chimneyZ)
-    scene.add(chimney)
+    // Chimenea: Cylinder(2, 3, 35, 8) -> Top 2, Bottom 3, Height 35
+    // Unit cylinder is Top 1, Bottom 1, Height 1.
+    // We can't easily change taper with scale. 
+    // We'll use a fixed geometry for the InstancedMesh that matches the average or just use scale.
+    // Let's use scale and accept uniform cylinders for performance, or create a tapered geometry.
+    // Creating a tapered geometry for the InstancedMesh is better.
+    // Let's use Cylinder(2, 3, 1, 8) as base and scale Y.
+    // Wait, specialized are (1.5, 2, 25).
+    // Ratios are similar. 2/3 = 0.66. 1.5/2 = 0.75.
+    // I'll use a generic tapered cylinder (0.7, 1, 1) and scale it.
+    
+    // Actually, for simplicity in this optimization step, I'll use the Grand Forge geometry as base
+    // and scale it down for specialized forges.
+    // Grand: 2, 3, 35.
+    // Specialized: 1.5, 2, 25.
+    // Scale factor for specialized: 0.75 (approx).
+    
+    // Re-initializing geometry to match Grand Forge shape
+    // Note: I can't change geometry after creation easily here without refactoring above.
+    // I'll assume the geometry above (1,1,1) and just scale it to look like a pipe.
+    
+    dummy.position.set(chimneyX, 37.5, chimneyZ)
+    dummy.scale.set(2.5, 35, 2.5) // Average width
+    dummy.updateMatrix()
+    chimneysMesh.setMatrixAt(chimneyIndex++, dummy.matrix)
 
-    // Humo/fuego saliendo de las chimeneas
-    const smokeGeometry = new THREE.CylinderGeometry(1.5, 0.5, 8, 6)
-    const smoke = new THREE.Mesh(smokeGeometry, materials.fire)
-    smoke.position.set(chimneyX, 45, chimneyZ)
-    scene.add(smoke)
+    // Humo/fuego
+    dummy.position.set(chimneyX, 45, chimneyZ)
+    dummy.scale.set(1.5, 8, 1.5)
+    dummy.updateMatrix()
+    fireMesh.setMatrixAt(fireIndex++, dummy.matrix)
   }
 
   // FORJAS ESPECIALIZADAS (6 forjas menores)
@@ -2841,20 +2824,20 @@ const createOpusDistrict = async (): Promise<void> => {
     const forgeGeometry = new THREE.BoxGeometry(15, 12, 20)
     const forgeMesh = new THREE.Mesh(forgeGeometry, materials.stone)
     forgeMesh.position.set(forge.x, 6, forge.z)
-    scene.add(forgeMesh)
+    scene?.add(forgeMesh)
 
     // Chimeneas de forjas especializadas
     for (let i = 0; i < 3; i++) {
-      const chimneyGeometry = new THREE.CylinderGeometry(1.5, 2, 25, 8)
-      const chimney = new THREE.Mesh(chimneyGeometry, materials.brick)
-      chimney.position.set(forge.x + (i - 1) * 6, 24.5, forge.z + 8)
-      scene.add(chimney)
+      dummy.position.set(forge.x + (i - 1) * 6, 24.5, forge.z + 8)
+      dummy.scale.set(1.8, 25, 1.8) // Slightly smaller
+      dummy.updateMatrix()
+      chimneysMesh.setMatrixAt(chimneyIndex++, dummy.matrix)
 
       // Fuego
-      const fireGeometry = new THREE.CylinderGeometry(1, 0.3, 5, 6)
-      const fire = new THREE.Mesh(fireGeometry, materials.fire)
-      fire.position.set(forge.x + (i - 1) * 6, 29, forge.z + 8)
-      scene.add(fire)
+      dummy.position.set(forge.x + (i - 1) * 6, 29, forge.z + 8)
+      dummy.scale.set(1, 5, 1)
+      dummy.updateMatrix()
+      fireMesh.setMatrixAt(fireIndex++, dummy.matrix)
     }
 
     // Yunques masivos (10 por forja)
@@ -2862,15 +2845,17 @@ const createOpusDistrict = async (): Promise<void> => {
       const anvilX = forge.x - 8 + (i % 5) * 4
       const anvilZ = forge.z - 8 + Math.floor(i / 5) * 8
 
-      const anvilBaseGeometry = new THREE.BoxGeometry(2, 1, 1.5)
-      const anvilBase = new THREE.Mesh(anvilBaseGeometry, materials.stone)
-      anvilBase.position.set(anvilX, 0.5, anvilZ)
-      scene.add(anvilBase)
+      dummy.position.set(anvilX, 0.5, anvilZ)
+      dummy.rotation.set(0, 0, 0)
+      dummy.scale.set(1, 1, 1) // Geometry is already sized
+      dummy.updateMatrix()
+      anvilBasesMesh.setMatrixAt(anvilIndex, dummy.matrix)
 
-      const anvilTopGeometry = new THREE.BoxGeometry(1.5, 0.5, 1)
-      const anvilTop = new THREE.Mesh(anvilTopGeometry, materials.iron)
-      anvilTop.position.set(anvilX, 1.25, anvilZ)
-      scene.add(anvilTop)
+      dummy.position.set(anvilX, 1.25, anvilZ)
+      dummy.updateMatrix()
+      anvilTopsMesh.setMatrixAt(anvilIndex, dummy.matrix)
+      
+      anvilIndex++
     }
   })
 
@@ -2881,7 +2866,7 @@ const createOpusDistrict = async (): Promise<void> => {
   const shipyardGeometry = new THREE.BoxGeometry(60, 8, 40)
   const shipyard = new THREE.Mesh(shipyardGeometry, materials.wood)
   shipyard.position.set(carpentryZoneCenter.x, 4, carpentryZoneCenter.z)
-  scene.add(shipyard)
+  scene?.add(shipyard)
 
   // Barcos en construcción terrestre (3 barcos)
   for (let i = 0; i < 3; i++) {
@@ -2890,16 +2875,22 @@ const createOpusDistrict = async (): Promise<void> => {
     const shipHullGeometry = new THREE.BoxGeometry(20, 6, 12)
     const shipHull = new THREE.Mesh(shipHullGeometry, materials.wood)
     shipHull.position.set(shipX, 7, carpentryZoneCenter.z)
-    scene.add(shipHull)
+    scene?.add(shipHull)
 
     // Mástiles
     for (let m = 0; m < 3; m++) {
-      const mastGeometry = new THREE.CylinderGeometry(0.3, 0.3, 20, 8)
-      const mast = new THREE.Mesh(mastGeometry, materials.wood)
-      mast.position.set(shipX + (m - 1) * 6, 17, carpentryZoneCenter.z)
-      scene.add(mast)
+      dummy.position.set(shipX + (m - 1) * 6, 17, carpentryZoneCenter.z)
+      dummy.scale.set(1, 20, 1) // Height 20
+      dummy.updateMatrix()
+      mastsMesh.setMatrixAt(mastIndex++, dummy.matrix)
     }
   }
+  
+  scene?.add(chimneysMesh)
+  scene?.add(fireMesh)
+  scene?.add(anvilBasesMesh)
+  scene?.add(anvilTopsMesh)
+  scene?.add(mastsMesh)
 
   // CARPINTERÍAS ESPECIALIZADAS (8 talleres)
   const carpentryShops = [
@@ -2917,14 +2908,14 @@ const createOpusDistrict = async (): Promise<void> => {
     const shopGeometry = new THREE.BoxGeometry(20, 10, 15)
     const shopMesh = new THREE.Mesh(shopGeometry, materials.wood)
     shopMesh.position.set(shop.x, 5, shop.z)
-    scene.add(shopMesh)
+    scene?.add(shopMesh)
 
     // Ruedas hidráulicas para cada taller
     const wheelGeometry = new THREE.CylinderGeometry(4, 4, 2, 16)
     const wheel = new THREE.Mesh(wheelGeometry, materials.wood)
     wheel.position.set(shop.x + 12, 8, shop.z)
     wheel.rotation.z = Math.PI / 2
-    scene.add(wheel)
+    scene?.add(wheel)
 
     // Productos exhibidos afuera
     for (let i = 0; i < 6; i++) {
@@ -2935,7 +2926,7 @@ const createOpusDistrict = async (): Promise<void> => {
         0.75,
         shop.z - 8 + Math.floor(i / 3) * 4
       )
-      scene.add(product)
+      scene?.add(product)
     }
   })
 
@@ -2946,7 +2937,7 @@ const createOpusDistrict = async (): Promise<void> => {
   const textileFactoryGeometry = new THREE.BoxGeometry(50, 15, 25)
   const textileFactory = new THREE.Mesh(textileFactoryGeometry, materials.stone)
   textileFactory.position.set(textileZoneCenter.x, 7.5, textileZoneCenter.z)
-  scene.add(textileFactory)
+  scene?.add(textileFactory)
 
   // Telares masivos dentro (vista desde arriba)
   for (let i = 0; i < 20; i++) {
@@ -2956,7 +2947,7 @@ const createOpusDistrict = async (): Promise<void> => {
     const loomGeometry = new THREE.BoxGeometry(2, 3, 1.5)
     const loom = new THREE.Mesh(loomGeometry, materials.wood)
     loom.position.set(loomX, 1.5, loomZ)
-    scene.add(loom)
+    scene?.add(loom)
   }
 
   // TALLERES DE TINTURAS (4 talleres)
@@ -2971,7 +2962,7 @@ const createOpusDistrict = async (): Promise<void> => {
     const workshopGeometry = new THREE.BoxGeometry(15, 8, 12)
     const workshop = new THREE.Mesh(workshopGeometry, materials.stone)
     workshop.position.set(pos.x, 4, pos.z)
-    scene.add(workshop)
+    scene?.add(workshop)
 
     // Calderos de tintes (colores diferentes)
     const dyeColors = [0xFF0000, 0x0000FF, 0xFFD700, 0x800080]
@@ -2984,7 +2975,7 @@ const createOpusDistrict = async (): Promise<void> => {
         1,
         pos.z - 3 + Math.floor(i / 3) * 6
       )
-      scene.add(cauldron)
+      scene?.add(cauldron)
     }
   })
 
@@ -2992,7 +2983,7 @@ const createOpusDistrict = async (): Promise<void> => {
   const spinneryGeometry = new THREE.BoxGeometry(40, 12, 20)
   const spinnery = new THREE.Mesh(spinneryGeometry, materials.wood)
   spinnery.position.set(textileZoneCenter.x, 6, textileZoneCenter.z + 35)
-  scene.add(spinnery)
+  scene?.add(spinnery)
 
   // Ruedas de hilar masivas (12 ruedas)
   for (let i = 0; i < 12; i++) {
@@ -3002,7 +2993,7 @@ const createOpusDistrict = async (): Promise<void> => {
     const spinningWheelGeometry = new THREE.CylinderGeometry(2, 2, 0.5, 16)
     const spinningWheel = new THREE.Mesh(spinningWheelGeometry, materials.wood)
     spinningWheel.position.set(wheelX, 2, wheelZ)
-    scene.add(spinningWheel)
+    scene?.add(spinningWheel)
   }
 
   // PLAZA CENTRAL DEL DISTRITO OPUS
@@ -3010,18 +3001,18 @@ const createOpusDistrict = async (): Promise<void> => {
   const opusPlaza = new THREE.Mesh(opusPlazaGeometry, materials.stone)
   opusPlaza.rotation.x = -Math.PI / 2
   opusPlaza.position.set(opusCenter.x, 0.15, opusCenter.z + 20)
-  scene.add(opusPlaza)
+  scene?.add(opusPlaza)
 
   // ESTATUA DEL GRAN MAESTRO ARTESANO
   const statueBaseGeometry = new THREE.CylinderGeometry(3, 4, 6, 16)
   const statueBase = new THREE.Mesh(statueBaseGeometry, materials.stone)
   statueBase.position.set(opusCenter.x, 3, opusCenter.z + 20)
-  scene.add(statueBase)
+  scene?.add(statueBase)
 
   const statueGeometry = new THREE.CylinderGeometry(1.5, 2, 8, 8)
   const statue = new THREE.Mesh(statueGeometry, materials.bronze)
   statue.position.set(opusCenter.x, 10, opusCenter.z + 20)
-  scene.add(statue)
+  scene?.add(statue)
 
   // INFRAESTRUCTURA: Canales hidráulicos para las ruedas
   const canalPositions = [
@@ -3049,7 +3040,7 @@ const createOpusDistrict = async (): Promise<void> => {
       (canal.start.z + canal.end.z) / 2
     )
     canalMesh.rotation.y = canalAngle
-    scene.add(canalMesh)
+    scene?.add(canalMesh)
   })
 }
 
@@ -3072,7 +3063,7 @@ async function createOpusNorte(workshopMaterial: any, metalMaterial: any, brickM
   const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
   districtBase.rotation.x = -Math.PI / 2
   districtBase.position.set(opusNorteCenter.x, 0.05, opusNorteCenter.z)
-  scene.add(districtBase)
+  scene?.add(districtBase)
   
   // FORJAS MASIVAS - Complejos metalúrgicos
   const forges = [
@@ -3134,7 +3125,7 @@ async function createOpusNorte(workshopMaterial: any, metalMaterial: any, brickM
     const forgeMesh = new THREE.Mesh(forgeGeometry, brickMaterial)
     forgeMesh.position.set(forge.x, forge.height/2, forge.z)
     forgeMesh.castShadow = true
-    scene.add(forgeMesh)
+    scene?.add(forgeMesh)
     
     // Múltiples chimeneas según tamaño
     for (let i = 0; i < forge.chimneys; i++) {
@@ -3146,13 +3137,13 @@ async function createOpusNorte(workshopMaterial: any, metalMaterial: any, brickM
       const chimneyGeometry = new THREE.CylinderGeometry(1.2, 1.5, forge.height + 8, 8)
       const chimney = new THREE.Mesh(chimneyGeometry, metalMaterial)
       chimney.position.set(chimneyX, (forge.height + 8)/2, chimneyZ)
-      scene.add(chimney)
+      scene?.add(chimney)
       
       // Humo saliendo
       const smokeGeometry = new THREE.CylinderGeometry(2, 1, 5, 6)
       const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial)
       smoke.position.set(chimneyX, forge.height + 10, chimneyZ)
-      scene.add(smoke)
+      scene?.add(smoke)
     }
     
     // Yunques masivos exteriores
@@ -3164,7 +3155,7 @@ async function createOpusNorte(workshopMaterial: any, metalMaterial: any, brickM
       const anvilGeometry = new THREE.BoxGeometry(2.5, 1.2, 1.5)
       const anvil = new THREE.Mesh(anvilGeometry, metalMaterial)
       anvil.position.set(anvilX, 0.6, anvilZ)
-      scene.add(anvil)
+      scene?.add(anvil)
       
       // Martillos y herramientas
       for (let j = 0; j < 3; j++) {
@@ -3176,7 +3167,7 @@ async function createOpusNorte(workshopMaterial: any, metalMaterial: any, brickM
           anvilZ + (Math.random() - 0.5) * 3
         )
         hammer.rotation.z = Math.random() * Math.PI
-        scene.add(hammer)
+        scene?.add(hammer)
       }
     }
     
@@ -3191,14 +3182,14 @@ async function createOpusNorte(workshopMaterial: any, metalMaterial: any, brickM
         forge.z + (i - 2) * 3
       )
       coal.scale.y = 0.7
-      scene.add(coal)
+      scene?.add(coal)
     }
     
     // Almacén de productos terminados
     const warehouseGeometry = new THREE.BoxGeometry(8, 5, 6)
     const warehouse = new THREE.Mesh(warehouseGeometry, workshopMaterial)
     warehouse.position.set(forge.x - forge.width - 6, 2.5, forge.z)
-    scene.add(warehouse)
+    scene?.add(warehouse)
   }
   
   // Plaza de herreros central
@@ -3207,13 +3198,13 @@ async function createOpusNorte(workshopMaterial: any, metalMaterial: any, brickM
   const forgePlaza = new THREE.Mesh(forgePlazaGeometry, forgePlazaMaterial)
   forgePlaza.rotation.x = -Math.PI / 2
   forgePlaza.position.set(opusNorteCenter.x, 0.08, opusNorteCenter.z + 20)
-  scene.add(forgePlaza)
+  scene?.add(forgePlaza)
   
   // Estatua del Dios Herrero
   const statueGeometry = new THREE.CylinderGeometry(3, 4, 8, 12)
   const statue = new THREE.Mesh(statueGeometry, metalMaterial)
   statue.position.set(forgePlaza.position.x, 4, forgePlaza.position.z)
-  scene.add(statue)
+  scene?.add(statue)
 }
 
 // ============ OPUS CENTRO - GREMIOS ARTESANALES ============
@@ -3235,7 +3226,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
   const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
   districtBase.rotation.x = -Math.PI / 2
   districtBase.position.set(opusCentroCenter.x, 0.04, opusCentroCenter.z)
-  scene.add(districtBase)
+  scene?.add(districtBase)
   
   // ASTILLEROS TERRESTRES - Construcción naval masiva
   const shipyards = [
@@ -3265,7 +3256,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
     const shipyardMesh = new THREE.Mesh(shipyardGeometry, workshopMaterial)
     shipyardMesh.position.set(shipyard.x, shipyard.height/2, shipyard.z)
     shipyardMesh.castShadow = true
-    scene.add(shipyardMesh)
+    scene?.add(shipyardMesh)
     
     // Barcos en construcción
     for (let i = 0; i < shipyard.ships; i++) {
@@ -3277,7 +3268,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
       const shipHull = new THREE.Mesh(shipHullGeometry, shipMaterial)
       shipHull.position.set(shipX, 2.5, shipZ)
       shipHull.rotation.y = Math.PI / 8
-      scene.add(shipHull)
+      scene?.add(shipHull)
       
       // Andamios masivos alrededor del barco
       for (let j = 0; j < 16; j++) {
@@ -3288,7 +3279,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
         const scaffoldGeometry = new THREE.BoxGeometry(0.4, 8, 0.4)
         const scaffold = new THREE.Mesh(scaffoldGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
         scaffold.position.set(scaffoldX, 4, scaffoldZ)
-        scene.add(scaffold)
+        scene?.add(scaffold)
       }
     }
     
@@ -3302,7 +3293,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
       const log = new THREE.Mesh(logGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
       log.position.set(logX, logY, logZ)
       log.rotation.z = Math.PI / 2
-      scene.add(log)
+      scene?.add(log)
     }
   }
   
@@ -3320,14 +3311,14 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
     const carpentryMesh = new THREE.Mesh(carpentryGeometry, workshopMaterial)
     carpentryMesh.position.set(carpentry.x, carpentry.height/2, carpentry.z)
     carpentryMesh.castShadow = true
-    scene.add(carpentryMesh)
+    scene?.add(carpentryMesh)
     
     // Aserraderos con ruedas hidráulicas
     const wheelGeometry = new THREE.CylinderGeometry(4, 4, 1.5, 16)
     const wheel = new THREE.Mesh(wheelGeometry, new THREE.MeshLambertMaterial({ color: 0x654321 }))
     wheel.position.set(carpentry.x + carpentry.width/2 + 3, 4, carpentry.z)
     wheel.rotation.z = Math.PI / 2
-    scene.add(wheel)
+    scene?.add(wheel)
     
     // Productos según especialidad
     if (carpentry.type === 'furniture') {
@@ -3340,7 +3331,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
           0.4,
           carpentry.z + (i - 2.5) * 1.5
         )
-        scene.add(table)
+        scene?.add(table)
       }
     }
     
@@ -3354,7 +3345,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
           0.75,
           carpentry.z + (i - 1) * 3
         )
-        scene.add(cartBody)
+        scene?.add(cartBody)
         
         // Ruedas
         for (let j = 0; j < 4; j++) {
@@ -3366,7 +3357,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
             cartBody.position.z + (j < 2 ? -0.6 : 0.6)
           )
           wheel.rotation.x = Math.PI / 2
-          scene.add(wheel)
+          scene?.add(wheel)
         }
       }
     }
@@ -3378,7 +3369,7 @@ async function createOpusCentro(workshopMaterial: any, metalMaterial: any, stone
   const artisanPlaza = new THREE.Mesh(artisanPlazaGeometry, artisanPlazaMaterial)
   artisanPlaza.rotation.x = -Math.PI / 2
   artisanPlaza.position.set(opusCentroCenter.x, 0.06, opusCentroCenter.z + 25)
-  scene.add(artisanPlaza)
+  scene?.add(artisanPlaza)
 }
 
 // ============ OPUS SUR - TEXTILES Y COMERCIO ============
@@ -3400,7 +3391,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
   const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
   districtBase.rotation.x = -Math.PI / 2
   districtBase.position.set(opusSurCenter.x, 0.03, opusSurCenter.z)
-  scene.add(districtBase)
+  scene?.add(districtBase)
   
   // FÁBRICAS TEXTILES MASIVAS
   const textileFactories = [
@@ -3439,7 +3430,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
     const factoryMesh = new THREE.Mesh(factoryGeometry, workshopMaterial)
     factoryMesh.position.set(factory.x, factory.height/2, factory.z)
     factoryMesh.castShadow = true
-    scene.add(factoryMesh)
+    scene?.add(factoryMesh)
     
     // Telares masivos
     for (let i = 0; i < factory.looms; i++) {
@@ -3449,7 +3440,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
       const loomGeometry = new THREE.BoxGeometry(2.5, 2, 1.5)
       const loom = new THREE.Mesh(loomGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
       loom.position.set(loomX, 1, loomZ)
-      scene.add(loom)
+      scene?.add(loom)
       
       // Hilos y telas en el telar
       const threadColors = [0xFF6B6B, 0x4ECDC4, 0xFFE66D, 0x6C5CE7, 0xFD79A8]
@@ -3460,7 +3451,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
         })
         const thread = new THREE.Mesh(threadGeometry, threadMaterial)
         thread.position.set(loomX, 1.8 + j * 0.2, loomZ)
-        scene.add(thread)
+        scene?.add(thread)
       }
     }
     
@@ -3468,7 +3459,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
     const warehouseGeometry = new THREE.BoxGeometry(10, 4, 8)
     const warehouse = new THREE.Mesh(warehouseGeometry, stoneMaterial)
     warehouse.position.set(factory.x - factory.width - 8, 2, factory.z)
-    scene.add(warehouse)
+    scene?.add(warehouse)
     
     // Balas de lana y algodón
     for (let i = 0; i < 12; i++) {
@@ -3482,7 +3473,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
         0.5 + Math.floor(i / 8) * 1.2,
         warehouse.position.z + (Math.floor(i / 4) % 2 - 0.5) * 2
       )
-      scene.add(bale)
+      scene?.add(bale)
     }
   }
   
@@ -3497,7 +3488,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
     const shopGeometry = new THREE.BoxGeometry(dyeShop.width, dyeShop.height, dyeShop.depth)
     const shopMesh = new THREE.Mesh(shopGeometry, workshopMaterial)
     shopMesh.position.set(dyeShop.x, dyeShop.height/2, dyeShop.z)
-    scene.add(shopMesh)
+    scene?.add(shopMesh)
     
     // Calderos de tinte
     for (let i = 0; i < 6; i++) {
@@ -3510,7 +3501,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
         0.75,
         dyeShop.z + (i - 2.5) * 1.5
       )
-      scene.add(cauldron)
+      scene?.add(cauldron)
     }
     
     // Tendederos con telas teñidas
@@ -3518,7 +3509,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
       const lineGeometry = new THREE.BoxGeometry(6, 0.1, 0.1)
       const line = new THREE.Mesh(lineGeometry, new THREE.MeshLambertMaterial({ color: 0x654321 }))
       line.position.set(dyeShop.x - dyeShop.width/2 - 3, 3, dyeShop.z + (i - 1.5) * 1.5)
-      scene.add(line)
+      scene?.add(line)
       
       // Telas colgando
       for (let j = 0; j < 3; j++) {
@@ -3533,7 +3524,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
           2,
           line.position.z
         )
-        scene.add(cloth)
+        scene?.add(cloth)
       }
     }
   }
@@ -3544,7 +3535,7 @@ async function createOpusSur(workshopMaterial: any, metalMaterial: any, stoneMat
   const textileMarket = new THREE.Mesh(textileMarketGeometry, textileMarketMaterial)
   textileMarket.rotation.x = -Math.PI / 2
   textileMarket.position.set(opusSurCenter.x, 0.05, opusSurCenter.z - 25)
-  scene.add(textileMarket)
+  scene?.add(textileMarket)
 }
 
 // ============ INFRAESTRUCTURA COMPARTIDA DE OPUS ============
@@ -3571,14 +3562,14 @@ async function createOpusInfrastructure(metalMaterial: any, stoneMaterial: any):
     const canalMesh = new THREE.Mesh(canalGeometry, canalMaterial)
     canalMesh.position.set(midX, -0.3, midZ)
     canalMesh.rotation.y = angle
-    scene.add(canalMesh)
+    scene?.add(canalMesh)
   }
   
   // Torre de vigilancia industrial
   const watchTowerGeometry = new THREE.CylinderGeometry(3, 4, 20, 12)
   const watchTower = new THREE.Mesh(watchTowerGeometry, stoneMaterial)
   watchTower.position.set(70, 10, 65)
-  scene.add(watchTower)
+  scene?.add(watchTower)
   
   console.log('OPUS infrastructure completed!')
 }
@@ -3586,7 +3577,7 @@ async function createOpusInfrastructure(metalMaterial: any, stoneMaterial: any):
 // ============ DISTRITOS ÉPICOS FUERA DE LAS MURALLAS ============
 // Cada distrito debe ser del tamaño del castillo central o más grande
 
-const createPort = async (): Promise<void> => {
+async function createPort(): Promise<void> {
   if (!scene) return
 
   const materials = {
@@ -3607,12 +3598,14 @@ const createPort = async (): Promise<void> => {
 
   console.log('Creating MASSIVE IMPERIAL PORT outside city walls...')
 
-  // Base del puerto
+  // Base del puerto (REMOVIDA POR PETICIÓN DE USUARIO)
+  /*
   const portBaseGeometry = new THREE.CircleGeometry(portRadius, 32)
   const portBase = new THREE.Mesh(portBaseGeometry, materials.water)
   portBase.rotation.x = -Math.PI / 2
   portBase.position.set(portCenter.x, -1, portCenter.z)
-  scene.add(portBase)
+  scene?.add(portBase)
+  */
 
   // ========== BAHÍA IMPERIAL (Norte del Puerto) ==========
   const imperialBayCenter = { x: portCenter.x - 30, z: portCenter.z - 50 }
@@ -3621,19 +3614,19 @@ const createPort = async (): Promise<void> => {
   const harborPalaceGeometry = new THREE.BoxGeometry(25, 12, 20)
   const harborPalace = new THREE.Mesh(harborPalaceGeometry, materials.marble)
   harborPalace.position.set(imperialBayCenter.x, 6, imperialBayCenter.z)
-  scene.add(harborPalace)
+  scene?.add(harborPalace)
 
   // Cúpula dorada del palacio portuario
   const palaceDomeGeometry = new THREE.SphereGeometry(8, 16, 12)
   const palaceDome = new THREE.Mesh(palaceDomeGeometry, materials.gold)
   palaceDome.position.set(imperialBayCenter.x, 18, imperialBayCenter.z)
-  scene.add(palaceDome)
+  scene?.add(palaceDome)
 
   // MUELLE IMPERIAL PRINCIPAL (Masivo)
   const imperialDockGeometry = new THREE.BoxGeometry(60, 2, 20)
   const imperialDock = new THREE.Mesh(imperialDockGeometry, materials.marble)
   imperialDock.position.set(imperialBayCenter.x + 20, 1, imperialBayCenter.z + 15)
-  scene.add(imperialDock)
+  scene?.add(imperialDock)
 
   // Torres imperiales del muelle (8 torres)
   for (let i = 0; i < 8; i++) {
@@ -3641,13 +3634,13 @@ const createPort = async (): Promise<void> => {
     const towerGeometry = new THREE.CylinderGeometry(3, 4, 18, 12)
     const tower = new THREE.Mesh(towerGeometry, materials.stone)
     tower.position.set(towerX, 9, imperialBayCenter.z + 25)
-    scene.add(tower)
+    scene?.add(tower)
 
     // Coronas doradas
     const crownGeometry = new THREE.CylinderGeometry(3.5, 3, 2, 12)
     const crown = new THREE.Mesh(crownGeometry, materials.gold)
     crown.position.set(towerX, 19, imperialBayCenter.z + 25)
-    scene.add(crown)
+    scene?.add(crown)
   }
 
   // ========== BAHÍA COMERCIAL MASIVA (Centro del Puerto) ==========
@@ -3657,7 +3650,7 @@ const createPort = async (): Promise<void> => {
   const exchangeGeometry = new THREE.BoxGeometry(40, 15, 30)
   const exchange = new THREE.Mesh(exchangeGeometry, materials.stone)
   exchange.position.set(commercialBayCenter.x, 7.5, commercialBayCenter.z - 20)
-  scene.add(exchange)
+  scene?.add(exchange)
 
   // Torres de comercio (4 esquinas)
   for (let i = 0; i < 4; i++) {
@@ -3668,7 +3661,7 @@ const createPort = async (): Promise<void> => {
     const commerceTowerGeometry = new THREE.CylinderGeometry(2.5, 3, 20, 8)
     const commerceTower = new THREE.Mesh(commerceTowerGeometry, materials.bronze)
     commerceTower.position.set(towerX, 10, towerZ)
-    scene.add(commerceTower)
+    scene?.add(commerceTower)
   }
 
   // MUELLES COMERCIALES MASIVOS (6 muelles gigantes)
@@ -3679,20 +3672,20 @@ const createPort = async (): Promise<void> => {
     const dockGeometry = new THREE.BoxGeometry(25, 2, 15)
     const dock = new THREE.Mesh(dockGeometry, materials.wood)
     dock.position.set(dockX, 1, dockZ)
-    scene.add(dock)
+    scene?.add(dock)
 
     // Grúa masiva en cada muelle
     const craneBaseGeometry = new THREE.CylinderGeometry(2, 3, 25, 8)
     const craneBase = new THREE.Mesh(craneBaseGeometry, materials.steel)
     craneBase.position.set(dockX, 12.5, dockZ - 10)
-    scene.add(craneBase)
+    scene?.add(craneBase)
 
     // Brazo de grúa
     const craneBoomGeometry = new THREE.BoxGeometry(1, 1, 30)
     const craneBoom = new THREE.Mesh(craneBoomGeometry, materials.steel)
     craneBoom.position.set(dockX + 15, 20, dockZ - 10)
     craneBoom.rotation.y = i * Math.PI / 8
-    scene.add(craneBoom)
+    scene?.add(craneBoom)
   }
 
   // ALMACENES MASIVOS DE MERCANCÍAS
@@ -3709,13 +3702,13 @@ const createPort = async (): Promise<void> => {
     const warehouseMaterial = new THREE.MeshLambertMaterial({ color: warehouseColors[index] })
     const warehouse = new THREE.Mesh(warehouseGeometry, warehouseMaterial)
     warehouse.position.set(pos.x, 6, pos.z)
-    scene.add(warehouse)
+    scene?.add(warehouse)
 
     // Techo del almacén
     const roofGeometry = new THREE.BoxGeometry(32, 2, 27)
     const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x5D4E37 }))
     roof.position.set(pos.x, 13, pos.z)
-    scene.add(roof)
+    scene?.add(roof)
   })
 
   // ========== BAHÍA NAVAL (Sur del Puerto) ==========
@@ -3725,27 +3718,27 @@ const createPort = async (): Promise<void> => {
   const shipyardGeometry = new THREE.BoxGeometry(80, 5, 40)
   const shipyard = new THREE.Mesh(shipyardGeometry, materials.stone)
   shipyard.position.set(navalBayCenter.x, 2.5, navalBayCenter.z)
-  scene.add(shipyard)
+  scene?.add(shipyard)
 
   // DIQUES SECOS MASIVOS (3 diques)
   for (let i = 0; i < 3; i++) {
     const dryDockGeometry = new THREE.BoxGeometry(30, 4, 20)
     const dryDock = new THREE.Mesh(dryDockGeometry, materials.stone)
     dryDock.position.set(navalBayCenter.x - 20 + (i * 25), 1, navalBayCenter.z)
-    scene.add(dryDock)
+    scene?.add(dryDock)
 
     // Barco en construcción en cada dique
     const shipHullGeometry = new THREE.BoxGeometry(28, 8, 15)
     const shipHull = new THREE.Mesh(shipHullGeometry, materials.wood)
     shipHull.position.set(dryDock.position.x, 6, dryDock.position.z)
-    scene.add(shipHull)
+    scene?.add(shipHull)
 
     // Mástiles en construcción
     for (let m = 0; m < 3; m++) {
       const mastGeometry = new THREE.CylinderGeometry(0.5, 0.5, 25, 8)
       const mast = new THREE.Mesh(mastGeometry, materials.wood)
       mast.position.set(shipHull.position.x + (m - 1) * 10, 16.5, shipHull.position.z)
-      scene.add(mast)
+      scene?.add(mast)
     }
 
     // Andamios masivos
@@ -3757,7 +3750,7 @@ const createPort = async (): Promise<void> => {
       const scaffoldGeometry = new THREE.BoxGeometry(0.5, 20, 0.5)
       const scaffold = new THREE.Mesh(scaffoldGeometry, materials.wood)
       scaffold.position.set(scaffoldX, 10, scaffoldZ)
-      scene.add(scaffold)
+      scene?.add(scaffold)
     }
   }
 
@@ -3765,7 +3758,7 @@ const createPort = async (): Promise<void> => {
   const arsenalGeometry = new THREE.BoxGeometry(50, 15, 30)
   const arsenal = new THREE.Mesh(arsenalGeometry, materials.stone)
   arsenal.position.set(navalBayCenter.x, 7.5, navalBayCenter.z + 40)
-  scene.add(arsenal)
+  scene?.add(arsenal)
 
   // Torres defensivas del arsenal
   for (let i = 0; i < 6; i++) {
@@ -3776,21 +3769,21 @@ const createPort = async (): Promise<void> => {
     const defenseGeometry = new THREE.CylinderGeometry(3, 4, 22, 8)
     const defenseTower = new THREE.Mesh(defenseGeometry, materials.stone)
     defenseTower.position.set(towerX, 11, towerZ)
-    scene.add(defenseTower)
+    scene?.add(defenseTower)
 
     // Cañones navales
     const cannonGeometry = new THREE.CylinderGeometry(0.4, 0.6, 8, 8)
     const cannon = new THREE.Mesh(cannonGeometry, materials.bronze)
     cannon.rotation.z = Math.PI / 2
     cannon.position.set(towerX + 4, 18, towerZ)
-    scene.add(cannon)
+    scene?.add(cannon)
   }
 
   // FARO IMPERIAL MASIVO
   const lighthouseGeometry = new THREE.CylinderGeometry(4, 6, 50, 16)
   const lighthouse = new THREE.Mesh(lighthouseGeometry, materials.marble)
   lighthouse.position.set(portCenter.x + 60, 25, portCenter.z - 60)
-  scene.add(lighthouse)
+  scene?.add(lighthouse)
 
   // Luz del faro
   const lightGeometry = new THREE.SphereGeometry(3, 16, 12)
@@ -3801,8 +3794,20 @@ const createPort = async (): Promise<void> => {
   })
   const light = new THREE.Mesh(lightGeometry, lightMaterial)
   light.position.set(portCenter.x + 60, 52, portCenter.z - 60)
-  scene.add(light)
-}
+  scene?.add(light)
+
+  const woodMaterial = materials.wood
+  
+  const dockConfigs = [
+    { type: 'emperor', x: portCenter.x + 40, z: portCenter.z - 40, width: 30, depth: 20 },
+    { type: 'empress', x: portCenter.x + 40, z: portCenter.z + 40, width: 25, depth: 18 },
+    { type: 'princes', x: portCenter.x + 60, z: portCenter.z, width: 20, depth: 15 },
+    { type: 'mega_cargo', x: portCenter.x - 20, z: portCenter.z - 30, width: 35, depth: 25 },
+    { type: 'textiles', x: portCenter.x - 20, z: portCenter.z + 30, width: 30, depth: 20 },
+    { type: 'warship_dock', x: portCenter.x - 50, z: portCenter.z, width: 40, depth: 30 },
+    { type: 'main_shipyard', x: portCenter.x, z: portCenter.z + 60, width: 45, depth: 35 },
+    { type: 'naval_arsenal', x: portCenter.x, z: portCenter.z - 60, width: 40, depth: 30 }
+  ]
   
   // CONSTRUIR TODOS LOS MUELLES CON CARACTERÍSTICAS ESPECIALIZADAS
   dockConfigs.forEach(dock => {
@@ -3819,7 +3824,7 @@ const createPort = async (): Promise<void> => {
     
     const dockMesh = new THREE.Mesh(dockGeometry, dockMaterial)
     dockMesh.position.set(dock.x, 0.6, dock.z)
-    scene.add(dockMesh)
+    scene?.add(dockMesh)
     
     // Pilotes de soporte reforzados
     const numPiles = Math.max(dock.width / 2, dock.depth / 2)
@@ -3832,7 +3837,7 @@ const createPort = async (): Promise<void> => {
         2,
         dock.z - dock.depth/2 + Math.floor(i / 6) * dock.depth/4
       )
-      scene.add(pile)
+      scene?.add(pile)
     }
     
     // ========== CARACTERÍSTICAS IMPERIALES ==========
@@ -3841,13 +3846,13 @@ const createPort = async (): Promise<void> => {
       const palaceGeometry = new THREE.BoxGeometry(15, 8, 12)
       const palace = new THREE.Mesh(palaceGeometry, materials.gold)
       palace.position.set(dock.x, 5, dock.z - 8)
-      scene.add(palace)
+      scene?.add(palace)
       
       // Cúpula imperial
       const domeGeometry = new THREE.SphereGeometry(4, 16, 12)
       const dome = new THREE.Mesh(domeGeometry, materials.gold)
       dome.position.set(palace.position.x, 10, palace.position.z)
-      scene.add(dome)
+      scene?.add(dome)
       
       // 8 torres imperiales
       for (let i = 0; i < 8; i++) {
@@ -3858,25 +3863,25 @@ const createPort = async (): Promise<void> => {
         const towerGeometry = new THREE.CylinderGeometry(1.5, 2, 12, 12)
         const tower = new THREE.Mesh(towerGeometry, materials.marble)
         tower.position.set(towerX, 6, towerZ)
-        scene.add(tower)
+        scene?.add(tower)
         
         // Corona dorada en cada torre
         const crownGeometry = new THREE.CylinderGeometry(2, 1.8, 1, 8)
         const crown = new THREE.Mesh(crownGeometry, materials.gold)
         crown.position.set(towerX, 13, towerZ)
-        scene.add(crown)
+        scene?.add(crown)
         
         // Estandarte imperial
         const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 6, 8)
         const pole = new THREE.Mesh(poleGeometry, materials.bronze)
         pole.position.set(towerX, 16, towerZ)
-        scene.add(pole)
+        scene?.add(pole)
         
         const bannerGeometry = new THREE.PlaneGeometry(4, 3)
         const bannerMaterial = new THREE.MeshLambertMaterial({ color: 0x8B0000 })
         const banner = new THREE.Mesh(bannerGeometry, bannerMaterial)
         banner.position.set(towerX + 2, 17, towerZ)
-        scene.add(banner)
+        scene?.add(banner)
       }
       
       // Alfombra dorada en el muelle
@@ -3889,7 +3894,7 @@ const createPort = async (): Promise<void> => {
       const carpet = new THREE.Mesh(carpetGeometry, carpetMaterial)
       carpet.rotation.x = -Math.PI / 2
       carpet.position.set(dock.x, 1.3, dock.z)
-      scene.add(carpet)
+      scene?.add(carpet)
     }
     
     if (['empress', 'princes'].includes(dock.type)) {
@@ -3899,7 +3904,7 @@ const createPort = async (): Promise<void> => {
       const pavilionMaterial = dock.type === 'empress' ? materials.marble : materials.stone
       const pavilion = new THREE.Mesh(pavilionGeometry, pavilionMaterial)
       pavilion.position.set(dock.x, 3.8, dock.z - 6)
-      scene.add(pavilion)
+      scene?.add(pavilion)
       
       // Banderas nobles (4-6 dependiendo del rango)
       const numFlags = dock.type === 'empress' ? 6 : 4
@@ -3908,19 +3913,20 @@ const createPort = async (): Promise<void> => {
         const flagPoleGeometry = new THREE.CylinderGeometry(0.15, 0.15, 8, 8)
         const flagPole = new THREE.Mesh(flagPoleGeometry, materials.bronze)
         flagPole.position.set(flagX, 5, dock.z + dock.depth/2)
-        scene.add(flagPole)
+        scene?.add(flagPole)
         
         const flagGeometry = new THREE.PlaneGeometry(3, 2)
         const flagColor = dock.type === 'empress' ? 0x800080 : 0x0000FF
         const flagMaterial = new THREE.MeshLambertMaterial({ color: flagColor })
         const flag = new THREE.Mesh(flagGeometry, flagMaterial)
         flag.position.set(flagX + 1.5, 7, dock.z + dock.depth/2)
-        scene.add(flag)
+        scene?.add(flag)
       }
     }
     
     // ========== CARACTERÍSTICAS COMERCIALES ==========
     if (dock.type === 'mega_cargo') {
+      const ropeMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
       // Grúas masivas industriales
       for (let i = 0; i < 6; i++) {
         const craneX = dock.x - dock.width/2 + (i + 1) * dock.width/7
@@ -3930,33 +3936,33 @@ const createPort = async (): Promise<void> => {
         const craneBaseGeometry = new THREE.CylinderGeometry(2, 3, 15, 12)
         const craneBase = new THREE.Mesh(craneBaseGeometry, materials.steel)
         craneBase.position.set(craneX, 8, craneZ)
-        scene.add(craneBase)
+        scene?.add(craneBase)
         
         // Brazo de grúa masivo
         const craneBoomGeometry = new THREE.BoxGeometry(0.8, 0.8, 20)
         const craneBoom = new THREE.Mesh(craneBoomGeometry, materials.steel)
         craneBoom.position.set(craneX + 10, 15, craneZ)
         craneBoom.rotation.y = (i * Math.PI / 12) - Math.PI/6
-        scene.add(craneBoom)
+        scene?.add(craneBoom)
         
         // Polea principal
         const pulleyGeometry = new THREE.CylinderGeometry(1, 1, 0.5, 12)
         const pulley = new THREE.Mesh(pulleyGeometry, materials.bronze)
         pulley.position.set(craneBoom.position.x + 8, craneBoom.position.y, craneBoom.position.z)
-        scene.add(pulley)
+        scene?.add(pulley)
         
         // Cable y gancho
         const cableGeometry = new THREE.CylinderGeometry(0.1, 0.1, 12, 6)
         const cable = new THREE.Mesh(cableGeometry, ropeMaterial)
         cable.position.set(pulley.position.x, pulley.position.y - 6, pulley.position.z)
-        scene.add(cable)
+        scene?.add(cable)
       }
       
       // Almacenes masivos de mercancías
       const warehouseGeometry = new THREE.BoxGeometry(dock.width - 4, 8, 12)
       const warehouse = new THREE.Mesh(warehouseGeometry, materials.warehouse)
       warehouse.position.set(dock.x, 4, dock.z + dock.depth + 8)
-      scene.add(warehouse)
+      scene?.add(warehouse)
       
       // Montañas organizadas de contenedores
       for (let row = 0; row < 4; row++) {
@@ -3972,7 +3978,7 @@ const createPort = async (): Promise<void> => {
             1.25 + row * 2.5,
             dock.z + dock.depth/2 + 6 + row * 2
           )
-          scene.add(container)
+          scene?.add(container)
         }
       }
     }
@@ -3991,7 +3997,7 @@ const createPort = async (): Promise<void> => {
       warehouseMaterial = new THREE.MeshLambertMaterial({ color: warehouseColor })
       const warehouse = new THREE.Mesh(warehouseGeometry, warehouseMaterial)
       warehouse.position.set(dock.x, 3, dock.z + dock.depth + 6)
-      scene.add(warehouse)
+      scene?.add(warehouse)
       
       // Mercancías específicas por tipo
       if (dock.type === 'spices') {
@@ -4008,7 +4014,7 @@ const createPort = async (): Promise<void> => {
             1 + Math.floor(i / 6) * 2,
             dock.z + dock.depth/2 + 2
           )
-          scene.add(sack)
+          scene?.add(sack)
         }
       }
       
@@ -4027,7 +4033,7 @@ const createPort = async (): Promise<void> => {
             1.5 + Math.floor(i / 8) * 3,
             dock.z + dock.depth/2 + 2
           )
-          scene.add(roll)
+          scene?.add(roll)
         }
       }
     }
@@ -4039,13 +4045,13 @@ const createPort = async (): Promise<void> => {
         const dryDockGeometry = new THREE.BoxGeometry(25, 3, 18)
         const dryDock = new THREE.Mesh(dryDockGeometry, materials.stone)
         dryDock.position.set(dock.x + (i - 1) * 30, 0, dock.z - 15)
-        scene.add(dryDock)
+        scene?.add(dryDock)
         
         // Barco en construcción
         const shipHullGeometry = new THREE.BoxGeometry(22, 8, 12)
         const shipHull = new THREE.Mesh(shipHullGeometry, materials.wood)
         shipHull.position.set(dryDock.position.x, 5.5, dryDock.position.z)
-        scene.add(shipHull)
+        scene?.add(shipHull)
         
         // Mástiles en construcción
         for (let m = 0; m < 3; m++) {
@@ -4056,7 +4062,7 @@ const createPort = async (): Promise<void> => {
             15.5,
             shipHull.position.z
           )
-          scene.add(mast)
+          scene?.add(mast)
         }
         
         // Grúas especializadas de astillero
@@ -4068,7 +4074,7 @@ const createPort = async (): Promise<void> => {
             9,
             dryDock.position.z + 12
           )
-          scene.add(crane)
+          scene?.add(crane)
         }
       }
     }
@@ -4078,7 +4084,7 @@ const createPort = async (): Promise<void> => {
       const fortressGeometry = new THREE.BoxGeometry(15, 8, 12)
       const fortress = new THREE.Mesh(fortressGeometry, materials.stone)
       fortress.position.set(dock.x, 4, dock.z - 10)
-      scene.add(fortress)
+      scene?.add(fortress)
       
       // Torres de defensa
       for (let i = 0; i < 4; i++) {
@@ -4089,14 +4095,14 @@ const createPort = async (): Promise<void> => {
         const towerGeometry = new THREE.CylinderGeometry(2, 2.5, 12, 8)
         const tower = new THREE.Mesh(towerGeometry, materials.stone)
         tower.position.set(towerX, 6, towerZ)
-        scene.add(tower)
+        scene?.add(tower)
         
         // Cañones en las torres
         const cannonGeometry = new THREE.CylinderGeometry(0.3, 0.4, 4, 8)
         const cannon = new THREE.Mesh(cannonGeometry, materials.steel)
         cannon.rotation.z = Math.PI / 2
         cannon.position.set(towerX + 2, 10, towerZ)
-        scene.add(cannon)
+        scene?.add(cannon)
       }
     }
     
@@ -4105,7 +4111,7 @@ const createPort = async (): Promise<void> => {
       const arsenalGeometry = new THREE.BoxGeometry(dock.width - 2, 10, dock.depth)
       const arsenal = new THREE.Mesh(arsenalGeometry, materials.stone)
       arsenal.position.set(dock.x, 5, dock.z - 8)
-      scene.add(arsenal)
+      scene?.add(arsenal)
       
       // Depósitos de armas ordenados
       for (let i = 0; i < 20; i++) {
@@ -4116,7 +4122,7 @@ const createPort = async (): Promise<void> => {
           1.5,
           dock.z + dock.depth/2 + Math.floor(i / 10) * 3
         )
-        scene.add(weaponRack)
+        scene?.add(weaponRack)
         
         // Armas en los racks
         for (let w = 0; w < 6; w++) {
@@ -4127,12 +4133,15 @@ const createPort = async (): Promise<void> => {
             weaponRack.position.y + 0.5,
             weaponRack.position.z
           )
-          scene.add(weapon)
+          scene?.add(weapon)
         }
       }
     }
   })
   
+  const portBaseX = portCenter.x
+  const portBaseZ = portCenter.z
+
   // ASTILLERO - Construcción naval épica
   const shipyardX = portBaseX + 25
   const shipyardZ = portBaseZ
@@ -4142,21 +4151,23 @@ const createPort = async (): Promise<void> => {
   const dryDockMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 })
   const dryDock = new THREE.Mesh(dryDockGeometry, dryDockMaterial)
   dryDock.position.set(shipyardX, 0, shipyardZ)
-  scene.add(dryDock)
+  scene?.add(dryDock)
   
   // Barco en construcción (galeón masivo)
   const shipHullGeometry = new THREE.BoxGeometry(20, 6, 8)
   const shipMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 })
+  const sailMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF })
+  const metalMaterial = materials.steel
   const shipHull = new THREE.Mesh(shipHullGeometry, shipMaterial)
   shipHull.position.set(shipyardX, 3, shipyardZ)
-  scene.add(shipHull)
+  scene?.add(shipHull)
   
   // Mástiles en construcción
   for (let i = 0; i < 3; i++) {
     const mastGeometry = new THREE.CylinderGeometry(0.4, 0.4, 15, 12)
     const mast = new THREE.Mesh(mastGeometry, woodMaterial)
     mast.position.set(shipyardX + (i - 1) * 6, 10.5, shipyardZ)
-    scene.add(mast)
+    scene?.add(mast)
   }
   
   // Andamios masivos alrededor del barco
@@ -4168,14 +4179,14 @@ const createPort = async (): Promise<void> => {
     const scaffoldGeometry = new THREE.BoxGeometry(0.5, 12, 0.5)
     const scaffold = new THREE.Mesh(scaffoldGeometry, woodMaterial)
     scaffold.position.set(scaffoldX, 6, scaffoldZ)
-    scene.add(scaffold)
+    scene?.add(scaffold)
     
     // Plataformas de trabajo
     if (i % 3 === 0) {
       const platformGeometry = new THREE.BoxGeometry(4, 0.3, 4)
       const platform = new THREE.Mesh(platformGeometry, woodMaterial)
       platform.position.set(scaffoldX, 8, scaffoldZ)
-      scene.add(platform)
+      scene?.add(platform)
     }
   }
   
@@ -4196,14 +4207,14 @@ const createPort = async (): Promise<void> => {
     const hullGeometry = new THREE.BoxGeometry(ship.length, ship.height, ship.width)
     const hull = new THREE.Mesh(hullGeometry, shipMaterial)
     hull.position.set(ship.x, ship.height/2, ship.z)
-    scene.add(hull)
+    scene?.add(hull)
     
     // Proa
     const prowGeometry = new THREE.ConeGeometry(ship.width/2, ship.length/4, 6)
     const prow = new THREE.Mesh(prowGeometry, shipMaterial)
     prow.position.set(ship.x + ship.length/2 + ship.length/8, ship.height/2, ship.z)
     prow.rotation.z = -Math.PI / 2
-    scene.add(prow)
+    scene?.add(prow)
     
     // Mástiles y velas según tipo
     const numMasts = ship.type === 'galleon' ? 3 : ship.type === 'warship' ? 3 : ship.type === 'merchant' ? 2 : 1
@@ -4217,7 +4228,7 @@ const createPort = async (): Promise<void> => {
         mastHeight/2,
         ship.z
       )
-      scene.add(mast)
+      scene?.add(mast)
       
       // Velas
       const sailWidth = ship.length / numMasts - 1
@@ -4225,14 +4236,14 @@ const createPort = async (): Promise<void> => {
       const sailGeometry = new THREE.PlaneGeometry(sailWidth, sailHeight)
       const sail = new THREE.Mesh(sailGeometry, sailMaterial)
       sail.position.set(mast.position.x + sailWidth/2, mastHeight * 0.6, ship.z)
-      scene.add(sail)
+      scene?.add(sail)
       
       // Vergas (palos horizontales)
       for (let j = 0; j < 2; j++) {
         const yardGeometry = new THREE.BoxGeometry(sailWidth + 1, 0.2, 0.2)
         const yard = new THREE.Mesh(yardGeometry, woodMaterial)
         yard.position.set(mast.position.x, mastHeight * (0.3 + j * 0.4), ship.z)
-        scene.add(yard)
+        scene?.add(yard)
       }
     }
     
@@ -4248,7 +4259,7 @@ const createPort = async (): Promise<void> => {
           ship.z + ship.width/2 + 0.3
         )
         cannon.rotation.z = Math.PI / 2
-        scene.add(cannon)
+        scene?.add(cannon)
       }
     }
   })
@@ -4269,50 +4280,24 @@ const createPort = async (): Promise<void> => {
     const warehouseMesh = new THREE.Mesh(warehouseGeometry, warehouseMaterial)
     warehouseMesh.position.set(warehouse.x, warehouse.height/2, warehouse.z)
     warehouseMesh.castShadow = true
-    scene.add(warehouseMesh)
+    scene?.add(warehouseMesh)
     
     // Tejado
     const roofGeometry = new THREE.BoxGeometry(warehouse.width + 0.5, 1, warehouse.depth + 0.5)
     const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 })
     const roof = new THREE.Mesh(roofGeometry, roofMaterial)
     roof.position.set(warehouse.x, warehouse.height + 0.5, warehouse.z)
-    scene.add(roof)
+    scene?.add(roof)
     
     // Puertas grandes
     const doorGeometry = new THREE.BoxGeometry(3, 4, 0.3)
     const doorMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 })
     const door = new THREE.Mesh(doorGeometry, doorMaterial)
     door.position.set(warehouse.x, 2, warehouse.z + warehouse.depth/2 + 0.2)
-    scene.add(door)
+    scene?.add(door)
   })
   
-  // FARO - Guía para los navegantes
-  const lighthouseX = portBaseX + 35
-  const lighthouseZ = portBaseZ - 20
-  
-  const lighthouseGeometry = new THREE.CylinderGeometry(3, 4, 25, 12)
-  const lighthouseMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF })
-  const lighthouse = new THREE.Mesh(lighthouseGeometry, lighthouseMaterial)
-  lighthouse.position.set(lighthouseX, 12.5, lighthouseZ)
-  scene.add(lighthouse)
-  
-  // Linterna del faro
-  const lanternGeometry = new THREE.CylinderGeometry(4, 4, 3, 16)
-  const lanternMaterial = new THREE.MeshLambertMaterial({ color: 0xFFD700 })
-  const lantern = new THREE.Mesh(lanternGeometry, lanternMaterial)
-  lantern.position.set(lighthouseX, 26.5, lighthouseZ)
-  scene.add(lantern)
-  
-  // Luz del faro
-  const lightGeometry = new THREE.SphereGeometry(1, 8, 6)
-  const lightMaterial = new THREE.MeshLambertMaterial({ 
-    color: 0xFFFFFF,
-    emissive: 0xFFFF00,
-    emissiveIntensity: 0.5
-  })
-  const light = new THREE.Mesh(lightGeometry, lightMaterial)
-  light.position.set(lighthouseX, 26.5, lighthouseZ)
-  scene.add(light)
+
 }
 
 const createMassiveVillaDistricts = async (): Promise<void> => {
@@ -4454,21 +4439,25 @@ const createMassiveVillaDistricts = async (): Promise<void> => {
 async function createMassiveVillaComplex(villa: any, houseMaterial: THREE.Material, districtName: string): Promise<void> {
   if (!scene) return
   
-  console.log(`Creating massive villa complex: ${districtName}`)
+  console.log(`Creating massive villa complex (OPTIMIZED): ${districtName}`)
   
-  // Base principal del distrito
-  const mainDistrictGeometry = new THREE.CircleGeometry(villa.radius, 64)
-  const districtBaseMaterial = new THREE.MeshLambertMaterial({ 
-    color: 0x9ACD32, 
-    transparent: true, 
-    opacity: 0.2 
-  })
-  const mainDistrictBase = new THREE.Mesh(mainDistrictGeometry, districtBaseMaterial)
-  mainDistrictBase.rotation.x = -Math.PI / 2
-  mainDistrictBase.position.set(villa.center.x, 0.01, villa.center.z)
-  scene.add(mainDistrictBase)
+  // ============ SISTEMA DE CALLES MASIVO (OPTIMIZADO CON INSTANCED MESH) ============
   
-  // ============ SISTEMA DE CALLES MASIVO Y COMPLEJO ============
+  // Calcular total de segmentos de calle
+  let totalStreetSegments = 8 // 8 avenidas principales
+  for (let ring = 1; ring <= 6; ring++) {
+    const ringRadius = (villa.radius / 7) * ring
+    const circumference = 2 * Math.PI * ringRadius
+    totalStreetSegments += Math.floor(circumference / 3)
+  }
+  
+  const streetGeometry = new THREE.BoxGeometry(1, 0.12, 2.5) // Geometría base unitaria en X
+  const streetMaterial = new THREE.MeshLambertMaterial({ color: 0x778899 })
+  const streetsMesh = new THREE.InstancedMesh(streetGeometry, streetMaterial, totalStreetSegments)
+  streetsMesh.receiveShadow = true
+  
+  const dummy = new THREE.Object3D()
+  let streetIndex = 0
   
   // Avenidas principales (8 direcciones)
   const mainAvenues = 8
@@ -4476,15 +4465,15 @@ async function createMassiveVillaComplex(villa: any, houseMaterial: THREE.Materi
     const angle = (i / mainAvenues) * Math.PI * 2
     const avenueLength = villa.radius * 0.95
     
-    const avenueGeometry = new THREE.BoxGeometry(avenueLength, 0.15, 4)
-    const avenue = new THREE.Mesh(avenueGeometry, new THREE.MeshLambertMaterial({ color: 0x696969 }))
-    avenue.position.set(
+    dummy.position.set(
       villa.center.x + Math.cos(angle) * avenueLength/2,
       0.04,
       villa.center.z + Math.sin(angle) * avenueLength/2
     )
-    avenue.rotation.y = angle
-    scene.add(avenue)
+    dummy.rotation.set(0, angle, 0)
+    dummy.scale.set(avenueLength, 1.25, 1.6) // Escalar longitud (X) y un poco ancho (Z)
+    dummy.updateMatrix()
+    streetsMesh.setMatrixAt(streetIndex++, dummy.matrix)
   }
   
   // Calles circulares (6 anillos concéntricos)
@@ -4498,18 +4487,20 @@ async function createMassiveVillaComplex(villa: any, houseMaterial: THREE.Materi
       const nextAngle = ((i + 1) / numSegments) * Math.PI * 2
       
       const segmentLength = ringRadius * Math.abs(nextAngle - angle)
-      const streetGeometry = new THREE.BoxGeometry(segmentLength, 0.12, 2.5)
-      const street = new THREE.Mesh(streetGeometry, new THREE.MeshLambertMaterial({ color: 0x778899 }))
       
-      street.position.set(
+      dummy.position.set(
         villa.center.x + Math.cos(angle + (nextAngle - angle)/2) * ringRadius,
         0.03,
         villa.center.z + Math.sin(angle + (nextAngle - angle)/2) * ringRadius
       )
-      street.rotation.y = angle + (nextAngle - angle)/2 + Math.PI/2
-      scene.add(street)
+      dummy.rotation.set(0, angle + (nextAngle - angle)/2 + Math.PI/2, 0)
+      dummy.scale.set(segmentLength, 1, 1)
+      dummy.updateMatrix()
+      streetsMesh.setMatrixAt(streetIndex++, dummy.matrix)
     }
   }
+  
+  scene?.add(streetsMesh)
   
   // ============ SUBDIVISIÓN EN BARRIOS ESPECIALIZADOS ============
   
@@ -4527,19 +4518,47 @@ async function createMassiveVillaComplex(villa: any, houseMaterial: THREE.Materi
     const neighborhoodPlaza = new THREE.Mesh(neighborhoodPlazaGeometry, plazaMaterial)
     neighborhoodPlaza.rotation.x = -Math.PI / 2
     neighborhoodPlaza.position.set(subDistrictCenter.x, 0.05, subDistrictCenter.z)
-    scene.add(neighborhoodPlaza)
+    scene?.add(neighborhoodPlaza)
     
     // Fuente de barrio
     const fountainGeometry = new THREE.CylinderGeometry(2, 2.5, 1.5, 16)
     const fountain = new THREE.Mesh(fountainGeometry, new THREE.MeshLambertMaterial({ color: 0xC0C0C0 }))
     fountain.position.set(subDistrictCenter.x, 0.75, subDistrictCenter.z)
-    scene.add(fountain)
+    scene?.add(fountain)
     
     // Infraestructura de barrio
     await createNeighborhoodInfrastructure(subDistrictCenter, villa.type)
   }
   
-  // ============ GENERACIÓN MASIVA DE CASAS EN PATRONES ORGÁNICOS ============
+  // ============ GENERACIÓN MASIVA DE CASAS (OPTIMIZADO CON INSTANCED MESH) ============
+  
+  const maxHouses = villa.population
+  
+  // Geometrías base
+  const houseGeometry = new THREE.BoxGeometry(1, 1, 1) // Cubo unitario
+  const roofBoxGeometry = new THREE.BoxGeometry(1, 1, 1) // Cubo unitario para tejado plano/dos aguas
+  const roofConeGeometry = new THREE.ConeGeometry(1, 1, 8) // Cono unitario (radio 1, altura 1)
+  const chimneyGeometry = new THREE.BoxGeometry(0.4, 2, 0.4)
+  
+  // Materiales
+  const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x5D4E37 })
+  const chimneyMaterial = new THREE.MeshLambertMaterial({ color: 0x4A4A4A })
+  
+  // Instanced Meshes
+  const housesMesh = new THREE.InstancedMesh(houseGeometry, houseMaterial, maxHouses)
+  const roofsBoxMesh = new THREE.InstancedMesh(roofBoxGeometry, roofMaterial, maxHouses)
+  const roofsConeMesh = new THREE.InstancedMesh(roofConeGeometry, roofMaterial, maxHouses)
+  const chimneysMesh = new THREE.InstancedMesh(chimneyGeometry, chimneyMaterial, maxHouses)
+  
+  housesMesh.castShadow = true
+  housesMesh.receiveShadow = true
+  roofsBoxMesh.castShadow = true
+  roofsConeMesh.castShadow = true
+  
+  let houseIndex = 0
+  let roofBoxIndex = 0
+  let roofConeIndex = 0
+  let chimneyIndex = 0
   
   let housesCreated = 0
   
@@ -4563,7 +4582,7 @@ async function createMassiveVillaComplex(villa: any, houseMaterial: THREE.Materi
       }
       
       const houseType = Math.random()
-      let currentHouseMaterial = houseMaterial
+      let houseColor = (houseMaterial as THREE.MeshLambertMaterial).color.clone()
       
       // Variedad de tipos de casa según la zona
       if (houseType < 0.6) {
@@ -4574,7 +4593,7 @@ async function createMassiveVillaComplex(villa: any, houseMaterial: THREE.Materi
         houseSize.depth *= 1.3
         houseSize.height *= 1.2
         if (villa.type !== 'working_class') {
-          currentHouseMaterial = new THREE.MeshLambertMaterial({ color: 0x778899 })
+          houseColor.setHex(0x778899)
         }
       } else {
         // Casa modesta (más pequeña)
@@ -4583,64 +4602,64 @@ async function createMassiveVillaComplex(villa: any, houseMaterial: THREE.Materi
         houseSize.height *= 0.9
       }
       
-      // Crear la casa
-      const houseGeometry = new THREE.BoxGeometry(houseSize.width, houseSize.height, houseSize.depth)
-      const house = new THREE.Mesh(houseGeometry, currentHouseMaterial)
-      house.position.set(houseX, houseSize.height/2, houseZ)
-      house.rotation.y = Math.random() * Math.PI * 2 // Rotación aleatoria
-      house.castShadow = true
-      scene.add(house)
+      // Configurar instancia de casa
+      dummy.position.set(houseX, houseSize.height/2, houseZ)
+      dummy.rotation.set(0, Math.random() * Math.PI * 2, 0)
+      dummy.scale.set(houseSize.width, houseSize.height, houseSize.depth)
+      dummy.updateMatrix()
+      
+      housesMesh.setMatrixAt(houseIndex, dummy.matrix)
+      housesMesh.setColorAt(houseIndex, houseColor)
+      houseIndex++
       
       // Tejado variado
       const roofType = Math.random()
       if (roofType < 0.7) {
-        // Tejado a dos aguas
-        const roofGeometry = new THREE.BoxGeometry(houseSize.width + 0.3, 0.8, houseSize.depth + 0.3)
-        const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x5D4E37 }))
-        roof.position.set(houseX, houseSize.height + 0.4, houseZ)
-        roof.rotation.y = house.rotation.y
-        scene.add(roof)
+        // Tejado a dos aguas (Box)
+        dummy.position.set(houseX, houseSize.height + 0.4, houseZ)
+        // Usamos la misma rotación que la casa
+        // Escala: width + 0.3, height 0.8, depth + 0.3
+        dummy.scale.set(houseSize.width + 0.3, 0.8, houseSize.depth + 0.3)
+        dummy.updateMatrix()
+        roofsBoxMesh.setMatrixAt(roofBoxIndex++, dummy.matrix)
       } else {
         // Tejado cónico
-        const roofGeometry = new THREE.ConeGeometry(Math.max(houseSize.width, houseSize.depth) * 0.7, 1.5, 8)
-        const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x5D4E37 }))
-        roof.position.set(houseX, houseSize.height + 0.75, houseZ)
-        scene.add(roof)
+        const coneRadius = Math.max(houseSize.width, houseSize.depth) * 0.7
+        dummy.position.set(houseX, houseSize.height + 0.75, houseZ)
+        // Escala: Radius X, Height Y, Radius Z (ConeGeometry es unitario 1,1,1 si lo creamos así, pero creamos 1,1,8)
+        // ConeGeometry(1, 1, 8) -> Radius=1, Height=1.
+        dummy.scale.set(coneRadius, 1.5, coneRadius) 
+        dummy.updateMatrix()
+        roofsConeMesh.setMatrixAt(roofConeIndex++, dummy.matrix)
       }
       
       // Chimenea (60% de las casas)
       if (Math.random() < 0.6) {
-        const chimneyGeometry = new THREE.BoxGeometry(0.4, 2, 0.4)
-        const chimney = new THREE.Mesh(chimneyGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
-        chimney.position.set(
+        dummy.position.set(
           houseX + (Math.random() - 0.5) * houseSize.width * 0.6,
           houseSize.height + 1.8,
           houseZ + (Math.random() - 0.5) * houseSize.depth * 0.6
         )
-        scene.add(chimney)
-      }
-      
-      // Jardín pequeño (40% de las casas)
-      if (Math.random() < 0.4) {
-        const gardenGeometry = new THREE.CircleGeometry(1.5, 8)
-        const gardenMaterial = new THREE.MeshLambertMaterial({ 
-          color: 0x32CD32, 
-          transparent: true, 
-          opacity: 0.6 
-        })
-        const garden = new THREE.Mesh(gardenGeometry, gardenMaterial)
-        garden.rotation.x = -Math.PI / 2
-        garden.position.set(
-          houseX + (Math.random() - 0.5) * 4,
-          0.02,
-          houseZ + (Math.random() - 0.5) * 4
-        )
-        scene.add(garden)
+        dummy.rotation.set(0, 0, 0)
+        dummy.scale.set(1, 1, 1) // Ya tiene tamaño fijo en geometría
+        dummy.updateMatrix()
+        chimneysMesh.setMatrixAt(chimneyIndex++, dummy.matrix)
       }
       
       housesCreated++
     }
   }
+  
+  // Limpiar instancias no usadas (poner count correcto)
+  housesMesh.count = houseIndex
+  roofsBoxMesh.count = roofBoxIndex
+  roofsConeMesh.count = roofConeIndex
+  chimneysMesh.count = chimneyIndex
+  
+  scene?.add(housesMesh)
+  scene?.add(roofsBoxMesh)
+  scene?.add(roofsConeMesh)
+  scene?.add(chimneysMesh)
 }
 
 async function createNeighborhoodInfrastructure(center: {x: number, z: number}, villageType: string): Promise<void> {
@@ -4650,26 +4669,26 @@ async function createNeighborhoodInfrastructure(center: {x: number, z: number}, 
   const churchGeometry = new THREE.BoxGeometry(6, 8, 10)
   const church = new THREE.Mesh(churchGeometry, new THREE.MeshLambertMaterial({ color: 0xC0C0C0 }))
   church.position.set(center.x - 12, 4, center.z)
-  scene.add(church)
+  scene?.add(church)
   
   // Torre de la iglesia
   const towerGeometry = new THREE.BoxGeometry(2.5, 12, 2.5)
   const tower = new THREE.Mesh(towerGeometry, new THREE.MeshLambertMaterial({ color: 0xC0C0C0 }))
   tower.position.set(center.x - 12, 6, center.z + 4)
-  scene.add(tower)
+  scene?.add(tower)
   
   // Mercado de barrio
   const marketGeometry = new THREE.BoxGeometry(8, 4, 6)
   const market = new THREE.Mesh(marketGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
   market.position.set(center.x + 12, 2, center.z)
-  scene.add(market)
+  scene?.add(market)
   
   // Escuela según el tipo de barrio
   if (villageType !== 'working_class') {
     const schoolGeometry = new THREE.BoxGeometry(10, 5, 8)
     const school = new THREE.Mesh(schoolGeometry, new THREE.MeshLambertMaterial({ color: 0xDEB887 }))
     school.position.set(center.x, 2.5, center.z - 15)
-    scene.add(school)
+    scene?.add(school)
   }
   
   // Taller especializado según tipo
@@ -4680,66 +4699,95 @@ async function createNeighborhoodInfrastructure(center: {x: number, z: number}, 
   const workshopGeometry = new THREE.BoxGeometry(6, 4, 8)
   const workshop = new THREE.Mesh(workshopGeometry, new THREE.MeshLambertMaterial({ color: workshopColor }))
   workshop.position.set(center.x, 2, center.z + 12)
-  scene.add(workshop)
+  scene?.add(workshop)
 }
 
 async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, districtName: string): Promise<void> {
   if (!scene) return
   
-  // Crear base del distrito
-  const districtBaseGeometry = new THREE.CircleGeometry(villa.radius, 32)
-  const districtBaseMaterial = new THREE.MeshLambertMaterial({ color: 0xE6D3A3, transparent: true, opacity: 0.3 })
-  const districtBase = new THREE.Mesh(districtBaseGeometry, districtBaseMaterial)
-  districtBase.rotation.x = -Math.PI / 2
-  districtBase.position.set(villa.center.x, 0.01, villa.center.z)
-  scene.add(districtBase)
-  
-  // ============ SISTEMA DE CALLES RADIALES ============
+  const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+  const streetMaterial = new THREE.MeshLambertMaterial({ color: 0x969696 })
+  const chimneyMaterial = new THREE.MeshLambertMaterial({ color: 0x4A4A4A })
+  const gardenMaterial = new THREE.MeshLambertMaterial({ color: 0x90EE90, transparent: true, opacity: 0.6 })
+
+  // ============ SISTEMA DE CALLES (OPTIMIZADO) ============
   const numRadialStreets = 8
+  const numRings = 3
+  let totalStreetSegments = numRadialStreets
+  for (let ring = 1; ring <= numRings; ring++) {
+    const ringRadius = (villa.radius / 4) * ring
+    const circumference = 2 * Math.PI * ringRadius
+    totalStreetSegments += Math.floor(circumference / 4)
+  }
+
+  const streetGeometry = new THREE.BoxGeometry(1, 0.1, 1)
+  const streetsMesh = new THREE.InstancedMesh(streetGeometry, streetMaterial, totalStreetSegments)
+  streetsMesh.receiveShadow = true
+  
+  const dummy = new THREE.Object3D()
+  let streetIndex = 0
+
+  // Radial streets
   for (let i = 0; i < numRadialStreets; i++) {
     const angle = (i / numRadialStreets) * Math.PI * 2
     const streetLength = villa.radius * 0.9
     
-    const streetGeometry = new THREE.BoxGeometry(streetLength, 0.1, 2)
-    const street = new THREE.Mesh(streetGeometry, new THREE.MeshLambertMaterial({ color: 0x969696 }))
-    street.position.set(
+    dummy.position.set(
       villa.center.x + Math.cos(angle) * streetLength/2,
       0.03,
       villa.center.z + Math.sin(angle) * streetLength/2
     )
-    street.rotation.y = angle
-    scene.add(street)
+    dummy.rotation.set(0, angle, 0)
+    dummy.scale.set(streetLength, 1, 2)
+    dummy.updateMatrix()
+    streetsMesh.setMatrixAt(streetIndex++, dummy.matrix)
   }
-  
-  // Calles circulares concéntricas
-  for (let ring = 1; ring <= 3; ring++) {
+
+  // Circular streets
+  for (let ring = 1; ring <= numRings; ring++) {
     const ringRadius = (villa.radius / 4) * ring
     const circumference = 2 * Math.PI * ringRadius
-    const numSegments = Math.floor(circumference / 4)  // Un segmento cada 4 unidades
+    const numSegments = Math.floor(circumference / 4)
     
     for (let i = 0; i < numSegments; i++) {
       const angle = (i / numSegments) * Math.PI * 2
       const nextAngle = ((i + 1) / numSegments) * Math.PI * 2
-      
       const segmentLength = ringRadius * Math.abs(nextAngle - angle)
-      const streetGeometry = new THREE.BoxGeometry(segmentLength, 0.1, 1.5)
-      const street = new THREE.Mesh(streetGeometry, new THREE.MeshLambertMaterial({ color: 0x969696 }))
       
-      street.position.set(
+      dummy.position.set(
         villa.center.x + Math.cos(angle + (nextAngle - angle)/2) * ringRadius,
         0.03,
         villa.center.z + Math.sin(angle + (nextAngle - angle)/2) * ringRadius
       )
-      street.rotation.y = angle + (nextAngle - angle)/2 + Math.PI/2
-      scene.add(street)
+      dummy.rotation.set(0, angle + (nextAngle - angle)/2 + Math.PI/2, 0)
+      dummy.scale.set(segmentLength, 1, 1.5)
+      dummy.updateMatrix()
+      streetsMesh.setMatrixAt(streetIndex++, dummy.matrix)
     }
   }
+  scene?.add(streetsMesh)
+
+  // ============ CASAS (OPTIMIZADO) ============
+  const maxHouses = villa.population
+  const houseGeometry = new THREE.BoxGeometry(1, 1, 1)
+  const roofGeometry = new THREE.BoxGeometry(1, 1, 1)
+  const chimneyGeometry = new THREE.BoxGeometry(0.4, 1.5, 0.4)
+  const gardenGeometry = new THREE.CircleGeometry(1, 8)
+
+  const housesMesh = new THREE.InstancedMesh(houseGeometry, houseMaterial, maxHouses)
+  const roofsMesh = new THREE.InstancedMesh(roofGeometry, roofMaterial, maxHouses)
+  const chimneysMesh = new THREE.InstancedMesh(chimneyGeometry, chimneyMaterial, maxHouses)
+  const gardensMesh = new THREE.InstancedMesh(gardenGeometry, gardenMaterial, maxHouses)
+
+  housesMesh.castShadow = true
+  roofsMesh.castShadow = true
   
-  // ============ GENERACIÓN MASIVA DE CASAS ============
-  const houses = []
+  let houseIndex = 0
+  let roofIndex = 0
+  let chimneyIndex = 0
+  let gardenIndex = 0
   let housesCreated = 0
-  
-  // Distribución en anillos concéntricos
+
   for (let ring = 1; ring <= 6; ring++) {
     const ringRadius = (villa.radius * 0.8 / 6) * ring
     const housesInRing = Math.min(ring * 12, villa.population - housesCreated)
@@ -4751,64 +4799,61 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
       const houseX = villa.center.x + Math.cos(angle) * radiusVariation
       const houseZ = villa.center.z + Math.sin(angle) * radiusVariation
       
-      // Variación en tamaños de casas
       const houseSize = {
         width: 2.5 + Math.random() * 1.5,
         height: 3 + Math.random() * 1,
         depth: 2.5 + Math.random() * 1.5
       }
-      
-      // Crear casa
-      const houseGeometry = new THREE.BoxGeometry(houseSize.width, houseSize.height, houseSize.depth)
-      const house = new THREE.Mesh(houseGeometry, houseMaterial)
-      house.position.set(houseX, houseSize.height/2, houseZ)
-      house.rotation.y = angle + (Math.random() - 0.5) * 0.5  // Ligera rotación aleatoria
-      house.castShadow = true
-      scene.add(house)
-      
-      // Tejado
-      const roofGeometry = new THREE.BoxGeometry(houseSize.width + 0.3, 0.8, houseSize.depth + 0.3)
-      const roof = new THREE.Mesh(roofGeometry, roofMaterial)
-      roof.position.set(houseX, houseSize.height + 0.4, houseZ)
-      roof.rotation.y = house.rotation.y
-      scene.add(roof)
-      
-      // Chimenea (80% de las casas)
+
+      // House
+      dummy.position.set(houseX, houseSize.height/2, houseZ)
+      dummy.rotation.set(0, angle + (Math.random() - 0.5) * 0.5, 0)
+      dummy.scale.set(houseSize.width, houseSize.height, houseSize.depth)
+      dummy.updateMatrix()
+      housesMesh.setMatrixAt(houseIndex++, dummy.matrix)
+
+      // Roof
+      dummy.position.set(houseX, houseSize.height + 0.4, houseZ)
+      dummy.rotation.set(0, dummy.rotation.y, 0) // Keep house rotation
+      dummy.scale.set(houseSize.width + 0.3, 0.8, houseSize.depth + 0.3)
+      dummy.updateMatrix()
+      roofsMesh.setMatrixAt(roofIndex++, dummy.matrix)
+
+      // Chimney
       if (Math.random() > 0.2) {
-        const chimneyGeometry = new THREE.BoxGeometry(0.4, 1.5, 0.4)
-        const chimneyMaterial = new THREE.MeshLambertMaterial({ color: 0x4A4A4A })
-        const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial)
-        chimney.position.set(
+        dummy.position.set(
           houseX + (Math.random() - 0.5) * houseSize.width * 0.7,
           houseSize.height + 1.2,
           houseZ + (Math.random() - 0.5) * houseSize.depth * 0.7
         )
-        scene.add(chimney)
+        dummy.rotation.set(0, 0, 0)
+        dummy.scale.set(1, 1, 1)
+        dummy.updateMatrix()
+        chimneysMesh.setMatrixAt(chimneyIndex++, dummy.matrix)
       }
-      
-      // Pequeño jardín/patio (40% de las casas)
+
+      // Garden
       if (Math.random() > 0.6) {
-        const gardenGeometry = new THREE.CircleGeometry(houseSize.width * 0.8, 8)
-        const gardenMaterial = new THREE.MeshLambertMaterial({ 
-          color: 0x90EE90, 
-          transparent: true, 
-          opacity: 0.6 
-        })
-        const garden = new THREE.Mesh(gardenGeometry, gardenMaterial)
-        garden.rotation.x = -Math.PI / 2
-        garden.position.set(
+        dummy.position.set(
           houseX + Math.cos(angle + Math.PI) * houseSize.width * 1.2,
           0.02,
           houseZ + Math.sin(angle + Math.PI) * houseSize.depth * 1.2
         )
-        scene.add(garden)
+        dummy.rotation.set(-Math.PI / 2, 0, 0)
+        dummy.scale.set(houseSize.width * 0.8, houseSize.width * 0.8, 1)
+        dummy.updateMatrix()
+        gardensMesh.setMatrixAt(gardenIndex++, dummy.matrix)
       }
       
-      houses.push({ x: houseX, z: houseZ, size: houseSize })
       housesCreated++
     }
   }
-  
+
+  scene?.add(housesMesh)
+  scene?.add(roofsMesh)
+  scene?.add(chimneysMesh)
+  scene?.add(gardensMesh)
+
   // ============ INFRAESTRUCTURA DEL DISTRITO ============
   
   // Plaza central del distrito
@@ -4817,14 +4862,14 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
   const centralPlaza = new THREE.Mesh(centralPlazaGeometry, centralPlazaMaterial)
   centralPlaza.rotation.x = -Math.PI / 2
   centralPlaza.position.set(villa.center.x, 0.05, villa.center.z)
-  scene.add(centralPlaza)
+  scene?.add(centralPlaza)
   
   // Fuente central
   const fountainGeometry = new THREE.CylinderGeometry(2, 2.5, 1.5, 12)
   const fountainMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFAFA })
   const fountain = new THREE.Mesh(fountainGeometry, fountainMaterial)
   fountain.position.set(villa.center.x, 0.75, villa.center.z)
-  scene.add(fountain)
+  scene?.add(fountain)
   
   // Iglesia/capilla local
   const chapelGeometry = new THREE.BoxGeometry(6, 8, 10)
@@ -4835,20 +4880,20 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
     4,
     villa.center.z - villa.radius * 0.2
   )
-  scene.add(chapel)
+  scene?.add(chapel)
   
   // Torre de campana
   const bellTowerGeometry = new THREE.BoxGeometry(2, 12, 2)
   const bellTower = new THREE.Mesh(bellTowerGeometry, chapelMaterial)
   bellTower.position.set(chapel.position.x, 6, chapel.position.z + 6)
-  scene.add(bellTower)
+  scene?.add(bellTower)
   
   // Tejado de iglesia
   const chapelRoofGeometry = new THREE.ConeGeometry(1.5, 3, 4)
   const chapelRoof = new THREE.Mesh(chapelRoofGeometry, roofMaterial)
   chapelRoof.position.set(bellTower.position.x, 13, bellTower.position.z)
   chapelRoof.rotation.y = Math.PI / 4
-  scene.add(chapelRoof)
+  scene?.add(chapelRoof)
   
   // Mercadillo local (3-5 puestos)
   const numMarketStalls = 3 + Math.floor(Math.random() * 3)
@@ -4861,7 +4906,7 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
     const stallMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 })
     const stall = new THREE.Mesh(stallGeometry, stallMaterial)
     stall.position.set(stallX, 1.25, stallZ)
-    scene.add(stall)
+    scene?.add(stall)
     
     // Toldo
     const canopyGeometry = new THREE.BoxGeometry(2.5, 0.1, 2.5)
@@ -4871,7 +4916,7 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
     })
     const canopy = new THREE.Mesh(canopyGeometry, canopyMaterial)
     canopy.position.set(stallX, 3, stallZ)
-    scene.add(canopy)
+    scene?.add(canopy)
   }
   
   // Molino de viento (en algunos distritos)
@@ -4884,7 +4929,7 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
     const millTowerMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFAFA })
     const millTower = new THREE.Mesh(millTowerGeometry, millTowerMaterial)
     millTower.position.set(millX, 6, millZ)
-    scene.add(millTower)
+    scene?.add(millTower)
     
     // Aspas del molino
     for (let i = 0; i < 4; i++) {
@@ -4898,7 +4943,7 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
         millZ + Math.sin(bladeAngle) * 4
       )
       blade.rotation.z = bladeAngle
-      scene.add(blade)
+      scene?.add(blade)
     }
   }
   
@@ -4911,15 +4956,15 @@ async function createVillaDistrict(villa: any, houseMaterial: THREE.Material, di
     1,
     villa.center.z + villa.radius * 0.3
   )
-  scene.add(well)
+  scene?.add(well)
   
   // Estructura del pozo
   const wellFrameGeometry = new THREE.BoxGeometry(3, 4, 0.5)
   const wellFrame = new THREE.Mesh(wellFrameGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
   wellFrame.position.set(well.position.x, 3, well.position.z)
-  scene.add(wellFrame)
+  scene?.add(wellFrame)
   
-  console.log(`Created ${districtName} with ${housesCreated} houses`)
+  console.log(`Created ${districtName} with ${housesCreated} houses (OPTIMIZED)`)
 }
 
 const createLakeAndSurroundings = async (): Promise<void> => {
@@ -4956,14 +5001,14 @@ const createLakeAndSurroundings = async (): Promise<void> => {
   const lake = new THREE.Mesh(lakeGeometry, materials.water)
   lake.rotation.x = -Math.PI / 2
   lake.position.set(lafeCenter.x, -1, lafeCenter.z)
-  scene.add(lake)
+  scene?.add(lake)
 
   // ========== PALACIO LACUSTRE IMPERIAL ==========
   // Palacio flotante en el centro del lago
   const lakePalaceGeometry = new THREE.BoxGeometry(40, 18, 30)
   const lakePalace = new THREE.Mesh(lakePalaceGeometry, materials.marble)
   lakePalace.position.set(lafeCenter.x, 9, lafeCenter.z)
-  scene.add(lakePalace)
+  scene?.add(lakePalace)
 
   // Cúpulas doradas del palacio lacustre (3 cúpulas principales)
   const domePositions = [
@@ -4976,7 +5021,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const domeGeometry = new THREE.SphereGeometry(dome.size, 16, 12)
     const domeMesh = new THREE.Mesh(domeGeometry, materials.gold)
     domeMesh.position.set(dome.x, 18 + dome.size, dome.z)
-    scene.add(domeMesh)
+    scene?.add(domeMesh)
   })
 
   // Torres del palacio flotante (8 torres en el perímetro)
@@ -4988,25 +5033,25 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const towerGeometry = new THREE.CylinderGeometry(3, 4, 22, 12)
     const tower = new THREE.Mesh(towerGeometry, materials.stone)
     tower.position.set(towerX, 11, towerZ)
-    scene.add(tower)
+    scene?.add(tower)
 
     // Corona dorada en cada torre
     const crownGeometry = new THREE.CylinderGeometry(3.5, 3, 2, 12)
     const crown = new THREE.Mesh(crownGeometry, materials.gold)
     crown.position.set(towerX, 23, towerZ)
-    scene.add(crown)
+    scene?.add(crown)
 
     // Banderas imperiales
     const flagPoleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 5, 8)
     const flagPole = new THREE.Mesh(flagPoleGeometry, materials.bronze)
     flagPole.position.set(towerX, 27, towerZ)
-    scene.add(flagPole)
+    scene?.add(flagPole)
 
     const flagGeometry = new THREE.PlaneGeometry(4, 3)
     const flagMaterial = new THREE.MeshLambertMaterial({ color: 0x800080 })
     const flag = new THREE.Mesh(flagGeometry, flagMaterial)
     flag.position.set(towerX + 2, 28, towerZ)
-    scene.add(flag)
+    scene?.add(flag)
   }
 
   // ========== PUENTES MONUMENTALES AL PALACIO ==========
@@ -5032,7 +5077,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       (bridge.start.z + bridge.end.z) / 2
     )
     bridgeMesh.rotation.y = bridgeAngle
-    scene.add(bridgeMesh)
+    scene?.add(bridgeMesh)
 
     // Pilares del puente (cada 15 unidades)
     const numPillars = Math.floor(bridgeLength / 15)
@@ -5043,7 +5088,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       const pillarGeometry = new THREE.CylinderGeometry(2, 3, 8, 12)
       const pillar = new THREE.Mesh(pillarGeometry, materials.stone)
       pillar.position.set(pillarX, 0, pillarZ)
-      scene.add(pillar)
+      scene?.add(pillar)
     }
 
     // Barandillas ornamentales
@@ -5054,7 +5099,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       const railGeometry = new THREE.BoxGeometry(0.3, 2, 0.3)
       const rail = new THREE.Mesh(railGeometry, materials.bronze)
       rail.position.set(railX + 3 * Math.cos(bridgeAngle + Math.PI/2), 4, railZ + 3 * Math.sin(bridgeAngle + Math.PI/2))
-      scene.add(rail)
+      scene?.add(rail)
     }
   })
 
@@ -5093,7 +5138,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const villaMaterial = villa.size === 'large' ? materials.marble : materials.stone
     const villaMesh = new THREE.Mesh(villaGeometry, villaMaterial)
     villaMesh.position.set(villa.x, villaSize.height/2, villa.z)
-    scene.add(villaMesh)
+    scene?.add(villaMesh)
 
     // Torres en villas grandes
     if (villa.size === 'large') {
@@ -5105,13 +5150,13 @@ const createLakeAndSurroundings = async (): Promise<void> => {
         const towerGeometry = new THREE.CylinderGeometry(2, 2.5, 15, 8)
         const tower = new THREE.Mesh(towerGeometry, materials.stone)
         tower.position.set(towerX, 7.5, towerZ)
-        scene.add(tower)
+        scene?.add(tower)
 
         // Techos puntiagudos
         const roofGeometry = new THREE.ConeGeometry(2.5, 4, 8)
         const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x5D4E37 }))
         roof.position.set(towerX, 17, towerZ)
-        scene.add(roof)
+        scene?.add(roof)
       }
     }
 
@@ -5120,7 +5165,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const garden = new THREE.Mesh(gardenGeometry, materials.grass)
     garden.rotation.x = -Math.PI / 2
     garden.position.set(villa.x + villaSize.width + 5, 0.02, villa.z)
-    scene.add(garden)
+    scene?.add(garden)
 
     // Muelles privados
     const dockGeometry = new THREE.BoxGeometry(10, 1, 4)
@@ -5133,7 +5178,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     
     dock.position.set(dockX, 0.5, dockZ)
     dock.rotation.y = angleToLake
-    scene.add(dock)
+    scene?.add(dock)
   })
 
   // ========== EMBARCACIONES EN EL LAGO ==========
@@ -5161,14 +5206,14 @@ const createLakeAndSurroundings = async (): Promise<void> => {
 
     const boatMesh = new THREE.Mesh(boatGeometry, boatMaterial)
     boatMesh.position.set(boat.x, 0, boat.z)
-    scene.add(boatMesh)
+    scene?.add(boatMesh)
 
     // Mástil para barcos grandes y medianos
     if (boat.size !== 'small') {
       const mastGeometry = new THREE.CylinderGeometry(0.2, 0.2, boatSize.height + 8, 8)
       const mast = new THREE.Mesh(mastGeometry, materials.wood)
       mast.position.set(boat.x, boatSize.height + 4, boat.z)
-      scene.add(mast)
+      scene?.add(mast)
 
       // Vela
       const sailGeometry = new THREE.PlaneGeometry(boatSize.length * 0.6, boatSize.height + 6)
@@ -5177,7 +5222,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       })
       const sail = new THREE.Mesh(sailGeometry, sailMaterial)
       sail.position.set(boat.x + boatSize.length * 0.3, boatSize.height + 4, boat.z)
-      scene.add(sail)
+      scene?.add(sail)
     }
   })
 
@@ -5187,18 +5232,18 @@ const createLakeAndSurroundings = async (): Promise<void> => {
   const templeIsland = new THREE.Mesh(templeIslandGeometry, materials.stone)
   templeIsland.rotation.x = -Math.PI / 2
   templeIsland.position.set(lafeCenter.x + 60, -0.5, lafeCenter.z + 60)
-  scene.add(templeIsland)
+  scene?.add(templeIsland)
 
   const templeGeometry = new THREE.BoxGeometry(12, 15, 12)
   const temple = new THREE.Mesh(templeGeometry, materials.marble)
   temple.position.set(lafeCenter.x + 60, 7.5, lafeCenter.z + 60)
-  scene.add(temple)
+  scene?.add(temple)
 
   // Cúpula del templo
   const templeDomeGeometry = new THREE.SphereGeometry(7, 16, 12)
   const templeDome = new THREE.Mesh(templeDomeGeometry, materials.gold)
   templeDome.position.set(lafeCenter.x + 60, 22, lafeCenter.z + 60)
-  scene.add(templeDome)
+  scene?.add(templeDome)
 
   // Columnas del templo (8 columnas)
   for (let i = 0; i < 8; i++) {
@@ -5209,7 +5254,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const columnGeometry = new THREE.CylinderGeometry(1, 1, 12, 12)
     const column = new THREE.Mesh(columnGeometry, materials.marble)
     column.position.set(columnX, 6, columnZ)
-    scene.add(column)
+    scene?.add(column)
   }
 
   // ========== JARDINES ACUÁTICOS Y VEGETACIÓN ==========
@@ -5223,7 +5268,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const reedGeometry = new THREE.CylinderGeometry(0.1, 0.2, 3 + Math.random() * 2, 6)
     const reed = new THREE.Mesh(reedGeometry, materials.reed)
     reed.position.set(reedX, 1.5, reedZ)
-    scene.add(reed)
+    scene?.add(reed)
   }
 
   // Nenúfares en el lago
@@ -5241,7 +5286,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       const lily = new THREE.Mesh(lilyGeometry, lilyMaterial)
       lily.rotation.x = -Math.PI / 2
       lily.position.set(lilyX, -0.8, lilyZ)
-      scene.add(lily)
+      scene?.add(lily)
     }
   }
 
@@ -5257,18 +5302,18 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const fountainBaseGeometry = new THREE.CylinderGeometry(4, 5, 3, 16)
     const fountainBase = new THREE.Mesh(fountainBaseGeometry, materials.marble)
     fountainBase.position.set(pos.x, 1.5, pos.z)
-    scene.add(fountainBase)
+    scene?.add(fountainBase)
 
     const fountainGeometry = new THREE.CylinderGeometry(2, 3, 8, 16)
     const fountain = new THREE.Mesh(fountainGeometry, materials.marble)
     fountain.position.set(pos.x, 7, pos.z)
-    scene.add(fountain)
+    scene?.add(fountain)
 
     // Estatua en la fuente
     const statueGeometry = new THREE.CylinderGeometry(1, 1.5, 4, 8)
     const statue = new THREE.Mesh(statueGeometry, materials.bronze)
     statue.position.set(pos.x, 13, pos.z)
-    scene.add(statue)
+    scene?.add(statue)
   })
 
   // ============ PUEBLO PESQUERO PRINCIPAL - "VILLA LAFE" ============
@@ -5299,7 +5344,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const houseMesh = new THREE.Mesh(houseGeometry, houseMaterial)
     houseMesh.position.set(house.x, house.height/2, house.z)
     houseMesh.castShadow = true
-    scene.add(houseMesh)
+    scene?.add(houseMesh)
     
     // Tejado específico por tipo
     if (house.type === 'chapel') {
@@ -5307,25 +5352,25 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       const roofGeometry = new THREE.BoxGeometry(house.width + 0.5, 2, house.depth + 0.5)
       const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x654321 }))
       roof.position.set(house.x, house.height + 1, house.z)
-      scene.add(roof)
+      scene?.add(roof)
       
       // Campanario
       const bellTowerGeometry = new THREE.BoxGeometry(1.5, 4, 1.5)
       const bellTower = new THREE.Mesh(bellTowerGeometry, houseMaterial)
       bellTower.position.set(house.x, house.height + 2, house.z + house.depth/2)
-      scene.add(bellTower)
+      scene?.add(bellTower)
       
       // Campana
       const bellGeometry = new THREE.SphereGeometry(0.3, 8, 6)
       const bell = new THREE.Mesh(bellGeometry, new THREE.MeshLambertMaterial({ color: 0xB8860B }))
       bell.position.set(house.x, house.height + 3.5, house.z + house.depth/2)
-      scene.add(bell)
+      scene?.add(bell)
     } else {
       // Tejado estándar
       const roofGeometry = new THREE.BoxGeometry(house.width + 0.3, 0.8, house.depth + 0.3)
       const roof = new THREE.Mesh(roofGeometry, new THREE.MeshLambertMaterial({ color: 0x654321 }))
       roof.position.set(house.x, house.height + 0.4, house.z)
-      scene.add(roof)
+      scene?.add(roof)
     }
     
     // Características específicas por tipo
@@ -5335,7 +5380,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
         const chimneyGeometry = new THREE.CylinderGeometry(0.4, 0.5, 2, 8)
         const chimney = new THREE.Mesh(chimneyGeometry, new THREE.MeshLambertMaterial({ color: 0x4A4A4A }))
         chimney.position.set(house.x + (i - 1) * 1.5, house.height + 1.5, house.z)
-        scene.add(chimney)
+        scene?.add(chimney)
         
         // "Humo" del ahumadero
         const smokeGeometry = new THREE.CylinderGeometry(0.6, 0.3, 2, 6)
@@ -5346,7 +5391,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
         })
         const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial)
         smoke.position.set(chimney.position.x, house.height + 3.5, chimney.position.z)
-        scene.add(smoke)
+        scene?.add(smoke)
       }
       
       // Pescados colgando para secar
@@ -5358,7 +5403,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
           house.height - 0.5,
           house.z - house.depth/2 + (i + 1) * house.depth/9
         )
-        scene.add(fish)
+        scene?.add(fish)
       }
     }
     
@@ -5367,7 +5412,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       const boatHullGeometry = new THREE.BoxGeometry(6, 1, 2)
       const boatHull = new THREE.Mesh(boatHullGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
       boatHull.position.set(house.x, 1, house.z)
-      scene.add(boatHull)
+      scene?.add(boatHull)
       
       // Andamios alrededor
       for (let i = 0; i < 6; i++) {
@@ -5378,7 +5423,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
           1.5,
           house.z + Math.sin(i) * 2
         )
-        scene.add(scaffold)
+        scene?.add(scaffold)
       }
     }
     
@@ -5397,7 +5442,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
           2,
           house.z + (i - 1) * 2
         )
-        scene.add(net)
+        scene?.add(net)
       }
     }
     
@@ -5406,13 +5451,13 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       const signGeometry = new THREE.BoxGeometry(2, 1, 0.2)
       const sign = new THREE.Mesh(signGeometry, new THREE.MeshLambertMaterial({ color: 0xF5DEB3 }))
       sign.position.set(house.x, house.height - 0.5, house.z + house.depth/2 + 0.5)
-      scene.add(sign)
+      scene?.add(sign)
       
       // Establos pequeños
       const stableGeometry = new THREE.BoxGeometry(4, 2.5, 3)
       const stable = new THREE.Mesh(stableGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
       stable.position.set(house.x + house.width + 2.5, 1.25, house.z)
-      scene.add(stable)
+      scene?.add(stable)
     }
   })
   
@@ -5429,7 +5474,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const dockGeometry = new THREE.BoxGeometry(dock.length, 0.8, dock.width)
     const dockMesh = new THREE.Mesh(dockGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
     dockMesh.position.set(dock.x, 0.4, dock.z)
-    scene.add(dockMesh)
+    scene?.add(dockMesh)
     
     // Pilotes de soporte
     const numPiles = Math.max(3, Math.floor(dock.length / 2))
@@ -5441,7 +5486,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
         0.5,
         dock.z
       )
-      scene.add(pile)
+      scene?.add(pile)
     }
   })
   
@@ -5464,14 +5509,14 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const hullGeometry = new THREE.BoxGeometry(length, height, width)
     const hull = new THREE.Mesh(hullGeometry, new THREE.MeshLambertMaterial({ color: 0x654321 }))
     hull.position.set(boat.x, height/2, boat.z)
-    scene.add(hull)
+    scene?.add(hull)
     
     // Proa
     const prowGeometry = new THREE.ConeGeometry(width/2, length/4, 6)
     const prow = new THREE.Mesh(prowGeometry, new THREE.MeshLambertMaterial({ color: 0x654321 }))
     prow.position.set(boat.x + length/2 + length/8, height/2, boat.z)
     prow.rotation.z = -Math.PI / 2
-    scene.add(prow)
+    scene?.add(prow)
     
     // Mástil y vela (solo barcos medianos y grandes)
     if (boat.size !== 'tiny') {
@@ -5479,13 +5524,13 @@ const createLakeAndSurroundings = async (): Promise<void> => {
       const mastGeometry = new THREE.CylinderGeometry(0.1, 0.1, mastHeight, 6)
       const mast = new THREE.Mesh(mastGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
       mast.position.set(boat.x, mastHeight/2 + height/2, boat.z)
-      scene.add(mast)
+      scene?.add(mast)
       
       const sailGeometry = new THREE.PlaneGeometry(length * 0.6, mastHeight * 0.7)
       const sailMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFACD })
       const sail = new THREE.Mesh(sailGeometry, sailMaterial)
       sail.position.set(boat.x + length * 0.3, mastHeight * 0.6, boat.z)
-      scene.add(sail)
+      scene?.add(sail)
     }
     
     // Redes de pesca (barcos pesqueros)
@@ -5504,7 +5549,7 @@ const createLakeAndSurroundings = async (): Promise<void> => {
           boat.z + width/2 + 0.5
         )
         net.scale.y = 0.3
-        scene.add(net)
+        scene?.add(net)
       }
     }
   })
@@ -5515,20 +5560,20 @@ const createLakeAndSurroundings = async (): Promise<void> => {
   const island = new THREE.Mesh(islandGeometry, islandMaterial)
   island.rotation.x = -Math.PI / 2
   island.position.set(lakeBaseX, 0.1, lakeBaseZ)
-  scene.add(island)
+  scene?.add(island)
   
   // Templete en la isla
   const shrineGeometry = new THREE.CylinderGeometry(1, 1.2, 2.5, 8)
   const shrineMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFAFA })
   const shrine = new THREE.Mesh(shrineGeometry, shrineMaterial)
   shrine.position.set(lakeBaseX, 1.5, lakeBaseZ)
-  scene.add(shrine)
+  scene?.add(shrine)
   
   // Techo del templete
   const shrineRoofGeometry = new THREE.ConeGeometry(1.5, 1, 8)
   const shrineRoof = new THREE.Mesh(shrineRoofGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
   shrineRoof.position.set(lakeBaseX, 3, lakeBaseZ)
-  scene.add(shrineRoof)
+  scene?.add(shrineRoof)
   
   // Árboles en la isla
   for (let i = 0; i < 5; i++) {
@@ -5539,12 +5584,12 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const treeGeometry = new THREE.CylinderGeometry(0.2, 0.3, 3, 6)
     const tree = new THREE.Mesh(treeGeometry, new THREE.MeshLambertMaterial({ color: 0x8B4513 }))
     tree.position.set(treeX, 1.5, treeZ)
-    scene.add(tree)
+    scene?.add(tree)
     
     const leavesGeometry = new THREE.SphereGeometry(1, 8, 6)
     const leaves = new THREE.Mesh(leavesGeometry, new THREE.MeshLambertMaterial({ color: 0x228B22 }))
     leaves.position.set(treeX, 3.5, treeZ)
-    scene.add(leaves)
+    scene?.add(leaves)
   }
   
   // ============ CAMINOS HACIA LA CIUDAD ============
@@ -5567,14 +5612,14 @@ const createLakeAndSurroundings = async (): Promise<void> => {
     const pathSegment = new THREE.Mesh(pathGeometry, pathMaterial)
     pathSegment.rotation.x = -Math.PI / 2
     pathSegment.position.set(point.x, 0.02, point.z)
-    scene.add(pathSegment)
+    scene?.add(pathSegment)
     
     // Marcadores de camino (piedras)
     if (index % 2 === 0) {
       const markerGeometry = new THREE.BoxGeometry(0.8, 1.5, 0.8)
       const marker = new THREE.Mesh(markerGeometry, new THREE.MeshLambertMaterial({ color: 0x696969 }))
       marker.position.set(point.x + 1.5, 0.75, point.z)
-      scene.add(marker)
+      scene?.add(marker)
     }
   })
 }
@@ -5582,82 +5627,122 @@ const createLakeAndSurroundings = async (): Promise<void> => {
 const createVegetation = async (): Promise<void> => {
   if (!scene) return
   
-  const treeTrunkMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 }) // Tronco más oscuro
-  const leaveMaterial = new THREE.MeshLambertMaterial({ color: 0x7A8471 }) // Verde apagado pergamino
+  console.log('Creating procedural vegetation (OPTIMIZED)...')
   
-  // Árboles alrededor de la ciudad (bosque) con distribución más orgánica
-  const forestPositions = [
-    // Norte (bosque denso)
-    { x: -6, z: -25 }, { x: 3, z: -27 }, { x: -10, z: -22 },
-    { x: 7, z: -24 }, { x: -3, z: -30 }, { x: 10, z: -28 },
-    { x: 0, z: -26 }, { x: -8, z: -29 },
-    // Sur (bosque disperso)
-    { x: -15, z: 25 }, { x: -8, z: 27 }, { x: 2, z: 30 },
-    { x: 8, z: 26 }, { x: -18, z: 30 }, { x: 5, z: 28 },
-    // Oeste (bosque cerca del lago)
-    { x: -28, z: -8 }, { x: -25, z: 0 }, { x: -32, z: -5 },
-    { x: -22, z: 6 }, { x: -30, z: 3 }, { x: -26, z: -12 },
-    { x: -24, z: 12 }, { x: -29, z: 8 },
-    // Este (menos denso por el puerto)
-    { x: 22, z: -10 }, { x: 28, z: -3 }, { x: 25, z: -15 },
-    { x: 30, z: -6 }, { x: 27, z: 5 }
-  ]
+  const treeTrunkMaterial = new THREE.MeshLambertMaterial({ color: 0x5D4037 })
+  const leaveMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 }) // Verde bosque
+  const bushMaterial = new THREE.MeshLambertMaterial({ color: 0x556B2F }) // Verde oliva
   
-  forestPositions.forEach(pos => {
-    // Tronco del árbol con variación
-    const trunkHeight = 2.5 + Math.random() * 2.5
-    const trunkRadius = 0.15 + Math.random() * 0.15
-    const trunkGeometry = new THREE.CylinderGeometry(trunkRadius, trunkRadius + 0.1, trunkHeight, 6)
-    const trunk = new THREE.Mesh(trunkGeometry, treeTrunkMaterial)
-    trunk.position.set(pos.x, trunkHeight/2, pos.z)
-    trunk.castShadow = true
-    scene.add(trunk)
+  // Geometries
+  const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1, 6) // Unit height
+  const leavesGeometry = new THREE.DodecahedronGeometry(1) // Unit radius
+  const bushGeometry = new THREE.DodecahedronGeometry(1) // Unit radius
+
+  // Counts (Estimate)
+  const maxTrees = 1000
+  const maxBushes = 500
+
+  const trunksMesh = new THREE.InstancedMesh(trunkGeometry, treeTrunkMaterial, maxTrees)
+  const leavesMesh = new THREE.InstancedMesh(leavesGeometry, leaveMaterial, maxTrees)
+  const bushesMesh = new THREE.InstancedMesh(bushGeometry, bushMaterial, maxBushes)
+
+  trunksMesh.castShadow = true
+  leavesMesh.castShadow = true
+  bushesMesh.castShadow = true
+
+  let treeIndex = 0
+  let bushIndex = 0
+  const dummy = new THREE.Object3D()
+
+  // Helper to add tree instance
+  const addTreeInstance = (x: number, z: number, scale: number = 1) => {
+    if (treeIndex >= maxTrees) return
+
+    const trunkHeight = 3 * scale
     
-    // Copa del árbol con forma más irregular
-    const leavesRadius = 1.2 + Math.random() * 0.8
-    const leavesGeometry = new THREE.SphereGeometry(leavesRadius, 8, 6)
-    const leaves = new THREE.Mesh(leavesGeometry, leaveMaterial)
-    leaves.position.set(pos.x, trunkHeight + leavesRadius * 0.6, pos.z)
-    leaves.scale.y = 0.8 + Math.random() * 0.4 // Variación en altura
-    leaves.castShadow = true
-    scene.add(leaves)
-  })
-  
-  // Arbustos decorativos dentro de la ciudad con colores pergamino
-  const bushMaterial = new THREE.MeshLambertMaterial({ color: 0x8A9A7A }) // Verde más claro
-  const bushPositions = [
-    { x: -5, z: -10 }, { x: 8, z: -8 }, { x: -9, z: 5 },
-    { x: 6, z: 10 }, { x: -3, z: 7 }, { x: 10, z: -5 },
-    { x: -12, z: 2 }, { x: 7, z: 3 }, { x: -6, z: 8 },
-    { x: 4, z: -3 }, { x: -8, z: -1 }, { x: 9, z: 7 }
-  ]
-  
-  bushPositions.forEach(pos => {
-    const bushRadius = 0.4 + Math.random() * 0.4
-    const bushGeometry = new THREE.SphereGeometry(bushRadius, 6, 4)
-    const bush = new THREE.Mesh(bushGeometry, bushMaterial)
-    bush.position.set(pos.x, bushRadius * 0.6, pos.z)
-    bush.scale.y = 0.5 + Math.random() * 0.3
-    bush.castShadow = true
-    scene.add(bush)
-  })
-  
-  // Hierba dispersa para mayor realismo
-  const grassMaterial = new THREE.MeshLambertMaterial({ color: 0x9AAA8A })
-  for (let i = 0; i < 30; i++) {
-    const angle = Math.random() * Math.PI * 2
-    const distance = 8 + Math.random() * 12
-    const x = Math.cos(angle) * distance
-    const z = Math.sin(angle) * distance
-    
-    const grassGeometry = new THREE.SphereGeometry(0.2 + Math.random() * 0.15, 4, 3)
-    const grass = new THREE.Mesh(grassGeometry, grassMaterial)
-    grass.position.set(x, 0.1, z)
-    grass.scale.y = 0.3 + Math.random() * 0.2
-    scene.add(grass)
+    // Trunk
+    dummy.position.set(x, trunkHeight / 2, z)
+    dummy.rotation.set(0, Math.random() * Math.PI, 0)
+    dummy.scale.set(scale, trunkHeight, scale)
+    dummy.updateMatrix()
+    trunksMesh.setMatrixAt(treeIndex, dummy.matrix)
+
+    // Leaves
+    const leavesRadius = 2 * scale
+    dummy.position.set(x, trunkHeight + leavesRadius * 0.6, z)
+    dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI)
+    dummy.scale.set(leavesRadius, leavesRadius, leavesRadius)
+    dummy.updateMatrix()
+    leavesMesh.setMatrixAt(treeIndex, dummy.matrix)
+
+    treeIndex++
   }
 
-  console.log('Lake and surroundings created successfully')
+  // Helper to add bush instance
+  const addBushInstance = (x: number, z: number) => {
+    if (bushIndex >= maxBushes) return
+    const radius = 0.5 + Math.random() * 0.5
+    
+    dummy.position.set(x, radius * 0.8, z)
+    dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI)
+    dummy.scale.set(radius, radius, radius)
+    dummy.updateMatrix()
+    bushesMesh.setMatrixAt(bushIndex++, dummy.matrix)
+  }
+
+  // 1. BOSQUES EXTERIORES (Fuera de las murallas)
+  // Anillo de bosques dispersos
+  for (let i = 0; i < 400; i++) {
+    const angle = Math.random() * Math.PI * 2
+    const dist = 350 + Math.random() * 200 // Lejos del centro
+    const x = Math.cos(angle) * dist
+    const z = Math.sin(angle) * dist
+    
+    // Evitar zona del puerto (Sureste) y Lago (Suroeste)
+    // Puerto aprox: angulo 0 a PI/2 (0 a 90 grados) -> x>0, z>0
+    // Lago aprox: angulo PI/2 a PI (90 a 180 grados) -> x<0, z>0
+    
+    // Vamos a plantar más en el Norte (z < 0) y Oeste lejano
+    if (z < 100 || x < -200) {
+      addTreeInstance(x, z, 1.5 + Math.random())
+    }
+  }
+
+  // 2. VEGETACIÓN EN PALERMO (Jardines y calles arboladas)
+  // Zona Oeste interior
+  for (let i = 0; i < 150; i++) {
+    const angle = Math.PI * 0.5 + Math.random() * Math.PI // Lado izquierdo
+    const dist = 100 + Math.random() * 150
+    const x = Math.cos(angle) * dist
+    const z = Math.sin(angle) * dist
+    
+    // Solo si cae en zona Palermo (x negativo)
+    if (x < -50 && Math.abs(z) < 200) {
+      if (Math.random() > 0.7) {
+        addTreeInstance(x, z, 0.8) // Árboles más pequeños ornamentales
+      } else {
+        addBushInstance(x, z)
+      }
+    }
+  }
+
+  // 3. DETALLES ALREDEDOR DEL LAGO
+  // El lago está en createLakeAndSurroundings, pero añadimos más densidad aquí
+  const lakeX = -150
+  const lakeZ = 150
+  for (let i = 0; i < 100; i++) {
+    const angle = Math.random() * Math.PI * 2
+    const dist = 90 + Math.random() * 40
+    const x = lakeX + Math.cos(angle) * dist
+    const z = lakeZ + Math.sin(angle) * dist
+    addTreeInstance(x, z, 1.2)
+  }
+  
+  scene?.add(trunksMesh)
+  scene?.add(leavesMesh)
+  scene?.add(bushesMesh)
+
+  console.log('Vegetation created successfully (OPTIMIZED)')
 }
 
 // Lifecycle
