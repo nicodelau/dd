@@ -2807,9 +2807,11 @@ function rollSingleDie(sides: number): number {
   return Math.floor(Math.random() * sides) + 1
 }
 
-async function rollDice(customSelection?: Record<string, number>) {
-  const diceSelection = customSelection || selectedDice.value
-  const totalSelected = Object.values(diceSelection).reduce((sum, count) => sum + count, 0)
+async function rollDice(customSelection?: Record<string, number> | any) {
+  const diceSelection: Record<string, number> = (customSelection && typeof customSelection === 'object' && !customSelection.target) 
+    ? customSelection 
+    : selectedDice.value
+  const totalSelected = Object.values(diceSelection).reduce((sum: number, count: number) => sum + count, 0)
 
   if (totalSelected === 0) return
 
