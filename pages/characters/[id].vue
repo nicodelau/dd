@@ -6,13 +6,13 @@
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-4">
             <UButton
-              :to="canEdit ? '/dashboard' : '/'"
+              :to="(user?.role === 'DM' || user?.role === 'ADMIN') ? '/dashboard' : '/'"
               color="gray"
               variant="ghost"
               icon="i-heroicons-arrow-left"
               size="sm"
             >
-              {{ canEdit ? 'Back to Dashboard' : 'Back to Home' }}
+              {{ (user?.role === 'DM' || user?.role === 'ADMIN') ? 'Back to Dashboard' : 'Back to Home' }}
             </UButton>
             
             <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>

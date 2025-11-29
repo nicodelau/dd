@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-4">
-            <UButton to="/dashboard" color="gray" variant="ghost" icon="i-heroicons-arrow-left" size="sm">
+            <UButton :to="(user?.role === 'DM' || user?.role === 'ADMIN') ? '/dashboard' : '/'" color="gray" variant="ghost" icon="i-heroicons-arrow-left" size="sm">
               Back to Dashboard
             </UButton>
 
