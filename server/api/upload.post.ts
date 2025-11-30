@@ -1,8 +1,12 @@
-import { writeFile, unlink } from 'fs/promises'
+import { writeFile, unlink, mkdir } from 'fs/promises'
 import { resolve, join } from 'path'
 import { randomUUID } from 'crypto'
+import { requireDMOrAdmin } from '../utils/auth'
 
 export default defineEventHandler(async (event) => {
+  // Check authentication - only DMs and Admins can upload images
+  await requireDMOrAdmin(event)
+
   const files = await readMultipartFormData(event)
   if (!files || files.length === 0) {
     throw createError({
@@ -32,6 +36,11 @@ export default defineEventHandler(async (event) => {
   
   // Ensure directory exists
   const uploadDir = resolve(process.cwd(), 'public', 'uploads')
+  try {
+    await mkdir(uploadDir, { recursive: true })
+  } catch (error) {
+    // Directory might already exist, ignore error
+  }
   const filePath = join(uploadDir, fileName)
 
   await writeFile(filePath, file.data)

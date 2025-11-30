@@ -23,4 +23,8 @@ logs
 .env.*
 !.env.example
 
+# Generated files
 /generated/prisma
+
+# Uploaded files (temporary)
+public/uploads/

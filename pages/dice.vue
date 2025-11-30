@@ -2336,11 +2336,23 @@ async function sendDmImage() {
       icon: 'i-heroicons-check-circle',
       color: 'green'
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to send image:', error)
+    
+    let errorMessage = t('imageSendFailed')
+    if (error?.data?.statusMessage) {
+      errorMessage = error.data.statusMessage
+    } else if (error?.statusCode === 401) {
+      errorMessage = 'Authentication required. Please log in again.'
+    } else if (error?.statusCode === 403) {
+      errorMessage = 'Access denied. DM or Admin role required.'
+    } else if (error?.statusCode === 400) {
+      errorMessage = 'Invalid file or no file uploaded.'
+    }
+    
     toast.add({
       title: t('error'),
-      description: t('imageSendFailed'),
+      description: errorMessage,
       icon: 'i-heroicons-exclamation-circle',
       color: 'red'
     })
