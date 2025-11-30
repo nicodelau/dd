@@ -32,6 +32,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Ensure the room exists, create it if it doesn't
+    let room = diceRoomStore.getRoom(roomCode)
+    if (!room) {
+      // Create the room if it doesn't exist (could happen if server restarted)
+      console.log(`🎲 Room ${roomCode} doesn't exist, creating it for user ${body.userId}`)
+      room = diceRoomStore.createRoom(roomCode, `Room ${roomCode}`, body.userId)
+    }
+
     // Update user's last seen time (activity tracking)
     const user = diceRoomStore.getUser(body.userId, roomCode)
     if (user) {
