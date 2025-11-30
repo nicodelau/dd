@@ -19,12 +19,20 @@ export default defineEventHandler(async (event) => {
   const role = (query.role as UserRole) || 'Player'
   const roomCode = query.roomCode as string || 'default'
 
-  // Set SSE headers
+  // Set SSE headers with enhanced keep-alive configuration
   setHeader(event, 'Content-Type', 'text/event-stream')
-  setHeader(event, 'Cache-Control', 'no-cache')
+  setHeader(event, 'Cache-Control', 'no-cache, no-store, must-revalidate')
   setHeader(event, 'Connection', 'keep-alive')
   setHeader(event, 'Access-Control-Allow-Origin', '*')
   setHeader(event, 'Access-Control-Allow-Headers', 'Cache-Control')
+  setHeader(event, 'X-Accel-Buffering', 'no') // Disable nginx buffering
+  setHeader(event, 'Transfer-Encoding', 'chunked')
+  
+  // Configure keep-alive timeout to prevent proxy timeouts
+  if (event.node.req.socket) {
+    event.node.req.socket.setKeepAlive(true, 30000) // 30s keep-alive
+    event.node.req.socket.setTimeout(0) // Disable socket timeout
+  }
 
   const response = event.node.res
   const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
@@ -57,23 +65,28 @@ export default defineEventHandler(async (event) => {
     diceRoomStore.removeUser(userId, roomCode)
   })
 
-  // Keep connection alive with periodic heartbeat
+  // Keep connection alive with more frequent heartbeat to prevent timeouts
   const heartbeatInterval = setInterval(() => {
     try {
       // Update user activity on heartbeat
       diceRoomStore.updateUserActivity(userId, roomCode)
       
-      response.write(`event: heartbeat\ndata: ${JSON.stringify({ 
+      // Send heartbeat with timestamp and connection health info
+      const heartbeatData = {
         timestamp: new Date().toISOString(),
-        userCount: diceRoomStore.getUserCount(roomCode)
-      })}\n\n`)
+        userCount: diceRoomStore.getUserCount(roomCode),
+        connectionId,
+        uptime: Date.now() - parseInt(connectionId.split('_')[1])
+      }
+      
+      response.write(`event: heartbeat\ndata: ${JSON.stringify(heartbeatData)}\n\n`)
     } catch (error) {
       console.error(`🎲 Heartbeat failed for ${connectionId}:`, error)
       clearInterval(heartbeatInterval)
       diceRoomStore.removeSSEConnection(connectionId, roomCode)
       diceRoomStore.removeUser(userId, roomCode)
     }
-  }, 30000) // Every 30 seconds
+  }, 15000) // Reduced to 15 seconds to prevent proxy timeouts
 
   // Clean up interval on disconnect
   event.node.req.on('close', () => {

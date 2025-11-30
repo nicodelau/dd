@@ -40,9 +40,19 @@
 
             <div class="flex items-center space-x-2">
               <div class="h-3 w-3 rounded-full"
-                :class="isConnected ? 'bg-green-500' : isOfflineMode ? 'bg-yellow-500' : 'bg-red-500'"></div>
+                :class="{
+                  'bg-green-500': isConnected,
+                  'bg-yellow-500': isOfflineMode,
+                  'bg-orange-500 animate-pulse': isReconnecting,
+                  'bg-red-500': !isConnected && !isOfflineMode && !isReconnecting
+                }"></div>
               <span class="text-sm text-gray-600 dark:text-gray-300">
-                {{ isConnected ? t('connected') : isOfflineMode ? t('offlineMode') : t('disconnected') }}
+                <template v-if="isReconnecting">
+                  {{ t('reconnecting') }} ({{ reconnectAttempts }}/{{ maxReconnectAttempts }})
+                </template>
+                <template v-else>
+                  {{ isConnected ? t('connected') : isOfflineMode ? t('offlineMode') : t('disconnected') }}
+                </template>
               </span>
               <UButton v-if="!isConnected || isOfflineMode" color="yellow" variant="ghost" size="xs"
                 :icon="isOfflineModePreference ? 'i-heroicons-wifi' : 'i-heroicons-wifi-slash'"
@@ -2210,6 +2220,18 @@ const isRolling = ref(false)
 const eventSource = ref < EventSource | null > (null)
 const animatingDice = ref < Set < string >> (new Set())
 
+// Reconnection state
+const reconnectAttempts = ref(0)
+const maxReconnectAttempts = 5
+const isReconnecting = ref(false)
+const reconnectTimeout = ref<NodeJS.Timeout | null>(null)
+
+// Heartbeat monitoring for silent disconnections
+const lastHeartbeat = ref<Date | null>(null)
+const heartbeatTimeout = ref<NodeJS.Timeout | null>(null)
+const heartbeatInterval = 15000 // Should match server interval
+const heartbeatToleranceMs = 45000 // 3x server interval for tolerance
+
 // Sidebar state
 const isLeftSidebarOpen = ref(false)
 const isRightSidebarOpen = ref(false)
@@ -3819,6 +3841,14 @@ function initializeSSE(roomCode?: string) {
       console.log('🎲 SSE connection established')
       isConnected.value = true
       isOfflineMode.value = false
+      
+      // Reset reconnection state on successful connection
+      reconnectAttempts.value = 0
+      isReconnecting.value = false
+      if (reconnectTimeout.value) {
+        clearTimeout(reconnectTimeout.value)
+        reconnectTimeout.value = null
+      }
 
       // Send join request via HTTP
       joinRoom(roomCode)
@@ -3826,10 +3856,47 @@ function initializeSSE(roomCode?: string) {
 
     eventSource.value.onerror = (error) => {
       console.error('🎲 SSE connection error:', error)
-      console.log('🎲 Fallback to offline mode')
       isConnected.value = false
-      isOfflineMode.value = true
-      connectedUsers.value = 1
+      
+      // Don't attempt reconnection if user explicitly chose offline mode
+      if (isOfflineModePreference.value) {
+        console.log('🎲 Staying offline per user preference')
+        isOfflineMode.value = true
+        connectedUsers.value = 1
+        return
+      }
+      
+      // Attempt automatic reconnection with exponential backoff
+      if (reconnectAttempts.value < maxReconnectAttempts) {
+        isReconnecting.value = true
+        reconnectAttempts.value++
+        
+        // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.value - 1), 16000)
+        
+        console.log(`🎲 Attempting reconnection ${reconnectAttempts.value}/${maxReconnectAttempts} in ${delay}ms`)
+        
+        reconnectTimeout.value = setTimeout(() => {
+          console.log(`🎲 Reconnection attempt ${reconnectAttempts.value}`)
+          disconnectSSE() // Clean up current connection
+          setTimeout(() => {
+            initializeSSE(roomCode) // Attempt to reconnect
+          }, 100)
+        }, delay)
+      } else {
+        console.log('🎲 Max reconnection attempts reached, falling back to offline mode')
+        isReconnecting.value = false
+        isOfflineMode.value = true
+        connectedUsers.value = 1
+        
+        // Show user notification about connection issues
+        const toast = useToast()
+        toast.add({
+          title: 'Connection Lost',
+          description: 'Unable to reconnect to the server. Using offline mode.',
+          color: 'red'
+        })
+      }
     }
 
     // Handle specific events
@@ -3910,7 +3977,27 @@ function initializeSSE(roomCode?: string) {
 
     eventSource.value.addEventListener('heartbeat', (event) => {
       const data = JSON.parse(event.data)
-      // Optional: Update user count from heartbeat
+      
+      // Update heartbeat timestamp
+      lastHeartbeat.value = new Date()
+      
+      // Reset heartbeat timeout monitor
+      if (heartbeatTimeout.value) {
+        clearTimeout(heartbeatTimeout.value)
+      }
+      
+      // Set up timeout to detect silent disconnection
+      heartbeatTimeout.value = setTimeout(() => {
+        if (isConnected.value && !isReconnecting.value) {
+          console.warn('🎲 Heartbeat timeout detected - connection may be lost')
+          // Trigger reconnection logic
+          if (eventSource.value) {
+            eventSource.value.dispatchEvent(new Event('error'))
+          }
+        }
+      }, heartbeatToleranceMs)
+      
+      // Update user count from heartbeat
       if (data.userCount) {
         connectedUsers.value = data.userCount
       }
@@ -4388,6 +4475,20 @@ function disconnectSSE() {
     eventSource.value = null
     console.log('🎲 SSE connection closed')
   }
+  
+  // Clear reconnection timeout if active
+  if (reconnectTimeout.value) {
+    clearTimeout(reconnectTimeout.value)
+    reconnectTimeout.value = null
+  }
+  
+  // Clear heartbeat timeout if active
+  if (heartbeatTimeout.value) {
+    clearTimeout(heartbeatTimeout.value)
+    heartbeatTimeout.value = null
+  }
+  
+  isReconnecting.value = false
 }
 
 function toggleOfflineMode() {
