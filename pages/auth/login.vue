@@ -18,28 +18,25 @@
           </div>
           
           <h1 class="text-4xl font-bold leading-tight mb-4">
-            Welcome to Your
-            <span class="text-transparent bg-clip-text bg-red-700">
-              D&D Adventure
-            </span>
+            {{ t('welcomeToAdventure') }}
           </h1>
           
           <p class="text-xl text-zinc-400 leading-relaxed mb-8">
-            Manage your characters, track your campaigns, and embark on epic quests. Your adventure awaits in the digital realm.
+            {{ t('adventureDescription') }}
           </p>
           
           <div class="space-y-4">
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span class="text-zinc-400">Create and manage characters</span>
+              <span class="text-zinc-400">{{ t('featureCharacters') }}</span>
             </div>
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-zinc-500 rounded-full"></div>
-              <span class="text-zinc-400">Track campaigns and sessions</span>
+              <span class="text-zinc-400">{{ t('featureCampaigns') }}</span>
             </div>
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-zinc-500 rounded-full"></div>
-              <span class="text-zinc-400">Digital dice rolling and stats</span>
+              <span class="text-zinc-400">{{ t('featureDice') }}</span>
             </div>
           </div>
         </div>
@@ -60,17 +57,17 @@
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-white text-white">Welcome Back</h2>
+          <h2 class="text-2xl font-bold text-white text-white">{{ t('welcomeBack') }}</h2>
         </div>
         
         <div class="hidden lg:block">
           <h2 class="text-3xl font-bold text-white text-white">
-            Sign in to your account
+            {{ t('signInTitle') }}
           </h2>
           <p class="mt-2 text-sm text-zinc-400 text-zinc-400">
-            Or
+            {{ t('or') }}
             <NuxtLink to="/auth/register" class="font-medium text-red-500 hover:text-red-400 transition-colors">
-              create a new account
+              {{ t('createAccount') }}
             </NuxtLink>
           </p>
         </div>
@@ -80,13 +77,13 @@
             <div class="space-y-4">
               <div>
                 <label for="email" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                  Email address
+                  {{ t('emailAddress') }}
                 </label>
                 <UInput
                   id="email"
                   v-model="form.email"
                   type="email"
-                  placeholder="Enter your email"
+                  :placeholder="t('enterEmail')"
                   size="lg"
                   :class="{ 'border-red-500': errors.email }"
                   class="transition-all duration-200"
@@ -97,13 +94,13 @@
 
               <div>
                 <label for="password" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                  Password
+                  {{ t('password') }}
                 </label>
                 <UInput
                   id="password"
                   v-model="form.password"
                   type="password"
-                  placeholder="Enter your password"
+                  :placeholder="t('enterPassword')"
                   size="lg"
                   :class="{ 'border-red-500': errors.password }"
                   class="transition-all duration-200"
@@ -118,7 +115,7 @@
                 <UCheckbox
                   id="remember-me"
                   v-model="form.rememberMe"
-                  label="Remember me"
+                  :label="t('rememberMe')"
                   class="text-sm"
                 />
               </div>
@@ -144,7 +141,7 @@
                   <svg v-if="!loading" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
                   </svg>
-                  {{ loading ? 'Signing in...' : 'Sign in' }}
+                  {{ loading ? t('signingIn') : t('signIn') }}
                 </span>
               </UButton>
             </div>
@@ -162,9 +159,9 @@
           <!-- Mobile register link -->
           <div class="lg:hidden mt-6 text-center">
             <p class="text-sm text-zinc-400 text-zinc-400">
-              Don't have an account?
+              {{ t('dontHaveAccount') }}
               <NuxtLink to="/auth/register" class="font-medium text-red-500 hover:text-red-400 transition-colors">
-                Sign up here
+                {{ t('signUpHere') }}
               </NuxtLink>
             </p>
           </div>
@@ -175,6 +172,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useTranslations()
+
 interface LoginForm {
   email: string
   password: string

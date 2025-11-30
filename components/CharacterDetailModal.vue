@@ -11,7 +11,7 @@
       <template #header>
         <div class="flex items-center justify-between">
           <h3 class="text-xl font-semibold text-white text-white">
-            {{ character?.characterName || 'Character Details' }}
+            {{ character?.characterName || t('characterDetails') }}
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="close" />
         </div>
@@ -23,33 +23,33 @@
           <!-- Basic Info -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-white text-white">Basic Information</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('basicInfo') }}</h4>
             </template>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <span class="text-zinc-400">Character Name:</span>
-                <p class="font-medium">{{ character.characterName || 'Unknown' }}</p>
+                <span class="text-zinc-400">{{ t('characterName') }}:</span>
+                <p class="font-medium">{{ character.characterName || t('unknown') }}</p>
               </div>
               <div>
-                <span class="text-zinc-400">Player:</span>
-                <p class="font-medium">{{ character.playerName || 'Unassigned' }}</p>
+                <span class="text-zinc-400">{{ t('player') }}:</span>
+                <p class="font-medium">{{ character.playerName || t('unassigned') }}</p>
               </div>
               <div>
-                <span class="text-zinc-400">Race:</span>
-                <p class="font-medium">{{ character.race || 'Unknown' }}</p>
+                <span class="text-zinc-400">{{ t('race') }}:</span>
+                <p class="font-medium">{{ character.race || t('unknown') }}</p>
               </div>
               <div>
-                <span class="text-zinc-400">Class & Level:</span>
-                <p class="font-medium">{{ (character.className || 'Unknown') }} {{ character.classLevel || 1 }}</p>
+                <span class="text-zinc-400">{{ t('classAndLevel') }}:</span>
+                <p class="font-medium">{{ (character.className || t('unknown')) }} {{ character.classLevel || 1 }}</p>
               </div>
               <div>
-                <span class="text-zinc-400">Background:</span>
-                <p class="font-medium">{{ character.background || 'Not set' }}</p>
+                <span class="text-zinc-400">{{ t('background') }}:</span>
+                <p class="font-medium">{{ character.background || t('notSet') }}</p>
               </div>
               <div>
-                <span class="text-zinc-400">Alignment:</span>
-                <p class="font-medium">{{ character.alignment || 'Not set' }}</p>
+                <span class="text-zinc-400">{{ t('alignment') }}:</span>
+                <p class="font-medium">{{ character.alignment || t('notSet') }}</p>
               </div>
             </div>
           </UCard>
@@ -57,16 +57,16 @@
           <!-- Combat Stats -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-white text-white">Combat Statistics</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('combatStats') }}</h4>
             </template>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div class="text-center">
-                <span class="text-zinc-400 text-sm">AC</span>
+                <span class="text-zinc-400 text-sm">{{ t('ac') }}</span>
                 <p class="text-2xl font-bold text-zinc-200">{{ character.armorClass || 10 }}</p>
               </div>
               <div class="text-center">
-                <span class="text-zinc-400 text-sm">Speed</span>
+                <span class="text-zinc-400 text-sm">{{ t('speed') }}</span>
                 <p class="text-lg font-bold">{{ character.speed || 30 }} ft</p>
               </div>
               <div class="text-center">
@@ -74,7 +74,7 @@
                 <p class="text-lg font-bold text-red-500">{{ character.currentHp }}/{{ character.maxHp }}</p>
               </div>
               <div class="text-center">
-                <span class="text-zinc-400 text-sm">Initiative</span>
+                <span class="text-zinc-400 text-sm">{{ t('initiative') }}</span>
                 <p class="text-lg font-bold">{{ formatModifier(character.initiative) }}</p>
               </div>
             </div>
@@ -82,7 +82,7 @@
             <!-- Health Bar -->
             <div class="mt-4">
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs text-zinc-400">Health</span>
+                <span class="text-xs text-zinc-400">{{ t('health') }}</span>
                 <span class="text-xs text-zinc-400">{{ healthPercentage }}%</span>
               </div>
               <div class="w-full bg-zinc-800 rounded-full h-2">
@@ -95,7 +95,7 @@
           <!-- Ability Scores -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-white text-white">Ability Scores</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('abilityScores') }}</h4>
             </template>
 
             <div class="grid grid-cols-3 md:grid-cols-6 gap-4">
@@ -197,20 +197,20 @@
           <!-- Quick Stats -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-white text-white">Quick Stats</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('quickStats') }}</h4>
             </template>
 
             <div class="space-y-3">
               <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Experience</span>
+                <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('experience') }}</span>
                 <span class="font-medium">{{ (character.experience || 0).toLocaleString() }} XP</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Proficiency</span>
+                <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('proficiencyBonus') }}</span>
                 <span class="font-medium">+{{ character.proficiencyBonus || 2 }}</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Passive Perception</span>
+                <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('passivePerception') }}</span>
                 <span class="font-medium">{{ character.passivePerception || 10 }}</span>
               </div>
             </div>
@@ -219,33 +219,33 @@
           <!-- Currency -->
           <UCard>
             <template #header>
-              <h4 class="font-semibold text-white text-white">Currency</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('currency') }}</h4>
             </template>
 
             <div class="space-y-2">
               <div class="flex justify-between items-center">
-                <span class="text-sm text-orange-600">Copper</span>
+                <span class="text-sm text-orange-600">{{ t('copper') }}</span>
                 <span class="font-medium">{{ character.copperCoins || 0 }} cp</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-400">Silver</span>
+                <span class="text-sm text-gray-400">{{ t('silver') }}</span>
                 <span class="font-medium">{{ character.silverCoins || 0 }} sp</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-sm text-blue-400">Electrum</span>
+                <span class="text-sm text-blue-400">{{ t('electrum') }}</span>
                 <span class="font-medium">{{ character.electrumCoins || 0 }} ep</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-sm text-yellow-500">Gold</span>
+                <span class="text-sm text-yellow-500">{{ t('gold') }}</span>
                 <span class="font-medium">{{ character.goldCoins || 0 }} gp</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-300">Platinum</span>
+                <span class="text-sm text-gray-300">{{ t('platinum') }}</span>
                 <span class="font-medium">{{ character.platinumCoins || 0 }} pp</span>
               </div>
               <div class="border-t pt-2 mt-2">
                 <div class="flex justify-between items-center">
-                  <span class="text-sm font-medium">Total (gp)</span>
+                  <span class="text-sm font-medium">{{ t('totalGp') }}</span>
                   <span class="font-bold">{{ calculateTotalWealth() }}</span>
                 </div>
               </div>
@@ -255,7 +255,7 @@
           <!-- Inventory -->
           <UCard v-if="character.inventory && character.inventory.length > 0">
             <template #header>
-              <h4 class="font-semibold text-white text-white">Inventory</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('inventory') }}</h4>
             </template>
 
             <div class="space-y-2 max-h-60 overflow-y-auto">
@@ -264,7 +264,7 @@
                 <div class="flex-1">
                   <p class="font-medium text-sm">{{ item.name }}</p>
                   <p class="text-xs text-zinc-400">{{ item.quantity }} × {{ item.weight || 0 }} lbs</p>
-                  <UBadge v-if="item.equipped" color="green" variant="soft" size="xs" class="mt-1">Equipped</UBadge>
+                  <UBadge v-if="item.equipped" color="green" variant="soft" size="xs" class="mt-1">{{ t('equipped') }}</UBadge>
                 </div>
               </div>
             </div>
@@ -273,7 +273,7 @@
           <!-- Notes -->
           <UCard v-if="character.notes">
             <template #header>
-              <h4 class="font-semibold text-white text-white">Notes</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('notes') }}</h4>
             </template>
 
             <div class="text-sm text-gray-600 dark:text-gray-300 max-h-32 overflow-y-auto">
@@ -286,14 +286,14 @@
       <template #footer>
         <div class="flex justify-between items-center">
           <div class="text-sm text-zinc-400">
-            Character ID: {{ character?.id }}
+            {{ t('characterId') }}: {{ character?.id }}
           </div>
           <div class="flex space-x-2">
             <UButton color="gray" variant="outline" @click="close">
-              Close
+              {{ t('close') }}
             </UButton>
             <UButton v-if="character" color="primary" :to="`/characters/${character.id}`" @click="close">
-              View Full Sheet
+              {{ t('viewFullSheet') }}
             </UButton>
           </div>
         </div>
@@ -304,6 +304,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+
+const { t } = useTranslations()
 
 interface Character {
   id: number

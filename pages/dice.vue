@@ -6,7 +6,7 @@
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-4">
             <UButton :to="(user?.role === 'DM' || user?.role === 'ADMIN') ? '/dashboard' : '/'" color="gray" variant="ghost" icon="i-heroicons-arrow-left" size="sm">
-              Back to Dashboard
+              {{ t('backToDashboard') }}
             </UButton>
 
             <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
@@ -14,11 +14,11 @@
             <div>
               <h1 class="text-2xl font-bold text-white flex items-center">
                 <UIcon name="i-heroicons-cube" class="w-8 h-8 text-red-500 mr-2" />
-                Collaborative Dice Room
+                {{ t('collaborativeDiceRoom') }}
               </h1>
               <div v-if="currentRoom" class="flex items-center space-x-2">
                 <span class="text-sm text-zinc-400 text-zinc-400">
-                  Room: {{ currentRoom.name }}
+                  {{ t('room') }}: {{ currentRoom.name }}
                 </span>
                 <div class="flex items-center space-x-1">
                   <span class="text-sm font-mono bg-gray-100 bg-zinc-900 px-2 py-1 rounded">
@@ -26,7 +26,7 @@
                   </span>
                   <UButton v-if="currentRoom.code !== 'default'" color="gray" variant="ghost" size="xs"
                     icon="i-heroicons-clipboard-document" @click="copyRoomCode">
-                    Copy
+                    {{ t('copy') }}
                   </UButton>
                 </div>
               </div>
@@ -34,22 +34,26 @@
           </div>
 
           <div class="flex items-center space-x-3">
+            <UButton color="primary" variant="solid" size="xs" icon="i-heroicons-language" @click="toggleLanguage">
+              {{ language === 'en' ? 'ES' : 'EN' }}
+            </UButton>
+
             <div class="flex items-center space-x-2">
               <div class="h-3 w-3 rounded-full"
                 :class="isConnected ? 'bg-green-500' : isOfflineMode ? 'bg-yellow-500' : 'bg-red-500'"></div>
               <span class="text-sm text-gray-600 dark:text-gray-300">
-                {{ isConnected ? 'Connected' : isOfflineMode ? 'Offline Mode' : 'Disconnected' }}
+                {{ isConnected ? t('connected') : isOfflineMode ? t('offlineMode') : t('disconnected') }}
               </span>
               <UButton v-if="!isConnected || isOfflineMode" color="yellow" variant="ghost" size="xs"
                 :icon="isOfflineModePreference ? 'i-heroicons-wifi' : 'i-heroicons-wifi-slash'"
                 @click="toggleOfflineMode">
-                {{ isOfflineModePreference ? 'Go Online' : 'Stay Offline' }}
+                {{ isOfflineModePreference ? t('goOnline') : t('stayOffline') }}
               </UButton>
             </div>
 
             <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
               <UIcon name="i-heroicons-users" class="h-4 w-4" />
-              <span>{{ connectedUsers }} {{ isOfflineMode ? '(offline)' : 'online' }}</span>
+              <span>{{ connectedUsers }} {{ isOfflineMode ? `(${t('offline')})` : t('online') }}</span>
             </div>
           </div>
         </div>
@@ -64,15 +68,15 @@
         <div class="flex items-center space-x-2">
           <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
             :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'">
-            {{ isLeftSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Players Info' : 'Character' }}
+            {{ isLeftSidebarOpen ? t('hide') : t('show') }} {{ userRole === 'DM' ? t('playersInfo') : t('character') }}
           </UButton>
           <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen"
             :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
-            {{ isRightSidebarOpen ? 'Hide' : 'Show' }} {{ userRole === 'DM' ? 'Request Dices' : 'Abilities' }}
+            {{ isRightSidebarOpen ? t('hide') : t('show') }} {{ userRole === 'DM' ? t('requestDices') : t('abilities') }}
           </UButton>
           <UButton v-if="userRole === 'DM'" color="purple" variant="outline" icon="i-heroicons-photo"
             @click="showDmImageModal = true">
-            Show Image
+            {{ t('showImage') }}
           </UButton>
         </div>
 
@@ -80,7 +84,7 @@
         <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
           <UButton color="red" variant="outline" icon="i-heroicons-arrow-right-on-rectangle"
             @click="leaveRoom">
-            Leave Room
+            {{ t('leaveRoom') }}
           </UButton>
         </div>
       </div>
@@ -92,12 +96,10 @@
           <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
           <div>
             <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-              Offline Mode Active
+              {{ t('offlineModeActive') }}
             </h3>
             <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-              You're currently using the dice room in offline mode. Your rolls are saved locally and won't be shared
-              with other players.
-              This happens automatically in production environments where the WebSocket server isn't available.
+              {{ t('offlineModeDesc') }}
             </p>
           </div>
         </div>
@@ -108,7 +110,7 @@
         <template #header>
           <h3 class="text-lg font-semibold text-white flex items-center">
             <UIcon name="i-heroicons-home" class="w-5 h-5 text-red-500 mr-2" />
-            Room Management
+            {{ t('roomManagement') }}
           </h3>
         </template>
 
@@ -116,17 +118,17 @@
           <div class="flex items-center space-x-4">
             <!-- Only show Create Room button for DMs -->
             <UButton v-if="userRole === 'DM'" color="primary" @click="showCreateRoom = true" icon="i-heroicons-plus">
-              Create New Room
+              {{ t('createNewRoom') }}
             </UButton>
 
-            <div v-if="userRole === 'DM'" class="text-gray-400 dark:text-zinc-400">or</div>
+            <div v-if="userRole === 'DM'" class="text-gray-400 dark:text-zinc-400">{{ t('or') }}</div>
 
             <div class="flex items-center space-x-2 flex-1">
-              <UInput v-model="joinRoomCode" placeholder="Enter room code..." class="flex-1"
+              <UInput v-model="joinRoomCode" :placeholder="t('enterRoomCode')" class="flex-1"
                 @keyup.enter="joinExistingRoom" />
               <UButton color="gray" @click="joinExistingRoom" :disabled="!joinRoomCode.trim()"
                 icon="i-heroicons-arrow-right-on-rectangle">
-                Join Room
+                {{ t('joinRoom') }}
               </UButton>
             </div>
           </div>
@@ -136,16 +138,14 @@
             <div class="flex items-start space-x-2">
               <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
-                <span class="font-medium text-blue-900 dark:text-blue-100">Player Note:</span>
-                <span class="text-blue-800 dark:text-blue-200">Only DMs can create new rooms. Ask your DM for the room
-                  code to
-                  join their session.</span>
+                <span class="font-medium text-blue-900 dark:text-blue-100">{{ t('playerNote') }}</span>
+                <span class="text-blue-800 dark:text-blue-200">{{ t('playerNoteDesc') }}</span>
               </div>
             </div>
           </div>
 
           <div v-if="!isConnected" class="text-sm text-zinc-400 text-zinc-400">
-            Connect to create or join rooms for multiplayer functionality.
+            {{ t('connectToCreateJoin') }}
           </div>
         </div>
       </UCard>
@@ -166,7 +166,7 @@
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-white flex items-center gap-2">
                 <UIcon :name="userRole === 'DM' ? 'i-heroicons-users' : 'i-heroicons-user'" class="w-5 h-5 text-red-500" />
-                {{ userRole === 'DM' ? 'Players Info' : 'Character Info' }}
+                {{ userRole === 'DM' ? t('playersInfo') : t('characterInfo') }}
               </h3>
               <UButton color="gray" variant="ghost" size="sm" @click="isLeftSidebarOpen = false"
                 icon="i-heroicons-x-mark" />
@@ -193,13 +193,13 @@
                   </div>
 
                   <h5 class="text-lg font-semibold text-white text-white">
-                    {{ activeCharacter.characterName || 'Unknown Character' }}
+                    {{ activeCharacter.characterName || t('unknownCharacter') }}
                   </h5>
                   <p class="text-sm text-zinc-400 text-zinc-400">
-                    Level {{ activeCharacter.classLevel || 1 }} {{ activeCharacter.className || 'Class' }}
+                    {{ t('level') }} {{ activeCharacter.classLevel || 1 }} {{ activeCharacter.className || t('class') }}
                   </p>
                   <p class="text-xs text-zinc-400 text-zinc-400">
-                    {{ (activeCharacter.race || 'Unknown') }}
+                    {{ (activeCharacter.race || t('unknown')) }}
                   </p>
                 </div>
 
@@ -207,33 +207,33 @@
                 <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
                   <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
                     <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4 text-yellow-500" />
-                    Currency
+                    {{ t('currency') }}
                   </h6>
                   <div class="grid grid-cols-2 gap-2 text-xs">
                     <div class="flex justify-between">
-                      <span class="text-orange-600">Copper:</span>
+                      <span class="text-orange-600">{{ t('copper') }}:</span>
                       <span class="font-mono">{{ activeCharacter.copperCoins || 0 }} cp</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-gray-400">Silver:</span>
+                      <span class="text-gray-400">{{ t('silver') }}:</span>
                       <span class="font-mono">{{ activeCharacter.silverCoins || 0 }} sp</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-blue-400">Electrum:</span>
+                      <span class="text-blue-400">{{ t('electrum') }}:</span>
                       <span class="font-mono">{{ activeCharacter.electrumCoins || 0 }} ep</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-yellow-500">Gold:</span>
+                      <span class="text-yellow-500">{{ t('gold') }}:</span>
                       <span class="font-mono">{{ activeCharacter.goldCoins || 0 }} gp</span>
                     </div>
                     <div class="flex justify-between col-span-2">
-                      <span class="text-gray-300">Platinum:</span>
+                      <span class="text-gray-300">{{ t('platinum') }}:</span>
                       <span class="font-mono">{{ activeCharacter.platinumCoins || 0 }} pp</span>
                     </div>
                   </div>
                   <div class="mt-2 pt-2 border-t border-zinc-800 border-zinc-800">
                     <div class="flex justify-between items-center text-sm">
-                      <span class="font-medium text-gray-700 dark:text-gray-300">Total Value:</span>
+                      <span class="font-medium text-gray-700 dark:text-gray-300">{{ t('totalValue') }}:</span>
                       <span class="font-bold text-white text-white">
                         {{ calculateTotalWealth(activeCharacter) }} gp
                       </span>
@@ -245,7 +245,7 @@
                 <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
                   <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
                     <UIcon name="i-heroicons-briefcase" class="w-4 h-4 text-zinc-400" />
-                    Inventory
+                    {{ t('inventory') }}
                   </h6>
                   <div v-if="activeCharacter.inventory && activeCharacter.inventory.length > 0"
                     class="space-y-2 max-h-32 overflow-y-auto">
@@ -255,7 +255,7 @@
                         <div class="flex-1 min-w-0">
                           <p class="text-sm font-medium text-white text-white truncate">{{ item.name }}</p>
                           <div class="flex items-center space-x-2 text-xs text-zinc-400 text-zinc-400">
-                            <span>Qty: {{ item.quantity || 1 }}</span>
+                            <span>{{ t('quantity') }}: {{ item.quantity || 1 }}</span>
                             <span v-if="item.weight">• {{ item.weight }} lbs</span>
                           </div>
                         </div>
@@ -265,7 +265,7 @@
                     </div>
                   </div>
                   <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
-                    No items in inventory
+                    {{ t('noItems') }}
                   </div>
                 </div>
 
@@ -273,7 +273,7 @@
                 <div v-if="activeCharacter.notes" class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
                   <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
                     <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-zinc-400" />
-                    Notes
+                    {{ t('notes') }}
                   </h6>
                   <p class="text-sm text-gray-700 dark:text-gray-300 max-h-24 overflow-y-auto">{{ activeCharacter.notes
                   }}</p>
@@ -283,7 +283,7 @@
                 <div v-if="!isOfflineMode" class="pt-2">
                   <UButton color="gray" variant="outline" size="sm" @click="resetStats" class="w-full">
                     <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-1" />
-                    Reset Stats
+                    {{ t('resetStats') }}
                   </UButton>
                 </div>
               </div>
@@ -291,7 +291,7 @@
               <div v-else class="text-center py-8">
                 <UIcon name="i-heroicons-face-smile" class="text-4xl mb-4 text-zinc-600" />
                 <p class="text-zinc-500">
-                  Select a character to view details
+                  {{ t('selectCharacter') }}
                 </p>
               </div>
             </div>
@@ -300,10 +300,10 @@
             <div v-else>
               <div class="mb-4">
                 <div class="flex items-center justify-between">
-                  <h4 class="font-medium text-white text-white">Players Health</h4>
+                  <h4 class="font-medium text-white text-white">{{ t('playersHealth') }}</h4>
                   <UButton v-if="!isOfflineMode && currentRoom && currentRoom.code !== 'default'" color="gray" variant="outline" size="xs"
                     @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
-                    Refresh
+                    {{ t('refresh') }}
                   </UButton>
                 </div>
               </div>
@@ -315,14 +315,14 @@
                   <div class="flex items-center justify-between mb-3">
                     <div>
                       <h5 class="text-sm font-medium text-white text-white">{{ player.name }}</h5>
-                      <p class="text-xs text-zinc-400 text-zinc-400">Level {{ player.stats.level }}</p>
+                      <p class="text-xs text-zinc-400 text-zinc-400">{{ t('level') }} {{ player.stats.level }}</p>
                     </div>
                     <div class="flex items-center space-x-1">
                       <UButton color="blue" variant="outline" size="xs" icon="i-heroicons-eye"
-                        @click="showPlayerDetails(player)" title="View Character Details" />
+                        @click="showPlayerDetails(player)" :title="t('viewCharacterDetails')" />
                       <span
                         class="text-xs font-mono bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                        AC {{ player.stats.armorClass }}
+                        {{ t('ac') }} {{ player.stats.armorClass }}
                       </span>
                     </div>
                   </div>
@@ -330,7 +330,7 @@
                   <!-- Health Bar -->
                   <div class="space-y-2">
                     <div class="flex items-center justify-between text-sm">
-                      <span class="text-red-700 dark:text-red-300">Health Points</span>
+                      <span class="text-red-700 dark:text-red-300">{{ t('healthPoints') }}</span>
                       <span class="font-mono text-red-900 dark:text-red-100">
                         {{ player.stats.hitPoints.current }} / {{ player.stats.hitPoints.max }}
                       </span>
@@ -352,26 +352,26 @@
                       'text-yellow-600 dark:text-yellow-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.25 && player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5,
                       'text-green-600 dark:text-green-400': player.stats.hitPoints.current > player.stats.hitPoints.max * 0.5
                     }">
-                      {{ player.stats.hitPoints.current === 0 ? '💀 Unconscious' :
-                        player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25 ? '🩸 Critical' :
-                          player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5 ? '⚠️ Wounded' : '💚 Healthy'
+                      {{ player.stats.hitPoints.current === 0 ? t('unconscious') :
+                        player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.25 ? t('critical') :
+                          player.stats.hitPoints.current <= player.stats.hitPoints.max * 0.5 ? t('wounded') : t('healthy')
                       }} </div>
                     </div>
 
                     <!-- Quick Stats Grid -->
                     <div class="grid grid-cols-3 gap-2 mt-3">
                       <div class="text-center">
-                        <div class="text-xs text-zinc-400 text-zinc-400">Init</div>
+                        <div class="text-xs text-zinc-400 text-zinc-400">{{ t('init') }}</div>
                         <div class="text-sm font-mono text-white text-white">
                           {{ player.stats.initiative >= 0 ? '+' : '' }}{{ player.stats.initiative }}
                         </div>
                       </div>
                       <div class="text-center">
-                        <div class="text-xs text-zinc-400 text-zinc-400">Speed</div>
+                        <div class="text-xs text-zinc-400 text-zinc-400">{{ t('speed') }}</div>
                         <div class="text-sm font-mono text-white text-white">{{ player.stats.speed }} ft</div>
                       </div>
                       <div class="text-center">
-                        <div class="text-xs text-zinc-400 text-zinc-400">Prof</div>
+                        <div class="text-xs text-zinc-400 text-zinc-400">{{ t('prof') }}</div>
                         <div class="text-sm font-mono text-white text-white">+{{ player.stats.proficiencyBonus
                         }}
                         </div>
@@ -382,9 +382,9 @@
 
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">👥</div>
-                  <h4 class="font-medium text-white text-white mb-2">No Players Connected</h4>
+                  <h4 class="font-medium text-white text-white mb-2">{{ t('noPlayersConnected') }}</h4>
                   <p class="text-sm text-zinc-400 text-zinc-400">
-                    {{ isOfflineMode ? 'Player health monitoring not available in offline mode' : 'Players will appear here once they join the room' }}
+                    {{ isOfflineMode ? t('playerHealthOffline') : t('playersWillAppear') }}
                   </p>
                 </div>
               </div>
@@ -399,7 +399,7 @@
             <div class="sticky top-0 bg-zinc-900 bg-zinc-900 border-b border-zinc-800 border-zinc-800 p-4">
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-white text-white">
-                  {{ userRole === 'DM' ? 'Request Dices' : 'Ability Scores' }}
+                  {{ userRole === 'DM' ? t('requestDices') : t('abilityScores') }}
                 </h3>
                 <UButton color="gray" variant="ghost" size="sm" @click="isRightSidebarOpen = false"
                   icon="i-heroicons-x-mark" />
@@ -413,10 +413,10 @@
                 <div v-if="activeCharacter" class="space-y-6">
                   <!-- Ability Scores - Compact Version -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-white text-white mb-3">Ability Scores</h6>
+                    <h6 class="text-sm font-medium text-white text-white mb-3">{{ t('abilityScores') }}</h6>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="flex justify-between items-center p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                        <span class="text-red-700 dark:text-red-300 font-medium">STR</span>
+                        <span class="text-red-700 dark:text-red-300 font-medium">{{ t('str') }}</span>
                         <span class="font-mono text-red-900 dark:text-red-100">
                           {{ activeCharacter.strength || 10 }} ({{
                             formatModifier(calculateModifier(activeCharacter.strength
@@ -424,7 +424,7 @@
                         </span>
                       </div>
                       <div class="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                        <span class="text-green-700 dark:text-green-300 font-medium">DEX</span>
+                        <span class="text-green-700 dark:text-green-300 font-medium">{{ t('dex') }}</span>
                         <span class="font-mono text-green-900 dark:text-green-100">
                           {{ activeCharacter.dexterity || 10 }} ({{
                             formatModifier(calculateModifier(activeCharacter.dexterity
@@ -432,21 +432,21 @@
                         </span>
                       </div>
                       <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
-                        <span class="text-orange-700 dark:text-orange-300 font-medium">CON</span>
+                        <span class="text-orange-700 dark:text-orange-300 font-medium">{{ t('con') }}</span>
                         <span class="font-mono text-orange-900 dark:text-orange-100">
                           {{ activeCharacter.constitution || 10 }} ({{
                             formatModifier(calculateModifier(activeCharacter.constitution || 10)) }})
                         </span>
                       </div>
                       <div class="flex justify-between items-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                        <span class="text-purple-700 dark:text-purple-300 font-medium">INT</span>
+                        <span class="text-purple-700 dark:text-purple-300 font-medium">{{ t('int') }}</span>
                         <span class="font-mono text-purple-900 dark:text-purple-100">
                           {{ activeCharacter.intelligence || 10 }} ({{
                             formatModifier(calculateModifier(activeCharacter.intelligence || 10)) }})
                         </span>
                       </div>
                       <div class="flex justify-between items-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                        <span class="text-blue-700 dark:text-blue-300 font-medium">WIS</span>
+                        <span class="text-blue-700 dark:text-blue-300 font-medium">{{ t('wis') }}</span>
                         <span class="font-mono text-blue-900 dark:text-blue-100">
                           {{ activeCharacter.wisdom || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.wisdom
                             ||
@@ -454,7 +454,7 @@
                         </span>
                       </div>
                       <div class="flex justify-between items-center p-2 bg-pink-50 dark:bg-pink-900/20 rounded">
-                        <span class="text-pink-700 dark:text-pink-300 font-medium">CHA</span>
+                        <span class="text-pink-700 dark:text-pink-300 font-medium">{{ t('cha') }}</span>
                         <span class="font-mono text-pink-900 dark:text-pink-100">
                           {{ activeCharacter.charisma || 10 }} ({{
                             formatModifier(calculateModifier(activeCharacter.charisma
@@ -467,7 +467,7 @@
                   <!-- Health Bar -->
                   <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded">
                     <div class="flex justify-between items-center text-sm mb-1">
-                      <span class="text-red-700 dark:text-red-300 font-medium">Hit Points</span>
+                      <span class="text-red-700 dark:text-red-300 font-medium">{{ t('hitPoints') }}</span>
                       <span class="font-mono text-red-900 dark:text-red-100">
                         {{ activeCharacter.currentHp || 0 }} / {{ activeCharacter.maxHp || 0 }}
                       </span>
@@ -481,25 +481,25 @@
 
                   <!-- Combat Stats -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-white text-white mb-3">Combat Stats</h6>
+                    <h6 class="text-sm font-medium text-white text-white mb-3">{{ t('combatStats') }}</h6>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                       <div class="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                        <span class="text-blue-700 dark:text-blue-300">AC</span>
+                        <span class="text-blue-700 dark:text-blue-300">{{ t('ac') }}</span>
                         <span class="font-mono text-blue-900 dark:text-blue-100">{{ activeCharacter.armorClass || 10
                         }}</span>
                       </div>
                       <div class="flex justify-between p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
-                        <span class="text-orange-700 dark:text-orange-300">Initiative</span>
+                        <span class="text-orange-700 dark:text-orange-300">{{ t('initiative') }}</span>
                         <span class="font-mono text-orange-900 dark:text-orange-100">{{
                           formatModifier(activeCharacter.initiative || 0) }}</span>
                       </div>
                       <div class="flex justify-between p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                        <span class="text-yellow-700 dark:text-yellow-300">Speed</span>
+                        <span class="text-yellow-700 dark:text-yellow-300">{{ t('speed') }}</span>
                         <span class="font-mono text-yellow-900 dark:text-yellow-100">{{ activeCharacter.speed || 30 }}
                           ft</span>
                       </div>
                       <div class="flex justify-between p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                        <span class="text-purple-700 dark:text-purple-300">Prof</span>
+                        <span class="text-purple-700 dark:text-purple-300">{{ t('prof') }}</span>
                         <span class="font-mono text-purple-900 dark:text-purple-100">+{{
                           activeCharacter.proficiencyBonus || 2
                         }}</span>
@@ -509,7 +509,7 @@
 
                   <!-- Saving Throws -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                    <h6 class="text-sm font-medium text-white text-white mb-3">Saving Throws</h6>
+                    <h6 class="text-sm font-medium text-white text-white mb-3">{{ t('savingThrows') }}</h6>
                     <div class="space-y-2">
                       <!-- Always show all 6 saving throws -->
                       <div
@@ -518,10 +518,10 @@
                         class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2">
                         <div class="flex items-center space-x-2">
                           <span class="text-sm font-medium text-white text-white capitalize">{{
-                            ability.substring(0, 3).toUpperCase()
+                            getAbilityAbbr(ability)
                             }}</span>
                           <span v-if="getSavingThrowProficiency(ability, activeCharacter)"
-                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">Prof</span>
+                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">{{ t('prof') }}</span>
                         </div>
                         <span class="text-sm font-mono text-gray-600 text-zinc-400">
                           {{ formatModifier(calculateSavingThrowModifierByAbility(ability, activeCharacter)) }}
@@ -533,10 +533,10 @@
                   <!-- Skills -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
                     <div class="flex items-center justify-between mb-3">
-                      <h6 class="text-sm font-medium text-white text-white">Skills</h6>
+                      <h6 class="text-sm font-medium text-white text-white">{{ t('skills') }}</h6>
                     </div>
                     <div class="mb-3">
-                      <UInput v-model="skillSearchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search skills..." size="xs" color="gray" variant="outline" />
+                      <UInput v-model="skillSearchQuery" icon="i-heroicons-magnifying-glass" :placeholder="t('searchSkills')" size="xs" color="gray" variant="outline" />
                     </div>
                     <div class="space-y-1 max-h-64 overflow-y-auto">
                       <!-- Always show all standard D&D skills -->
@@ -546,9 +546,9 @@
                           <span class="text-sm font-medium text-white text-white truncate">{{ skill.name
                           }}</span>
                           <span v-if="skill.proficient"
-                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded flex-shrink-0">Prof</span>
+                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded flex-shrink-0">{{ t('prof') }}</span>
                           <span v-if="skill.expertise"
-                            class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0">Exp</span>
+                            class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0">{{ t('exp') }}</span>
                         </div>
                         <span class="text-xs font-mono text-gray-600 text-zinc-400 ml-2">
                           {{ formatModifier(calculateSkillModifierForSkill(skill, activeCharacter)) }}
@@ -563,7 +563,7 @@
                     <UIcon name="i-heroicons-user" class="w-12 h-12 text-zinc-600" />
                   </div>
                   <p class="text-zinc-400 text-zinc-400">
-                    Select a character to view details
+                    {{ t('selectCharacter') }}
                   </p>
                 </div>
               </div>
@@ -572,10 +572,10 @@
               <div v-else>
                 <div class="mb-4">
                   <div class="flex items-center justify-between">
-                    <h4 class="font-medium text-white text-white">Player Management</h4>
+                    <h4 class="font-medium text-white text-white">{{ t('playerManagement') }}</h4>
                     <UButton v-if="currentRoom && currentRoom.code !== 'default'" color="blue" variant="outline" size="xs"
                       @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
-                      Refresh
+                      {{ t('refresh') }}
                     </UButton>
                   </div>
                 </div>
@@ -591,21 +591,21 @@
                       <div class="flex items-center space-x-2">
                         <UButton color="green" variant="outline" size="xs" @click="requestRollFromPlayer(player)"
                           icon="i-heroicons-cube">
-                          Request Roll
+                          {{ t('requestRoll') }}
                         </UButton>
                         <UButton color="blue" variant="outline" size="xs" @click="editPlayerStats(player)"
                           icon="i-heroicons-pencil">
-                          Edit
+                          {{ t('edit') }}
                         </UButton>
                       </div>
                     </div>
 
                     <div class="text-xs text-zinc-400 text-zinc-400 space-y-1">
-                      <div>STR: {{ player.stats.abilities.strength }} | DEX: {{ player.stats.abilities.dexterity }} |
-                        CON: {{
+                      <div>{{ t('str') }}: {{ player.stats.abilities.strength }} | {{ t('dex') }}: {{ player.stats.abilities.dexterity }} |
+                        {{ t('con') }}: {{
                           player.stats.abilities.constitution }}</div>
-                      <div>INT: {{ player.stats.abilities.intelligence }} | WIS: {{ player.stats.abilities.wisdom }} |
-                        CHA: {{
+                      <div>{{ t('int') }}: {{ player.stats.abilities.intelligence }} | {{ t('wis') }}: {{ player.stats.abilities.wisdom }} |
+                        {{ t('cha') }}: {{
                           player.stats.abilities.charisma }}</div>
                     </div>
                   </div>
@@ -614,7 +614,7 @@
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">👥</div>
                   <p class="text-zinc-400 text-zinc-400">
-                    {{ isOfflineMode ? 'Player management not available in offline mode' : 'No players connected' }}
+                    {{ isOfflineMode ? t('playerManagementOffline') : t('noPlayersConnected') }}
                   </p>
                 </div>
 
@@ -631,11 +631,11 @@
                 <template #header>
                   <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-white text-white">
-                      🎯 Roll History
+                      🎯 {{ t('history') }}
                     </h3>
                     <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs" @click="clearHistory"
                       icon="i-heroicons-trash">
-                      Clear
+                      {{ t('clear') }}
                     </UButton>
                   </div>
                 </template>
@@ -673,7 +673,7 @@
                         </div>
 
                         <div v-if="roll.isCritical" class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                          {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                          {{ roll.criticalType === 'success' ? `🎯 ${t('criticalSuccess')}` : `💥 ${t('criticalFailure')}` }}
                         </div>
                       </div>
                       <!-- Sumatoria a la derecha -->
@@ -690,7 +690,7 @@
                 <div v-else class="text-center py-8">
                   <div class="text-4xl mb-4">🎲</div>
                   <p class="text-zinc-400 text-zinc-400">
-                    No rolls yet. Start rolling some dice!
+                    {{ t('noRolls') }}
                   </p>
                 </div>
               </UCard>
@@ -706,10 +706,10 @@
                     <template #header>
                       <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-white text-white">
-                          🎲 Select Dice
+                          🎲 {{ t('selectDice') }}
                         </h3>
                         <div v-if="totalDiceSelected > 0" class="text-sm text-zinc-400 text-zinc-400">
-                          {{ totalDiceSelected }} dice selected
+                          {{ totalDiceSelected }} {{ t('diceSelected') }}
                         </div>
                       </div>
                     </template>
@@ -742,7 +742,7 @@
 
                       <!-- Quick Roll Buttons -->
                       <div>
-                        <h4 class="text-sm font-medium text-white text-white mb-3">Quick Rolls</h4>
+                        <h4 class="text-sm font-medium text-white text-white mb-3">{{ t('quickRolls') }}</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                           <UButton v-for="roll in quickRolls" :key="roll.label" color="gray" variant="outline" size="sm"
                             @click="performQuickRoll(roll)" class="text-xs">
@@ -753,10 +753,10 @@
 
                       <!-- Modifier and Roll Type -->
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <UFormGroup label="Modifier">
+                        <UFormGroup :label="t('modifier')">
                           <UInput v-model.number="modifier" type="number" placeholder="0" />
                         </UFormGroup>
-                        <UFormGroup label="Roll Type">
+                        <UFormGroup :label="t('rollType')">
                           <USelect v-model="rollType" :options="rollTypeOptions" />
                         </UFormGroup>
                       </div>
@@ -765,7 +765,7 @@
                       <div class="text-center">
                         <UButton color="primary" size="lg" @click="rollDice"
                           :disabled="totalDiceSelected === 0 || isRolling" :loading="isRolling" icon="i-heroicons-play">
-                          Roll {{ totalDiceSelected }} {{ totalDiceSelected === 1 ? 'Die' : 'Dice' }}
+                          {{ t('roll') }} {{ totalDiceSelected }} {{ totalDiceSelected === 1 ? t('die') : t('dice') }}
                         </UButton>
                       </div>
 
@@ -773,7 +773,7 @@
                       <div class="text-center">
                         <UButton color="gray" variant="ghost" size="sm" @click="clearSelection"
                           :disabled="totalDiceSelected === 0" icon="i-heroicons-x-mark">
-                          Clear Selection
+                          {{ t('clearSelection') }}
                         </UButton>
                       </div>
                     </div>
@@ -786,11 +786,11 @@
                     <template #header>
                       <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-white text-white">
-                          🎯 Roll History
+                          🎯 {{ t('history') }}
                         </h3>
                         <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
                           @click="clearHistory" icon="i-heroicons-trash">
-                          Clear
+                          {{ t('clear') }}
                         </UButton>
                       </div>
                     </template>
@@ -829,7 +829,7 @@
 
                             <div v-if="roll.isCritical"
                               class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                              {{ roll.criticalType === 'success' ? '🎯 Critical Hit!' : '💥 Critical Fail!' }}
+                              {{ roll.criticalType === 'success' ? `🎯 ${t('criticalSuccess')}` : `💥 ${t('criticalFailure')}` }}
                             </div>
                           </div>
                           <!-- Sumatoria a la derecha -->
@@ -846,7 +846,7 @@
                     <div v-else class="text-center py-8">
                       <div class="text-4xl mb-4">🎲</div>
                       <p class="text-zinc-400 text-zinc-400">
-                        No rolls yet. Start rolling some dice!
+                        {{ t('noRolls') }}
                       </p>
                     </div>
                   </UCard>
@@ -859,7 +859,7 @@
                     <template #header>
                       <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-white text-white">
-                          ⚔️ Battle Mode
+                          ⚔️ {{ t('battleMode') }}
                         </h3>
                         <div class="flex items-center space-x-2">
                           <UBadge v-if="isInBattle" :color="getBattlePhaseColor(battleMode.phase)" variant="soft">
@@ -867,11 +867,11 @@
                           </UBadge>
                           <UButton v-if="!isInBattle" color="red" size="sm" @click="startBattle"
                             :loading="isBattleLoading" icon="i-heroicons-play">
-                            Start Battle Setup
+                            {{ t('startBattleSetup') }}
                           </UButton>
                           <UButton v-else color="gray" size="sm" @click="endBattle" :loading="isBattleLoading"
                             icon="i-heroicons-stop">
-                            End Battle
+                            {{ t('endBattle') }}
                           </UButton>
                         </div>
                       </div>
@@ -879,11 +879,9 @@
 
                     <div v-if="!isInBattle" class="text-center py-8">
                       <div class="text-4xl mb-4">⚔️</div>
-                      <h4 class="font-medium text-white text-white mb-2">Ready for Battle</h4>
+                      <h4 class="font-medium text-white text-white mb-2">{{ t('readyForBattle') }}</h4>
                       <p class="text-sm text-zinc-400 text-zinc-400 mb-4">
-                        Click "Start Battle Setup" to begin preparing for combat. You'll be able to add enemies and then
-                        roll
-                        initiative when ready.
+                        {{ t('readyForBattleDesc') }}
                       </p>
                     </div>
 
@@ -895,11 +893,9 @@
                           <UIcon name="i-heroicons-information-circle"
                             class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                           <div>
-                            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">Battle Setup Phase</h4>
+                            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">{{ t('battleSetupPhase') }}</h4>
                             <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                              Add all enemies that will participate in this battle, then click "Roll Initiative" to
-                              begin
-                              combat.
+                              {{ t('battleSetupDesc') }}
                             </p>
                           </div>
                         </div>
@@ -908,22 +904,22 @@
                       <!-- Player Management -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-white text-white">Player Selection</h4>
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('playerSelection') }}</h4>
                           <UButton color="gray" variant="outline" size="xs" @click="loadBattlePlayers"
                             :loading="isBattlePlayersLoading" icon="i-heroicons-arrow-path">
-                            Refresh
+                            {{ t('refresh') }}
                           </UButton>
                         </div>
 
                         <!-- Selected Players -->
                         <div v-if="selectedPlayers.length > 0" class="mb-3">
-                          <h5 class="text-xs font-medium text-green-900 dark:text-green-100 mb-2">Selected Players</h5>
+                          <h5 class="text-xs font-medium text-green-900 dark:text-green-100 mb-2">{{ t('selectedPlayers') }}</h5>
                           <div class="space-y-1">
                             <div v-for="player in selectedPlayers" :key="player.userId"
                               class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
                               <div class="flex-1">
                                 <div class="font-medium text-green-900 dark:text-green-100">{{ player.name }}</div>
-                                <div class="text-xs text-green-700 dark:text-green-300">Ready for battle</div>
+                                <div class="text-xs text-green-700 dark:text-green-300">{{ t('readyForBattleStatus') }}</div>
                               </div>
                               <UButton color="red" variant="ghost" size="xs"
                                 @click="removePlayerFromBattle(player.userId)" icon="i-heroicons-minus">
@@ -934,13 +930,13 @@
 
                         <!-- Available Players -->
                         <div v-if="unselectedPlayers.length > 0" class="mb-3">
-                          <h5 class="text-xs font-medium text-gray-600 text-zinc-400 mb-2">Available Players</h5>
+                          <h5 class="text-xs font-medium text-gray-600 text-zinc-400 mb-2">{{ t('availablePlayers') }}</h5>
                           <div class="space-y-1">
                             <div v-for="player in unselectedPlayers" :key="player.userId"
                               class="flex items-center justify-between p-2 bg-zinc-950 bg-zinc-900 border border-zinc-800 border-zinc-800 rounded">
                               <div class="flex-1">
                                 <div class="font-medium text-white dark:text-gray-100">{{ player.name }}</div>
-                                <div class="text-xs text-zinc-400 text-zinc-400">Click to add to battle</div>
+                                <div class="text-xs text-zinc-400 text-zinc-400">{{ t('clickToAdd') }}</div>
                               </div>
                               <UButton color="green" variant="ghost" size="xs" @click="addPlayerToBattle(player.userId)"
                                 icon="i-heroicons-plus">
@@ -955,10 +951,10 @@
                           class="text-center py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                           <div class="text-2xl mb-2">👥</div>
                           <p class="text-zinc-400 text-zinc-400 text-sm mb-3">
-                            No players connected to this room
+                            {{ t('noPlayersConnected') }}
                           </p>
                           <p class="text-xs text-gray-400 dark:text-zinc-400">
-                            Players need to join the room first
+                            {{ t('playersNeedToJoin') }}
                           </p>
                         </div>
                       </div>
@@ -966,10 +962,10 @@
                       <!-- Enemy Management -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-white text-white">Enemy Setup</h4>
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('enemySetup') }}</h4>
                           <UButton color="green" variant="outline" size="xs" @click="showAddEnemyModal = true"
                             icon="i-heroicons-plus">
-                            Add Enemy
+                            {{ t('addEnemy') }}
                           </UButton>
                         </div>
 
@@ -996,11 +992,11 @@
                           class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                           <div class="text-2xl mb-2">👹</div>
                           <p class="text-zinc-400 text-zinc-400 text-sm mb-3">
-                            No enemies added yet
+                            {{ t('noEnemiesAdded') }}
                           </p>
                           <UButton color="green" variant="outline" size="sm" @click="showAddEnemyModal = true"
                             icon="i-heroicons-plus">
-                            Add Your First Enemy
+                            {{ t('addFirstEnemy') }}
                           </UButton>
                         </div>
                       </div>
@@ -1011,15 +1007,13 @@
                         class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                         <div class="text-center">
                           <div class="text-green-900 dark:text-green-100 font-medium mb-2">
-                            Ready to Start Combat!
+                            {{ t('readyToStartCombat') }}
                           </div>
                           <p class="text-sm text-green-700 dark:text-green-300 mb-3">
-                            {{ selectedPlayers.length }} players and {{ Object.keys(battleMode.enemies).length }}
-                            enemies
-                            ready. Click below to roll initiative and begin combat.
+                            {{ selectedPlayers.length }} {{ t('combatReadyDesc') }}
                           </p>
                           <UButton color="green" size="sm" @click="rollInitiative" icon="i-heroicons-play">
-                            Roll Initiative & Start Combat
+                            {{ t('rollInitiativeAndStart') }}
                           </UButton>
                         </div>
                       </div>
@@ -1030,10 +1024,10 @@
                         class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                         <div class="text-center">
                           <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
-                            Players Needed
+                            {{ t('playersNeeded') }}
                           </div>
                           <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                            Add at least one player before starting combat.
+                            {{ t('addPlayerWarning') }}
                           </p>
                         </div>
                       </div>
@@ -1043,10 +1037,10 @@
                         class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                         <div class="text-center">
                           <div class="text-yellow-900 dark:text-yellow-100 font-medium mb-2">
-                            Enemies Needed
+                            {{ t('enemiesNeeded') }}
                           </div>
                           <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                            Add at least one enemy before starting combat.
+                            {{ t('addEnemyWarning') }}
                           </p>
                         </div>
                       </div>
@@ -1057,10 +1051,10 @@
                       <!-- Enemy Management -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-white text-white">Enemies</h4>
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('enemies') }}</h4>
                           <UButton color="green" variant="outline" size="xs" @click="showAddEnemyModal = true"
                             icon="i-heroicons-plus">
-                            Add Enemy
+                            {{ t('addEnemy') }}
                           </UButton>
                         </div>
 
@@ -1085,22 +1079,22 @@
                         </div>
 
                         <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
-                          No enemies in battle
+                          {{ t('noEnemiesInBattle') }}
                         </div>
                       </div>
 
                       <!-- Initiative Tracker -->
                       <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-white text-white">Initiative Order</h4>
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('initiativeOrder') }}</h4>
                           <div class="flex items-center space-x-2">
                             <UButton v-if="battleMode.phase === 'setup'" color="blue" variant="outline" size="xs"
                               @click="rollInitiative" icon="i-heroicons-arrow-path">
-                              Roll Initiative
+                              {{ t('rollInitiative') }}
                             </UButton>
                             <UButton v-else-if="battleMode.phase === 'combat'" color="green" variant="outline" size="xs"
                               @click="nextTurn" icon="i-heroicons-arrow-right">
-                              Next Turn
+                              {{ t('nextTurn') }}
                             </UButton>
                           </div>
                         </div>
@@ -1119,7 +1113,7 @@
                                 {{ participant.name }}
                               </span>
                               <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">
-                                {{ participant.type }}
+                                {{ t(participant.type) }}
                               </UBadge>
                             </div>
                             <div class="text-sm font-mono"
@@ -1138,7 +1132,7 @@
                     <template #header>
                       <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-white text-white">
-                          ⚔️ Battle in Progress
+                          ⚔️ {{ t('battleInProgress') }}
                         </h3>
                         <UBadge color="green" variant="soft">
                           {{ battleMode.phase }}
@@ -1153,15 +1147,15 @@
                         class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                         <div class="text-center">
                           <div class="text-lg font-bold text-green-900 dark:text-green-100">
-                            Current Turn
+                            {{ t('currentTurn') }}
                           </div>
                           <div class="text-2xl font-bold text-green-700 dark:text-green-300 mt-1">
-                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.name || 'Unknown' }}
+                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.name || t('unknown') }}
                           </div>
                           <UBadge
                             :color="battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type === 'player' ? 'blue' : 'red'"
                             variant="soft" class="mt-2">
-                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type || 'unknown' }}
+                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type ? t(battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type) : t('unknown') }}
                           </UBadge>
                         </div>
                       </div>
@@ -1172,12 +1166,12 @@
                         class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                         <div class="flex items-center justify-between mb-3">
                           <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                            ⚔️ Your Attacks
+                            ⚔️ {{ t('yourAttacks') }}
                           </h4>
                           <UButton color="blue" variant="ghost" size="xs"
                             :icon="showCharacterAttacks ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
                             @click="showCharacterAttacks = !showCharacterAttacks">
-                            {{ showCharacterAttacks ? 'Hide' : 'Show' }}
+                            {{ showCharacterAttacks ? t('hide') : t('show') }}
                           </UButton>
                         </div>
 
@@ -1187,29 +1181,29 @@
                               class="bg-zinc-900 bg-zinc-900 border border-blue-200 dark:border-blue-700 rounded p-3">
                               <div class="flex items-center justify-between mb-2">
                                 <h5 class="font-medium text-white text-white">
-                                  {{ attack.name || 'Unnamed Attack' }}
+                                  {{ attack.name || t('unnamedAttack') }}
                                 </h5>
                                 <div class="flex items-center space-x-2">
                                   <UButton color="blue" size="xs" @click="rollAttack(attack)" :loading="isRollingAttack"
                                     icon="i-heroicons-cube">
-                                    Attack
+                                    {{ t('attack') }}
                                   </UButton>
                                   <UButton v-if="attack.damage" color="red" size="xs" @click="rollDamage(attack)"
                                     :loading="isRollingAttack" icon="i-heroicons-fire">
-                                    Damage
+                                    {{ t('damage') }}
                                   </UButton>
                                 </div>
                               </div>
                               <div class="text-sm text-gray-600 text-zinc-400 space-y-1">
                                 <div v-if="attack.attackBonus !== undefined">
-                                  <span class="font-medium">Attack Bonus:</span>
+                                  <span class="font-medium">{{ t('attackBonus') }}:</span>
                                   {{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}
                                 </div>
                                 <div v-if="attack.damage">
-                                  <span class="font-medium">Damage:</span> {{ attack.damage }}
+                                  <span class="font-medium">{{ t('damage') }}:</span> {{ attack.damage }}
                                 </div>
                                 <div v-if="attack.rangeText">
-                                  <span class="font-medium">Range:</span> {{ attack.rangeText }}
+                                  <span class="font-medium">{{ t('range') }}:</span> {{ attack.rangeText }}
                                 </div>
                                 <div v-if="attack.notes" class="text-xs">
                                   {{ attack.notes }}
@@ -1218,14 +1212,14 @@
                             </div>
                           </div>
                           <div v-else class="text-center py-4 text-blue-600 dark:text-blue-400 text-sm">
-                            No attacks configured. Edit your character sheet to add attacks.
+                            {{ t('noAttacksConfigured') }}
                           </div>
                         </div>
                       </div>
 
                       <!-- Initiative Order (Player View) -->
                       <div v-if="battleMode.initiativeOrder && battleMode.initiativeOrder.length > 0">
-                        <h4 class="text-sm font-medium text-white text-white mb-3">Initiative Order</h4>
+                        <h4 class="text-sm font-medium text-white text-white mb-3">{{ t('initiativeOrder') }}</h4>
                         <div class="space-y-1">
                           <div v-for="(participant, index) in battleMode.initiativeOrder" :key="participant.id"
                             class="flex items-center justify-between p-2 rounded"
@@ -1256,7 +1250,7 @@
                       <div v-if="battleMode.phase === 'setup'"
                         class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
                         <div class="text-2xl mb-2">⏳</div>
-                        <p>Waiting for DM to roll initiative...</p>
+                        <p>{{ t('waitingForDm') }}</p>
                       </div>
                     </div>
                   </UCard>
@@ -1266,17 +1260,17 @@
                     <template #header>
                       <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-white text-white">
-                          🎵 DJ Music Control
+                          🎵 {{ t('djMusicControl') }}
                         </h3>
                         <div class="flex items-center space-x-2">
                           <UBadge v-if="musicState.isPlaying" color="green" variant="soft">
-                            Playing
+                            {{ t('playing') }}
                           </UBadge>
                           <UBadge v-else-if="musicState.currentTrack" color="yellow" variant="soft">
-                            Paused
+                            {{ t('paused') }}
                           </UBadge>
                           <UBadge v-else color="gray" variant="soft">
-                            No Track
+                            {{ t('noTrack') }}
                           </UBadge>
                         </div>
                       </div>
@@ -1286,25 +1280,25 @@
                       <!-- Add YouTube Track Section -->
                       <div
                         class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">Add YouTube Track</h4>
+                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">{{ t('addYoutubeTrack') }}</h4>
                         <div class="space-y-3">
-                          <UInput v-model="newTrackUrl" placeholder="Paste YouTube URL here..."
+                          <UInput v-model="newTrackUrl" :placeholder="t('pasteYoutubeUrl')"
                             icon="i-heroicons-musical-note" />
                           <div class="flex flex-wrap gap-2">
                             <UButton color="blue" size="sm" @click="addTrackToPlaylist"
                               :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
                               icon="i-heroicons-plus">
-                              Add to Playlist
+                              {{ t('addToPlaylist') }}
                             </UButton>
                             <UButton color="green" size="sm" @click="addAndPlayTrack"
                               :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
                               icon="i-heroicons-play">
-                              Add & Play Now
+                              {{ t('addAndPlayNow') }}
                             </UButton>
                             <UButton color="purple" size="sm" @click="addTrackAsSoundEffect"
                               :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
                               icon="i-heroicons-speaker-wave">
-                              Add as Sound Effect
+                              {{ t('addAsSoundEffect') }}
                             </UButton>
                           </div>
                         </div>
@@ -1313,14 +1307,13 @@
                       <!-- Sound Effects Control Panel -->
                       <div
                         class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🔊 Sound Effects
-                          Control
+                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🔊 {{ t('soundEffectsControl') }}
                         </h4>
                         <div class="space-y-3">
                           <!-- Sound Effects Volume Control -->
                           <div>
                             <div class="flex items-center justify-between mb-2">
-                              <label class="text-sm text-purple-700 dark:text-purple-300">Sound Effects Volume</label>
+                              <label class="text-sm text-purple-700 dark:text-purple-300">{{ t('soundEffectsVolume') }}</label>
                               <span class="text-sm text-purple-600 dark:text-purple-400">{{
                                 musicState.soundEffects.soundEffectsVolume }}%</span>
                             </div>
@@ -1335,8 +1328,7 @@
 
                           <!-- Quick Sound Effects -->
                           <div v-if="musicState.playlist.filter(t => t.isSoundEffect).length > 0">
-                            <h5 class="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">Quick Sound
-                              Effects</h5>
+                            <h5 class="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">{{ t('quickSoundEffects') }}</h5>
                             <div class="grid grid-cols-2 gap-2">
                               <UButton v-for="track in musicState.playlist.filter(t => t.isSoundEffect).slice(0, 4)"
                                 :key="track.id" color="purple" variant="outline" size="xs"
@@ -1349,7 +1341,7 @@
                           <div
                             class="bg-purple-100 dark:bg-purple-800/30 border border-purple-200 dark:border-purple-700 rounded p-2">
                             <p class="text-xs text-purple-700 dark:text-purple-300">
-                              Sound effects play simultaneously with background music and have separate volume control.
+                              {{ t('soundEffectsInfo') }}
                             </p>
                           </div>
                         </div>
@@ -1358,30 +1350,30 @@
                       <!-- Fade Transition Settings -->
                       <div
                         class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🎚️ Audio Transitions
+                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🎚️ {{ t('audioTransitions') }}
                         </h4>
                         <div class="space-y-3">
                           <div class="flex items-center justify-between">
-                            <label class="text-sm text-purple-700 dark:text-purple-300">Enable Smooth Fades</label>
+                            <label class="text-sm text-purple-700 dark:text-purple-300">{{ t('enableSmoothFades') }}</label>
                             <UToggle v-model="fadeConfig.enabled" />
                           </div>
 
                           <div v-if="fadeConfig.enabled"
                             class="space-y-2 border-t border-purple-200 dark:border-purple-700 pt-3">
                             <div class="flex items-center justify-between">
-                              <label class="text-xs text-purple-600 dark:text-purple-400">Track Switch (ms)</label>
+                              <label class="text-xs text-purple-600 dark:text-purple-400">{{ t('trackSwitchMs') }}</label>
                               <UInput v-model.number="fadeConfig.trackTransition" type="number" min="100" max="2000"
                                 size="xs" class="w-20" />
                             </div>
 
                             <div class="flex items-center justify-between">
-                              <label class="text-xs text-purple-600 dark:text-purple-400">Volume Change (ms)</label>
+                              <label class="text-xs text-purple-600 dark:text-purple-400">{{ t('volumeChangeMs') }}</label>
                               <UInput v-model.number="fadeConfig.volumeChange" type="number" min="100" max="1000"
                                 size="xs" class="w-20" />
                             </div>
 
                             <div class="flex items-center justify-between">
-                              <label class="text-xs text-purple-600 dark:text-purple-400">Play/Pause (ms)</label>
+                              <label class="text-xs text-purple-600 dark:text-purple-400">{{ t('playPauseMs') }}</label>
                               <UInput v-model.number="fadeConfig.playPause" type="number" min="100" max="1000" size="xs"
                                 class="w-20" />
                             </div>
@@ -1409,10 +1401,10 @@
                             <div class="flex items-start justify-between">
                               <div class="flex-1 min-w-0">
                                 <h4 class="text-sm font-medium text-green-900 dark:text-green-100 truncate">
-                                  🎵 {{ musicState.currentTrack.title || 'Unknown Track' }}
+                                  🎵 {{ musicState.currentTrack.title || t('unknownTrack') }}
                                 </h4>
                                 <p class="text-xs text-green-700 dark:text-green-300 truncate mt-1">
-                                  {{ musicState.currentTrack.artist || 'Unknown Artist' }}
+                                  {{ musicState.currentTrack.artist || t('unknownArtist') }}
                                 </p>
                                 <!-- Duration and metadata -->
                                 <div
@@ -1432,7 +1424,7 @@
                                 <div v-if="fadeTransition.isActive"
                                   class="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 mr-2">
                                   <UIcon name="i-heroicons-arrows-right-left" class="w-3 h-3 animate-pulse" />
-                                  <span class="text-xs">Fading...</span>
+                                  <span class="text-xs">{{ t('fading') }}</span>
                                 </div>
 
                                 <UButton v-if="musicState.isPlaying" color="yellow" variant="ghost" size="xs"
@@ -1451,7 +1443,7 @@
                       <div
                         class="bg-zinc-950 bg-zinc-900/50 border border-zinc-800 border-zinc-800 rounded-lg p-4">
                         <div class="flex items-center justify-between mb-2">
-                          <h4 class="text-sm font-medium text-white text-white">Volume</h4>
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('volume') }}</h4>
                           <span class="text-sm text-gray-600 text-zinc-400">{{ musicState.volume }}%</span>
                         </div>
                         <div class="flex items-center space-x-3">
@@ -1465,10 +1457,10 @@
                       <!-- Playlist -->
                       <div>
                         <div class="flex items-center justify-between mb-3">
-                          <h4 class="text-sm font-medium text-white text-white">Playlist</h4>
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('playlist') }}</h4>
                           <UButton v-if="musicState.playlist.length > 0" color="gray" variant="ghost" size="xs"
                             @click="clearPlaylist" icon="i-heroicons-trash">
-                            Clear All
+                            {{ t('clearAll') }}
                           </UButton>
                         </div>
 
@@ -1499,7 +1491,7 @@
                               <div class="flex-1 min-w-0">
                                 <div class="flex items-center space-x-2">
                                   <div class="text-sm font-medium text-white text-white truncate">
-                                    {{ track.title || 'Unknown Track' }}
+                                    {{ track.title || t('unknownTrack') }}
                                   </div>
                                   <!-- Sound Effect Badge -->
                                   <UBadge v-if="track.isSoundEffect" color="purple" variant="soft" size="xs">
@@ -1507,14 +1499,14 @@
                                   </UBadge>
                                 </div>
                                 <div class="text-xs text-zinc-400 text-zinc-400 truncate">
-                                  {{ track.artist || 'Unknown Artist' }}
+                                  {{ track.artist || t('unknownArtist') }}
                                 </div>
                                 <!-- Duration and additional metadata -->
                                 <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-zinc-400 mt-1">
                                   <span v-if="track.duration">{{ formatDuration(track.duration) }}</span>
                                   <span v-if="track.isSoundEffect && track.isPlayableWhileMusic"
                                     class="text-purple-500">
-                                    • Can play with music
+                                    {{ t('canPlayWithMusic') }}
                                   </span>
                                   <span v-if="track.tags && track.tags.length > 0" class="truncate">
                                     {{ track.tags.slice(0, 2).join(', ') }}
@@ -1528,7 +1520,7 @@
                               <!-- Sound Effect Play Button -->
                               <UButton v-if="track.isSoundEffect" color="purple" variant="ghost" size="xs"
                                 @click="playSoundEffect(track.id)" icon="i-heroicons-speaker-wave"
-                                title="Play as sound effect" />
+                                :title="t('playAsSoundEffect')" />
                               <!-- Regular Play Button -->
                               <UButton v-else color="green" variant="ghost" size="xs"
                                 @click="playTrackFromPlaylist(track)" icon="i-heroicons-play"
@@ -1544,10 +1536,10 @@
                           class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                           <div class="text-2xl mb-2">🎵</div>
                           <p class="text-zinc-400 text-zinc-400 text-sm mb-3">
-                            No tracks in playlist
+                            {{ t('noTracksInPlaylist') }}
                           </p>
                           <p class="text-gray-400 dark:text-zinc-400 text-xs">
-                            Add YouTube tracks to create atmosphere for your session
+                            {{ t('addTracksDesc') }}
                           </p>
                         </div>
                       </div>
@@ -1559,11 +1551,9 @@
                           <UIcon name="i-heroicons-information-circle"
                             class="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5" />
                           <div>
-                            <h4 class="text-xs font-medium text-purple-900 dark:text-purple-100">Music Sync</h4>
+                            <h4 class="text-xs font-medium text-purple-900 dark:text-purple-100">{{ t('musicSync') }}</h4>
                             <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
-                              All participants will hear the music you play in real-time. Volume is controlled
-                              individually by
-                              each player.
+                              {{ t('musicSyncDesc') }}
                             </p>
                           </div>
                         </div>
@@ -1583,38 +1573,38 @@
               <div v-else class="text-center py-16">
                 <div class="text-8xl mb-6">🎲</div>
                 <h2 class="text-2xl font-bold text-white text-white mb-4">
-                  No Active Dice Session
+                  {{ t('noActiveSession') }}
                 </h2>
                 <div v-if="userRole === 'DM'" class="space-y-4">
                   <p class="text-lg text-gray-600 text-zinc-400 mb-6">
-                    As a DM, you need to create or join a room to start rolling dice.
+                    {{ t('dmStartMessage') }}
                   </p>
                   <div class="flex justify-center space-x-4">
                     <UButton color="primary" size="lg" @click="showCreateRoom = true" icon="i-heroicons-plus">
-                      Create New Room
+                      {{ t('createNewRoom') }}
                     </UButton>
-                    <div class="text-gray-400 dark:text-zinc-400 flex items-center">or</div>
+                    <div class="text-gray-400 dark:text-zinc-400 flex items-center">{{ t('or') }}</div>
                     <div class="flex items-center space-x-2">
-                      <UInput v-model="joinRoomCode" placeholder="Enter room code..." class="w-48"
+                      <UInput v-model="joinRoomCode" :placeholder="t('enterRoomCode')" class="w-48"
                         @keyup.enter="joinExistingRoom" />
                       <UButton color="gray" @click="joinExistingRoom" :disabled="!joinRoomCode.trim()"
                         icon="i-heroicons-arrow-right-on-rectangle">
-                        Join Room
+                        {{ t('joinRoom') }}
                       </UButton>
                     </div>
                   </div>
                 </div>
                 <div v-else class="space-y-4">
                   <p class="text-lg text-gray-600 text-zinc-400 mb-6">
-                    You need to join a dice room created by a DM to start rolling dice.
+                    {{ t('playerStartMessage') }}
                   </p>
                   <div class="flex justify-center">
                     <div class="flex items-center space-x-2">
-                      <UInput v-model="joinRoomCode" placeholder="Enter room code from your DM..." class="w-64"
+                      <UInput v-model="joinRoomCode" :placeholder="t('enterRoomCodeFromDm')" class="w-64"
                         @keyup.enter="joinExistingRoom" />
                       <UButton color="primary" @click="joinExistingRoom" :disabled="!joinRoomCode.trim()"
                         icon="i-heroicons-arrow-right-on-rectangle">
-                        Join Room
+                        {{ t('joinRoom') }}
                       </UButton>
                     </div>
                   </div>
@@ -1622,9 +1612,9 @@
                     <div class="flex items-start space-x-2">
                       <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
                       <div>
-                        <span class="font-medium text-blue-900 dark:text-blue-100">Need a room code?</span>
+                        <span class="font-medium text-blue-900 dark:text-blue-100">{{ t('needRoomCode') }}</span>
                         <span class="text-blue-800 dark:text-blue-200 block text-sm mt-1">
-                          Ask your Dungeon Master for the room code to join their dice session.
+                          {{ t('askDmForCode') }}
                         </span>
                       </div>
                     </div>
@@ -1640,10 +1630,10 @@
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-6">
               <h2 class="text-2xl font-bold text-white text-white mb-2">
-                🗺️ Campaign Map
+                🗺️ {{ t('campaignMap') }}
               </h2>
               <p class="text-gray-600 text-zinc-400">
-                Explore the world of your campaign. Click on different regions to learn more about them.
+                {{ t('campaignMapDesc') }}
               </p>
             </div>
             <TopoMap 
@@ -1658,7 +1648,7 @@
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-semibold text-white text-white">
-            🏠 Create New Room
+            🏠 {{ t('createNewRoom') }}
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="showCreateRoom = false" />
         </div>
@@ -1667,20 +1657,20 @@
           <div class="text-center py-4">
             <div class="text-6xl mb-4">🎲</div>
             <p class="text-gray-600 dark:text-gray-300 mb-4">
-              Create a new private room for your D&D session
+              {{ t('createRoomDesc') }}
             </p>
             <p class="text-sm text-zinc-400 text-zinc-400">
-              You'll get a unique room code that others can use to join
+              {{ t('createRoomNote') }}
             </p>
           </div>
         </div>
 
         <div class="flex justify-end space-x-3 mt-8">
           <UButton color="gray" variant="outline" @click="showCreateRoom = false">
-            Cancel
+            {{ t('cancel') }}
           </UButton>
           <UButton color="primary" @click="createRoom" icon="i-heroicons-plus">
-            Create Room
+            {{ t('createRoom') }}
           </UButton>
         </div>
       </div>
@@ -1691,7 +1681,7 @@
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-semibold text-white text-white">
-            🎲 Request Roll from {{ selectedPlayerForRequest?.name }}
+            🎲 {{ t('requestRollFrom') }} {{ selectedPlayerForRequest?.name }}
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="closeRollRequestModal" />
         </div>
@@ -1699,7 +1689,7 @@
         <div class="space-y-4">
           <!-- Dice Type Selection -->
           <div>
-            <UFormGroup label="Select Dice Type">
+            <UFormGroup :label="t('selectDiceType')">
               <div class="grid grid-cols-2 gap-3">
                 <UButton v-for="diceType in diceTypes" :key="diceType.type"
                   :color="requestedDiceType === diceType.type ? 'primary' : 'gray'"
@@ -1714,14 +1704,14 @@
 
           <!-- Optional Message -->
           <div>
-            <UFormGroup label="Optional Message">
-              <UTextarea v-model="rollRequestMessage" placeholder="e.g., Make a Dexterity saving throw..." rows="3" />
+            <UFormGroup :label="t('optionalMessage')">
+              <UTextarea v-model="rollRequestMessage" :placeholder="t('rollRequestPlaceholder')" rows="3" />
             </UFormGroup>
           </div>
 
           <!-- Modifier (optional) -->
           <div>
-            <UFormGroup label="Modifier (optional)">
+            <UFormGroup :label="t('modifierOptional')">
               <UInput v-model.number="rollRequestModifier" type="number" placeholder="0" />
             </UFormGroup>
           </div>
@@ -1729,11 +1719,11 @@
 
         <div class="flex justify-end space-x-3 mt-8">
           <UButton color="gray" variant="outline" @click="closeRollRequestModal">
-            Cancel
+            {{ t('cancel') }}
           </UButton>
           <UButton color="primary" @click="sendRollRequest" :disabled="!requestedDiceType"
             icon="i-heroicons-paper-airplane">
-            Send Request
+            {{ t('sendRequest') }}
           </UButton>
         </div>
       </div>
@@ -1744,7 +1734,7 @@
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-semibold text-white text-white">
-            Edit Stats for {{ editingPlayer?.name }}
+            {{ t('editStatsFor') }} {{ editingPlayer?.name }}
           </h3>
           <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="closeEditModal" />
         </div>
@@ -1752,13 +1742,13 @@
         <div v-if="editingPlayerStats" class="space-y-6">
           <!-- Hit Points -->
           <div>
-            <h4 class="text-sm font-medium text-white text-white mb-3">Health</h4>
+            <h4 class="text-sm font-medium text-white text-white mb-3">{{ t('health') }}</h4>
             <div class="grid grid-cols-2 gap-4">
-              <UFormGroup label="Current HP">
+              <UFormGroup :label="t('currentHp')">
                 <UInput v-model.number="editingPlayerStats.hitPoints.current" type="number" min="0"
                   :max="editingPlayerStats.hitPoints.max" />
               </UFormGroup>
-              <UFormGroup label="Max HP">
+              <UFormGroup :label="t('maxHp')">
                 <UInput v-model.number="editingPlayerStats.hitPoints.max" type="number" min="1" />
               </UFormGroup>
             </div>
@@ -1766,18 +1756,18 @@
 
           <!-- Core Stats -->
           <div>
-            <h4 class="text-sm font-medium text-white text-white mb-3">Core Stats</h4>
+            <h4 class="text-sm font-medium text-white text-white mb-3">{{ t('coreStats') }}</h4>
             <div class="grid grid-cols-2 gap-4">
-              <UFormGroup label="Armor Class">
+              <UFormGroup :label="t('armorClass')">
                 <UInput v-model.number="editingPlayerStats.armorClass" type="number" min="1" />
               </UFormGroup>
-              <UFormGroup label="Level">
+              <UFormGroup :label="t('level')">
                 <UInput v-model.number="editingPlayerStats.level" type="number" min="1" max="20" />
               </UFormGroup>
-              <UFormGroup label="Proficiency Bonus">
+              <UFormGroup :label="t('proficiencyBonus')">
                 <UInput v-model.number="editingPlayerStats.proficiencyBonus" type="number" min="1" />
               </UFormGroup>
-              <UFormGroup label="Speed">
+              <UFormGroup :label="t('speed')">
                 <UInput v-model.number="editingPlayerStats.speed" type="number" min="0" />
               </UFormGroup>
             </div>
@@ -1785,24 +1775,24 @@
 
           <!-- Abilities -->
           <div>
-            <h4 class="text-sm font-medium text-white text-white mb-3">Ability Scores</h4>
+            <h4 class="text-sm font-medium text-white text-white mb-3">{{ t('abilityScores') }}</h4>
             <div class="grid grid-cols-3 gap-4">
-              <UFormGroup label="Strength (STR)">
+              <UFormGroup :label="`${t('strength')} (${t('str')})`">
                 <UInput v-model.number="editingPlayerStats.abilities.strength" type="number" min="1" max="30" />
               </UFormGroup>
-              <UFormGroup label="Dexterity (DEX)">
+              <UFormGroup :label="`${t('dexterity')} (${t('dex')})`">
                 <UInput v-model.number="editingPlayerStats.abilities.dexterity" type="number" min="1" max="30" />
               </UFormGroup>
-              <UFormGroup label="Constitution (CON)">
+              <UFormGroup :label="`${t('constitution')} (${t('con')})`">
                 <UInput v-model.number="editingPlayerStats.abilities.constitution" type="number" min="1" max="30" />
               </UFormGroup>
-              <UFormGroup label="Intelligence (INT)">
+              <UFormGroup :label="`${t('intelligence')} (${t('int')})`">
                 <UInput v-model.number="editingPlayerStats.abilities.intelligence" type="number" min="1" max="30" />
               </UFormGroup>
-              <UFormGroup label="Wisdom (WIS)">
+              <UFormGroup :label="`${t('wisdom')} (${t('wis')})`">
                 <UInput v-model.number="editingPlayerStats.abilities.wisdom" type="number" min="1" max="30" />
               </UFormGroup>
-              <UFormGroup label="Charisma (CHA)">
+              <UFormGroup :label="`${t('charisma')} (${t('cha')})`">
                 <UInput v-model.number="editingPlayerStats.abilities.charisma" type="number" min="1" max="30" />
               </UFormGroup>
             </div>
@@ -1810,7 +1800,7 @@
 
           <!-- Initiative -->
           <div>
-            <UFormGroup label="Initiative Modifier">
+            <UFormGroup :label="t('initiativeModifier')">
               <UInput v-model.number="editingPlayerStats.initiative" type="number" />
             </UFormGroup>
           </div>
@@ -1818,10 +1808,10 @@
 
         <div class="flex justify-end space-x-3 mt-8">
           <UButton color="gray" variant="outline" @click="closeEditModal">
-            Cancel
+            {{ t('cancel') }}
           </UButton>
           <UButton color="primary" @click="savePlayerStats" :disabled="!editingPlayerStats">
-            Save Changes
+            {{ t('saveChanges') }}
           </UButton>
         </div>
       </div>
@@ -1833,10 +1823,10 @@
         <div class="text-center">
           <div class="text-6xl mb-4">🎲</div>
           <h3 class="text-lg font-semibold text-white text-white mb-2">
-            Roll Request from DM
+            {{ t('rollRequestFromDm') }}
           </h3>
           <p class="text-gray-600 dark:text-gray-300 mb-4">
-            The DM is requesting you to roll: <strong>{{ pendingRollRequest?.diceType }}</strong>
+            {{ t('dmRequestingRoll') }} <strong>{{ pendingRollRequest?.diceType }}</strong>
           </p>
 
           <div v-if="pendingRollRequest?.message" class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4">
@@ -1847,15 +1837,15 @@
 
           <div v-if="pendingRollRequest?.modifier && pendingRollRequest.modifier !== 0"
             class="text-sm text-gray-600 text-zinc-400 mb-4">
-            Modifier: {{ pendingRollRequest.modifier > 0 ? '+' : '' }}{{ pendingRollRequest.modifier }}
+            {{ t('modifier') }}: {{ pendingRollRequest.modifier > 0 ? '+' : '' }}{{ pendingRollRequest.modifier }}
           </div>
 
           <div class="flex justify-center space-x-3">
             <UButton color="gray" variant="outline" @click="declineRollRequest">
-              Decline
+              {{ t('decline') }}
             </UButton>
             <UButton color="primary" @click="acceptRollRequest" icon="i-heroicons-cube">
-              Roll {{ pendingRollRequest?.diceType }}
+              {{ t('roll') }} {{ pendingRollRequest?.diceType }}
             </UButton>
           </div>
         </div>
@@ -1866,32 +1856,32 @@
     <UModal v-model="showAddEnemyModal" :ui="{ width: 'max-w-md' }">
       <div class="p-6">
         <h3 class="text-lg font-semibold text-white text-white mb-4">
-          👹 Add Enemy
+          👹 {{ t('addEnemy') }}
         </h3>
 
         <div class="space-y-4">
-          <UFormGroup label="Enemy Name" required>
-            <UInput v-model="newEnemy.name" placeholder="Goblin, Orc, Dragon..." />
+          <UFormGroup :label="t('enemyName')" required>
+            <UInput v-model="newEnemy.name" :placeholder="t('enemyNamePlaceholder')" />
           </UFormGroup>
 
-          <UFormGroup label="Hit Points" required>
+          <UFormGroup :label="t('hitPoints')" required>
             <UInput v-model.number="newEnemy.hitPoints" type="number" min="1" placeholder="10" />
           </UFormGroup>
 
-          <UFormGroup label="Armor Class">
+          <UFormGroup :label="t('armorClass')">
             <UInput v-model.number="newEnemy.armorClass" type="number" min="1" placeholder="10" />
           </UFormGroup>
 
-          <UFormGroup label="Initiative Modifier">
+          <UFormGroup :label="t('initiativeModifier')">
             <UInput v-model.number="newEnemy.initiative" type="number" placeholder="0" />
           </UFormGroup>
 
           <div class="flex justify-end space-x-3 mt-6">
             <UButton color="gray" variant="outline" @click="showAddEnemyModal = false">
-              Cancel
+              {{ t('cancel') }}
             </UButton>
             <UButton color="green" @click="addEnemy" :disabled="!newEnemy.name || !newEnemy.hitPoints">
-              Add Enemy
+              {{ t('addEnemy') }}
             </UButton>
           </div>
         </div>
@@ -1913,13 +1903,13 @@
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-white">Show Image to Players</h3>
+            <h3 class="text-lg font-semibold text-white">{{ t('showImageToPlayers') }}</h3>
             <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="showDmImageModal = false" />
           </div>
         </template>
 
         <div class="space-y-4">
-          <UFormGroup label="Upload Image" help="Select an image from your device">
+          <UFormGroup :label="t('uploadImage')" :help="t('selectImageHelp')">
             <input type="file" accept="image/*" @change="handleImageUpload" class="block w-full text-sm text-gray-400
               file:mr-4 file:py-2 file:px-4
               file:rounded-full file:border-0
@@ -1935,28 +1925,28 @@
               <div class="w-full border-t border-gray-700"></div>
             </div>
             <div class="relative flex justify-center">
-              <span class="bg-zinc-900 px-2 text-sm text-gray-500">OR</span>
+              <span class="bg-zinc-900 px-2 text-sm text-gray-500">{{ t('or') }}</span>
             </div>
           </div>
 
-          <UFormGroup label="Image URL">
-            <UInput v-model="dmImageUrl" placeholder="https://example.com/image.jpg" />
+          <UFormGroup :label="t('imageUrl')">
+            <UInput v-model="dmImageUrl" :placeholder="t('imageUrlPlaceholder')" />
           </UFormGroup>
 
-          <UFormGroup label="Caption (Optional)">
-            <UInput v-model="dmImageCaption" placeholder="A mysterious map..." />
+          <UFormGroup :label="t('captionOptional')">
+            <UInput v-model="dmImageCaption" :placeholder="t('imageCaptionPlaceholder')" />
           </UFormGroup>
 
           <div v-if="dmImageUrl" class="mt-4">
-            <p class="text-sm text-gray-400 mb-2">Preview:</p>
+            <p class="text-sm text-gray-400 mb-2">{{ t('preview') }}:</p>
             <img :src="dmImageUrl" class="w-full h-48 object-contain rounded bg-black/50" />
           </div>
         </div>
 
         <template #footer>
           <div class="flex justify-end space-x-2">
-            <UButton color="gray" variant="ghost" @click="showDmImageModal = false">Cancel</UButton>
-            <UButton color="purple" :loading="isSendingImage" @click="sendDmImage">Show to Players</UButton>
+            <UButton color="gray" variant="ghost" @click="showDmImageModal = false">{{ t('cancel') }}</UButton>
+            <UButton color="purple" :loading="isSendingImage" @click="sendDmImage">{{ t('showToPlayers') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -2096,6 +2086,9 @@ interface QuickRoll {
 
 // Component imports
 import TopoMap from '~/components/TopoMap.vue'
+
+// Translations
+const { t, toggleLanguage, language } = useTranslations()
 
 // Get authenticated user
 const user = useState < any > ('user')
@@ -2338,16 +2331,16 @@ async function sendDmImage() {
     
     // Show success toast
     toast.add({
-      title: 'Image Sent',
-      description: 'The image has been shown to all players.',
+      title: t('imageSent'),
+      description: t('imageShownToPlayers'),
       icon: 'i-heroicons-check-circle',
       color: 'green'
     })
   } catch (error) {
     console.error('Failed to send image:', error)
     toast.add({
-      title: 'Error',
-      description: 'Failed to send image.',
+      title: t('error'),
+      description: t('imageSendFailed'),
       icon: 'i-heroicons-exclamation-circle',
       color: 'red'
     })
@@ -2596,12 +2589,12 @@ function getBattlePhaseColor(phase: string): string {
 
 function getBattlePhaseLabel(phase: string): string {
   const labelMap: Record<string, string> = {
-    'setup': 'Setup Phase',
-    'rolling_initiative': 'Rolling Initiative',
-    'combat': 'Active Combat',
-    'ended': 'Battle Ended'
+    'setup': t('setupPhase'),
+    'rolling_initiative': t('rollingInitiativePhase'),
+    'combat': t('activeCombatPhase'),
+    'ended': t('battleEndedPhase')
   }
-  return labelMap[phase] || 'Unknown Phase'
+  return labelMap[phase] || t('unknownPhase')
 }
 
 function calculateTotalWealth(character: any): number {
@@ -2712,28 +2705,33 @@ function getSavingThrowProficiency(ability: string, character: any): boolean {
   return savingThrow ? savingThrow.proficient : false
 }
 
+function getAbilityAbbr(ability: string) {
+  const key = ability.substring(0, 3).toLowerCase()
+  return t(key as any)
+}
+
 // Helper function to get all D&D skills with character's proficiency
 function getAllSkills(character: any): any[] {
   // Standard D&D 5e skills
   const standardSkills = [
-    { name: 'Acrobatics', ability: 'DEX' },
-    { name: 'Animal Handling', ability: 'WIS' },
-    { name: 'Arcana', ability: 'INT' },
-    { name: 'Athletics', ability: 'STR' },
-    { name: 'Deception', ability: 'CHA' },
-    { name: 'History', ability: 'INT' },
-    { name: 'Insight', ability: 'WIS' },
-    { name: 'Intimidation', ability: 'CHA' },
-    { name: 'Investigation', ability: 'INT' },
-    { name: 'Medicine', ability: 'WIS' },
-    { name: 'Nature', ability: 'INT' },
-    { name: 'Perception', ability: 'WIS' },
-    { name: 'Performance', ability: 'CHA' },
-    { name: 'Persuasion', ability: 'CHA' },
-    { name: 'Religion', ability: 'INT' },
-    { name: 'Sleight of Hand', ability: 'DEX' },
-    { name: 'Stealth', ability: 'DEX' },
-    { name: 'Survival', ability: 'WIS' }
+    { name: 'Acrobatics', ability: 'DEX', key: 'skillAcrobatics' },
+    { name: 'Animal Handling', ability: 'WIS', key: 'skillAnimalHandling' },
+    { name: 'Arcana', ability: 'INT', key: 'skillArcana' },
+    { name: 'Athletics', ability: 'STR', key: 'skillAthletics' },
+    { name: 'Deception', ability: 'CHA', key: 'skillDeception' },
+    { name: 'History', ability: 'INT', key: 'skillHistory' },
+    { name: 'Insight', ability: 'WIS', key: 'skillInsight' },
+    { name: 'Intimidation', ability: 'CHA', key: 'skillIntimidation' },
+    { name: 'Investigation', ability: 'INT', key: 'skillInvestigation' },
+    { name: 'Medicine', ability: 'WIS', key: 'skillMedicine' },
+    { name: 'Nature', ability: 'INT', key: 'skillNature' },
+    { name: 'Perception', ability: 'WIS', key: 'skillPerception' },
+    { name: 'Performance', ability: 'CHA', key: 'skillPerformance' },
+    { name: 'Persuasion', ability: 'CHA', key: 'skillPersuasion' },
+    { name: 'Religion', ability: 'INT', key: 'skillReligion' },
+    { name: 'Sleight of Hand', ability: 'DEX', key: 'skillSleightOfHand' },
+    { name: 'Stealth', ability: 'DEX', key: 'skillStealth' },
+    { name: 'Survival', ability: 'WIS', key: 'skillSurvival' }
   ]
 
   // Map character skills to standard skills
@@ -2743,7 +2741,7 @@ function getAllSkills(character: any): any[] {
     )
 
     return {
-      name: standardSkill.name,
+      name: t(standardSkill.key as any),
       ability: standardSkill.ability,
       proficient: characterSkill?.proficient || false,
       expertise: characterSkill?.expertise || false
@@ -3235,7 +3233,7 @@ function handleMapZoneSelected(zone: { name: string; description: string }) {
   // Could trigger different actions based on user role
   if (userRole.value === 'DM') {
     // DMs might get additional options like setting scene music or ambience
-    showZoneInfoToast(zone, 'DM mode: Consider setting ambience for this location')
+    showZoneInfoToast(zone, t('dmZoneInfo'))
   } else {
     // Players get basic zone information
     showZoneInfoToast(zone)
@@ -3439,11 +3437,11 @@ async function sendRollRequest() {
     if (response.success) {
       closeRollRequestModal()
       // Show success message
-      showToast(`Roll request sent to ${selectedPlayerForRequest.value.name}`, 'success')
+      showToast(`${t('rollRequestSent')} ${selectedPlayerForRequest.value.name}`, 'success')
     }
   } catch (error) {
     console.error('Error sending roll request:', error)
-    showToast('Failed to send roll request', 'error')
+    showToast(t('rollRequestFailed'), 'error')
   }
 }
 

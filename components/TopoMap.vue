@@ -6,17 +6,17 @@
       <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-700 z-20">
         <div class="text-center">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-          <p class="text-sm text-gray-600 dark:text-gray-300">Cargando mapa 3D...</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300">{{ t('loadingMap') }}</p>
         </div>
       </div>
 
       <div v-if="hasError" class="absolute inset-0 flex items-center justify-center bg-red-50 dark:bg-red-900/20 z-20">
         <div class="text-center p-4">
           <div class="text-red-500 mb-2">⚠️</div>
-          <h3 class="font-bold text-red-700 dark:text-red-300">Error al cargar el mapa</h3>
+          <h3 class="font-bold text-red-700 dark:text-red-300">{{ t('errorLoadingMap') }}</h3>
           <p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ errorMessage }}</p>
           <button @click="retryInit" class="mt-2 px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">
-            Reintentar
+            {{ t('retry') }}
           </button>
         </div>
       </div>
@@ -30,15 +30,15 @@
       <!-- Controles de cámara -->
       <div v-if="!isLoading && !hasError"
         class="absolute top-4 right-4 bg-black/80 text-white p-2 rounded text-xs z-10">
-        Click + Drag: Rotar | Scroll: Zoom | Clic en zonas: Info
+        {{ t('cameraControls') }}
       </div>
 
       <!-- Debug info -->
       <div v-if="showDebugInfo"
         class="absolute bottom-4 left-4 bg-blue-900/80 text-white p-2 rounded text-xs z-10 max-w-xs">
-        <div>WebGL: {{ webglSupported ? '✅' : '❌' }}</div>
-        <div>Renderer: {{ rendererInfo }}</div>
-        <div>Scene objects: {{ sceneObjectCount }}</div>
+        <div>{{ t('webgl') }}: {{ webglSupported ? '✅' : '❌' }}</div>
+        <div>{{ t('renderer') }}: {{ rendererInfo }}</div>
+        <div>{{ t('sceneObjects') }}: {{ sceneObjectCount }}</div>
       </div>
     </div>
   </div>
@@ -48,6 +48,8 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
+const { t } = useTranslations()
 
 interface MapZone {
   name: string

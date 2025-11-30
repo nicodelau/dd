@@ -18,28 +18,25 @@
           </div>
           
           <h1 class="text-4xl font-bold leading-tight mb-4">
-            Recover Your
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-              Adventure Access
-            </span>
+            {{ t('recoverAccess') }}
           </h1>
           
           <p class="text-xl text-slate-300 leading-relaxed mb-8">
-            Don't worry! It happens to the best adventurers. We'll help you get back to your characters and campaigns.
+            {{ t('recoverDescription') }}
           </p>
           
           <div class="space-y-4">
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-emerald-400 rounded-full"></div>
-              <span class="text-slate-300">Enter your email address</span>
+              <span class="text-slate-300">{{ t('enterEmailStep') }}</span>
             </div>
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span class="text-slate-300">Check your email for reset link</span>
+              <span class="text-slate-300">{{ t('checkEmailStep') }}</span>
             </div>
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <span class="text-slate-300">Create a new secure password</span>
+              <span class="text-slate-300">{{ t('createPasswordStep') }}</span>
             </div>
           </div>
         </div>
@@ -60,15 +57,15 @@
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Reset Password</h2>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('resetPassword') }}</h2>
         </div>
         
         <div class="hidden lg:block">
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
-            Forgot your password?
+            {{ t('forgotPasswordTitle') }}
           </h2>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            No problem! Enter your email and we'll send you a reset link.
+            {{ t('forgotPasswordDesc') }}
           </p>
         </div>
 
@@ -77,13 +74,13 @@
             <form class="space-y-6" @submit.prevent="handleForgotPassword">
               <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email address
+                  {{ t('emailAddress') }}
                 </label>
                 <UInput
                   id="email"
                   v-model="form.email"
                   type="email"
-                  placeholder="Enter your email address"
+                  :placeholder="t('enterEmailPlaceholder')"
                   size="lg"
                   :class="{ 'border-red-500': errors.email }"
                   class="transition-all duration-200"
@@ -112,7 +109,7 @@
                     <svg v-if="!loading" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>
-                    {{ loading ? 'Sending...' : 'Send reset link' }}
+                    {{ loading ? t('sending') : t('sendResetLink') }}
                   </span>
                 </UButton>
               </div>
@@ -135,12 +132,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
               </svg>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Check your email</h3>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ t('checkYourEmail') }}</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              We've sent a password reset link to <strong>{{ form.email }}</strong>
+              {{ t('resetLinkSentTo') }} <strong>{{ form.email }}</strong>
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">
-              Don't see the email? Check your spam folder or try again.
+              {{ t('checkSpam') }}
             </p>
           </div>
 
@@ -150,7 +147,7 @@
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
               </svg>
-              Back to sign in
+              {{ t('backToSignIn') }}
             </NuxtLink>
           </div>
         </div>
@@ -160,6 +157,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useTranslations()
+
 interface ForgotPasswordForm {
   email: string
 }
@@ -183,9 +182,9 @@ const validateForm = (): boolean => {
   errors.value = {}
   
   if (!form.value.email) {
-    errors.value.email = 'Email is required'
+    errors.value.email = t('emailRequired')
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    errors.value.email = 'Please enter a valid email address'
+    errors.value.email = t('emailInvalid')
   }
   
   return Object.keys(errors.value).length === 0
@@ -206,8 +205,8 @@ const handleForgotPassword = async () => {
     submitted.value = true
     
     toast.add({
-      title: 'Reset link sent',
-      description: 'Check your email for password reset instructions',
+      title: t('resetLinkSent'),
+      description: t('resetLinkSentDesc'),
       color: 'green'
     })
     
@@ -215,13 +214,13 @@ const handleForgotPassword = async () => {
     console.error('Forgot password error:', error)
     
     if (error.statusCode === 404) {
-      errors.value.general = 'No account found with this email address'
+      errors.value.general = t('noAccountFound')
     } else {
-      errors.value.general = 'An error occurred. Please try again later.'
+      errors.value.general = t('errorOccurred')
     }
     
     toast.add({
-      title: 'Failed to send reset link',
+      title: t('failedToSendLink'),
       description: errors.value.general,
       color: 'red'
     })
@@ -232,7 +231,7 @@ const handleForgotPassword = async () => {
 
 // Meta for SEO
 useSeoMeta({
-  title: 'Forgot Password - D&D Character Manager',
-  description: 'Reset your D&D Character Manager password'
+  title: t('forgotPasswordMetaTitle'),
+  description: t('forgotPasswordMetaDesc')
 })
 </script>

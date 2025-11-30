@@ -18,28 +18,25 @@
           </div>
           
           <h1 class="text-4xl font-bold leading-tight mb-4">
-            Begin Your
-            <span class="text-transparent bg-clip-text bg-red-700">
-              Epic Journey
-            </span>
+            {{ t('beginJourney') }}
           </h1>
           
           <p class="text-xl text-zinc-400 leading-relaxed mb-8">
-            Create your account and join thousands of adventurers managing their D&D campaigns in the digital realm.
+            {{ t('journeyDescription') }}
           </p>
           
           <div class="space-y-4">
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span class="text-zinc-400">Choose your role: Player or DM</span>
+              <span class="text-zinc-400">{{ t('featureRole') }}</span>
             </div>
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-zinc-500 rounded-full"></div>
-              <span class="text-zinc-400">Create unlimited characters</span>
+              <span class="text-zinc-400">{{ t('featureUnlimited') }}</span>
             </div>
             <div class="flex items-center space-x-3">
               <div class="w-2 h-2 bg-zinc-500 rounded-full"></div>
-              <span class="text-zinc-400">Join campaigns and adventures</span>
+              <span class="text-zinc-400">{{ t('featureJoin') }}</span>
             </div>
           </div>
         </div>
@@ -60,17 +57,17 @@
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-white text-white">Join the Adventure</h2>
+          <h2 class="text-2xl font-bold text-white text-white">{{ t('joinAdventure') }}</h2>
         </div>
         
         <div class="hidden lg:block">
           <h2 class="text-3xl font-bold text-white text-white">
-            Create your account
+            {{ t('createAccountTitle') }}
           </h2>
           <p class="mt-2 text-sm text-zinc-400 text-zinc-400">
-            Or
+            {{ t('or') }}
             <NuxtLink to="/auth/login" class="font-medium text-red-500 hover:text-red-400 transition-colors">
-              sign in to your existing account
+              {{ t('signInExisting') }}
             </NuxtLink>
           </p>
         </div>
@@ -80,13 +77,13 @@
             <div class="space-y-4">
               <div>
                 <label for="username" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                  Username
+                  {{ t('username') }}
                 </label>
                 <UInput
                   id="username"
                   v-model="form.username"
                   type="text"
-                  placeholder="Choose a unique username"
+                  :placeholder="t('chooseUsername')"
                   size="lg"
                   :class="{ 'border-red-500': errors.username }"
                   class="transition-all duration-200"
@@ -97,13 +94,13 @@
               
               <div>
                 <label for="email" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                  Email address
+                  {{ t('emailAddress') }}
                 </label>
                 <UInput
                   id="email"
                   v-model="form.email"
                   type="email"
-                  placeholder="your@email.com"
+                  :placeholder="t('enterEmail')"
                   size="lg"
                   :class="{ 'border-red-500': errors.email }"
                   class="transition-all duration-200"
@@ -115,13 +112,13 @@
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label for="firstName" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                    First name
+                    {{ t('firstName') }}
                   </label>
                   <UInput
                     id="firstName"
                     v-model="form.firstName"
                     type="text"
-                    placeholder="First name"
+                    :placeholder="t('firstName')"
                     size="lg"
                     :class="{ 'border-red-500': errors.firstName }"
                     class="transition-all duration-200"
@@ -131,13 +128,13 @@
                 
                 <div>
                   <label for="lastName" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                    Last name
+                    {{ t('lastName') }}
                   </label>
                   <UInput
                     id="lastName"
                     v-model="form.lastName"
                     type="text"
-                    placeholder="Last name"
+                    :placeholder="t('lastName')"
                     size="lg"
                     :class="{ 'border-red-500': errors.lastName }"
                     class="transition-all duration-200"
@@ -148,13 +145,13 @@
               
               <div>
                 <label for="password" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                  Password
+                  {{ t('password') }}
                 </label>
                 <UInput
                   id="password"
                   v-model="form.password"
                   type="password"
-                  placeholder="Password (min. 6 characters)"
+                  :placeholder="t('enterPassword')"
                   size="lg"
                   :class="{ 'border-red-500': errors.password }"
                   class="transition-all duration-200"
@@ -165,13 +162,13 @@
               
               <div>
                 <label for="confirmPassword" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                  Confirm password
+                  {{ t('confirmPassword') }}
                 </label>
                 <UInput
                   id="confirmPassword"
                   v-model="form.confirmPassword"
                   type="password"
-                  placeholder="Confirm your password"
+                  :placeholder="t('confirmPasswordPlaceholder')"
                   size="lg"
                   :class="{ 'border-red-500': errors.confirmPassword }"
                   class="transition-all duration-200"
@@ -182,19 +179,19 @@
               
               <div>
                 <label for="role" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
-                  I want to be a...
+                  {{ t('iWantToBe') }}
                 </label>
                 <USelect
                   id="role"
                   v-model="form.role"
                   :options="roleOptions"
-                  placeholder="Select your role"
+                  :placeholder="t('selectRole')"
                   size="lg"
                   :class="{ 'border-red-500': errors.role }"
                   class="transition-all duration-200"
                 />
                 <p class="mt-2 text-xs text-gray-500 text-zinc-400">
-                  Players can create and manage their own characters. DMs can manage all characters and create campaigns.
+                  {{ t('roleDescription') }}
                 </p>
                 <p v-if="errors.role" class="mt-1 text-sm text-red-600">{{ errors.role }}</p>
               </div>
@@ -211,13 +208,13 @@
               </div>
               <div class="ml-3 text-sm">
                 <label for="agree-terms" class="text-zinc-300 text-zinc-300">
-                  I agree to the 
+                  {{ t('agreeTo') }} 
                   <NuxtLink to="/terms" class="font-medium text-red-500 hover:text-red-400 transition-colors">
-                    Terms of Service
+                    {{ t('termsOfService') }}
                   </NuxtLink>
-                  and 
+                  {{ t('and') }} 
                   <NuxtLink to="/privacy" class="font-medium text-red-500 hover:text-red-400 transition-colors">
-                    Privacy Policy
+                    {{ t('privacyPolicy') }}
                   </NuxtLink>
                 </label>
               </div>
@@ -244,7 +241,7 @@
                   <svg v-if="!loading" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                   </svg>
-                  {{ loading ? 'Creating account...' : 'Create account' }}
+                  {{ loading ? t('creatingAccount') : t('createAccountBtn') }}
                 </span>
               </UButton>
             </div>
@@ -262,9 +259,9 @@
           <!-- Mobile login link -->
           <div class="lg:hidden mt-6 text-center">
             <p class="text-sm text-zinc-400 text-zinc-400">
-              Already have an account?
+              {{ t('alreadyHaveAccount') }}
               <NuxtLink to="/auth/login" class="font-medium text-red-500 hover:text-red-400 transition-colors">
-                Sign in here
+                {{ t('signInHere') }}
               </NuxtLink>
             </p>
           </div>
@@ -275,6 +272,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useTranslations()
+
 interface RegisterForm {
   username: string
   email: string

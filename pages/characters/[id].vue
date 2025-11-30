@@ -12,17 +12,26 @@
               icon="i-heroicons-arrow-left"
               size="sm"
             >
-              {{ (user?.role === 'DM' || user?.role === 'ADMIN') ? 'Back to Dashboard' : 'Back to Home' }}
+              {{ (user?.role === 'DM' || user?.role === 'ADMIN') ? t('backToDashboard') : t('backToHome') }}
             </UButton>
             
             <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
             
             <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
-              {{ character?.characterName || 'Character Sheet' }}
+              {{ character?.characterName || t('characterSheet') }}
             </h1>
           </div>
           
           <div class="flex items-center space-x-2">
+            <UButton
+              color="primary"
+              variant="solid"
+              size="sm"
+              icon="i-heroicons-language"
+              @click="toggleLanguage"
+            >
+              {{ language === 'en' ? 'ES' : 'EN' }}
+            </UButton>
             <UButton
               v-if="canEdit"
               color="gray"
@@ -31,7 +40,7 @@
               @click="editMode = !editMode"
               :disabled="isLoading"
             >
-              {{ editMode ? 'Cancel' : 'Edit' }}
+              {{ editMode ? t('cancel') : t('edit') }}
             </UButton>
             
             <UButton
@@ -41,7 +50,7 @@
               @click="saveCharacter"
               :loading="isSaving"
             >
-              Save Changes
+              {{ t('saveChanges') }}
             </UButton>
           </div>
         </div>
@@ -63,11 +72,11 @@
           </svg>
         </div>
         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          Character Not Found
+          {{ t('characterNotFound') }}
         </h3>
         <p class="text-red-500 mb-6">{{ error }}</p>
         <UButton color="primary" :to="canEdit ? '/dashboard' : '/'">
-          {{ canEdit ? 'Back to Dashboard' : 'Back to Home' }}
+          {{ canEdit ? t('backToDashboard') : t('backToHome') }}
         </UButton>
       </div>
       
@@ -79,7 +88,7 @@
           <UCard>
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Character Portrait
+                {{ t('characterPortrait') }}
               </h3>
             </template>
             
@@ -89,7 +98,7 @@
                  <img
                    v-if="character.avatar && !imageLoadError"
                    :src="character.avatar"
-                   :alt="character.characterName || 'Character'"
+                   :alt="character.characterName || t('character')"
                    class="h-32 w-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
                    @error="imageLoadError = true"
                    @load="imageLoadError = false"
@@ -105,17 +114,17 @@
               <!-- Avatar URL Input in Edit Mode -->
               <div v-if="editMode" class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Avatar URL
+                  {{ t('avatarUrl') }}
                 </label>
                 <UInput
                   v-model="editForm.avatar"
-                  placeholder="https://example.com/avatar.jpg"
+                  :placeholder="t('imageUrlPlaceholder')"
                   type="url"
                 />
               </div>
               
               <p class="text-sm text-gray-600 dark:text-gray-300">
-                {{ (character.race || 'Unknown') }} {{ (character.className || 'Unknown') }}
+                {{ (character.race || t('unknown')) }} {{ (character.className || t('unknown')) }}
               </p>
             </div>
           </UCard>
@@ -124,14 +133,14 @@
           <UCard>
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Currency
+                {{ t('currency') }}
               </h3>
             </template>
 
             <div class="grid grid-cols-1 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Copper (cp)
+                  {{ t('copper') }} (cp)
                 </label>
                 <UInput
                   v-if="editMode"
@@ -145,7 +154,7 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Silver (sp)
+                  {{ t('silver') }} (sp)
                 </label>
                 <UInput
                   v-if="editMode"
@@ -159,7 +168,7 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Electrum (ep)
+                  {{ t('electrum') }} (ep)
                 </label>
                 <UInput
                   v-if="editMode"
@@ -173,7 +182,7 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Gold (gp)
+                  {{ t('gold') }} (gp)
                 </label>
                 <UInput
                   v-if="editMode"
@@ -187,7 +196,7 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Platinum (pp)
+                  {{ t('platinum') }} (pp)
                 </label>
                 <UInput
                   v-if="editMode"
@@ -202,7 +211,7 @@
 
             <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div class="flex justify-between items-center">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Value (gp)</span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('totalValue') }} (gp)</span>
                 <span class="text-lg font-bold text-gray-900 dark:text-white">
                   {{ calculateTotalWealth() }}
                 </span>
@@ -215,7 +224,7 @@
             <template #header>
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Inventory
+                  {{ t('inventory') }}
                 </h3>
                 <UButton
                   v-if="editMode && canEdit"
@@ -225,13 +234,13 @@
                   icon="i-heroicons-plus"
                   @click="addInventoryItem"
                 >
-                  Add Item
+                  {{ t('addItem') }}
                 </UButton>
               </div>
             </template>
 
              <div v-if="editMode ? (!editInventory || editInventory.length === 0) : (!character.inventory || character.inventory.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
-               No items in inventory.
+               {{ t('noItems') }}
              </div>
 
              <div v-else class="space-y-3">
@@ -243,12 +252,12 @@
                 <div class="grid grid-cols-1 gap-3">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Item Name
+                      {{ t('itemName') }}
                     </label>
                     <UInput
                       v-if="editMode"
                       v-model="editInventory[index].name"
-                      placeholder="Item name"
+                      :placeholder="t('itemName')"
                     />
                     <p v-else class="text-gray-900 dark:text-white font-medium">{{ item.name }}</p>
                   </div>
@@ -256,7 +265,7 @@
                   <div class="grid grid-cols-2 gap-2">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Quantity
+                        {{ t('quantity') }}
                       </label>
                       <UInput
                         v-if="editMode"
@@ -270,7 +279,7 @@
 
                     <div>
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Weight (lbs)
+                        {{ t('weight') }} (lbs)
                       </label>
                       <UInput
                         v-if="editMode"
@@ -286,21 +295,21 @@
 
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Notes
+                      {{ t('notes') }}
                     </label>
                     <UTextarea
                       v-if="editMode"
                       v-model="editInventory[index].notes"
-                      placeholder="Item description or notes..."
+                      :placeholder="t('itemDescription')"
                       :rows="2"
                     />
-                    <p v-else class="text-gray-900 dark:text-white text-sm">{{ item.notes || 'No notes' }}</p>
+                    <p v-else class="text-gray-900 dark:text-white text-sm">{{ item.notes || t('noNotes') }}</p>
                   </div>
 
                   <div v-if="editMode" class="flex items-center justify-between">
                     <UCheckbox
                       v-model="editInventory[index].equipped"
-                      label="Equipped"
+                      :label="t('equipped')"
                     />
                     <UButton
                       color="red"
@@ -309,12 +318,12 @@
                       icon="i-heroicons-trash"
                       @click="removeInventoryItem(index)"
                     >
-                      Remove
+                      {{ t('remove') }}
                     </UButton>
                   </div>
 
                   <div v-else-if="item.equipped" class="mt-2">
-                    <UBadge color="green" variant="soft" size="sm">Equipped</UBadge>
+                    <UBadge color="green" variant="soft" size="sm">{{ t('equipped') }}</UBadge>
                   </div>
                 </div>
               </div>
@@ -325,19 +334,19 @@
           <UCard>
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Notes
+                {{ t('notes') }}
               </h3>
             </template>
             
             <UTextarea
               v-if="editMode"
               v-model="characterNotes"
-              placeholder="Add character notes..."
+              :placeholder="t('addNotes')"
               :rows="4"
             />
             
             <div v-else class="text-gray-600 dark:text-gray-300 min-h-[100px]">
-              {{ characterNotes || 'No notes added yet.' }}
+              {{ characterNotes || t('noNotes') }}
             </div>
           </UCard>
         </div>
@@ -348,81 +357,81 @@
           <UCard>
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Basic Information
+                {{ t('basicInfo') }}
               </h3>
             </template>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Character Name
+                  {{ t('characterName') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.characterName"
-                  placeholder="Character name"
+                  :placeholder="t('characterName')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.characterName || 'Unknown' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.characterName || t('unknown') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Player Name
+                  {{ t('playerName') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.playerName"
-                  placeholder="Player name"
+                  :placeholder="t('playerName')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.playerName || 'Unassigned' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.playerName || t('unassigned') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Race
+                  {{ t('race') }}
                 </label>
                 <USelect
                   v-if="editMode"
                   v-model="editForm.race"
                   :options="raceOptions"
-                  placeholder="Select race"
+                  :placeholder="t('selectRace')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.race || 'Unknown' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.race || t('unknown') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Subrace
+                  {{ t('subrace') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.subrace"
-                  placeholder="e.g., High Elf, Hill Dwarf"
+                  :placeholder="t('subracePlaceholder')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.subrace || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.subrace || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Ancestry
+                  {{ t('ancestry') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.ancestry"
-                  placeholder="Character lineage or ancestry"
+                  :placeholder="t('ancestryPlaceholder')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.ancestry || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.ancestry || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Class & Level
+                  {{ t('classAndLevel') }}
                 </label>
                 <div v-if="editMode" class="flex space-x-2">
                   <USelect
                     v-model="editForm.className"
                     :options="classOptions"
-                    placeholder="Class"
+                    :placeholder="t('classPlaceholder')"
                     class="flex-1"
                   />
                   <UInput
@@ -433,33 +442,33 @@
                     class="w-20"
                   />
                 </div>
-                <p v-else class="text-gray-900 dark:text-white">{{ (character.className || 'Unknown') }} {{ character.classLevel || 1 }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ (character.className || t('unknown')) }} {{ character.classLevel || 1 }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Background
+                  {{ t('background') }}
                 </label>
                 <USelect
                   v-if="editMode"
                   v-model="editForm.background"
                   :options="backgroundOptions"
-                  placeholder="Select background"
+                  :placeholder="t('backgroundPlaceholder')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.background || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.background || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Alignment
+                  {{ t('alignment') }}
                 </label>
                 <USelect
                   v-if="editMode"
                   v-model="editForm.alignment"
                   :options="alignmentOptions"
-                  placeholder="Select alignment"
+                  :placeholder="t('alignmentPlaceholder')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.alignment || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.alignment || t('notSet') }}</p>
               </div>
             </div>
           </UCard>
@@ -468,14 +477,14 @@
            <UCard>
              <template #header>
                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                 Combat Statistics
+                 {{ t('combatStats') }}
                </h3>
              </template>
 
              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                <div>
                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Armor Class
+                   {{ t('armorClass') }}
                  </label>
                  <UInput
                    v-if="editMode"
@@ -488,7 +497,7 @@
 
                <div>
                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Speed
+                   {{ t('speed') }}
                  </label>
                  <UInput
                    v-if="editMode"
@@ -501,7 +510,7 @@
 
                <div>
                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Max HP
+                   {{ t('maxHp') }}
                  </label>
                  <UInput
                    v-if="editMode"
@@ -514,7 +523,7 @@
 
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Current HP
+                    {{ t('currentHp') }}
                   </label>
                   <div v-if="editMode" class="space-y-2">
                     <UInput
@@ -541,7 +550,7 @@
                         @click="adjustHp"
                         :disabled="!hpAdjustment || hpAdjustment === 0"
                       >
-                        Adjust
+                        {{ t('adjust') }}
                       </UButton>
                     </div>
                   </div>
@@ -551,14 +560,14 @@
              <!-- Proficiency Checkboxes -->
              <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">
-                 Proficiencies
+                 {{ t('proficiencies') }}
                </h4>
 
                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <!-- Saving Throws Proficiency -->
                  <div>
                    <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                     Saving Throws
+                     {{ t('savingThrows') }}
                    </h5>
                    <div class="space-y-2">
                      <div v-for="ability in ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']" :key="ability" class="flex items-center space-x-2">
@@ -567,7 +576,7 @@
                          v-model="savingThrowProficient[ability]"
                          size="sm"
                        />
-                       <span class="text-sm text-gray-600 dark:text-gray-400 capitalize">{{ ability }}</span>
+                       <span class="text-sm text-gray-600 dark:text-gray-400">{{ t(ability) }}</span>
                      </div>
                    </div>
                  </div>
@@ -579,7 +588,7 @@
             <!-- Health Bar -->
             <div class="mt-6">
               <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Health</span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('health') }}</span>
                 <span class="text-sm text-gray-500 dark:text-gray-400">
                   {{ Math.round(((character.currentHp || 0) / (character.maxHp || 1)) * 100) }}%
                 </span>
@@ -602,83 +611,83 @@
           <UCard>
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Physical Characteristics
+                {{ t('physicalCharacteristics') }}
               </h3>
             </template>
             
             <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Age
+                  {{ t('age') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model.number="editForm.age"
                   type="number"
                   min="1"
-                  placeholder="Age"
+                  :placeholder="t('age')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.age || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.age || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Height
+                  {{ t('height') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.height"
                   placeholder="e.g., 5'8&quot;"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.height || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.height || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Weight
+                  {{ t('weight') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.weight"
                   placeholder="e.g., 160 lbs"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.weight || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.weight || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Eyes
+                  {{ t('eyes') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.eyes"
-                  placeholder="Eye color"
+                  :placeholder="t('eyes')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.eyes || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.eyes || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Skin
+                  {{ t('skin') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.skin"
-                  placeholder="Skin color/type"
+                  :placeholder="t('skin')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.skin || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.skin || t('notSet') }}</p>
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Hair
+                  {{ t('hair') }}
                 </label>
                 <UInput
                   v-if="editMode"
                   v-model="editForm.hair"
-                  placeholder="Hair color/style"
+                  :placeholder="t('hair')"
                 />
-                <p v-else class="text-gray-900 dark:text-white">{{ character.hair || 'Not set' }}</p>
+                <p v-else class="text-gray-900 dark:text-white">{{ character.hair || t('notSet') }}</p>
               </div>
             </div>
           </UCard>
@@ -688,7 +697,7 @@
              <template #header>
                <div class="flex items-center justify-between">
                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                   Combat Actions
+                   {{ t('combatActions') }}
                  </h3>
                  <UButton
                    v-if="editMode && canEdit"
@@ -698,7 +707,7 @@
                    icon="i-heroicons-plus"
                    @click="addCombatAction"
                  >
-                   Add Action
+                   {{ t('addAction') }}
                  </UButton>
                </div>
              </template>
@@ -706,52 +715,52 @@
              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                <div>
                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Hit Dice
+                   {{ t('hitDice') }}
                  </label>
                  <UInput
                    v-if="editMode"
                    v-model="editForm.hitDice"
                    placeholder="e.g., 1d8"
                  />
-                 <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.hitDice || 'Not set' }}</p>
+                 <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.hitDice || t('notSet') }}</p>
                </div>
 
                <div>
                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Initiative
+                   {{ t('initiative') }}
                  </label>
                  <UInput
                    v-if="editMode"
                    v-model.number="editForm.initiative"
                    type="number"
-                   placeholder="Initiative"
+                   :placeholder="t('initiative')"
                  />
                  <p v-else class="text-lg font-bold text-gray-900 dark:text-white">
-                   {{ character.initiative !== undefined ? (character.initiative >= 0 ? '+' : '') + character.initiative : 'Not set' }}
+                   {{ character.initiative !== undefined ? (character.initiative >= 0 ? '+' : '') + character.initiative : t('notSet') }}
                  </p>
                </div>
 
                <div>
                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Passive Perception
+                   {{ t('passivePerception') }}
                  </label>
                  <UInput
                    v-if="editMode"
                    v-model.number="editForm.passivePerception"
                    type="number"
                    min="1"
-                   placeholder="Passive Perception"
+                   :placeholder="t('passivePerception')"
                  />
                  <p v-else class="text-lg font-bold text-gray-900 dark:text-white">{{ character.passivePerception || 10 }}</p>
                </div>
 
                <div>
                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Death Saves
+                   {{ t('deathSaves') }}
                  </label>
                  <div v-if="editMode" class="space-y-2">
                    <div class="flex space-x-2">
-                     <span class="text-xs text-gray-500">Success:</span>
+                     <span class="text-xs text-gray-500">{{ t('successes') }}:</span>
                      <UInput
                        v-model.number="editForm.deathSaveSuccesses"
                        type="number"
@@ -761,7 +770,7 @@
                      />
                    </div>
                    <div class="flex space-x-2">
-                     <span class="text-xs text-gray-500">Failures:</span>
+                     <span class="text-xs text-gray-500">{{ t('failures') }}:</span>
                      <UInput
                        v-model.number="editForm.deathSaveFailures"
                        type="number"
@@ -781,7 +790,7 @@
              <!-- Custom Combat Actions -->
              <div v-if="editCombatActions.length > 0 || (character.combatActions && character.combatActions.length > 0)" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">
-                 Custom Actions
+                 {{ t('customActions') }}
                </h4>
 
                <div class="space-y-4">
@@ -793,32 +802,32 @@
                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                      <div>
                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                         Action Name
+                         {{ t('actionName') }}
                        </label>
                        <UInput
                          v-if="editMode"
                          v-model="editCombatActions[index].name"
-                         placeholder="Action name"
+                         :placeholder="t('actionName')"
                        />
                        <p v-else class="text-gray-900 dark:text-white font-medium">{{ action.name }}</p>
                      </div>
 
                      <div>
                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                         Type
+                         {{ t('type') }}
                        </label>
                        <USelect
                          v-if="editMode"
                          v-model="editCombatActions[index].type"
                          :options="actionTypeOptions"
-                         placeholder="Action type"
+                         :placeholder="t('type')"
                        />
-                       <p v-else class="text-gray-900 dark:text-white">{{ action.type || 'Action' }}</p>
+                       <p v-else class="text-gray-900 dark:text-white">{{ action.type || t('action') }}</p>
                      </div>
 
                      <div>
                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                         Uses
+                         {{ t('uses') }}
                        </label>
                        <div v-if="editMode" class="flex space-x-2">
                          <UInput
@@ -845,15 +854,15 @@
 
                    <div class="mt-4">
                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       Description
+                       {{ t('description') }}
                      </label>
                      <UTextarea
                        v-if="editMode"
                        v-model="editCombatActions[index].description"
-                       placeholder="Describe what this action does..."
+                       :placeholder="t('description')"
                        :rows="2"
                      />
-                     <p v-else class="text-gray-900 dark:text-white text-sm">{{ action.description || 'No description' }}</p>
+                     <p v-else class="text-gray-900 dark:text-white text-sm">{{ action.description || t('none') }}</p>
                    </div>
 
                    <div v-if="editMode" class="mt-4 flex justify-end">
@@ -864,7 +873,7 @@
                        icon="i-heroicons-trash"
                        @click="removeCombatAction(index)"
                      >
-                       Remove
+                       {{ t('remove') }}
                      </UButton>
                    </div>
                  </div>
@@ -876,14 +885,14 @@
           <UCard>
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Ability Scores
+                {{ t('abilityScores') }}
               </h3>
             </template>
             
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               <div class="text-center">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  STR
+                  {{ t('str') }}
                 </label>
                 <UInput
                   v-if="editMode"
@@ -903,7 +912,7 @@
               
               <div class="text-center">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  DEX
+                  {{ t('dex') }}
                 </label>
                 <UInput
                   v-if="editMode"
@@ -923,7 +932,7 @@
               
               <div class="text-center">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  CON
+                  {{ t('con') }}
                 </label>
                 <UInput
                   v-if="editMode"
@@ -943,7 +952,7 @@
               
               <div class="text-center">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  INT
+                  {{ t('int') }}
                 </label>
                 <UInput
                   v-if="editMode"
@@ -963,7 +972,7 @@
               
               <div class="text-center">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  WIS
+                  {{ t('wis') }}
                 </label>
                 <UInput
                   v-if="editMode"
@@ -983,7 +992,7 @@
               
               <div class="text-center">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  CHA
+                  {{ t('cha') }}
                 </label>
                 <UInput
                   v-if="editMode"
@@ -1008,7 +1017,7 @@
              <template #header>
                <div class="flex items-center justify-between">
                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                   Attacks
+                   {{ t('attacks') }}
                  </h3>
                  <UButton
                    v-if="editMode && canEdit"
@@ -1018,13 +1027,13 @@
                    icon="i-heroicons-plus"
                    @click="addAttack"
                  >
-                   Add Attack
+                   {{ t('addAttack') }}
                  </UButton>
                </div>
              </template>
 
               <div v-if="editMode ? (!editAttacks || editAttacks.length === 0) : (!character.attacks || character.attacks.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                No attacks configured yet.
+                {{ t('noAttacks') }}
               </div>
 
               <div v-else class="space-y-4">
@@ -1036,19 +1045,19 @@
                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                    <div>
                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       Name
+                       {{ t('name') }}
                      </label>
                      <UInput
                        v-if="editMode"
                        v-model="editAttacks[index].name"
-                       placeholder="Attack name"
+                       :placeholder="t('attackName')"
                      />
                      <p v-else class="text-gray-900 dark:text-white">{{ attack.name }}</p>
                    </div>
 
                    <div>
                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       Attack Bonus
+                       {{ t('attackBonus') }}
                      </label>
                      <UInput
                        v-if="editMode"
@@ -1063,7 +1072,7 @@
 
                    <div>
                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       Damage
+                       {{ t('damage') }}
                      </label>
                      <UInput
                        v-if="editMode"
@@ -1075,7 +1084,7 @@
 
                    <div>
                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       Range/Properties
+                       {{ t('rangeProperties') }}
                      </label>
                      <UInput
                        v-if="editMode"
@@ -1088,15 +1097,15 @@
 
                  <div class="mt-4">
                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                     Description
+                     {{ t('description') }}
                    </label>
                    <UTextarea
                      v-if="editMode"
                      v-model="editAttacks[index].notes"
-                     placeholder="Attack description..."
+                     :placeholder="t('attackDescription')"
                      :rows="2"
                    />
-                   <p v-else class="text-gray-900 dark:text-white">{{ attack.notes || 'No description' }}</p>
+                   <p v-else class="text-gray-900 dark:text-white">{{ attack.notes || t('noDescription') }}</p>
                  </div>
 
                  <div v-if="editMode" class="mt-4 flex justify-end">
@@ -1107,7 +1116,7 @@
                      icon="i-heroicons-trash"
                      @click="removeAttack(index)"
                    >
-                     Remove
+                     {{ t('remove') }}
                    </UButton>
                  </div>
                </div>
@@ -1216,7 +1225,7 @@
             <UCard>
               <template #header>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Skills
+                  {{ t('skills') }}
                 </h3>
               </template>
 
@@ -1241,30 +1250,30 @@
             <UCard>
               <template #header>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Quick Stats
+                  {{ t('quickStats') }}
                 </h3>
               </template>
               
               <div class="space-y-3">
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600 dark:text-gray-300">Experience</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('experience') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white">{{ (character.experience || 0).toLocaleString() }} XP</span>
                 </div>
                 
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600 dark:text-gray-300">Proficiency Bonus</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('proficiencyBonus') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white">+{{ character.proficiencyBonus || 2 }}</span>
                 </div>
 
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600 dark:text-gray-300">Passive Perception</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('passivePerception') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white">{{ character.passivePerception || 10 }}</span>
                 </div>
                 
                 <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600 dark:text-gray-300">Inspiration</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('inspiration') }}</span>
                   <span class="font-medium text-gray-900 dark:text-white">
-                    {{ character.inspiration ? 'Yes' : 'No' }}
+                    {{ character.inspiration ? t('yes') : t('no') }}
                   </span>
                 </div>
               </div>
@@ -1276,6 +1285,7 @@
 </template>
 
 <script setup lang="ts">
+const { t, toggleLanguage, language } = useTranslations()
 import type { CharacterDTO } from '~/types/dtos'
 
 const route = useRoute()

@@ -9,27 +9,36 @@
           </div>
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-              DM Dashboard
+              {{ t('dmDashboard') }}
             </h1>
             <p class="text-gray-600 dark:text-gray-300">
-              Manage characters and campaigns
+              {{ t('playerManagement') }}
             </p>
           </div>
         </div>
         
         <div class="flex space-x-3">
           <UButton
+            color="primary"
+            variant="solid"
+            size="sm"
+            icon="i-heroicons-language"
+            @click="toggleLanguage"
+          >
+            {{ language === 'en' ? 'ES' : 'EN' }}
+          </UButton>
+          <UButton
             to="/"
             color="gray"
             variant="outline"
           >
-            Back to Home
+            {{ t('backToHome') }}
           </UButton>
           <UButton
             color="primary"
             @click="showCreateModal = true"
           >
-            Create Character
+            {{ t('createCharacter') }}
           </UButton>
         </div>
       </div>
@@ -44,7 +53,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Characters</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ t('totalCharacters') }}</p>
               <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ characters.length }}</p>
             </div>
           </div>
@@ -58,7 +67,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Assigned</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ t('assigned') }}</p>
               <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ assignedCount }}</p>
             </div>
           </div>
@@ -72,7 +81,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Unassigned</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ t('unassigned') }}</p>
               <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ unassignedCount }}</p>
             </div>
           </div>
@@ -86,7 +95,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Players</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ t('activePlayers') }}</p>
               <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ activePlayers.length }}</p>
             </div>
           </div>
@@ -97,21 +106,23 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Characters</h2>
-            <div class="flex items-center space-x-3">
-              <!-- Filter Dropdown -->
-              <USelect 
-                v-model="filterStatus" 
-                :options="filterOptions" 
-                placeholder="Filter by status"
-                class="w-40"
-              />
-              <!-- Search -->
-              <UInput 
-                v-model="searchQuery" 
-                placeholder="Search characters..." 
-                icon="i-heroicons-magnifying-glass-20-solid"
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('characters') }}</h2>
+            <div class="flex space-x-4">
+              <UInput
+                v-model="searchQuery"
+                icon="i-heroicons-magnifying-glass"
+                :placeholder="t('searchCharacters')"
                 class="w-64"
+              />
+              <USelect
+                v-model="filterStatus"
+                :options="[
+                  { label: t('allStatuses'), value: 'all' },
+                  { label: t('assigned'), value: 'assigned' },
+                  { label: t('unassigned'), value: 'unassigned' }
+                ]"
+                :placeholder="t('filterByStatus')"
+                class="w-48"
               />
             </div>
           </div>
@@ -126,8 +137,8 @@
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No characters found</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new character.</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">{{ t('characterNotFound') }}</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('createFirstCharacter') }}</p>
           </div>
           
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -155,20 +166,20 @@
     <UModal v-model="showAssignModal">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">Assign Character</h3>
+          <h3 class="text-lg font-semibold">{{ t('assign') }} {{ t('character') }}</h3>
         </template>
         
         <div class="space-y-4">
           <div v-if="selectedCharacter">
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Assign <strong>{{ selectedCharacter.characterName }}</strong> to a player:
+              {{ t('assign') }} <strong>{{ selectedCharacter.characterName }}</strong> {{ t('toPlayer') }}:
             </p>
             
-            <UFormGroup label="Player" required>
+            <UFormGroup :label="t('player')" required>
               <USelect 
                 v-model="assignmentForm.playerId" 
                 :options="playerOptions" 
-                placeholder="Select a player"
+                :placeholder="t('selectPlayer')"
                 :loading="loadingPlayers"
               />
             </UFormGroup>
@@ -178,7 +189,7 @@
         <template #footer>
           <div class="flex justify-end space-x-2">
             <UButton color="gray" variant="outline" @click="showAssignModal = false">
-              Cancel
+              {{ t('cancel') }}
             </UButton>
             <UButton 
               color="red" 
@@ -186,7 +197,7 @@
               @click="unassignCharacter"
               v-if="selectedCharacter?.user"
             >
-              Unassign
+              {{ t('unassign') }}
             </UButton>
             <UButton 
               color="primary" 
@@ -194,7 +205,7 @@
               :loading="assignmentLoading"
               :disabled="!assignmentForm.playerId"
             >
-              Assign
+              {{ t('assign') }}
             </UButton>
           </div>
         </template>
@@ -204,6 +215,7 @@
 </template>
 
 <script setup>
+const { t, toggleLanguage, language } = useTranslations()
 definePageMeta({
   middleware: ['dm']
 })

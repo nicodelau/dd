@@ -15,7 +15,7 @@
       <template #header>
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ characterName }}'s Turn - Special Abilities
+            {{ t('specialAbilities') }} - {{ characterName }}
           </h3>
           <UButton
             color="gray"
@@ -31,8 +31,8 @@
         <div v-if="!specialAbilities || specialAbilities.length === 0" class="text-center py-8">
           <div class="text-gray-500 dark:text-gray-400">
             <UIcon name="i-heroicons-sparkles" class="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p class="text-lg font-medium mb-2">No Special Abilities</p>
-            <p class="text-sm">This character doesn't have any special abilities configured yet.</p>
+            <p class="text-lg font-medium mb-2">{{ t('noSpecialAbilities') }}</p>
+            <p class="text-sm">{{ t('noSpecialAbilitiesDesc') }}</p>
           </div>
         </div>
 
@@ -63,7 +63,7 @@
                   </span>
                   <span v-if="ability.usesPerRest" class="flex items-center">
                     <UIcon name="i-heroicons-arrow-path" class="w-3 h-3 mr-1" />
-                    {{ ability.usesRemaining || 0 }}/{{ ability.usesPerRest }} uses
+                    {{ ability.usesRemaining || 0 }}/{{ ability.usesPerRest }} {{ t('usesLower') }}
                   </span>
                 </div>
               </div>
@@ -73,7 +73,7 @@
                 size="sm"
                 @click.stop="rollAbility(ability)"
               >
-                Roll
+                {{ t('roll') }}
               </UButton>
             </div>
           </div>
@@ -83,7 +83,7 @@
       <template #footer>
         <div class="flex justify-end">
           <UButton color="gray" variant="outline" @click="closeModal">
-            Close
+            {{ t('close') }}
           </UButton>
         </div>
       </template>
@@ -92,6 +92,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useTranslations()
 interface SpecialAbility {
   id: string
   name: string

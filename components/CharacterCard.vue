@@ -66,11 +66,11 @@
       <!-- Level and Background -->
       <div class="space-y-2">
         <div class="flex justify-between text-sm">
-          <span class="text-zinc-400 text-zinc-400">Level:</span>
+          <span class="text-zinc-400 text-zinc-400">{{ t('level') }}:</span>
           <span class="font-medium text-white text-white">{{ character.classLevel || character.level || 1 }}</span>
         </div>
         <div v-if="character.background" class="flex justify-between text-sm">
-          <span class="text-zinc-400 text-zinc-400">Background:</span>
+          <span class="text-zinc-400 text-zinc-400">{{ t('background') }}:</span>
           <span class="font-medium text-white text-white">{{ character.background }}</span>
         </div>
       </div>
@@ -87,7 +87,7 @@
         <div v-if="character.armorClass" class="flex items-center space-x-2">
           <UIcon name="i-heroicons-shield-check" class="h-4 w-4 text-zinc-400" />
           <span class="text-sm text-zinc-400 text-zinc-300">
-            {{ character.armorClass }} AC
+            {{ character.armorClass }} {{ t('ac') }}
           </span>
         </div>
       </div>
@@ -95,7 +95,7 @@
       <!-- Health Bar if HP data available -->
       <div v-if="character.currentHp !== undefined && character.maxHp" class="w-full">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs text-zinc-400 text-zinc-400">Health</span>
+          <span class="text-xs text-zinc-400 text-zinc-400">{{ t('health') }}</span>
           <span class="text-xs text-zinc-400 text-zinc-400">
             {{ healthPercentage }}%
           </span>
@@ -113,16 +113,16 @@
       <div v-if="character.user" class="flex items-center space-x-2">
         <div class="h-2 w-2 bg-green-500 rounded-full"></div>
         <span class="text-sm text-zinc-400 text-zinc-400">
-          Assigned to: <span class="font-medium text-white text-white">{{ character.user.username }}</span>
+          {{ t('assignedTo') }} <span class="font-medium text-white text-white">{{ character.user.username }}</span>
         </span>
       </div>
       <div v-else class="flex items-center space-x-2">
         <div class="h-2 w-2 bg-yellow-500 rounded-full"></div>
-        <span class="text-sm text-zinc-400 text-zinc-400">Unassigned</span>
+        <span class="text-sm text-zinc-400 text-zinc-400">{{ t('unassigned') }}</span>
       </div>
       
       <span v-if="character.createdAt" class="text-xs text-gray-400">
-        Created {{ formatDate(character.createdAt) }}
+        {{ t('created') }} {{ formatDate(character.createdAt) }}
       </span>
     </div>
 
@@ -135,7 +135,7 @@
         block
         @click="$emit('view', character)"
       >
-        View Sheet
+        {{ t('viewSheet') }}
       </UButton>
     </div>
 
@@ -148,6 +148,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useTranslations()
+
 interface Character {
   id: number
   playerName?: string
@@ -220,26 +222,26 @@ const isHealthy = computed(() => healthPercentage.value > 75)
 const menuItems = computed(() => [
   [
     {
-      label: 'View Details',
+      label: t('viewDetails'),
       icon: 'i-heroicons-eye',
       click: () => emit('view', props.character)
     },
     {
-      label: 'Edit Character',
+      label: t('editCharacter'),
       icon: 'i-heroicons-pencil',
       click: () => emit('edit', props.character)
     }
   ],
   ...(isDM.value ? [[
     {
-      label: props.character.user ? 'Reassign' : 'Assign',
+      label: props.character.user ? t('reassign') : t('assign'),
       icon: 'i-heroicons-user-plus',
       click: () => emit('assign', props.character)
     }
   ]] : []),
   [
     {
-      label: 'Delete Character',
+      label: t('deleteCharacter'),
       icon: 'i-heroicons-trash',
       click: () => emit('delete', props.character)
     }
@@ -248,18 +250,18 @@ const menuItems = computed(() => [
 
 // Utility functions
 function formatDate(dateString?: string) {
-  if (!dateString) return 'Unknown'
+  if (!dateString) return t('unknown')
   
   const date = new Date(dateString)
   const now = new Date()
   const diffTime = Math.abs(now.getTime() - date.getTime())
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   
-  if (diffDays === 1) return 'Today'
-  if (diffDays === 2) return 'Yesterday'
-  if (diffDays <= 7) return `${diffDays - 1} days ago`
-  if (diffDays <= 30) return `${Math.ceil(diffDays / 7)} weeks ago`
-  if (diffDays <= 365) return `${Math.ceil(diffDays / 30)} months ago`
-  return `${Math.ceil(diffDays / 365)} years ago`
+  if (diffDays === 1) return t('today')
+  if (diffDays === 2) return t('yesterday')
+  if (diffDays <= 7) return `${diffDays - 1} ${t('daysAgo')}`
+  if (diffDays <= 30) return `${Math.ceil(diffDays / 7)} ${t('weeksAgo')}`
+  if (diffDays <= 365) return `${Math.ceil(diffDays / 30)} ${t('monthsAgo')}`
+  return `${Math.ceil(diffDays / 365)} ${t('yearsAgo')}`
 }
 </script>

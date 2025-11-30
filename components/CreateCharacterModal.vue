@@ -15,7 +15,7 @@
       <template #header>
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold text-white text-white">
-            Create New Character
+            {{ t('createNewCharacter') }}
           </h3>
           <UButton
             color="gray"
@@ -29,17 +29,17 @@
       <form @submit.prevent="submitForm" class="space-y-6">
         <!-- Player and Character Name -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UFormGroup label="Player Name" name="playerName">
+          <UFormGroup :label="t('playerName')" name="playerName">
             <UInput
               v-model="form.playerName"
-              placeholder="Enter player name"
+              :placeholder="t('enterPlayerName')"
             />
           </UFormGroup>
           
-          <UFormGroup label="Character Name" name="characterName" required>
+          <UFormGroup :label="t('characterName')" name="characterName" required>
             <UInput
               v-model="form.characterName"
-              placeholder="Enter character name"
+              :placeholder="t('enterCharacterName')"
               required
             />
           </UFormGroup>
@@ -47,31 +47,31 @@
 
         <!-- Race and Subrace -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UFormGroup label="Race" name="race">
+          <UFormGroup :label="t('race')" name="race">
             <UInput
               v-model="form.race"
-              placeholder="Enter race (e.g., Human, Elf, Custom Race)"
+              :placeholder="t('enterRace')"
             />
           </UFormGroup>
           
-          <UFormGroup label="Subrace" name="subrace">
+          <UFormGroup :label="t('subrace')" name="subrace">
             <UInput
               v-model="form.subrace"
-              placeholder="Enter subrace (optional)"
+              :placeholder="t('enterSubrace')"
             />
           </UFormGroup>
         </div>
 
         <!-- Class and Level -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UFormGroup label="Class" name="className">
+          <UFormGroup :label="t('class')" name="className">
             <UInput
               v-model="form.className"
-              placeholder="Enter class (e.g., Fighter, Wizard, Custom Class)"
+              :placeholder="t('enterClass')"
             />
           </UFormGroup>
           
-          <UFormGroup label="Level" name="classLevel">
+          <UFormGroup :label="t('level')" name="classLevel">
             <UInput
               v-model.number="form.classLevel"
               type="number"
@@ -84,23 +84,23 @@
 
         <!-- Background and Alignment -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <UFormGroup label="Background" name="background">
+          <UFormGroup :label="t('background')" name="background">
             <UInput
               v-model="form.background"
-              placeholder="Enter background (e.g., Soldier, Noble, Custom)"
+              :placeholder="t('enterBackground')"
             />
           </UFormGroup>
           
-          <UFormGroup label="Alignment" name="alignment">
+          <UFormGroup :label="t('alignment')" name="alignment">
             <UInput
               v-model="form.alignment"
-              placeholder="Enter alignment (e.g., Lawful Good, Custom)"
+              :placeholder="t('enterAlignment')"
             />
           </UFormGroup>
         </div>
 
         <!-- Character Image -->
-        <UFormGroup label="Character Image" name="avatar">
+        <UFormGroup :label="t('characterPortrait')" name="avatar">
           <div class="flex items-center space-x-4">
             <UAvatar
               :src="form.avatar || '/placeholder-character.png'"
@@ -110,10 +110,10 @@
             <div class="flex-1">
               <UInput
                 v-model="form.avatar"
-                placeholder="Enter image URL"
+                :placeholder="t('enterImageUrl')"
               />
               <p class="text-xs text-gray-500 mt-1">
-                Paste an image URL or upload to an image hosting service
+                {{ t('pasteImageUrl') }}
               </p>
             </div>
           </div>
@@ -124,10 +124,10 @@
           <template #ability-scores>
             <div class="p-4 space-y-4">
               <h4 class="text-md font-semibold text-white text-white mb-4">
-                Ability Scores
+                {{ t('abilityScores') }}
               </h4>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <UFormGroup label="Strength" name="strength">
+                <UFormGroup :label="t('strength')" name="strength">
                   <div class="flex items-center space-x-2">
                     <UInput
                       v-model.number="form.strength"
@@ -147,7 +147,7 @@
                   </div>
                 </UFormGroup>
                 
-                <UFormGroup label="Dexterity" name="dexterity">
+                <UFormGroup :label="t('dexterity')" name="dexterity">
                   <div class="flex items-center space-x-2">
                     <UInput
                       v-model.number="form.dexterity"
@@ -167,7 +167,7 @@
                   </div>
                 </UFormGroup>
                 
-                <UFormGroup label="Constitution" name="constitution">
+                <UFormGroup :label="t('constitution')" name="constitution">
                   <div class="flex items-center space-x-2">
                     <UInput
                       v-model.number="form.constitution"
@@ -187,7 +187,7 @@
                   </div>
                 </UFormGroup>
                 
-                <UFormGroup label="Intelligence" name="intelligence">
+                <UFormGroup :label="t('intelligence')" name="intelligence">
                   <div class="flex items-center space-x-2">
                     <UInput
                       v-model.number="form.intelligence"
@@ -207,7 +207,7 @@
                   </div>
                 </UFormGroup>
                 
-                <UFormGroup label="Wisdom" name="wisdom">
+                <UFormGroup :label="t('wisdom')" name="wisdom">
                   <div class="flex items-center space-x-2">
                     <UInput
                       v-model.number="form.wisdom"
@@ -227,7 +227,7 @@
                   </div>
                 </UFormGroup>
                 
-                <UFormGroup label="Charisma" name="charisma">
+                <UFormGroup :label="t('charisma')" name="charisma">
                   <div class="flex items-center space-x-2">
                     <UInput
                       v-model.number="form.charisma"
@@ -249,7 +249,7 @@
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                <UFormGroup label="Proficiency Bonus" name="proficiencyBonus">
+                <UFormGroup :label="t('proficiencyBonus')" name="proficiencyBonus">
                   <UInput
                     v-model.number="form.proficiencyBonus"
                     type="number"
@@ -259,7 +259,7 @@
                   />
                 </UFormGroup>
                 
-                <UFormGroup label="Passive Perception" name="passivePerception">
+                <UFormGroup :label="t('passivePerception')" name="passivePerception">
                   <UInput
                     v-model.number="form.passivePerception"
                     type="number"
@@ -278,7 +278,7 @@
             <div class="p-4 space-y-4">
               <div class="flex items-center justify-between mb-4">
                 <h4 class="text-md font-semibold text-white text-white">
-                  Skills & Abilities
+                  {{ t('skillsAndAbilities') }}
                 </h4>
                 <UButton
                   color="primary"
@@ -287,7 +287,7 @@
                   icon="i-heroicons-plus"
                   @click="addNewSkill"
                 >
-                  Add Skill
+                  {{ t('addSkill') }}
                 </UButton>
               </div>
               
@@ -297,37 +297,37 @@
                   :key="index"
                   class="grid grid-cols-1 lg:grid-cols-5 gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
                 >
-                  <UFormGroup label="Name" name="skillName">
+                  <UFormGroup :label="t('name')" name="skillName">
                     <UInput
                       v-model="skill.name"
-                      placeholder="Skill name"
+                      :placeholder="t('skillName')"
                     />
                   </UFormGroup>
                   
-                  <UFormGroup label="Ability" name="skillAbility">
+                  <UFormGroup :label="t('ability')" name="skillAbility">
                     <USelect
                       v-model="skill.ability"
                       :options="abilityOptions"
-                      placeholder="Choose ability"
+                      :placeholder="t('chooseAbility')"
                     />
                   </UFormGroup>
                   
-                  <UFormGroup label="Category" name="skillCategory">
+                  <UFormGroup :label="t('category')" name="skillCategory">
                     <USelect
                       v-model="skill.category"
                       :options="skillCategoryOptions"
-                      placeholder="Category"
+                      :placeholder="t('category')"
                     />
                   </UFormGroup>
                   
                   <div class="flex items-end space-x-2">
                     <UCheckbox
                       v-model="skill.proficient"
-                      label="Proficient"
+                      :label="t('proficient')"
                     />
                     <UCheckbox
                       v-model="skill.expertise"
-                      label="Expertise"
+                      :label="t('expertise')"
                       :disabled="!skill.proficient"
                     />
                   </div>
@@ -340,16 +340,16 @@
                       icon="i-heroicons-trash"
                       @click="removeSkill(index)"
                     >
-                      Remove
+                      {{ t('remove') }}
                     </UButton>
                   </div>
                   
                   <!-- Description for custom skills -->
                   <div v-if="skill.category === 'OTRO'" class="lg:col-span-5">
-                    <UFormGroup label="Description" name="skillDescription">
+                    <UFormGroup :label="t('description')" name="skillDescription">
                       <UTextarea
                         v-model="skill.description"
-                        placeholder="Describe what this skill does..."
+                        :placeholder="t('skillDescriptionPlaceholder')"
                         :rows="2"
                       />
                     </UFormGroup>
@@ -358,7 +358,7 @@
               </div>
               
               <div v-else class="text-center text-gray-500 dark:text-gray-400 py-8">
-                No skills added yet. Click "Add Skill" to get started.
+                {{ t('noSkillsAdded') }}
               </div>
             </div>
           </template>
@@ -368,7 +368,7 @@
         <UAccordion :items="accordionItems" multiple>
           <template #basic-stats>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
-              <UFormGroup label="Max HP" name="maxHp">
+              <UFormGroup :label="t('maxHp')" name="maxHp">
                 <UInput
                   v-model.number="form.maxHp"
                   type="number"
@@ -377,7 +377,7 @@
                 />
               </UFormGroup>
               
-              <UFormGroup label="Armor Class" name="armorClass">
+              <UFormGroup :label="t('ac')" name="armorClass">
                 <UInput
                   v-model.number="form.armorClass"
                   type="number"
@@ -386,7 +386,7 @@
                 />
               </UFormGroup>
               
-              <UFormGroup label="Speed" name="speed">
+              <UFormGroup :label="t('speed')" name="speed">
                 <UInput
                   v-model.number="form.speed"
                   type="number"
@@ -395,7 +395,7 @@
                 />
               </UFormGroup>
               
-              <UFormGroup label="Initiative" name="initiative">
+              <UFormGroup :label="t('initiative')" name="initiative">
                 <UInput
                   v-model.number="form.initiative"
                   type="number"
@@ -407,7 +407,7 @@
           
           <template #physical>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
-              <UFormGroup label="Age" name="age">
+              <UFormGroup :label="t('age')" name="age">
                 <UInput
                   v-model.number="form.age"
                   type="number"
@@ -416,35 +416,35 @@
                 />
               </UFormGroup>
               
-              <UFormGroup label="Height" name="height">
+              <UFormGroup :label="t('height')" name="height">
                 <UInput
                   v-model="form.height"
                   placeholder="5'10&quot;"
                 />
               </UFormGroup>
               
-              <UFormGroup label="Weight" name="weight">
+              <UFormGroup :label="t('weight')" name="weight">
                 <UInput
                   v-model="form.weight"
                   placeholder="180 lbs"
                 />
               </UFormGroup>
               
-              <UFormGroup label="Eyes" name="eyes">
+              <UFormGroup :label="t('eyes')" name="eyes">
                 <UInput
                   v-model="form.eyes"
                   placeholder="Brown"
                 />
               </UFormGroup>
               
-              <UFormGroup label="Skin" name="skin">
+              <UFormGroup :label="t('skin')" name="skin">
                 <UInput
                   v-model="form.skin"
                   placeholder="Tan"
                 />
               </UFormGroup>
               
-              <UFormGroup label="Hair" name="hair">
+              <UFormGroup :label="t('hair')" name="hair">
                 <UInput
                   v-model="form.hair"
                   placeholder="Black"
@@ -462,7 +462,7 @@
             variant="outline"
             @click="closeModal"
           >
-            Cancel
+            {{ t('cancel') }}
           </UButton>
           <UButton
             color="primary"
@@ -470,7 +470,7 @@
             :loading="isSubmitting"
             :disabled="!isFormValid"
           >
-            Create Character
+            {{ t('createCharacter') }}
           </UButton>
         </div>
       </template>
@@ -479,6 +479,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useTranslations()
+
 interface Character {
   id: number
   playerName?: string
@@ -584,53 +586,53 @@ function getModifierColor(modifier: number): string {
   return 'red'
 }
 
-const abilityScoreItems = [
+const abilityScoreItems = computed(() => [
   {
-    label: 'Ability Scores & Modifiers',
+    label: t('abilityScores'),
     icon: 'i-heroicons-chart-bar',
     slot: 'ability-scores',
     defaultOpen: true
   }
-]
+])
 
-const skillsItems = [
+const skillsItems = computed(() => [
   {
-    label: 'Skills & Abilities',
+    label: t('skillsAndAbilities'),
     icon: 'i-heroicons-academic-cap',
     slot: 'skills',
     defaultOpen: false
   }
-]
+])
 
-const accordionItems = [
+const accordionItems = computed(() => [
   {
-    label: 'Basic Combat Stats',
+    label: t('basicCombatStats'),
     icon: 'i-heroicons-shield-check',
     slot: 'basic-stats',
     defaultOpen: false
   },
   {
-    label: 'Physical Characteristics',
+    label: t('physicalCharacteristics'),
     icon: 'i-heroicons-user',
     slot: 'physical',
     defaultOpen: false
   }
-]
+])
 
-const abilityOptions = [
-  { label: 'Strength', value: 'strength' },
-  { label: 'Dexterity', value: 'dexterity' },
-  { label: 'Constitution', value: 'constitution' },
-  { label: 'Intelligence', value: 'intelligence' },
-  { label: 'Wisdom', value: 'wisdom' },
-  { label: 'Charisma', value: 'charisma' }
-]
+const abilityOptions = computed(() => [
+  { label: t('strength'), value: 'strength' },
+  { label: t('dexterity'), value: 'dexterity' },
+  { label: t('constitution'), value: 'constitution' },
+  { label: t('intelligence'), value: 'intelligence' },
+  { label: t('wisdom'), value: 'wisdom' },
+  { label: t('charisma'), value: 'charisma' }
+])
 
-const skillCategoryOptions = [
-  { label: 'Daño', value: 'DANO' },
-  { label: 'Ayuda', value: 'AYUDA' },
-  { label: 'Otro', value: 'OTRO' }
-]
+const skillCategoryOptions = computed(() => [
+  { label: t('damageTypeLabel'), value: 'DANO' },
+  { label: t('help'), value: 'AYUDA' },
+  { label: t('other'), value: 'OTRO' }
+])
 
 // Skill management functions
 function addNewSkill() {
@@ -739,8 +741,8 @@ async function submitForm() {
       // Show success notification
       const toast = useToast()
       toast.add({
-        title: 'Character Created',
-        description: `${form.value.characterName} has been created successfully!`,
+        title: t('characterCreated'),
+        description: `${form.value.characterName} ${t('characterCreatedDesc')}`,
         color: 'green'
       })
     } else {
@@ -752,8 +754,8 @@ async function submitForm() {
     // Show error notification
     const toast = useToast()
     toast.add({
-      title: 'Error',
-      description: error.data?.message || error.message || 'Failed to create character. Please try again.',
+      title: t('error'),
+      description: error.data?.message || error.message || t('errorCreatingCharacterDesc'),
       color: 'red'
     })
   } finally {
