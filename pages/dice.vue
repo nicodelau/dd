@@ -556,6 +556,67 @@
                       </div>
                     </div>
                   </div>
+
+                  <!-- Attacks -->
+                  <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h6 class="text-sm font-medium text-white text-white flex items-center gap-2">
+                        <UIcon name="i-heroicons-bolt" class="w-4 h-4 text-red-500" />
+                        {{ t('attacks') }}
+                      </h6>
+                    </div>
+                    
+                    <div v-if="activeCharacter.attacks && activeCharacter.attacks.length > 0" class="space-y-2">
+                      <div v-for="attack in activeCharacter.attacks" :key="attack.id || attack.name"
+                        class="bg-gray-100 dark:bg-gray-700 rounded p-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <h5 class="font-medium text-white text-white text-sm">
+                            {{ attack.name || t('unnamedAttack') }}
+                          </h5>
+                          <div class="flex items-center space-x-1">
+                            <UButton color="blue" size="xs" @click="rollAttack(attack)" :loading="isRollingAttack"
+                              icon="i-heroicons-cube">
+                              {{ t('attack') }}
+                            </UButton>
+                            <UButton v-if="attack.damage" color="red" size="xs" @click="rollDamage(attack)"
+                              :loading="isRollingAttack" icon="i-heroicons-fire">
+                              {{ t('damage') }}
+                            </UButton>
+                          </div>
+                        </div>
+                        <div class="text-xs text-gray-600 text-zinc-400 space-y-1">
+                          <div v-if="attack.attackBonus !== undefined" class="flex justify-between">
+                            <span class="font-medium">{{ t('attackBonus') }}:</span>
+                            <span class="font-mono">{{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}</span>
+                          </div>
+                          <div v-if="attack.damage" class="flex justify-between">
+                            <span class="font-medium">{{ t('damage') }}:</span> 
+                            <span class="font-mono">{{ attack.damage }}</span>
+                          </div>
+                          <div v-if="attack.damageType" class="flex justify-between">
+                            <span class="font-medium">{{ t('damageType') }}:</span> 
+                            <span>{{ attack.damageType }}</span>
+                          </div>
+                          <div v-if="attack.rangeText" class="flex justify-between">
+                            <span class="font-medium">{{ t('range') }}:</span> 
+                            <span>{{ attack.rangeText }}</span>
+                          </div>
+                          <div v-if="attack.properties" class="flex justify-between">
+                            <span class="font-medium">{{ t('properties') }}:</span> 
+                            <span>{{ attack.properties }}</span>
+                          </div>
+                          <div v-if="attack.notes" class="text-xs mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            {{ attack.notes }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
+                      <UIcon name="i-heroicons-bolt-slash" class="w-6 h-6 mx-auto mb-2 text-zinc-600" />
+                      {{ t('noAttacksConfigured') }}
+                    </div>
+                  </div>
                 </div>
 
                 <div v-else class="text-center py-8">
