@@ -3470,32 +3470,38 @@ async function syncRollHistory(roomCode?: string) {
     console.log('🎲 Syncing roll history for room:', roomCode)
     const response = await $fetch(`/api/dice/rooms/${roomCode}/state?userId=${userId.value}`)
     
-    if (response.rollHistory && Array.isArray(response.rollHistory)) {
-      // Process synced rolls to ensure proper timestamps and diceResults
-      const processedRolls = response.rollHistory.map((roll: any) => {
-        // Ensure diceResults exists (for backward compatibility)
-        let diceResults = roll.diceResults
-        if (!diceResults && roll.diceRolled) {
-          diceResults = []
-          roll.diceRolled.forEach((dice: any) => {
-            dice.results.forEach((result: number) => {
-              diceResults!.push({ type: dice.type, result })
+      if (response.rollHistory && Array.isArray(response.rollHistory)) {
+        // Process synced rolls to ensure proper timestamps and diceResults
+        const processedRolls = response.rollHistory.map((roll: any) => {
+          // Ensure diceResults exists (for backward compatibility)
+          let diceResults = roll.diceResults
+          if (!diceResults && roll.diceRolled) {
+            diceResults = []
+            roll.diceRolled.forEach((dice: any) => {
+              dice.results.forEach((result: number) => {
+                diceResults!.push({ type: dice.type, result })
+              })
             })
-          })
-        }
+          }
 
-        return {
-          ...roll,
-          timestamp: new Date(roll.timestamp),
-          isOwn: roll.userId === userId.value,
-          diceResults: diceResults || []
-        }
-      })
+          return {
+            ...roll,
+            timestamp: new Date(roll.timestamp),
+            isOwn: roll.userId === userId.value,
+            diceResults: diceResults || []
+          }
+        })
 
-      // Replace current history with synced history
-      rollHistory.value = processedRolls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      console.log('🎲 Roll history synced manually from server')
-    }
+        // Merge with existing history, avoiding duplicates
+        const existingIds = new Set(rollHistory.value.map(r => r.id))
+        const newRolls = processedRolls.filter((roll: any) => !existingIds.has(roll.id))
+        
+        // Combine and sort by timestamp (newest first)
+        rollHistory.value = [...newRolls, ...rollHistory.value]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        
+        console.log(`🎲 Roll history synced: added ${newRolls.length} new rolls`)
+      }
   } catch (error) {
     console.error('Failed to sync roll history:', error)
   }
@@ -3988,9 +3994,15 @@ function initializeSSE(roomCode?: string) {
           }
         })
 
-        // Replace current history with synced history
-        rollHistory.value = processedRolls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        console.log('🎲 Roll history synced with server')
+        // Merge with existing history, avoiding duplicates
+        const existingIds = new Set(rollHistory.value.map(r => r.id))
+        const newRolls = processedRolls.filter((roll: any) => !existingIds.has(roll.id))
+        
+        // Combine and sort by timestamp (newest first)
+        rollHistory.value = [...newRolls, ...rollHistory.value]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        
+        console.log(`🎲 Roll history synced: added ${newRolls.length} new rolls`)
       }
     })
 
@@ -4020,9 +4032,15 @@ function initializeSSE(roomCode?: string) {
           }
         })
 
-        // Replace current history with synced history
-        rollHistory.value = processedRolls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        console.log('🎲 Roll history synced from room state')
+        // Merge with existing history, avoiding duplicates
+        const existingIds = new Set(rollHistory.value.map(r => r.id))
+        const newRolls = processedRolls.filter((roll: any) => !existingIds.has(roll.id))
+        
+        // Combine and sort by timestamp (newest first)
+        rollHistory.value = [...newRolls, ...rollHistory.value]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        
+        console.log(`🎲 Roll history synced from room state: added ${newRolls.length} new rolls`)
       }
     })
 
