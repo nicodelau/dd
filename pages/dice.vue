@@ -3947,6 +3947,38 @@ function initializeSSE(roomCode?: string) {
       }
     })
 
+    // Handle room state sync (for reconnection scenarios)
+    window.addEventListener('room:state:sync', (event) => {
+      const data = (event as any).detail
+      
+      if (data.rollHistory && Array.isArray(data.rollHistory)) {
+        // Process synced rolls to ensure proper timestamps and diceResults
+        const processedRolls = data.rollHistory.map((roll: any) => {
+          // Ensure diceResults exists (for backward compatibility)
+          let diceResults = roll.diceResults
+          if (!diceResults && roll.diceRolled) {
+            diceResults = []
+            roll.diceRolled.forEach((dice: any) => {
+              dice.results.forEach((result: number) => {
+                diceResults!.push({ type: dice.type, result })
+              })
+            })
+          }
+
+          return {
+            ...roll,
+            timestamp: new Date(roll.timestamp),
+            isOwn: roll.userId === userId.value,
+            diceResults: diceResults || []
+          }
+        })
+
+        // Replace current history with synced history
+        rollHistory.value = processedRolls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        console.log('🎲 Roll history synced from room state')
+      }
+    })
+
     eventSource.value.addEventListener('heartbeat', (event) => {
       const data = JSON.parse(event.data)
       // Optional: Update user count from heartbeat
