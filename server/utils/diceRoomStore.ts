@@ -319,13 +319,21 @@ class DiceRoomStore {
       throw new Error(`Room with code ${roomCode} already exists`)
     }
 
-    // Check DB
-    if (!prisma.diceRoom) {
-        console.error('❌ Critical Error: prisma.diceRoom is undefined. The Prisma Client likely needs a restart or regeneration.')
-        throw new Error('Database model DiceRoom is missing. Please restart the server.')
+    // Check DB with fallback
+    let existing = null
+    try {
+      if (!prisma.diceRoom) {
+          console.error('❌ Critical Error: prisma.diceRoom is undefined. Available models:', 
+              Object.keys(prisma).filter(k => typeof (prisma as any)[k] === 'object' && (prisma as any)[k] !== null))
+          throw new Error('Database model DiceRoom is missing. Please restart the server.')
+      }
+      existing = await prisma.diceRoom.findUnique({ where: { code: roomCode } })
+    } catch (dbError) {
+      console.error('❌ Database error in createRoom:', dbError)
+      // In production, if DB is unavailable, we can still create in-memory room as fallback
+      console.warn('⚠️ Creating room in-memory only due to DB unavailability')
     }
-
-    const existing = await prisma.diceRoom.findUnique({ where: { code: roomCode } })
+    
     if (existing) {
         throw new Error(`Room with code ${roomCode} already exists`)
     }
@@ -343,20 +351,22 @@ class DiceRoomStore {
       sseConnections: new Map()
     }
     
-    // Persist to DB
+    // Persist to DB (optional in fallback mode)
     try {
-        await prisma.diceRoom.create({
-            data: {
-                id: roomId,
-                code: roomCode,
-                name: roomName,
-                createdBy: creatorUserId,
-                updatedAt: new Date()
-            }
-        })
+        if (prisma.diceRoom) {
+            await prisma.diceRoom.create({
+                data: {
+                    id: roomId,
+                    code: roomCode,
+                    name: roomName,
+                    createdBy: creatorUserId,
+                    updatedAt: new Date()
+                }
+            })
+        }
     } catch (e) {
-        console.error('Failed to create room in DB', e)
-        throw e
+        console.error('Failed to create room in DB, continuing with in-memory only:', e)
+        // Don't throw error - allow room to exist in memory
     }
     
     this.rooms.set(roomCode, room)
