@@ -248,12 +248,14 @@ const handleLogin = async () => {
       color: 'green'
     })
     
-    // Redirect based on user role
-    if (user.role === 'ADMIN' || user.role === 'DM') {
-      await router.push('/dashboard')
-    } else {
-      await router.push('/')
-    }
+    // Check if there's a stored redirect path
+    const redirectPath = useState('redirectPath')
+    const targetPath = redirectPath.value || (user.role === 'ADMIN' || user.role === 'DM' ? '/dashboard' : '/')
+    
+    // Clear the stored redirect path
+    redirectPath.value = null
+    
+    await router.push(targetPath)
     
   } catch (error: any) {
     console.error('Login error:', error)
