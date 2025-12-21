@@ -320,6 +320,11 @@ class DiceRoomStore {
     }
 
     // Check DB
+    if (!prisma.diceRoom) {
+        console.error('❌ Critical Error: prisma.diceRoom is undefined. The Prisma Client likely needs a restart or regeneration.')
+        throw new Error('Database model DiceRoom is missing. Please restart the server.')
+    }
+
     const existing = await prisma.diceRoom.findUnique({ where: { code: roomCode } })
     if (existing) {
         throw new Error(`Room with code ${roomCode} already exists`)
