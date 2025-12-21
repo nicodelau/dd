@@ -3468,7 +3468,7 @@ async function syncRollHistory(roomCode?: string) {
   
   try {
     console.log('🎲 Syncing roll history for room:', roomCode)
-    const response = await $fetch(`/api/dice/rooms/${roomCode}/state`)
+    const response = await $fetch(`/api/dice/rooms/${roomCode}/state?userId=${userId.value}`)
     
     if (response.rollHistory && Array.isArray(response.rollHistory)) {
       // Process synced rolls to ensure proper timestamps and diceResults
