@@ -10,6 +10,7 @@ interface ConnectionConfig {
   reconnectOnHeartbeatFail: boolean
   connectionTimeout: number
   stateSync: boolean
+  enableHeartbeatTimeout?: boolean // Disable heartbeat timeout completely
 }
 
 interface ConnectionState {
@@ -38,7 +39,8 @@ export const useConnectionManager = () => {
     heartbeatInterval: 15000, // 15 seconds (matching server)
     reconnectOnHeartbeatFail: true,
     connectionTimeout: 15000, // 15 seconds
-    stateSync: true
+    stateSync: true,
+    enableHeartbeatTimeout: false // Disable heartbeat timeout by default
   }
 
   // Reactive state
@@ -248,33 +250,36 @@ export const useConnectionManager = () => {
       clearTimeout(heartbeatTimer)
     }
 
-    // Set timeout to 2.5x the heartbeat interval (grace period)
-    const timeoutDuration = config.value.heartbeatInterval * 2.5
+    // Set timeout to 120x the heartbeat interval (30 minutes grace period)
+    const timeoutDuration = config.value.heartbeatInterval * 120
 
-    heartbeatTimer = setTimeout(() => {
-      if (connectionState.value.status === 'connected') {
-        const timeSinceLastHeartbeat = connectionState.value.lastHeartbeat 
-          ? Date.now() - connectionState.value.lastHeartbeat.getTime()
-          : timeoutDuration // Fallback
+    // Only set heartbeat timer if timeout is enabled
+    if (config.value.enableHeartbeatTimeout !== false) {
+      heartbeatTimer = setTimeout(() => {
+        if (connectionState.value.status === 'connected') {
+          const timeSinceLastHeartbeat = connectionState.value.lastHeartbeat 
+            ? Date.now() - connectionState.value.lastHeartbeat.getTime()
+            : timeoutDuration // Fallback
 
-        if (timeSinceLastHeartbeat > timeoutDuration) {
-          console.warn('⚡ Heartbeat timeout detected')
-          connectionState.value.quality = 'criticalConnection'
-          
-          if (config.value.reconnectOnHeartbeatFail && !isManuallyDisconnected) {
-            connectionState.value.lastError = 'Heartbeat timeout'
-            // Force reconnection by triggering error
-            if (eventSource) {
-              eventSource.close()
+          if (timeSinceLastHeartbeat > timeoutDuration) {
+            console.warn('⚡ Heartbeat timeout detected')
+            connectionState.value.quality = 'criticalConnection'
+            
+            if (config.value.reconnectOnHeartbeatFail && !isManuallyDisconnected) {
+              connectionState.value.lastError = 'Heartbeat timeout'
+              // Force reconnection by triggering error
+              if (eventSource) {
+                eventSource.close()
+              }
+              // Trigger manual reconnect schedule if needed, utilizing stored params
+               if (connectionParams.value) {
+                  scheduleReconnect(connectionParams.value)
+               }
             }
-            // Trigger manual reconnect schedule if needed, utilizing stored params
-             if (connectionParams.value) {
-                scheduleReconnect(connectionParams.value)
-             }
           }
         }
-      }
-    }, timeoutDuration) 
+      }, timeoutDuration)
+    } 
   }
 
   /**
