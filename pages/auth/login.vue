@@ -252,6 +252,9 @@ const handleLogin = async () => {
     const redirectPath = useState('redirectPath')
     const targetPath = redirectPath.value || (user.role === 'ADMIN' || user.role === 'DM' ? '/dashboard' : '/')
     
+    console.log('🔀 Login: redirectPath.value =', redirectPath.value)
+    console.log('🔀 Login: targetPath =', targetPath)
+    
     // Clear the stored redirect path
     redirectPath.value = null
     
