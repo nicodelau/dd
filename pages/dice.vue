@@ -5,8 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-4">
-            <UButton :to="(user?.role === 'DM' || user?.role === 'ADMIN') ? '/dashboard' : '/'" color="gray"
-              variant="ghost" icon="i-heroicons-arrow-left" size="sm">
+            <UButton :to="(user?.role === 'DM' || user?.role === 'ADMIN') ? '/dashboard' : '/'" color="gray" variant="ghost" icon="i-heroicons-arrow-left" size="sm">
               {{ t('backToDashboard') }}
             </UButton>
 
@@ -40,19 +39,10 @@
             </UButton>
 
             <div class="flex items-center space-x-2">
-              <div class="h-3 w-3 rounded-full" :class="{
-                'bg-green-500': isConnected,
-                'bg-yellow-500': isOfflineMode,
-                'bg-orange-500 animate-pulse': isReconnecting,
-                'bg-red-500': !isConnected && !isOfflineMode && !isReconnecting
-              }"></div>
+              <div class="h-3 w-3 rounded-full"
+                :class="isConnected ? 'bg-green-500' : isOfflineMode ? 'bg-yellow-500' : 'bg-red-500'"></div>
               <span class="text-sm text-gray-600 dark:text-gray-300">
-                <template v-if="isReconnecting">
-                  {{ t('reconnecting') }} ({{ reconnectAttempts }}/{{ maxReconnectAttempts }})
-                </template>
-                <template v-else>
-                  {{ isConnected ? t('connected') : isOfflineMode ? t('offlineMode') : t('disconnected') }}
-                </template>
+                {{ isConnected ? t('connected') : isOfflineMode ? t('offlineMode') : t('disconnected') }}
               </span>
               <UButton v-if="!isConnected || isOfflineMode" color="yellow" variant="ghost" size="xs"
                 :icon="isOfflineModePreference ? 'i-heroicons-wifi' : 'i-heroicons-wifi-slash'"
@@ -73,8 +63,7 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Toolbar (Sidebar Toggles & Room Actions) -->
-      <div
-        class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-lg border border-zinc-800">
         <!-- Sidebar Toggles -->
         <div class="flex items-center space-x-2">
           <UButton color="blue" variant="outline" @click="isLeftSidebarOpen = !isLeftSidebarOpen"
@@ -83,8 +72,7 @@
           </UButton>
           <UButton color="green" variant="outline" @click="isRightSidebarOpen = !isRightSidebarOpen"
             :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'">
-            {{ isRightSidebarOpen ? t('hide') : t('show') }} {{ userRole === 'DM' ? t('requestDices') : t('abilities')
-            }}
+            {{ isRightSidebarOpen ? t('hide') : t('show') }} {{ userRole === 'DM' ? t('requestDices') : t('abilities') }}
           </UButton>
           <UButton v-if="userRole === 'DM'" color="purple" variant="outline" icon="i-heroicons-photo"
             @click="showDmImageModal = true">
@@ -94,7 +82,8 @@
 
         <!-- Room Actions -->
         <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
-          <UButton color="red" variant="outline" icon="i-heroicons-arrow-right-on-rectangle" @click="leaveRoom">
+          <UButton color="red" variant="outline" icon="i-heroicons-arrow-right-on-rectangle"
+            @click="leaveRoom">
             {{ t('leaveRoom') }}
           </UButton>
         </div>
@@ -176,8 +165,7 @@
           <div class="sticky top-0 bg-zinc-900 bg-zinc-900 border-b border-zinc-800 border-zinc-800 p-4">
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                <UIcon :name="userRole === 'DM' ? 'i-heroicons-users' : 'i-heroicons-user'"
-                  class="w-5 h-5 text-red-500" />
+                <UIcon :name="userRole === 'DM' ? 'i-heroicons-users' : 'i-heroicons-user'" class="w-5 h-5 text-red-500" />
                 {{ userRole === 'DM' ? t('playersInfo') : t('characterInfo') }}
               </h3>
               <UButton color="gray" variant="ghost" size="sm" @click="isLeftSidebarOpen = false"
@@ -313,9 +301,8 @@
               <div class="mb-4">
                 <div class="flex items-center justify-between">
                   <h4 class="font-medium text-white text-white">{{ t('playersHealth') }}</h4>
-                  <UButton v-if="!isOfflineMode && currentRoom && currentRoom.code !== 'default'" color="gray"
-                    variant="outline" size="xs" @click="loadAllPlayersStats(currentRoom.code)"
-                    icon="i-heroicons-arrow-path">
+                  <UButton v-if="!isOfflineMode && currentRoom && currentRoom.code !== 'default'" color="gray" variant="outline" size="xs"
+                    @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
                     {{ t('refresh') }}
                   </UButton>
                 </div>
@@ -534,8 +521,7 @@
                             getAbilityAbbr(ability)
                             }}</span>
                           <span v-if="getSavingThrowProficiency(ability, activeCharacter)"
-                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">{{
-                              t('prof') }}</span>
+                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded">{{ t('prof') }}</span>
                         </div>
                         <span class="text-sm font-mono text-gray-600 text-zinc-400">
                           {{ formatModifier(calculateSavingThrowModifierByAbility(ability, activeCharacter)) }}
@@ -550,8 +536,7 @@
                       <h6 class="text-sm font-medium text-white text-white">{{ t('skills') }}</h6>
                     </div>
                     <div class="mb-3">
-                      <UInput v-model="skillSearchQuery" icon="i-heroicons-magnifying-glass"
-                        :placeholder="t('searchSkills')" size="xs" color="gray" variant="outline" />
+                      <UInput v-model="skillSearchQuery" icon="i-heroicons-magnifying-glass" :placeholder="t('searchSkills')" size="xs" color="gray" variant="outline" />
                     </div>
                     <div class="space-y-1 max-h-64 overflow-y-auto">
                       <!-- Always show all standard D&D skills -->
@@ -561,11 +546,9 @@
                           <span class="text-sm font-medium text-white text-white truncate">{{ skill.name
                           }}</span>
                           <span v-if="skill.proficient"
-                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded flex-shrink-0">{{
-                              t('prof') }}</span>
+                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded flex-shrink-0">{{ t('prof') }}</span>
                           <span v-if="skill.expertise"
-                            class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0">{{
-                              t('exp') }}</span>
+                            class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0">{{ t('exp') }}</span>
                         </div>
                         <span class="text-xs font-mono text-gray-600 text-zinc-400 ml-2">
                           {{ formatModifier(calculateSkillModifierForSkill(skill, activeCharacter)) }}
@@ -582,7 +565,7 @@
                         {{ t('attacks') }}
                       </h6>
                     </div>
-
+                    
                     <div v-if="activeCharacter.attacks && activeCharacter.attacks.length > 0" class="space-y-2">
                       <div v-for="attack in activeCharacter.attacks" :key="attack.id || attack.name"
                         class="bg-gray-100 dark:bg-gray-700 rounded p-3">
@@ -604,23 +587,22 @@
                         <div class="text-xs text-gray-600 text-zinc-400 space-y-1">
                           <div v-if="attack.attackBonus !== undefined" class="flex justify-between">
                             <span class="font-medium">{{ t('attackBonus') }}:</span>
-                            <span class="font-mono">{{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus
-                            }}</span>
+                            <span class="font-mono">{{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}</span>
                           </div>
                           <div v-if="attack.damage" class="flex justify-between">
-                            <span class="font-medium">{{ t('damage') }}:</span>
+                            <span class="font-medium">{{ t('damage') }}:</span> 
                             <span class="font-mono">{{ attack.damage }}</span>
                           </div>
                           <div v-if="attack.damageType" class="flex justify-between">
-                            <span class="font-medium">{{ t('damageType') }}:</span>
+                            <span class="font-medium">{{ t('damageType') }}:</span> 
                             <span>{{ attack.damageType }}</span>
                           </div>
                           <div v-if="attack.rangeText" class="flex justify-between">
-                            <span class="font-medium">{{ t('range') }}:</span>
+                            <span class="font-medium">{{ t('range') }}:</span> 
                             <span>{{ attack.rangeText }}</span>
                           </div>
                           <div v-if="attack.properties" class="flex justify-between">
-                            <span class="font-medium">{{ t('properties') }}:</span>
+                            <span class="font-medium">{{ t('properties') }}:</span> 
                             <span>{{ attack.properties }}</span>
                           </div>
                           <div v-if="attack.notes" class="text-xs mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded">
@@ -629,7 +611,7 @@
                         </div>
                       </div>
                     </div>
-
+                    
                     <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
                       <UIcon name="i-heroicons-bolt-slash" class="w-6 h-6 mx-auto mb-2 text-zinc-600" />
                       {{ t('noAttacksConfigured') }}
@@ -652,8 +634,8 @@
                 <div class="mb-4">
                   <div class="flex items-center justify-between">
                     <h4 class="font-medium text-white text-white">{{ t('playerManagement') }}</h4>
-                    <UButton v-if="currentRoom && currentRoom.code !== 'default'" color="blue" variant="outline"
-                      size="xs" @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
+                    <UButton v-if="currentRoom && currentRoom.code !== 'default'" color="blue" variant="outline" size="xs"
+                      @click="loadAllPlayersStats(currentRoom.code)" icon="i-heroicons-arrow-path">
                       {{ t('refresh') }}
                     </UButton>
                   </div>
@@ -680,12 +662,10 @@
                     </div>
 
                     <div class="text-xs text-zinc-400 text-zinc-400 space-y-1">
-                      <div>{{ t('str') }}: {{ player.stats.abilities.strength }} | {{ t('dex') }}: {{
-                        player.stats.abilities.dexterity }} |
+                      <div>{{ t('str') }}: {{ player.stats.abilities.strength }} | {{ t('dex') }}: {{ player.stats.abilities.dexterity }} |
                         {{ t('con') }}: {{
                           player.stats.abilities.constitution }}</div>
-                      <div>{{ t('int') }}: {{ player.stats.abilities.intelligence }} | {{ t('wis') }}: {{
-                        player.stats.abilities.wisdom }} |
+                      <div>{{ t('int') }}: {{ player.stats.abilities.intelligence }} | {{ t('wis') }}: {{ player.stats.abilities.wisdom }} |
                         {{ t('cha') }}: {{
                           player.stats.abilities.charisma }}</div>
                     </div>
@@ -754,9 +734,7 @@
                         </div>
 
                         <div v-if="roll.isCritical" class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                          {{ roll.criticalType === 'success' ? `🎯 ${t('criticalSuccess')}` : `💥
-                          ${t('criticalFailure')}`
-                          }}
+                          {{ roll.criticalType === 'success' ? `🎯 ${t('criticalSuccess')}` : `💥 ${t('criticalFailure')}` }}
                         </div>
                       </div>
                       <!-- Sumatoria a la derecha -->
@@ -912,8 +890,7 @@
 
                             <div v-if="roll.isCritical"
                               class="text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                              {{ roll.criticalType === 'success' ? `🎯 ${t('criticalSuccess')}` : `💥
-                              ${t('criticalFailure')}` }}
+                              {{ roll.criticalType === 'success' ? `🎯 ${t('criticalSuccess')}` : `💥 ${t('criticalFailure')}` }}
                             </div>
                           </div>
                           <!-- Sumatoria a la derecha -->
@@ -977,8 +954,7 @@
                           <UIcon name="i-heroicons-information-circle"
                             class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                           <div>
-                            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">{{ t('battleSetupPhase') }}
-                            </h4>
+                            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">{{ t('battleSetupPhase') }}</h4>
                             <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
                               {{ t('battleSetupDesc') }}
                             </p>
@@ -998,16 +974,13 @@
 
                         <!-- Selected Players -->
                         <div v-if="selectedPlayers.length > 0" class="mb-3">
-                          <h5 class="text-xs font-medium text-green-900 dark:text-green-100 mb-2">{{
-                            t('selectedPlayers') }}
-                          </h5>
+                          <h5 class="text-xs font-medium text-green-900 dark:text-green-100 mb-2">{{ t('selectedPlayers') }}</h5>
                           <div class="space-y-1">
                             <div v-for="player in selectedPlayers" :key="player.userId"
                               class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
                               <div class="flex-1">
                                 <div class="font-medium text-green-900 dark:text-green-100">{{ player.name }}</div>
-                                <div class="text-xs text-green-700 dark:text-green-300">{{ t('readyForBattleStatus') }}
-                                </div>
+                                <div class="text-xs text-green-700 dark:text-green-300">{{ t('readyForBattleStatus') }}</div>
                               </div>
                               <UButton color="red" variant="ghost" size="xs"
                                 @click="removePlayerFromBattle(player.userId)" icon="i-heroicons-minus">
@@ -1018,8 +991,7 @@
 
                         <!-- Available Players -->
                         <div v-if="unselectedPlayers.length > 0" class="mb-3">
-                          <h5 class="text-xs font-medium text-gray-600 text-zinc-400 mb-2">{{ t('availablePlayers') }}
-                          </h5>
+                          <h5 class="text-xs font-medium text-gray-600 text-zinc-400 mb-2">{{ t('availablePlayers') }}</h5>
                           <div class="space-y-1">
                             <div v-for="player in unselectedPlayers" :key="player.userId"
                               class="flex items-center justify-between p-2 bg-zinc-950 bg-zinc-900 border border-zinc-800 border-zinc-800 rounded">
@@ -1244,8 +1216,7 @@
                           <UBadge
                             :color="battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type === 'player' ? 'blue' : 'red'"
                             variant="soft" class="mt-2">
-                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type ?
-                              t(battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type) : t('unknown') }}
+                            {{ battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type ? t(battleMode.initiativeOrder[battleMode.currentTurnIndex]?.type) : t('unknown') }}
                           </UBadge>
                         </div>
                       </div>
@@ -1344,6 +1315,318 @@
                       </div>
                     </div>
                   </UCard>
+
+                  <!-- DJ Music Control Panel (DM Only) -->
+                  <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default' && isConnected">
+                    <template #header>
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-white text-white">
+                          🎵 {{ t('djMusicControl') }}
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                          <UBadge v-if="musicState.isPlaying" color="green" variant="soft">
+                            {{ t('playing') }}
+                          </UBadge>
+                          <UBadge v-else-if="musicState.currentTrack" color="yellow" variant="soft">
+                            {{ t('paused') }}
+                          </UBadge>
+                          <UBadge v-else color="gray" variant="soft">
+                            {{ t('noTrack') }}
+                          </UBadge>
+                        </div>
+                      </div>
+                    </template>
+
+                    <div class="space-y-4">
+                      <!-- Add YouTube Track Section -->
+                      <div
+                        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">{{ t('addYoutubeTrack') }}</h4>
+                        <div class="space-y-3">
+                          <UInput v-model="newTrackUrl" :placeholder="t('pasteYoutubeUrl')"
+                            icon="i-heroicons-musical-note" />
+                          <div class="flex flex-wrap gap-2">
+                            <UButton color="blue" size="sm" @click="addTrackToPlaylist"
+                              :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
+                              icon="i-heroicons-plus">
+                              {{ t('addToPlaylist') }}
+                            </UButton>
+                            <UButton color="green" size="sm" @click="addAndPlayTrack"
+                              :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
+                              icon="i-heroicons-play">
+                              {{ t('addAndPlayNow') }}
+                            </UButton>
+                            <UButton color="purple" size="sm" @click="addTrackAsSoundEffect"
+                              :disabled="!newTrackUrl || isAddingTrack" :loading="isAddingTrack"
+                              icon="i-heroicons-speaker-wave">
+                              {{ t('addAsSoundEffect') }}
+                            </UButton>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Sound Effects Control Panel -->
+                      <div
+                        class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🔊 {{ t('soundEffectsControl') }}
+                        </h4>
+                        <div class="space-y-3">
+                          <!-- Sound Effects Volume Control -->
+                          <div>
+                            <div class="flex items-center justify-between mb-2">
+                              <label class="text-sm text-purple-700 dark:text-purple-300">{{ t('soundEffectsVolume') }}</label>
+                              <span class="text-sm text-purple-600 dark:text-purple-400">{{
+                                musicState.soundEffects.soundEffectsVolume }}%</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                              <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-purple-400" />
+                              <input type="range" min="0" max="100" v-model="musicState.soundEffects.soundEffectsVolume"
+                                @input="setSoundEffectsVolume"
+                                class="flex-1 h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer dark:bg-purple-700" />
+                              <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-purple-400" />
+                            </div>
+                          </div>
+
+                          <!-- Quick Sound Effects -->
+                          <div v-if="musicState.playlist.filter(t => t.isSoundEffect).length > 0">
+                            <h5 class="text-xs font-medium text-purple-800 dark:text-purple-200 mb-2">{{ t('quickSoundEffects') }}</h5>
+                            <div class="grid grid-cols-2 gap-2">
+                              <UButton v-for="track in musicState.playlist.filter(t => t.isSoundEffect).slice(0, 4)"
+                                :key="track.id" color="purple" variant="outline" size="xs"
+                                @click="playSoundEffect(track.id)" class="truncate text-xs">
+                                🔊 {{ track.title.length > 12 ? track.title.substring(0, 12) + '...' : track.title }}
+                              </UButton>
+                            </div>
+                          </div>
+
+                          <div
+                            class="bg-purple-100 dark:bg-purple-800/30 border border-purple-200 dark:border-purple-700 rounded p-2">
+                            <p class="text-xs text-purple-700 dark:text-purple-300">
+                              {{ t('soundEffectsInfo') }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Fade Transition Settings -->
+                      <div
+                        class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-purple-900 dark:text-purple-100 mb-3">🎚️ {{ t('audioTransitions') }}
+                        </h4>
+                        <div class="space-y-3">
+                          <div class="flex items-center justify-between">
+                            <label class="text-sm text-purple-700 dark:text-purple-300">{{ t('enableSmoothFades') }}</label>
+                            <UToggle v-model="fadeConfig.enabled" />
+                          </div>
+
+                          <div v-if="fadeConfig.enabled"
+                            class="space-y-2 border-t border-purple-200 dark:border-purple-700 pt-3">
+                            <div class="flex items-center justify-between">
+                              <label class="text-xs text-purple-600 dark:text-purple-400">{{ t('trackSwitchMs') }}</label>
+                              <UInput v-model.number="fadeConfig.trackTransition" type="number" min="100" max="2000"
+                                size="xs" class="w-20" />
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                              <label class="text-xs text-purple-600 dark:text-purple-400">{{ t('volumeChangeMs') }}</label>
+                              <UInput v-model.number="fadeConfig.volumeChange" type="number" min="100" max="1000"
+                                size="xs" class="w-20" />
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                              <label class="text-xs text-purple-600 dark:text-purple-400">{{ t('playPauseMs') }}</label>
+                              <UInput v-model.number="fadeConfig.playPause" type="number" min="100" max="1000" size="xs"
+                                class="w-20" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Current Track Display -->
+                      <div v-if="musicState.currentTrack"
+                        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                          <!-- Thumbnail -->
+                          <div class="flex-shrink-0">
+                            <img v-if="musicState.currentTrack.thumbnail" :src="musicState.currentTrack.thumbnail"
+                              :alt="musicState.currentTrack.title" class="w-16 h-12 object-cover rounded-lg" />
+                            <div v-else
+                              class="w-16 h-12 bg-green-200 dark:bg-green-800 rounded-lg flex items-center justify-center">
+                              <UIcon name="i-heroicons-musical-note"
+                                class="h-6 w-6 text-green-600 dark:text-green-400" />
+                            </div>
+                          </div>
+
+                          <!-- Track info and controls -->
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between">
+                              <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-medium text-green-900 dark:text-green-100 truncate">
+                                  🎵 {{ musicState.currentTrack.title || t('unknownTrack') }}
+                                </h4>
+                                <p class="text-xs text-green-700 dark:text-green-300 truncate mt-1">
+                                  {{ musicState.currentTrack.artist || t('unknownArtist') }}
+                                </p>
+                                <!-- Duration and metadata -->
+                                <div
+                                  class="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400 mt-1">
+                                  <span v-if="musicState.currentTrack.duration">{{
+                                    formatDuration(musicState.currentTrack.duration) }}</span>
+                                  <span v-if="musicState.currentTrack.tags && musicState.currentTrack.tags.length > 0"
+                                    class="truncate">
+                                    #{{ musicState.currentTrack.tags.slice(0, 1).join(', #') }}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <!-- Control buttons -->
+                              <div class="flex items-center space-x-1 ml-3">
+                                <!-- Fade transition indicator -->
+                                <div v-if="fadeTransition.isActive"
+                                  class="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 mr-2">
+                                  <UIcon name="i-heroicons-arrows-right-left" class="w-3 h-3 animate-pulse" />
+                                  <span class="text-xs">{{ t('fading') }}</span>
+                                </div>
+
+                                <UButton v-if="musicState.isPlaying" color="yellow" variant="ghost" size="xs"
+                                  @click="pauseMusic" icon="i-heroicons-pause" />
+                                <UButton v-else color="green" variant="ghost" size="xs" @click="resumeMusic"
+                                  icon="i-heroicons-play" />
+                                <UButton color="red" variant="ghost" size="xs" @click="stopMusic"
+                                  icon="i-heroicons-stop" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Volume Control -->
+                      <div
+                        class="bg-zinc-950 bg-zinc-900/50 border border-zinc-800 border-zinc-800 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('volume') }}</h4>
+                          <span class="text-sm text-gray-600 text-zinc-400">{{ musicState.volume }}%</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                          <UIcon name="i-heroicons-speaker-x-mark" class="h-4 w-4 text-gray-400" />
+                          <input type="range" min="0" max="100" v-model="musicState.volume" @input="setVolume"
+                            class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+                          <UIcon name="i-heroicons-speaker-wave" class="h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+
+                      <!-- Playlist -->
+                      <div>
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('playlist') }}</h4>
+                          <UButton v-if="musicState.playlist.length > 0" color="gray" variant="ghost" size="xs"
+                            @click="clearPlaylist" icon="i-heroicons-trash">
+                            {{ t('clearAll') }}
+                          </UButton>
+                        </div>
+
+                        <div v-if="musicState.playlist.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
+                          <div v-for="track in musicState.playlist" :key="track.id"
+                            class="flex items-center justify-between p-3 bg-zinc-900 bg-zinc-900 border border-zinc-800 border-zinc-800 rounded-lg"
+                            :class="{
+                              'ring-2 ring-green-500': track.id === musicState.currentTrack?.id,
+                              'border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20': track.isSoundEffect
+                            }">
+                            <!-- Thumbnail and track info -->
+                            <div class="flex items-center flex-1 min-w-0 space-x-3">
+                              <!-- Video thumbnail -->
+                              <div class="flex-shrink-0">
+                                <img v-if="track.thumbnail" :src="track.thumbnail" :alt="track.title"
+                                  class="w-12 h-9 object-cover rounded" />
+                                <div v-else
+                                  class="w-12 h-9 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center"
+                                  :class="track.isSoundEffect ? 'bg-purple-200 dark:bg-purple-800' : ''">
+                                  <UIcon
+                                    :name="track.isSoundEffect ? 'i-heroicons-speaker-wave' : 'i-heroicons-musical-note'"
+                                    class="h-4 w-4"
+                                    :class="track.isSoundEffect ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'" />
+                                </div>
+                              </div>
+
+                              <!-- Track details -->
+                              <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                  <div class="text-sm font-medium text-white text-white truncate">
+                                    {{ track.title || t('unknownTrack') }}
+                                  </div>
+                                  <!-- Sound Effect Badge -->
+                                  <UBadge v-if="track.isSoundEffect" color="purple" variant="soft" size="xs">
+                                    SFX
+                                  </UBadge>
+                                </div>
+                                <div class="text-xs text-zinc-400 text-zinc-400 truncate">
+                                  {{ track.artist || t('unknownArtist') }}
+                                </div>
+                                <!-- Duration and additional metadata -->
+                                <div class="flex items-center space-x-2 text-xs text-gray-400 dark:text-zinc-400 mt-1">
+                                  <span v-if="track.duration">{{ formatDuration(track.duration) }}</span>
+                                  <span v-if="track.isSoundEffect && track.isPlayableWhileMusic"
+                                    class="text-purple-500">
+                                    {{ t('canPlayWithMusic') }}
+                                  </span>
+                                  <span v-if="track.tags && track.tags.length > 0" class="truncate">
+                                    {{ track.tags.slice(0, 2).join(', ') }}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Control buttons -->
+                            <div class="flex items-center space-x-1 ml-2">
+                              <!-- Sound Effect Play Button -->
+                              <UButton v-if="track.isSoundEffect" color="purple" variant="ghost" size="xs"
+                                @click="playSoundEffect(track.id)" icon="i-heroicons-speaker-wave"
+                                :title="t('playAsSoundEffect')" />
+                              <!-- Regular Play Button -->
+                              <UButton v-else color="green" variant="ghost" size="xs"
+                                @click="playTrackFromPlaylist(track)" icon="i-heroicons-play"
+                                :disabled="track.id === musicState.currentTrack?.id && musicState.isPlaying" />
+                              <!-- Remove Button -->
+                              <UButton color="red" variant="ghost" size="xs" @click="removeTrackFromPlaylist(track.id)"
+                                icon="i-heroicons-trash" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div v-else
+                          class="text-center py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                          <div class="text-2xl mb-2">🎵</div>
+                          <p class="text-zinc-400 text-zinc-400 text-sm mb-3">
+                            {{ t('noTracksInPlaylist') }}
+                          </p>
+                          <p class="text-gray-400 dark:text-zinc-400 text-xs">
+                            {{ t('addTracksDesc') }}
+                          </p>
+                        </div>
+                      </div>
+
+                      <!-- Music Sync Info for Participants -->
+                      <div
+                        class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                        <div class="flex items-start space-x-2">
+                          <UIcon name="i-heroicons-information-circle"
+                            class="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5" />
+                          <div>
+                            <h4 class="text-xs font-medium text-purple-900 dark:text-purple-100">{{ t('musicSync') }}</h4>
+                            <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                              {{ t('musicSyncDesc') }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </UCard>
+
+
+
+
+
+
                 </div>
               </div>
 
@@ -1386,11 +1669,9 @@
                       </UButton>
                     </div>
                   </div>
-                  <div
-                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mx-auto max-w-md">
+                  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mx-auto max-w-md">
                     <div class="flex items-start space-x-2">
-                      <UIcon name="i-heroicons-information-circle"
-                        class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
                       <div>
                         <span class="font-medium text-blue-900 dark:text-blue-100">{{ t('needRoomCode') }}</span>
                         <span class="text-blue-800 dark:text-blue-200 block text-sm mt-1">
@@ -1406,19 +1687,22 @@
         </div>
 
         <!-- Topographical Map Section -->
-        <!-- <div class="mt-12 border-t border-zinc-800 border-zinc-800 pt-8"> -->
-        <!--   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> -->
-        <!--     <div class="mb-6"> -->
-        <!--       <h2 class="text-2xl font-bold text-white text-white mb-2"> -->
-        <!--         🗺️ {{ t('campaignMap') }} -->
-        <!--       </h2> -->
-        <!--       <p class="text-gray-600 text-zinc-400"> -->
-        <!--         {{ t('campaignMapDesc') }} -->
-        <!--       </p> -->
-        <!--     </div> -->
-        <!--     <TopoMap @zone-selected="handleMapZoneSelected" :zones="campaignZones" /> -->
-        <!--   </div> -->
-        <!-- </div> -->
+        <div class="mt-12 border-t border-zinc-800 border-zinc-800 pt-8">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold text-white text-white mb-2">
+                🗺️ {{ t('campaignMap') }}
+              </h2>
+              <p class="text-gray-600 text-zinc-400">
+                {{ t('campaignMapDesc') }}
+              </p>
+            </div>
+            <TopoMap 
+              @zone-selected="handleMapZoneSelected"
+              :zones="campaignZones"
+            />
+          </div>
+        </div>
     </main>
     <!-- Room Creation Modal -->
     <UModal v-model="showCreateRoom" :ui="{ width: 'max-w-md' }">
@@ -1694,7 +1978,7 @@
               file:bg-purple-50 file:text-purple-700
               hover:file:bg-purple-100
               dark:file:bg-purple-900/20 dark:file:text-purple-300
-            " />
+            "/>
           </UFormGroup>
 
           <div class="relative">
@@ -1733,12 +2017,12 @@
     <UModal v-model="showImageDisplayModal" :ui="{ width: 'max-w-4xl' }">
       <div class="relative bg-black rounded-lg overflow-hidden">
         <img :src="displayedImageUrl" class="w-full h-auto max-h-[80vh] object-contain" />
-
+        
         <div v-if="displayedImageCaption" class="absolute bottom-0 left-0 right-0 bg-black/70 p-4 text-center">
           <p class="text-white text-lg font-medium">{{ displayedImageCaption }}</p>
         </div>
 
-        <UButton color="white" variant="ghost" icon="i-heroicons-x-mark"
+        <UButton color="white" variant="ghost" icon="i-heroicons-x-mark" 
           class="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-full"
           @click="showImageDisplayModal = false" />
       </div>
@@ -1868,69 +2152,63 @@ import TopoMap from '~/components/TopoMap.vue'
 const { t, toggleLanguage, language } = useTranslations()
 
 // Get authenticated user
-const user = useState<any>('user')
+const user = useState < any > ('user')
 
 // Campaign zones for the topographical map - Updated for Pilotes
 const campaignZones = ref([
-  {
-    name: "PALERMO",
-    description: "Elegante distrito residencial donde vive la nobleza y los comerciantes prósperos. Sus calles empedradas y mansiones reflejan el poder económico de la ciudad.",
-    x: -6,
-    z: 0,
-    color: 0x8B4513
+  { 
+    name: "PALERMO", 
+    description: "Elegante distrito residencial donde vive la nobleza y los comerciantes prósperos. Sus calles empedradas y mansiones reflejan el poder económico de la ciudad.", 
+    x: -6, 
+    z: 0, 
+    color: 0x8B4513 
   },
-  {
-    name: "OPUS",
-    description: "Vibrante centro artesanal donde los mejores craftsmen de Pilotes crean obras maestras. El sonido de martillos y el olor a metal forjado llenan el aire.",
-    x: 6,
-    z: 0,
-    color: 0x4A4A4A
+  { 
+    name: "OPUS", 
+    description: "Vibrante centro artesanal donde los mejores craftsmen de Pilotes crean obras maestras. El sonido de martillos y el olor a metal forjado llenan el aire.", 
+    x: 6, 
+    z: 0, 
+    color: 0x4A4A4A 
   },
-  {
-    name: "PUERTO",
-    description: "Bullicioso distrito portuario donde llegan mercancías de tierras lejanas. Los muelles nunca descansan y siempre hay historias de aventura en las tabernas.",
-    x: 8,
-    z: 8,
-    color: 0x1E90FF
+  { 
+    name: "PUERTO", 
+    description: "Bullicioso distrito portuario donde llegan mercancías de tierras lejanas. Los muelles nunca descansan y siempre hay historias de aventura en las tabernas.", 
+    x: 8, 
+    z: 8, 
+    color: 0x1E90FF 
   },
-  {
-    name: "Castillo Central",
-    description: "Imponente fortaleza real que domina el corazón de Pilotes. Desde sus torres se puede ver toda la ciudad y las tierras circundantes.",
-    x: 0,
-    z: -4,
-    color: 0xFFD700
+  { 
+    name: "Castillo Central", 
+    description: "Imponente fortaleza real que domina el corazón de Pilotes. Desde sus torres se puede ver toda la ciudad y las tierras circundantes.", 
+    x: 0, 
+    z: -4, 
+    color: 0xFFD700 
   },
-  {
-    name: "LAFE",
-    description: "Sereno lago de aguas cristalinas ubicado fuera de las murallas. Es un lugar de paz donde los ciudadanos van a reflexionar y los pescadores buscan su sustento.",
-    x: -10,
-    z: 10,
-    color: 0x20B2AA
+  { 
+    name: "LAFE", 
+    description: "Sereno lago de aguas cristalinas ubicado fuera de las murallas. Es un lugar de paz donde los ciudadanos van a reflexionar y los pescadores buscan su sustento.", 
+    x: -10, 
+    z: 10, 
+    color: 0x20B2AA 
   },
-  {
-    name: "Las Murallas",
-    description: "Poderosas fortificaciones de piedra que han protegido Pilotes durante siglos. Sus torres de vigilancia mantienen guardia constante contra cualquier amenaza.",
-    x: 0,
-    z: 6,
-    color: 0x696969
+  { 
+    name: "Las Murallas", 
+    description: "Poderosas fortificaciones de piedra que han protegido Pilotes durante siglos. Sus torres de vigilancia mantienen guardia constante contra cualquier amenaza.", 
+    x: 0, 
+    z: 6, 
+    color: 0x696969 
   }
 ])
 
 // Reactive state
-const userRole = ref<'Player' | 'DM'>('Player')
+const userRole = ref < 'Player' | 'DM' > ('Player')
 const isConnected = ref(false)
 const isOfflineMode = ref(false)
 const isOfflineModePreference = ref(false) // Persistent offline mode preference
 const connectedUsers = ref(1)
 const isRolling = ref(false)
-const eventSource = ref<EventSource | null>(null)
-const animatingDice = ref<Set<string>>(new Set())
-
-// Reconnection state
-const reconnectAttempts = ref(0)
-const maxReconnectAttempts = 5
-const isReconnecting = ref(false)
-const reconnectTimeout = ref<NodeJS.Timeout | null>(null)
+const eventSource = ref < EventSource | null > (null)
+const animatingDice = ref < Set < string >> (new Set())
 
 // Sidebar state
 const isLeftSidebarOpen = ref(false)
@@ -1940,44 +2218,40 @@ const isRightSidebarOpen = ref(false)
 const isSidebarOpen = computed(() => isLeftSidebarOpen.value || isRightSidebarOpen.value)
 
 // User character data and role detection
-const userCharacters = ref<any[]>([])
-const activeCharacterId = ref<string | null>(null)
+const userCharacters = ref < any[] > ([])
+const activeCharacterId = ref < string | null > (null)
 const isRefreshingUserData = ref(false)
 
 // Room management state
-const currentRoom = ref<{ name: string; code: string; isOwner: boolean } | null>(null)
+const currentRoom = ref < { name: string; code: string; isOwner: boolean } | null > (null)
 const showCreateRoom = ref(false)
 const joinRoomCode = ref('')
 
-// Heartbeat system to maintain session alive
-const roomCodeForHeartbeat = computed(() => currentRoom.value?.code || '')
-const { isHeartbeatActive, startHeartbeat, stopHeartbeat } = useHeartbeat(roomCodeForHeartbeat)
-
 // Player stats (for current user if they're a player)
-const playerStats = ref<PlayerStats | null>(null)
+const playerStats = ref < PlayerStats | null > (null)
 
 // Character attacks and combat data
-const activeCharacterAttacks = ref<any[]>([])
+const activeCharacterAttacks = ref < any[] > ([])
 const showCharacterAttacks = ref(false)
 const isRollingAttack = ref(false)
 
 // All players stats (for DMs)
-const allPlayers = ref<Player[]>([])
+const allPlayers = ref < Player[] > ([])
 
 // DM editing modal state
 const isEditingPlayer = ref(false)
-const editingPlayer = ref<Player | null>(null)
-const editingPlayerStats = ref<PlayerStats | null>(null)
+const editingPlayer = ref < Player | null > (null)
+const editingPlayerStats = ref < PlayerStats | null > (null)
 
 // Battle mode state
-const battleMode = ref<BattleState | null>(null)
+const battleMode = ref < BattleState | null > (null)
 const isInBattle = computed(() => battleMode.value?.phase !== undefined)
 const showBattleUI = ref(false)
 const showAddEnemyModal = ref(false)
 const newEnemy = ref({ name: '', hitPoints: 10, armorClass: 10, initiative: 0 })
 const isBattleLoading = ref(false)
 const showSpecialAbilitiesModal = ref(false)
-const currentPlayerAbilities = ref<any[]>([])
+const currentPlayerAbilities = ref < any[] > ([])
 
 // Character Detail Modal state (for DM)
 const showCharacterDetailModal = ref(false)
@@ -1994,7 +2268,7 @@ const filteredSkills = computed(() => {
   if (!activeCharacter.value) return []
   const skills = getAllSkills(activeCharacter.value)
   if (!skillSearchQuery.value) return skills
-
+  
   const query = skillSearchQuery.value.toLowerCase()
   return skills.filter((skill: any) => skill.name.toLowerCase().includes(query))
 })
@@ -2002,8 +2276,8 @@ const filteredSkills = computed(() => {
 const currentPlayerName = ref('')
 
 // Battle player management
-const selectedPlayers = ref<Array<{ userId: string; name: string }>>([])
-const unselectedPlayers = ref<Array<{ userId: string; name: string }>>([])
+const selectedPlayers = ref < Array < { userId: string; name: string } >> ([])
+const unselectedPlayers = ref < Array < { userId: string; name: string } >> ([])
 const isBattlePlayersLoading = ref(false)
 
 // Music system state
@@ -2014,11 +2288,28 @@ const musicState = ref({
   playlist: [] as any[],
   soundEffects: {
     soundEffectsVolume: 75,
-    playableTrackIds: new Set<string>(),
+    playableTrackIds: new Set < string > (),
     lastSoundEffectPlayed: null as Date | null
   }
 })
-const selectedDice = ref<Record<string, number>>({
+const newTrackUrl = ref('')
+const isAddingTrack = ref(false)
+
+// YouTube Player state
+const youtubePlayer = ref < any > (null)
+const isYouTubeAPIReady = ref(false)
+const currentVideoId = ref < string | null > (null)
+
+// Fade transition configuration
+const fadeConfig = ref({
+  trackTransition: 500,  // ms for track switching fade
+  volumeChange: 300,     // ms for volume change fade
+  playPause: 400,        // ms for play/pause fade
+  enabled: true          // global fade enable/disable
+})
+
+// Dice selection
+const selectedDice = ref < Record < string, number>> ({
   d4: 0,
   d6: 0,
   d8: 0,
@@ -2033,12 +2324,12 @@ const modifier = ref(0)
 const rollType = ref('normal')
 
 // Roll history
-const rollHistory = ref<DiceRoll[]>([])
+const rollHistory = ref < DiceRoll[] > ([])
 
 // Roll request system
 const showRollRequestModal = ref(false)
-const selectedPlayerForRequest = ref<Player | null>(null)
-const requestedDiceType = ref<string>('')
+const selectedPlayerForRequest = ref < Player | null > (null)
+const requestedDiceType = ref < string > ('')
 const rollRequestMessage = ref('')
 const rollRequestModifier = ref(0)
 
@@ -2076,12 +2367,12 @@ async function sendDmImage() {
     if (dmImageFile.value) {
       const formData = new FormData()
       formData.append('file', dmImageFile.value)
-
+      
       const uploadResponse = await $fetch<{ url: string }>('/api/upload', {
         method: 'POST',
         body: formData
       } as any)
-
+      
       finalImageUrl = uploadResponse.url
     }
 
@@ -2098,7 +2389,7 @@ async function sendDmImage() {
     dmImageUrl.value = ''
     dmImageCaption.value = ''
     dmImageFile.value = null
-
+    
     // Show success toast
     toast.add({
       title: t('imageSent'),
@@ -2108,18 +2399,18 @@ async function sendDmImage() {
     })
   } catch (error: any) {
     console.error('Failed to send image:', error)
-
+    
     let errorMessage = t('imageSendFailed')
-    if (error && typeof error === 'object' && error.data?.statusMessage) {
+    if (error?.data?.statusMessage) {
       errorMessage = error.data.statusMessage
-    } else if (error && typeof error === 'object' && error.statusCode === 401) {
+    } else if (error?.statusCode === 401) {
       errorMessage = 'Authentication required. Please log in again.'
-    } else if (error && typeof error === 'object' && error.statusCode === 403) {
+    } else if (error?.statusCode === 403) {
       errorMessage = 'Access denied. DM or Admin role required.'
-    } else if (error && typeof error === 'object' && error.statusCode === 400) {
+    } else if (error?.statusCode === 400) {
       errorMessage = 'Invalid file or no file uploaded.'
     }
-
+    
     toast.add({
       title: t('error'),
       description: errorMessage,
@@ -2133,17 +2424,17 @@ async function sendDmImage() {
 
 // Player roll request notification
 const showRollRequestNotification = ref(false)
-const pendingRollRequest = ref<{
+const pendingRollRequest = ref < {
   fromDM: string
   diceType: string
   message?: string
   modifier?: number
   requestId: string
-} | null>(null)
+} | null > (null)
 
 // Critical roll animation
 const showCriticalAnimation = ref(false)
-const criticalAnimationType = ref<'success' | 'failure' | null>(null)
+const criticalAnimationType = ref < 'success' | 'failure' | null > (null)
 
 // Constants
 const diceTypes: DiceType[] = [
@@ -2217,11 +2508,13 @@ async function loadUserCharacters() {
   }
 
   try {
-    const response = await $fetch<{ success: boolean, data: any[] }>(`/api/characters?player=${user.value.id}`)
+    const response = await $fetch < { success: boolean, data: any[] } > (`/api/characters?player=${user.value.id}`)
     if (response.success && Array.isArray(response.data)) {
       userCharacters.value = response.data
+      // Auto-detect role based on characters
       if (userCharacters.value.length > 0) {
         userRole.value = 'Player'
+        // If no active character is selected, select the first one
         if (!activeCharacterId.value && userCharacters.value.length > 0) {
           activeCharacterId.value = userCharacters.value[0].id
           await loadCharacterStats()
@@ -2233,11 +2526,14 @@ async function loadUserCharacters() {
         activeCharacterAttacks.value = []
       }
 
+      console.log(`🎭 Auto-detected role: ${userRole.value} (${userCharacters.value.length} characters found)`)
     } else {
+      console.warn('Invalid response format from characters API:', response)
       userCharacters.value = []
       userRole.value = 'DM'
     }
   } catch (error) {
+    console.error('Failed to load user characters:', error)
     userCharacters.value = []
     userRole.value = 'DM' // Default to DM if we can't load characters
 
@@ -2260,6 +2556,7 @@ async function loadCharacterStats() {
   try {
     const character = userCharacters.value.find(c => c.id === activeCharacterId.value)
     if (character) {
+      // Convert character data to player stats format using REAL character data
       const realStats = {
         hitPoints: {
           current: character.currentHp || character.maxHp || 10,
@@ -2267,6 +2564,7 @@ async function loadCharacterStats() {
         },
         armorClass: character.armorClass || 10,
         abilities: {
+          // Use raw ability scores from the character data
           strength: character.strength || 10,
           dexterity: character.dexterity || 10,
           constitution: character.constitution || 10,
@@ -2281,9 +2579,11 @@ async function loadCharacterStats() {
       }
 
       playerStats.value = realStats
+      console.log('📊 Loaded REAL character stats for:', character.characterName, realStats)
 
       // Load character attacks
       activeCharacterAttacks.value = character.attacks || []
+      console.log('⚔️ Loaded character attacks:', activeCharacterAttacks.value.length, 'attacks')
 
       // Show attacks automatically when in combat and it's player's turn
       showCharacterAttacks.value = isInBattle.value && isPlayerTurn()
@@ -2293,11 +2593,61 @@ async function loadCharacterStats() {
         await updateStats()
       }
     } else {
+      console.warn('Character not found in user characters list:', activeCharacterId.value)
       playerStats.value = createDefaultStats()
     }
   } catch (error) {
+    console.error('Failed to load character stats:', error)
     playerStats.value = createDefaultStats()
   }
+}
+
+async function refreshUserData() {
+  isRefreshingUserData.value = true
+  try {
+    await loadUserCharacters()
+
+    // Only update stats if we're in a valid room
+    if (currentRoom.value && currentRoom.value.code !== 'default') {
+      if (userRole.value === 'Player') {
+        await loadPlayerStats(currentRoom.value.code)
+      } else {
+        await loadAllPlayersStats(currentRoom.value.code)
+      }
+
+      // Re-join room with updated role
+      if (isConnected.value && !isOfflineMode.value) {
+        await joinRoom(currentRoom.value.code)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to refresh user data:', error)
+  } finally {
+    isRefreshingUserData.value = false
+  }
+}
+
+async function onActiveCharacterChange() {
+  if (activeCharacterId.value) {
+    await loadCharacterStats()
+    if (!isOfflineMode.value) {
+      await updateStats()
+    }
+  }
+}
+
+function getBadgeColor(diceType: string): string {
+  const colorMap: Record<string, string> = {
+    'd4': 'bg-blue-600',
+    'd6': 'bg-green-600',
+    'd8': 'bg-purple-600',
+    'd10': 'bg-pink-600',
+    'd12': 'bg-red-600',
+    'd20': 'bg-orange-600',
+    'd36': 'bg-cyan-600',
+    'd100': 'bg-green-600'
+  }
+  return colorMap[diceType] || 'bg-gray-600'
 }
 
 function getBattlePhaseColor(phase: string): string {
@@ -2329,7 +2679,9 @@ function calculateTotalWealth(character: any): number {
   const gold = character.goldCoins || 0
   const platinum = character.platinumCoins || 0
 
-  const total = (platinum * 100) + gold + (electrum * 0.5) + (silver * 0.1) + (copper * 0.01)
+  // Convert everything to gold pieces
+  // 1 pp = 10 gp, 1 ep = 0.5 gp, 1 sp = 0.1 gp, 1 cp = 0.01 gp
+  const total = (platinum * 10) + gold + (electrum * 0.5) + (silver * 0.1) + (copper * 0.01)
   return Math.round(total * 100) / 100 // Round to 2 decimal places
 }
 
@@ -2347,6 +2699,60 @@ function calculateHealthPercentage(character: any): number {
   return Math.max(0, Math.min(100, (current / character.maxHp) * 100))
 }
 
+function calculateSkillModifier(skill: any, character: any): number {
+  if (!skill || !character) return 0
+
+  // Get the base ability score
+  const abilityMap: Record<string, string> = {
+    'STR': 'strength',
+    'DEX': 'dexterity',
+    'CON': 'constitution',
+    'INT': 'intelligence',
+    'WIS': 'wisdom',
+    'CHA': 'charisma'
+  }
+
+  const abilityField = abilityMap[skill.ability] || skill.ability.toLowerCase()
+  const abilityScore = character[abilityField] || 10
+  const abilityModifier = calculateModifier(abilityScore)
+
+  // Add proficiency bonus if proficient
+  let proficiencyBonus = 0
+  if (skill.proficient) {
+    proficiencyBonus = character.proficiencyBonus || 2
+    // Double proficiency bonus if expertise
+    if (skill.expertise) {
+      proficiencyBonus *= 2
+    }
+  }
+
+  return abilityModifier + proficiencyBonus
+}
+
+function calculateSavingThrowModifier(savingThrow: any, character: any): number {
+  if (!savingThrow || !character) return 0
+
+  // Get the base ability score
+  const abilityMap: Record<string, string> = {
+    'strength': 'strength',
+    'dexterity': 'dexterity',
+    'constitution': 'constitution',
+    'intelligence': 'intelligence',
+    'wisdom': 'wisdom',
+    'charisma': 'charisma'
+  }
+
+  const abilityField = abilityMap[savingThrow.ability.toLowerCase()] || savingThrow.ability.toLowerCase()
+  const abilityScore = character[abilityField] || 10
+  const abilityModifier = calculateModifier(abilityScore)
+
+  // Add proficiency bonus if proficient
+  const proficiencyBonus = savingThrow.proficient ? (character.proficiencyBonus || 2) : 0
+
+  return abilityModifier + proficiencyBonus
+}
+
+// Helper function to calculate saving throw modifier by ability name
 function calculateSavingThrowModifierByAbility(ability: string, character: any): number {
   if (!character) return 0
 
@@ -2420,6 +2826,7 @@ function getAllSkills(character: any): any[] {
 function calculateSkillModifierForSkill(skill: any, character: any): number {
   if (!skill || !character) return 0
 
+  // Get the base ability score
   const abilityMap: Record<string, string> = {
     'STR': 'strength',
     'DEX': 'dexterity',
@@ -2433,9 +2840,11 @@ function calculateSkillModifierForSkill(skill: any, character: any): number {
   const abilityScore = character[abilityField] || 10
   const abilityModifier = calculateModifier(abilityScore)
 
+  // Add proficiency bonus if proficient
   let proficiencyBonus = 0
   if (skill.proficient) {
     proficiencyBonus = character.proficiencyBonus || 2
+    // Double proficiency bonus if expertise
     if (skill.expertise) {
       proficiencyBonus *= 2
     }
@@ -2445,11 +2854,13 @@ function calculateSkillModifierForSkill(skill: any, character: any): number {
 }
 
 function toggleDice(diceType: string) {
+  // Add animation
   animatingDice.value.add(diceType)
   setTimeout(() => {
     animatingDice.value.delete(diceType)
   }, 500)
 
+  // Update dice count
   if (selectedDice.value[diceType] < 10) {
     selectedDice.value[diceType]++
   } else {
@@ -2470,8 +2881,8 @@ function rollSingleDie(sides: number): number {
 }
 
 async function rollDice(customSelection?: Record<string, number> | any) {
-  const diceSelection: Record<string, number> = (customSelection && typeof customSelection === 'object' && !customSelection.target)
-    ? customSelection
+  const diceSelection: Record<string, number> = (customSelection && typeof customSelection === 'object' && !customSelection.target) 
+    ? customSelection 
     : selectedDice.value
   const totalSelected = Object.values(diceSelection).reduce((sum: number, count: number) => sum + count, 0)
 
@@ -2479,17 +2890,20 @@ async function rollDice(customSelection?: Record<string, number> | any) {
 
   isRolling.value = true
 
+  // Add dramatic animation  all selected dice
   Object.entries(diceSelection).forEach(([diceType, count]) => {
     if (count > 0) {
       animatingDice.value.add(diceType)
     }
   })
 
+  // Simulate rolling animation delay with staggered effects
   setTimeout(async () => {
     const diceRolled: { type: string; count: number; results: number[] }[] = []
     let total = 0
     const details: (string | number)[] = []
 
+    // Roll each type of dice
     for (const [diceType, count] of Object.entries(diceSelection)) {
       if (count > 0) {
         const dice = diceTypes.find(d => d.type === diceType)!
@@ -2498,6 +2912,7 @@ async function rollDice(customSelection?: Record<string, number> | any) {
         for (let i = 0; i < count; i++) {
           let roll = rollSingleDie(dice.sides)
 
+          // Handle advantage/disadvantage for d20s
           if (diceType === 'd20' && rollType.value !== 'normal') {
             const secondRoll = rollSingleDie(dice.sides)
             if (rollType.value === 'advantage') {
@@ -2521,11 +2936,13 @@ async function rollDice(customSelection?: Record<string, number> | any) {
       }
     }
 
+    // Add modifier
     if (modifier.value !== 0) {
       total += modifier.value
       details.push(modifier.value)
     }
 
+    // Check for criticals (only on single d20 rolls)
     let isCritical = false
     let criticalType: 'success' | 'failure' | undefined
 
@@ -2554,6 +2971,7 @@ async function rollDice(customSelection?: Record<string, number> | any) {
       }
     }
 
+    // Create roll description
     const diceDesc = Object.entries(selectedDice.value)
       .filter(([_, count]) => count > 0)
       .map(([type, count]) => `${count}${type}`)
@@ -2567,6 +2985,7 @@ async function rollDice(customSelection?: Record<string, number> | any) {
       description += ` (${rollType.value})`
     }
 
+    // Create flat array of individual dice results
     const diceResults: { type: string; result: number }[] = []
     diceRolled.forEach(dice => {
       dice.results.forEach(result => {
@@ -2591,12 +3010,17 @@ async function rollDice(customSelection?: Record<string, number> | any) {
       isOwn: true
     }
 
+    // Add to history (newest first)
     rollHistory.value.unshift(roll)
 
+    // Show critical animation if it's a critical roll
     if (isCritical && criticalType) {
       criticalAnimationType.value = criticalType
       showCriticalAnimation.value = true
+      // Video will auto-close when it ends via @ended event
     }
+
+    // Submit to server for other s (only if connected and not in offline mode)
     if (isConnected.value && !isOfflineMode.value) {
       try {
         await submitDiceRoll({
@@ -2613,24 +3037,29 @@ async function rollDice(customSelection?: Record<string, number> | any) {
         })
       } catch (error) {
         console.error('🎲 Failed to submit roll to server:', error)
+        // Roll still works locally even if server submission fails
       }
     }
 
+    // Clear animations
     animatingDice.value.clear()
     isRolling.value = false
-  }, 1500)
+  }, 1500) // Longer animation framatic effect
 }
 
+// Character Attack Functions
 async function rollAttack(attack: any) {
   if (!attack || isRollingAttack.value) return
 
   isRollingAttack.value = true
 
   try {
+    // Calculate attack roll: 1d20 + attack bonus
     const d20Roll = rollSingleDie(20)
     const attackBonus = attack.attackBonus || 0
     const total = d20Roll + attackBonus
 
+    // Determine if it's a critical hit or miss
     let isCritical = false
     let criticalType: 'success' | 'failure' | undefined
 
@@ -2664,8 +3093,10 @@ async function rollAttack(attack: any) {
       isOwn: true
     }
 
+    // Add to history
     rollHistory.value.unshift(roll)
 
+    // Submit to server if connected
     if (isConnected.value && !isOfflineMode.value) {
       try {
         await submitDiceRoll({
@@ -2690,7 +3121,9 @@ async function rollAttack(attack: any) {
   } finally {
     isRollingAttack.value = false
 
+    // Automatically roll damage after attack (if attack has damage)
     if (attack.damage) {
+      // Add a small delay to show attack roll first, then damage
       setTimeout(async () => {
         await rollDamage(attack)
       }, 500)
@@ -2869,7 +3302,7 @@ function rollSingleDiceType(diceType: string) {
 // Handle topographical map zone selection
 function handleMapZoneSelected(zone: { name: string; description: string }) {
   console.log('Zone selected:', zone)
-
+  
   // Could trigger different actions based on user role
   if (userRole.value === 'DM') {
     // DMs might get additional options like setting scene music or ambience
@@ -2891,6 +3324,27 @@ function showZoneInfoToast(zone: { name: string; description: string }, addition
     }
   })
 }
+
+async function updateUserName() {
+  if (userName.value.trim()) {
+    // Load characters for the new user name and auto-detect role
+    await loadUserCharacters()
+
+    if (isConnected.value && !isOfflineMode.value && currentRoom.value && currentRoom.value.code !== 'default') {
+      try {
+        await joinRoom(currentRoom.value.code) // Re-join with updated name and role
+        console.log('Updated user name to:', userName.value)
+      } catch (error) {
+        console.error('Failed to update user name:', error)
+        console.log('Updated user name to:', userName.value, '(locally only)')
+      }
+    } else {
+      console.log('Updated user name to:', userName.value, '(offline mode or no valid room)')
+    }
+  }
+}
+
+
 
 function createDefaultStats(): PlayerStats {
   return {
@@ -2931,7 +3385,7 @@ async function updateStats() {
 
 async function loadPlayerStats(roomCode?: string) {
   if (!roomCode) return // Don't load stats if no room code provided
-
+  
   if (isOfflineMode.value) {
     // In offline mode, load character stats directly from the character data
     await loadCharacterStats()
@@ -3064,19 +3518,24 @@ async function sendRollRequest() {
   }
 }
 
+// Roll request functions (Player side)
 function acceptRollRequest() {
   if (!pendingRollRequest.value) return
 
   const diceType = pendingRollRequest.value.diceType
   const requestModifier = pendingRollRequest.value.modifier || 0
 
+  // Close the notification
   showRollRequestNotification.value = false
 
+  // Set up the dice selection
   selectedDice.value = { [diceType]: 1 }
   modifier.value = requestModifier
 
+  // Automatically roll the dice
   rollDice()
 
+  // Clear the pending request
   pendingRollRequest.value = null
 }
 
@@ -3099,6 +3558,16 @@ function formatTime(timestamp: Date): string {
     second: '2-digit'
   }).format(timestamp)
 }
+
+function getCriticalClass(roll: DiceRoll): string {
+  if (roll.isCritical) {
+    return roll.criticalType === 'success'
+      ? 'text-green-600 dark:text-green-400'
+      : 'text-red-600 dark:text-red-400'
+  }
+  return 'text-white text-white'
+}
+
 // Helper function to show music-related toasts only to DMs
 function showMusicToast(title: string, description: string, color: 'green' | 'red' | 'blue' | 'yellow' = 'green') {
   if (userRole.value === 'DM') {
@@ -3284,6 +3753,28 @@ async function copyRoomCode() {
   }
 }
 
+async function kickPlayer(player: Player) {
+  if (!currentRoom.value || userRole.value !== 'DM') return
+
+  try {
+    await $fetch('/api/dice/kick', {
+      method: 'POST',
+      body: {
+        dmUserId: userId.value,
+        targetUserId: player.userId,
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    console.log('🏠 Kicked player:', player.name)
+
+    // Remove from local list
+    allPlayers.value = allPlayers.value.filter(p => p.userId !== player.userId)
+  } catch (error) {
+    console.error('🏠 Failed to kick player:', error)
+  }
+}
+
 async function reconnectWithRoom(roomCode: string) {
   // Close existing SSE connection
   disconnectSSE()
@@ -3301,31 +3792,11 @@ async function reconnectWithRoom(roomCode: string) {
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 'undefined' && window.location.hostname !== 'localhost'
 
-// Helper function for safe SSE event handling
-function handleSSEEvent(event: MessageEvent, eventName: string, handler: (data: any) => void) {
-  try {
-    if (!event.data) {
-      console.warn(`🎲 SSE ${eventName} event with no data`)
-      return
-    }
-    const data = JSON.parse(event.data)
-    handler(data)
-  } catch (error) {
-    console.error(`🎲 Error processing ${eventName} event:`, error)
-  }
-}
-
-// Helper function to validate dice type
-function isValidDiceType(type: string): boolean {
-  const validTypes = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd36', 'd100']
-  return validTypes.includes(type)
-}
-
 // SSE Functions - Server-Sent Events for real-time updates
 function initializeSSE(roomCode?: string) {
   // Don't connect if no room code provided
   if (!roomCode) return
-
+  
   // Check if user has explicitly chosen offline mode
   if (isOfflineModePreference.value) {
     console.log('🎲 Staying in offline mode per user preference')
@@ -3349,213 +3820,54 @@ function initializeSSE(roomCode?: string) {
       isConnected.value = true
       isOfflineMode.value = false
 
-      // Reset reconnection state on successful connection
-      reconnectAttempts.value = 0
-      isReconnecting.value = false
-      if (reconnectTimeout.value) {
-        clearTimeout(reconnectTimeout.value)
-        reconnectTimeout.value = null
-      }
-
       // Start heartbeat to maintain session alive
       if (roomCode && roomCode !== 'default') {
         startHeartbeat()
         console.log('🎲 Heartbeat started for room:', roomCode)
       }
 
+      // Send join request via HTTP
       joinRoom(roomCode)
     }
 
     eventSource.value.onerror = (error) => {
       console.error('🎲 SSE connection error:', error)
+      console.log('🎲 Fallback to offline mode')
       isConnected.value = false
-
-      if (isOfflineModePreference.value) {
-        console.log('🎲 Staying offline per user preference')
-        isOfflineMode.value = true
-        connectedUsers.value = 1
-        return
-      }
-
-      if (reconnectAttempts.value < maxReconnectAttempts) {
-        isReconnecting.value = true
-        reconnectAttempts.value++
-
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.value - 1), 16000)
-
-        console.log(`🎲 Attempting reconnection ${reconnectAttempts.value}/${maxReconnectAttempts} in ${delay}ms`)
-
-        reconnectTimeout.value = setTimeout(() => {
-          console.log(`🎲 Reconnection attempt ${reconnectAttempts.value}`)
-          disconnectSSE() // Clean up current connection
-          setTimeout(() => {
-            initializeSSE(roomCode) // Attempt to reconnect
-          }, 100)
-        }, delay)
-      } else {
-        console.log('🎲 Max reconnection attempts reached, falling back to offline mode')
-        isReconnecting.value = false
-        isOfflineMode.value = true
-        connectedUsers.value = 1
-
-        // Show user notification about connection issues
-        const toast = useToast()
-        toast.add({
-          title: 'Connection Lost',
-          description: 'Unable to reconnect to server. Using offline mode.',
-          color: 'red'
-        })
-      }
-    }
-
-    // Add connection health check - ping every 2 minutes to keep connection alive
-    window.sseHealthCheckInterval = setInterval(() => {
-      if (eventSource.value && isConnected.value) {
-        // Check if connection is still responsive
-        try {
-          fetch('/api/dice/ping', { 
-            method: 'POST',
-            body: JSON.stringify({ roomCode })
-          }).catch(() => {
-            console.warn('🎲 SSE health check failed, may need reconnection')
-          })
-        } catch (error) {
-          console.warn('🎲 SSE health check error:', error)
-        }
-      }
-    }, 120000) // 2 minutes
-  } catch (error) {
-    console.error('🎲 Failed to initialize SSE:', error)
-    console.log('🎲 Using offline mode')
-    isOfflineMode.value = true
-    isConnected.value = false
-    connectedUsers.value = 1
-  }
-
-      if (reconnectAttempts.value < maxReconnectAttempts) {
-        isReconnecting.value = true
-        reconnectAttempts.value++
-
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.value - 1), 16000)
-
-        console.log(`🎲 Attempting reconnection ${reconnectAttempts.value}/${maxReconnectAttempts} in ${delay}ms`)
-
-        reconnectTimeout.value = setTimeout(() => {
-          console.log(`🎲 Reconnection attempt ${reconnectAttempts.value}`)
-          disconnectSSE() // Clean up current connection
-          setTimeout(() => {
-            initializeSSE(roomCode) // Attempt to reconnect
-          }, 100)
-        }, delay)
-      } else {
-        console.log('🎲 Max reconnection attempts reached, falling back to offline mode')
-        isReconnecting.value = false
-        isOfflineMode.value = true
-        connectedUsers.value = 1
-
-        // Show user notification about connection issues
-        const toast = useToast()
-        toast.add({
-          title: 'Connection Lost',
-          description: 'Unable to reconnect to the server. Using offline mode.',
-          color: 'red'
-        })
-      }
+      isOfflineMode.value = true
+      connectedUsers.value = 1
     }
 
     // Handle specific events
     eventSource.value.addEventListener('connected', (event) => {
-      handleSSEEvent(event, 'connected', (data) => {
-        console.log('🎲 SSE connected with ID:', data.connectionId)
-      })
-    })
-
-    eventSource.value.addEventListener('users:count', (event) => {
-      handleSSEEvent(event, 'users:count', (data) => {
-        connectedUsers.value = data.count
-      })
-    })
-
-    eventSource.value.addEventListener('dice:history', (event) => {
-      handleSSEEvent(event, 'dice:history', (data) => {
-        // Merge with existing history, avoiding duplicates
-        const existingIds = new Set(rollHistory.value.map(r => r.id))
-        const newRolls = data.history
-          .filter((r: DiceRoll) => !existingIds.has(r.id))
-          .map((r: DiceRoll) => {
-            // Ensure diceResults exists (for backward compatibility)
-            let diceResults = r.diceResults
-            if (!diceResults && r.diceRolled) {
-              diceResults = []
-              r.diceRolled.forEach(dice => {
-                dice.results.forEach(result => {
-                  diceResults!.push({ type: dice.type, result })
-                })
-              })
-            }
-
-            return {
-              ...r,
-              timestamp: new Date(r.timestamp),
-              isOwn: r.userId === userId.value,
-              diceResults: diceResults || []
-            }
-          })
-
-        rollHistory.value = [...rollHistory.value, ...newRolls]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      })
-    })
-
-    eventSource.value.addEventListener('dice:roll', (event) => {
-      handleSSEEvent(event, 'dice:roll', (data) => {
-        const roll = data as DiceRoll
-
-        // Only add rolls from other users
-        if (roll.userId !== userId.value) {
-          // Ensure diceResults exists (for backward compatibility)
-          let diceResults = roll.diceResults
-          if (!diceResults && roll.diceRolled) {
-            diceResults = []
-            roll.diceRolled.forEach(dice => {
-              dice.results.forEach(result => {
-                // Validate dice type before adding
-                if (isValidDiceType(dice.type)) {
-                  diceResults!.push({ type: dice.type, result })
-                } else {
-                  console.warn(`🎲 Invalid dice type: ${dice.type}`)
-                }
-              })
-            })
-          }
-
-          const processedRoll = {
-            ...roll,
-            timestamp: new Date(roll.timestamp),
-            isOwn: false,
-            diceResults: diceResults || []
-          }
-
-          rollHistory.value.unshift(processedRoll)
-
-          // Show critical animation if it's a critical roll from another user
-          if (processedRoll.isCritical && processedRoll.criticalType) {
-            criticalAnimationType.value = processedRoll.criticalType
-            showCriticalAnimation.value = true
-            // Video will auto-close when it ends via @ended event
-          }
-        }
-      })
-    })
-
-    eventSource.value.addEventListener('dice:history', (event) => {
       try {
         if (!event.data) {
-          console.warn('🎲 SSE dice:history event with no data')
+          console.warn('🎲 SSE connected event with no data')
           return
         }
         const data = JSON.parse(event.data)
-        // Merge with existing history, avoiding duplicates
+        console.log('🎲 SSE connected with ID:', data.connectionId)
+      } catch (error) {
+        console.error('🎲 Error processing connected event:', error)
+      }
+    })
+
+    eventSource.value.addEventListener('users:count', (event) => {
+      try {
+        if (!event.data) {
+          console.warn('🎲 SSE users:count event with no data')
+          return
+        }
+        const data = JSON.parse(event.data)
+        connectedUsers.value = data.count
+      } catch (error) {
+        console.error('🎲 Error processing users:count event:', error)
+      }
+    })
+
+    eventSource.value.addEventListener('dice:history', (event) => {
+      const data = JSON.parse(event.data)
+      // Merge with existing history, avoiding duplicates
       const existingIds = new Set(rollHistory.value.map(r => r.id))
       const newRolls = data.history
         .filter((r: DiceRoll) => !existingIds.has(r.id))
@@ -3566,12 +3878,7 @@ function initializeSSE(roomCode?: string) {
             diceResults = []
             r.diceRolled.forEach(dice => {
               dice.results.forEach(result => {
-                // Validate dice type before adding
-                if (isValidDiceType(dice.type)) {
-                  diceResults!.push({ type: dice.type, result })
-                } else {
-                  console.warn(`🎲 Invalid dice type: ${dice.type}`)
-                }
+                diceResults!.push({ type: dice.type, result })
               })
             })
           }
@@ -3586,19 +3893,11 @@ function initializeSSE(roomCode?: string) {
 
       rollHistory.value = [...rollHistory.value, ...newRolls]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      } catch (error) {
-        console.error('🎲 Error processing dice:history event:', error)
-      }
     })
 
     eventSource.value.addEventListener('dice:roll', (event) => {
-      try {
-        if (!event.data) {
-          console.warn('🎲 SSE dice:roll event with no data')
-          return
-        }
-        const data = JSON.parse(event.data)
-        const roll = data as DiceRoll
+      const data = JSON.parse(event.data)
+      const roll = data as DiceRoll
 
       // Only add rolls from other users
       if (roll.userId !== userId.value) {
@@ -3629,119 +3928,116 @@ function initializeSSE(roomCode?: string) {
           // Video will auto-close when it ends via @ended event
         }
       }
-      } catch (error) {
-        console.error('🎲 Error processing dice:roll event:', error)
+    })
+
+    eventSource.value.addEventListener('heartbeat', (event) => {
+      const data = JSON.parse(event.data)
+      // Optional: Update user count from heartbeat
+      if (data.userCount) {
+        connectedUsers.value = data.userCount
       }
     })
 
     // Handle role and stats events
     eventSource.value.addEventListener('user:role', (event) => {
-      handleSSEEvent(event, 'user:role', (data) => {
-        console.log('🎲 Received role:', data.role)
-      })
+      const data = JSON.parse(event.data)
+      console.log('🎲 Received role:', data.role)
     })
 
     eventSource.value.addEventListener('user:stats', (event) => {
-      handleSSEEvent(event, 'user:stats', (data) => {
-        if (userRole.value === 'Player') {
-          playerStats.value = data.stats
-          console.log('🎲 Received player stats')
-        }
-      })
+      const data = JSON.parse(event.data)
+      if (userRole.value === 'Player') {
+        playerStats.value = data.stats
+        console.log('🎲 Received player stats')
+      }
     })
 
     // Handle DM show image event
     eventSource.value.addEventListener('dm:show_image', (event) => {
-      handleSSEEvent(event, 'dm:show_image', (data) => {
-        displayedImageUrl.value = data.imageUrl
-        displayedImageCaption.value = data.caption || ''
-        showImageDisplayModal.value = true
+      const data = JSON.parse(event.data)
+      displayedImageUrl.value = data.imageUrl
+      displayedImageCaption.value = data.caption || ''
+      showImageDisplayModal.value = true
 
-        // Clear existing timeout if any
-        if (imageDisplayTimeout.value) {
-          clearTimeout(imageDisplayTimeout.value)
-        }
+      // Clear existing timeout if any
+      if (imageDisplayTimeout.value) {
+        clearTimeout(imageDisplayTimeout.value)
+      }
 
-        // Auto close after 5 seconds
-        imageDisplayTimeout.value = setTimeout(() => {
-          showImageDisplayModal.value = false
-          imageDisplayTimeout.value = null
-        }, 5000)
-      })
+      // Auto close after 5 seconds
+      imageDisplayTimeout.value = setTimeout(() => {
+        showImageDisplayModal.value = false
+        imageDisplayTimeout.value = null
+      }, 5000)
     })
 
     eventSource.value.addEventListener('players:stats', (event) => {
-      handleSSEEvent(event, 'players:stats', (data) => {
-        if (userRole.value === 'DM') {
-          allPlayers.value = data.players
-          console.log('🎲 Received all player stats')
-        }
-      })
+      const data = JSON.parse(event.data)
+      if (userRole.value === 'DM') {
+        allPlayers.value = data.players
+        console.log('🎲 Received all player stats')
+      }
     })
 
     eventSource.value.addEventListener('stats:updated', (event) => {
-      handleSSEEvent(event, 'stats:updated', (data) => {
-        // Update stats for specific player
-        if (userRole.value === 'DM') {
-          const playerIndex = allPlayers.value.findIndex(p => p.userId === data.userId)
-          if (playerIndex !== -1) {
-            allPlayers.value[playerIndex].stats = data.stats
-          }
-        } else if (data.userId === userId.value) {
-          playerStats.value = data.stats
+      const data = JSON.parse(event.data)
+      // Update stats for specific player
+      if (userRole.value === 'DM') {
+        const playerIndex = allPlayers.value.findIndex(p => p.userId === data.userId)
+        if (playerIndex !== -1) {
+          allPlayers.value[playerIndex].stats = data.stats
         }
-        console.log('🎲 Stats updated for user:', data.userId)
-      })
+      } else if (data.userId === userId.value) {
+        playerStats.value = data.stats
+      }
+      console.log('🎲 Stats updated for user:', data.userId)
     })
 
     eventSource.value.addEventListener('dice:request', (event) => {
-      handleSSEEvent(event, 'dice:request', (data) => {
-        // Only show notification to the target player
-        if (data.targetUserId === userId.value) {
-          pendingRollRequest.value = {
-            fromDM: data.fromDM,
-            diceType: data.diceType,
-            message: data.message,
-            modifier: data.modifier,
-            requestId: data.requestId
-          }
-          showRollRequestNotification.value = true
-          console.log('🎲 Received roll request from DM:', data)
+      const data = JSON.parse(event.data)
+      // Only show notification to the target player
+      if (data.targetUserId === userId.value) {
+        pendingRollRequest.value = {
+          fromDM: data.fromDM,
+          diceType: data.diceType,
+          message: data.message,
+          modifier: data.modifier,
+          requestId: data.requestId
         }
-      })
+        showRollRequestNotification.value = true
+        console.log('🎲 Received roll request from DM:', data)
+      }
     })
 
     // Battle Mode Events
     eventSource.value.addEventListener('battle:started', (event) => {
-      handleSSEEvent(event, 'battle:started', (data) => {
-        battleMode.value = data.battleState
-        console.log('⚔️ Battle mode started by DM:', data)
+      const data = JSON.parse(event.data)
+      battleMode.value = data.battleState
+      console.log('⚔️ Battle mode started by DM:', data)
 
-        const toast = useToast()
-        toast.add({
-          title: 'Battle Started',
-          description: 'The DM has started battle mode',
-          color: 'green'
-        })
+      const toast = useToast()
+      toast.add({
+        title: 'Battle Started',
+        description: 'The DM has started battle mode',
+        color: 'green'
       })
     })
 
     eventSource.value.addEventListener('battle:ended', (event) => {
-      handleSSEEvent(event, 'battle:ended', (data) => {
-        battleMode.value = null
-        console.log('⚔️ Battle mode ended by DM:', data)
+      const data = JSON.parse(event.data)
+      battleMode.value = null
+      console.log('⚔️ Battle mode ended by DM:', data)
 
-        const toast = useToast()
-        toast.add({
-          title: 'Battle Ended',
-          description: 'The DM has ended battle mode',
-          color: 'blue'
-        })
+      const toast = useToast()
+      toast.add({
+        title: 'Battle Ended',
+        description: 'The DM has ended battle mode',
+        color: 'blue'
       })
     })
 
     eventSource.value.addEventListener('battle:enemy_added', (event) => {
-      handleSSEEvent(event, 'battle:enemy_added', (data) => {
+      const data = JSON.parse(event.data)
       if (battleMode.value && battleMode.value.enemies) {
         battleMode.value.enemies[data.enemy.id] = data.enemy
       }
@@ -3758,85 +4054,288 @@ function initializeSSE(roomCode?: string) {
     })
 
     eventSource.value.addEventListener('battle:enemy_removed', (event) => {
-      handleSSEEvent(event, 'battle:enemy_removed', (data) => {
-        if (battleMode.value && battleMode.value.enemies) {
-          delete battleMode.value.enemies[data.enemyId]
-        }
-        console.log('👹 Enemy removed from battle:', data.enemyId)
+      const data = JSON.parse(event.data)
+      if (battleMode.value && battleMode.value.enemies) {
+        delete battleMode.value.enemies[data.enemyId]
+      }
+      console.log('👹 Enemy removed from battle:', data.enemyId)
 
-        if (userRole.value === 'Player') {
-          const toast = useToast()
-          toast.add({
-            title: 'Enemy Defeated',
-            description: 'An enemy has been removed from battle',
-            color: 'green'
-          })
-        }
-      })
+      if (userRole.value === 'Player') {
+        const toast = useToast()
+        toast.add({
+          title: 'Enemy Defeated',
+          description: 'An enemy has been removed from battle',
+          color: 'green'
+        })
+      }
     })
 
     eventSource.value.addEventListener('battle:initiative_rolled', (event) => {
-      handleSSEEvent(event, 'battle:initiative_rolled', (data) => {
-        if (battleMode.value) {
-          battleMode.value.initiativeOrder = data.participants
-          battleMode.value.phase = 'combat'
-          battleMode.value.currentTurnIndex = 0
-        }
-        console.log('🎲 Initiative rolled:', data.participants)
+      const data = JSON.parse(event.data)
+      if (battleMode.value) {
+        battleMode.value.initiativeOrder = data.participants
+        battleMode.value.phase = 'combat'
+        battleMode.value.currentTurnIndex = 0
+      }
+      console.log('🎲 Initiative rolled:', data.participants)
 
-        const toast = useToast()
-        toast.add({
-          title: 'Initiative Rolled',
-          description: 'Initiative has been rolled for all participants',
-          color: 'blue'
-        })
+      const toast = useToast()
+      toast.add({
+        title: 'Initiative Rolled',
+        description: 'Initiative has been rolled for all participants',
+        color: 'blue'
       })
     })
 
     eventSource.value.addEventListener('battle:turn_changed', (event) => {
-      handleSSEEvent(event, 'battle:turn_changed', (data) => {
-        if (battleMode.value) {
-          battleMode.value.currentTurnIndex = data.currentTurnIndex
-        }
-        console.log('🔄 Turn changed:', data)
+      const data = JSON.parse(event.data)
+      if (battleMode.value) {
+        battleMode.value.currentTurnIndex = data.currentTurnIndex
+      }
+      console.log('🔄 Turn changed:', data)
 
-        const currentParticipant = battleMode.value?.initiativeOrder?.[data.currentTurnIndex]
-        if (currentParticipant) {
-          const toast = useToast()
-          toast.add({
-            title: 'Next Turn',
-            description: `It's now ${currentParticipant.name}'s turn`,
-            color: 'green'
-          })
+      const currentParticipant = battleMode.value?.initiativeOrder?.[data.currentTurnIndex]
+      if (currentParticipant) {
+        const toast = useToast()
+        toast.add({
+          title: 'Next Turn',
+          description: `It's now ${currentParticipant.name}'s turn`,
+          color: 'green'
+        })
 
-          // Check if it's the current user's turn and they're a player
-          if (currentParticipant.type === 'player' && currentParticipant.userId === userId.value) {
-            // Load special abilities for this character and show modal
-            loadPlayerSpecialAbilities(currentParticipant)
-          }
+        // Check if it's the current user's turn and they're a player
+        if (currentParticipant.type === 'player' && currentParticipant.userId === userId.value) {
+          // Load special abilities for this character and show modal
+          loadPlayerSpecialAbilities(currentParticipant)
         }
-      })
+      }
     })
 
     eventSource.value.addEventListener('battle:damage_dealt', (event) => {
-      handleSSEEvent(event, 'battle:damage_dealt', (data) => {
-        console.log('💥 Damage dealt:', data)
+      const data = JSON.parse(event.data)
+      console.log('💥 Damage dealt:', data)
 
-        // Update local battle state if target is an enemy
-        if (battleMode.value && battleMode.value.enemies && data.targetId in battleMode.value.enemies) {
-          const enemy = battleMode.value.enemies[data.targetId]
-          enemy.hitPoints.current = data.newHitPoints
-          if (data.isDefeated) {
-            enemy.isDefeated = true
-          }
+      // Update local battle state if target is an enemy
+      if (battleMode.value && battleMode.value.enemies && data.targetId in battleMode.value.enemies) {
+        const enemy = battleMode.value.enemies[data.targetId]
+        enemy.hitPoints.current = data.newHitPoints
+        if (data.isDefeated) {
+          enemy.isDefeated = true
         }
+      }
+
+      const toast = useToast()
+      toast.add({
+        title: 'Damage Dealt',
+        description: `${data.damage} damage dealt to ${data.targetName || 'target'}`,
+        color: 'red'
+      })
+    })
+
+    // Music event listeners for real-time synchronization
+    eventSource.value.addEventListener('music:state_changed', (event) => {
+      console.log('🎵 SSE: Received music:state_changed event:', event.data)
+      const data = JSON.parse(event.data)
+
+      musicState.value.isPlaying = data.isPlaying
+      musicState.value.isPaused = data.isPaused
+      musicState.value.currentTrack = data.currentTrack
+      musicState.value.volume = data.volume
+
+      console.log('🎵 Music state changed:', data)
+      console.log('🎵 Updated local music state:', musicState.value)
+
+      // Ensure YouTube player is initialized if we have music state
+      if (data.currentTrack && !isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Initializing YouTube player for music sync')
+        initializeYouTubePlayer()
+      }
+
+      // Sync player with new state
+      if (isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Syncing YouTube player with new state')
+        syncPlayerWithMusicState()
+      } else {
+        console.log('🎵 SSE: YouTube player not ready, cannot sync')
+      }
+
+      const toast = useToast()
+      if (data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Now Playing',
+          description: `🎵 ${data.currentTrack.title}`,
+          color: 'green'
+        })
+      } else if (data.isPaused) {
+        toast.add({
+          title: 'Music Paused',
+          description: '⏸️ Playback paused',
+          color: 'yellow'
+        })
+      }
+    })
+
+    eventSource.value.addEventListener('music:playlist_updated', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.value.playlist = data.playlist
+      console.log('🎵 Playlist updated:', data.playlist)
+
+      const toast = useToast()
+      toast.add({
+        title: 'Playlist Updated',
+        description: `📋 Playlist now has ${data.playlist.length} tracks`,
+        color: 'blue'
+      })
+    })
+
+    eventSource.value.addEventListener('music:track_added', (event) => {
+      console.log('🎵 SSE: Received music:track_added event:', event.data)
+      const data = JSON.parse(event.data)
+
+      musicState.value.playlist.push(data.track)
+      console.log('🎵 Track added to playlist:', data.track)
+      console.log('🎵 Updated playlist:', musicState.value.playlist)
+
+      // Ensure YouTube player is initialized if this is the first track
+      if (musicState.value.playlist.length === 1 && !isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Initializing YouTube player for first track')
+        initializeYouTubePlayer()
+      }
+
+      const toast = useToast()
+      toast.add({
+        title: 'Track Added',
+        description: `🎵 ${data.track.title} added to playlist`,
+        color: 'green'
+      })
+    })
+
+    eventSource.value.addEventListener('music:playback_changed', (event) => {
+      console.log('🎵 SSE: Received music:playback_changed event:', event.data)
+      const data = JSON.parse(event.data)
+
+      musicState.value.currentTrack = data.currentTrack
+      musicState.value.isPlaying = data.isPlaying
+      musicState.value.position = data.position
+      musicState.value.volume = data.volume
+      fadeTransition.value.isActive = data.fadeTransition || false
+
+      console.log('🎵 Playback changed:', data)
+
+      // Ensure YouTube player is initialized if we have a track
+      if (data.currentTrack && !isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Initializing YouTube player for playback')
+        initializeYouTubePlayer()
+      }
+
+      // Sync player with new state
+      if (isYouTubePlayerReady()) {
+        console.log('🎵 SSE: Syncing YouTube player with playback change')
+        syncPlayerWithMusicState()
+      } else {
+        console.log('🎵 SSE: YouTube player not ready for playback sync')
+      }
+
+      const toast = useToast()
+      if (data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Now Playing',
+          description: `🎵 ${data.currentTrack.title}`,
+          color: 'green'
+        })
+      } else if (!data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Music Paused',
+          description: '⏸️ Playback paused',
+          color: 'yellow'
+        })
+      }
+    })
+
+    eventSource.value.addEventListener('music:track_removed', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.value.playlist = musicState.value.playlist.filter(track => track.id !== data.trackId)
+      console.log('🎵 Track removed from playlist:', data.trackId)
+
+      const toast = useToast()
+      toast.add({
+        title: 'Track Removed',
+        description: '➖ Track removed from playlist',
+        color: 'orange'
+      })
+    })
+
+    eventSource.value.addEventListener('music:volume_changed', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.value.volume = data.volume
+      console.log('🎵 Volume changed:', data.volume)
+    })
+
+    eventSource.value.addEventListener('music:playlist_cleared', (event) => {
+      musicState.value.playlist = []
+      console.log('🎵 Playlist cleared')
+
+      const toast = useToast()
+      toast.add({
+        title: 'Playlist Cleared',
+        description: '🗑️ All tracks removed from playlist',
+        color: 'red'
+      })
+    })
+
+    eventSource.value.addEventListener('music:track_added', (event) => {
+      const data = JSON.parse(event.data)
+
+      // Check if track already exists to prevent duplicates
+      const existingTrack = musicState.value.playlist.find(t => t.id === data.track.id)
+      if (!existingTrack) {
+        musicState.value.playlist.push(data.track)
+
+        // If it's a sound effect, add it to the playable track IDs
+        if (data.track.isSoundEffect || data.track.isPlayableWhileMusic) {
+          musicState.value.soundEffects.playableTrackIds.add(data.track.id)
+        }
+
+        console.log('🎵 Track added to playlist:', data.track.title)
 
         const toast = useToast()
         toast.add({
-          title: 'Damage Dealt',
-          description: `${data.damage} damage dealt to ${data.targetName || 'target'}`,
-          color: 'red'
+          title: data.track.isSoundEffect ? 'Sound Effect Added' : 'Track Added',
+          description: `${data.track.isSoundEffect ? '🔊' : '🎵'} ${data.track.title}`,
+          color: data.track.isSoundEffect ? 'purple' : 'green'
         })
+      }
+    })
+
+    // Sound Effects SSE Event Handlers
+    eventSource.value.addEventListener('music:sound_effects_volume_changed', (event) => {
+      const data = JSON.parse(event.data)
+      musicState.value.soundEffects.soundEffectsVolume = data.soundEffectsVolume
+      console.log('🔊 Sound effects volume changed:', data.soundEffectsVolume)
+    })
+
+    eventSource.value.addEventListener('music:sound_effect_played', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🔊 Sound effect played event received:', data)
+      console.log('🔊 Track data:', data.track)
+      console.log('🔊 Volume data:', data.volume)
+
+      // Update last played timestamp
+      musicState.value.soundEffects.lastSoundEffectPlayed = new Date(data.timestamp)
+
+      // Actually play the sound effect audio
+      if (data.track?.url) {
+        console.log('🔊 Calling playSoundEffectAudio with:', data.track.url, data.volume || musicState.value.soundEffects.soundEffectsVolume)
+        playSoundEffectAudio(data.track.url, data.volume || musicState.value.soundEffects.soundEffectsVolume)
+      } else {
+        console.error('🔊 No track URL found in sound effect data:', data)
+      }
+
+      const toast = useToast()
+      toast.add({
+        title: 'Sound Effect',
+        description: `🔊 ${data.track?.title || 'Sound effect'} played`,
+        color: 'purple'
       })
     })
 
@@ -3851,7 +4350,7 @@ function initializeSSE(roomCode?: string) {
 
 async function joinRoom(roomCode?: string) {
   if (!roomCode) return // Don't join if no room code provided
-
+  
   try {
     const response = await $fetch('/api/dice/join', {
       method: 'POST',
@@ -3873,6 +4372,8 @@ async function joinRoom(roomCode?: string) {
         await loadAllPlayersStats(roomCode)
       }
 
+      // Load initial music state for DMs
+      await loadInitialMusicState(roomCode)
     }
   } catch (error) {
     console.error('Failed to join room:', error)
@@ -3881,7 +4382,7 @@ async function joinRoom(roomCode?: string) {
 
 async function submitDiceRoll(roll: Omit<DiceRoll, 'id' | 'timestamp' | 'isOwn'>) {
   if (!currentRoom.value || currentRoom.value.code === 'default') return null
-
+  
   try {
     const response = await $fetch('/api/dice/roll', {
       method: 'POST',
@@ -3913,21 +4414,6 @@ function disconnectSSE() {
   // Stop heartbeat when disconnecting
   stopHeartbeat()
   console.log('🎲 Heartbeat stopped')
-
-  // Clear reconnection timeout if active
-  if (reconnectTimeout.value) {
-    clearTimeout(reconnectTimeout.value)
-    reconnectTimeout.value = null
-  }
-
-  isReconnecting.value = false
-
-  // Clear health check interval if it exists
-  if (window.sseHealthCheckInterval) {
-    clearInterval(window.sseHealthCheckInterval)
-    window.sseHealthCheckInterval = null
-    console.log('🎲 SSE health check stopped')
-  }
 }
 
 function toggleOfflineMode() {
@@ -4183,9 +4669,9 @@ async function loadBattlePlayers() {
   try {
     const response = await $fetch(`/api/battle/players?roomCode=${currentRoom.value.code}`)
 
-    if (response && response.success && response.data) {
-      selectedPlayers.value = response.data.selectedPlayers || []
-      unselectedPlayers.value = response.data.unselectedPlayers || []
+    if (response.success) {
+      selectedPlayers.value = response.data.selectedPlayers
+      unselectedPlayers.value = response.data.unselectedPlayers
       console.log('👥 Battle players loaded:', response.data)
     }
   } catch (error) {
@@ -4471,7 +4957,7 @@ async function showPlayerDetails(player: Player) {
   try {
     // Fetch the full character data for the player
     const response = await $fetch(`/api/characters?player=${player.userId}`)
-    if (response && response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
+    if (response.success && response.data.length > 0) {
       // Find the character that matches the participant name
       let playerCharacter = response.data.find((char: any) => char.characterName === player.name)
       // If no exact match, use the first character (assuming they only have one active)
@@ -4559,28 +5045,1382 @@ async function dealDamageToEnemy(enemy: Enemy) {
   }
 }
 
+// Music System Functions
+async function addTrackToPlaylist() {
+  console.log('🎵 addTrackToPlaylist called with URL:', newTrackUrl.value, 'currentRoom:', currentRoom.value)
+
+  if (!newTrackUrl.value.trim()) {
+    console.log('🎵 No URL provided')
+    return
+  }
+
+  if (!currentRoom.value) {
+    console.log('🎵 No current room')
+    return
+  }
+
+  if (currentRoom.value.code === 'default') {
+    console.log('🎵 Cannot add tracks to default room')
+    return
+  }
+
+  const startTime = Date.now()
+  isAddingTrack.value = true
+
+  // Check SSE connection status
+  const sseStatus = eventSource.value?.readyState
+  const sseStatusText = sseStatus === 0 ? 'CONNECTING' : sseStatus === 1 ? 'OPEN' : sseStatus === 2 ? 'CLOSED' : 'UNKNOWN'
+  console.log('🎵 Starting to add track:', newTrackUrl.value.trim(), `(timestamp: ${startTime}) SSE Status: ${sseStatusText} (${sseStatus}) Room: ${currentRoom.value.code}`)
+
+  // Add a fallback timeout to reset isAddingTrack in case something goes wrong
+  const fallbackTimeout = setTimeout(() => {
+    if (isAddingTrack.value) {
+      console.warn('🎵 ⚠️ Fallback timeout: Resetting isAddingTrack after 10 seconds')
+      isAddingTrack.value = false
+    }
+  }, 10000) // 10 second fallback
+
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim()
+      }
+    })
+
+    const apiResponseTime = Date.now()
+    console.log('🎵 API Response:', response, `(response time: ${apiResponseTime - startTime}ms)`)
+
+    if (response && response.success) {
+      console.log('🎵 Track added to playlist:', response.track, `(api completed in ${apiResponseTime - startTime}ms)`)
+
+      // Don't update local state manually - let SSE handle it
+      // This prevents conflicts between local updates and server events
+      newTrackUrl.value = ''
+
+      showMusicToast('Track Added', `Added "${response.track.title}" to playlist`, 'green')
+    } else {
+      console.error('🎵 API returned unsuccessful response:', response)
+      throw new Error(response?.message || 'API returned unsuccessful response')
+    }
+  } catch (error: any) {
+    console.error('🎵 Failed to add track:', error)
+
+    showMusicToast('Error', error.data?.statusMessage || error.message || 'Failed to add track to playlist', 'red')
+  } finally {
+    clearTimeout(fallbackTimeout) // Clear the fallback timeout
+    const finalTime = Date.now()
+    console.log('🎵 Setting isAddingTrack to false', `(total time: ${finalTime - startTime}ms)`)
+    isAddingTrack.value = false
+  }
+}
+
+// Sound Effects Functions
+async function setSoundEffectsVolume() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/sound-effects-volume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        soundEffectsVolume: musicState.value.soundEffects.soundEffectsVolume
+      }
+    })
+
+    if (response.success) {
+      console.log('🔊 Sound effects volume set to:', musicState.value.soundEffects.soundEffectsVolume)
+    }
+  } catch (error) {
+    console.error('Failed to set sound effects volume:', error)
+    // Don't show toast for volume changes as they happen frequently
+  }
+}
+
+async function playSoundEffect(trackId: string) {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/play-sound-effect', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: trackId
+      }
+    })
+
+    if (response.success) {
+      console.log('🔊 Sound effect played:', trackId)
+
+      showMusicToast('Sound Effect Played', '🔊 Sound effect triggered for all players', 'blue')
+    }
+  } catch (error) {
+    console.error('Failed to play sound effect:', error)
+    showMusicToast('Error', 'Failed to play sound effect', 'red')
+  }
+}
+
+// Function to actually play sound effect audio for all clients
+// Ensure YouTube API is ready for sound effects
+function ensureYouTubeAPIForSoundEffects(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
+      console.log('🔊 YouTube API already available for sound effects')
+      resolve(true)
+      return
+    }
+
+    // If the main music player has already loaded the API, it should be available
+    if (isYouTubeAPIReady.value) {
+      console.log('🔊 YouTube API marked as ready')
+      // Wait a moment for the API to fully initialize
+      setTimeout(() => {
+        if (window.YT && window.YT.Player) {
+          resolve(true)
+        } else {
+          console.error('🔊 YouTube API marked ready but not actually available')
+          resolve(false)
+        }
+      }, 100)
+      return
+    }
+
+    // Try to wait for the API to become available
+    let attempts = 0
+    const checkAPI = () => {
+      attempts++
+      if (window.YT && window.YT.Player) {
+        console.log('🔊 YouTube API became available after', attempts, 'attempts')
+        resolve(true)
+      } else if (attempts < 20) { // Wait up to 10 seconds
+        setTimeout(checkAPI, 500)
+      } else {
+        console.error('🔊 YouTube API not available after waiting')
+        resolve(false)
+      }
+    }
+
+    checkAPI()
+  })
+}
+
+function playSoundEffectAudio(youtubeUrl: string, volume: number = 50) {
+  try {
+    // Extract YouTube video ID
+    const videoId = extractYouTubeVideoId(youtubeUrl)
+    if (!videoId) {
+      console.error('🔊 Invalid YouTube URL for sound effect:', youtubeUrl)
+      return
+    }
+
+    console.log('🔊 Playing sound effect:', videoId, 'at volume:', volume)
+
+    // Ensure YouTube API is available, then create player
+    ensureYouTubeAPIForSoundEffects().then((apiReady) => {
+      if (apiReady) {
+        createSoundEffectPlayer(videoId, volume)
+      } else {
+        console.error('🔊 Cannot play sound effect - YouTube API not available')
+        // Could add a fallback here, but for volume control we need the API
+      }
+    })
+
+  } catch (error) {
+    console.error('🔊 Error playing sound effect audio:', error)
+  }
+}
+
+// Create a YouTube Player specifically for sound effects with volume control
+function createSoundEffectPlayer(videoId: string, volume: number) {
+  // Create unique ID for this sound effect player
+  const playerId = `sound-effect-player-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+  // Create container div
+  const playerDiv = document.createElement('div')
+  playerDiv.id = playerId
+  playerDiv.style.position = 'absolute'
+  playerDiv.style.left = '-9999px'
+  playerDiv.style.top = '-9999px'
+  playerDiv.style.width = '1px'
+  playerDiv.style.height = '1px'
+  playerDiv.style.opacity = '0'
+  playerDiv.style.pointerEvents = 'none'
+
+  // Add to sound effects container
+  let container = document.getElementById('sound-effects-container')
+  if (!container) {
+    console.log('🔊 Creating sound effects container')
+    container = document.createElement('div')
+    container.id = 'sound-effects-container'
+    container.style.display = 'none'
+    container.style.position = 'absolute'
+    container.style.left = '-9999px'
+    document.body.appendChild(container)
+  }
+
+  container.appendChild(playerDiv)
+  console.log('🔊 Sound effect player container created:', playerId)
+
+  // Add small delay to avoid conflicts with main player
+  setTimeout(() => {
+    try {
+      if (!window.YT || !window.YT.Player) {
+        console.error('🔊 YouTube API not available when creating sound effect player')
+        if (playerDiv && playerDiv.parentNode) {
+          playerDiv.parentNode.removeChild(playerDiv)
+        }
+        return
+      }
+
+      console.log('🔊 Creating YouTube Player for sound effect')
+      const player = new window.YT.Player(playerId, {
+        height: '1',
+        width: '1',
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          disablekb: 1,
+          enablejsapi: 1,
+          modestbranding: 1,
+          playsinline: 1,
+          rel: 0,
+          start: 0,
+          end: 10,  // Play only first 10 seconds
+          origin: window.location.origin
+        },
+        events: {
+          onReady: (event) => {
+            console.log('🔊 Sound effect player ready, setting volume to:', volume)
+            try {
+              // Set volume and play
+              event.target.setVolume(Math.max(0, Math.min(100, volume)))
+              event.target.playVideo()
+              console.log('🔊 Sound effect playback started at volume:', volume)
+            } catch (e) {
+              console.error('🔊 Error setting volume or starting playback:', e)
+            }
+          },
+          onStateChange: (event) => {
+            console.log('🔊 Sound effect player state changed:', event.data)
+            // Clean up when finished (ENDED = 0)
+            if (event.data === 0) {
+              console.log('🔊 Sound effect ended, cleaning up')
+              setTimeout(() => cleanupPlayer(player, playerDiv), 1000)
+            }
+          },
+          onError: (event) => {
+            console.error('🔊 Sound effect player error:', event.data)
+            setTimeout(() => cleanupPlayer(player, playerDiv), 1000)
+          }
+        }
+      })
+
+      // Safety cleanup after 15 seconds
+      setTimeout(() => {
+        console.log('🔊 Safety cleanup for sound effect player')
+        cleanupPlayer(player, playerDiv)
+      }, 15000)
+
+    } catch (error) {
+      console.error('🔊 Error creating YouTube player for sound effect:', error)
+      // Remove the div if player creation failed
+      if (playerDiv && playerDiv.parentNode) {
+        playerDiv.parentNode.removeChild(playerDiv)
+      }
+    }
+  }, 100) // Small delay to avoid conflicts
+}
+
+// Clean up a sound effect player
+function cleanupPlayer(player: any, playerDiv: HTMLElement) {
+  try {
+    if (player && typeof player.destroy === 'function') {
+      player.destroy()
+      console.log('🔊 YouTube player destroyed')
+    }
+  } catch (e) {
+    console.log('🔊 Error destroying player:', e.message)
+  }
+
+  try {
+    if (playerDiv && playerDiv.parentNode) {
+      playerDiv.parentNode.removeChild(playerDiv)
+      console.log('🔊 Player div removed from DOM')
+    }
+  } catch (e) {
+    console.log('🔊 Error removing player div:', e.message)
+  }
+}
+
+
+
+// Helper function to extract YouTube video ID
+function extractYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+
+  return null
+}
+
+async function addTrackAsSoundEffect() {
+  if (!newTrackUrl.value.trim() || !currentRoom.value) return
+
+  isAddingTrack.value = true
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim(),
+        isSoundEffect: true,
+        isPlayableWhileMusic: true
+      }
+    })
+
+    if (response.success) {
+      console.log('🔊 Sound effect added:', response.track)
+
+      // Clear the input field
+      newTrackUrl.value = ''
+
+      // The track will be added to playlist via SSE event
+      showMusicToast('Sound Effect Added', `Added "${response.track.title}" as sound effect`, 'green')
+    }
+  } catch (error) {
+    console.error('Failed to add sound effect:', error)
+    showMusicToast('Error', 'Failed to add sound effect', 'red')
+  } finally {
+    isAddingTrack.value = false
+  }
+}
+
+async function addAndPlayTrack() {
+  if (!newTrackUrl.value.trim() || !currentRoom.value) return
+
+  isAddingTrack.value = true
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim(),
+        playImmediately: true
+      }
+    })
+
+    if (response.success) {
+      console.log('🎵 Track added and playing:', response.track)
+
+      // Clear the input field
+      newTrackUrl.value = ''
+
+      // The track and playback state will be updated via SSE events
+      showMusicToast('Track Added & Playing', `🎵 ${response.track.title}`, 'green')
+    }
+  } catch (error) {
+    console.error('Failed to add and play track:', error)
+    showMusicToast('Error', 'Failed to add and play track', 'red')
+  } finally {
+    isAddingTrack.value = false
+  }
+}
+
+async function pauseMusic() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/pause', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.isPlaying = false
+      console.log('🎵 Music paused')
+
+      showMusicToast('Music Paused', 'Music has been paused for all participants', 'yellow')
+    }
+  } catch (error) {
+    console.error('Failed to pause music:', error)
+    showMusicToast('Error', 'Failed to pause music', 'red')
+  }
+}
+
+async function resumeMusic() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/resume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.isPlaying = true
+      console.log('🎵 Music resumed')
+
+      showMusicToast('Music Resumed', 'Music has been resumed for all participants', 'green')
+    }
+  } catch (error) {
+    console.error('Failed to resume music:', error)
+    showMusicToast('Error', 'Failed to resume music', 'red')
+  }
+}
+
+async function stopMusic() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/stop', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.isPlaying = false
+      musicState.value.currentTrack = null
+      console.log('🎵 Music stopped')
+
+      showMusicToast('Music Stopped', 'Music has been stopped for all participants', 'blue')
+    }
+  } catch (error) {
+    console.error('Failed to stop music:', error)
+    showMusicToast('Error', 'Failed to stop music', 'red')
+  }
+}
+
+async function setVolume() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/volume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        volume: musicState.value.volume
+      }
+    })
+
+    if (response.success) {
+      console.log('🎵 Volume set to:', musicState.value.volume)
+    }
+  } catch (error) {
+    console.error('Failed to set volume:', error)
+    // Don't show toast for volume changes as they happen frequently
+  }
+}
+
+async function clearPlaylist() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/clear', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.playlist = []
+      musicState.value.currentTrack = null
+      musicState.value.isPlaying = false
+      console.log('🎵 Playlist cleared')
+
+      showMusicToast('Playlist Cleared', 'All tracks have been removed from the playlist', 'blue')
+    }
+  } catch (error) {
+    console.error('Failed to clear playlist:', error)
+    showMusicToast('Error', 'Failed to clear playlist', 'red')
+  }
+}
+
+async function playTrackFromPlaylist(track: any) {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/play', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: track.id
+      }
+    })
+
+    if (response.success) {
+      musicState.value.currentTrack = track
+      musicState.value.isPlaying = true
+      console.log('🎵 Playing track from playlist:', track.title)
+
+      showMusicToast('Now Playing', `Playing "${track.title}"`, 'green')
+    }
+  } catch (error) {
+    console.error('Failed to play track:', error)
+    showMusicToast('Error', 'Failed to play track', 'red')
+  }
+}
+
+async function removeTrackFromPlaylist(trackId: string) {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/remove-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: trackId
+      }
+    })
+
+    if (response.success) {
+      // Update local state
+      musicState.value.playlist = musicState.value.playlist.filter(t => t.id !== trackId)
+
+      // Clean up sound effects tracking
+      musicState.value.soundEffects.playableTrackIds.delete(trackId)
+
+      // If the removed track was currently playing, stop playback
+      if (musicState.value.currentTrack?.id === trackId) {
+        musicState.value.currentTrack = null
+        musicState.value.isPlaying = false
+      }
+
+      console.log('🎵 Track removed from playlist:', trackId)
+
+      const toast = useToast()
+      toast.add({
+        title: 'Track Removed',
+        description: 'Track has been removed from the playlist',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to remove track:', error)
+    showMusicToast('Error', 'Failed to remove track', 'red')
+  }
+}
+
+// Utility function to format duration in seconds to MM:SS format
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return '0:00'
+
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// Load initial music state when joining a room
+async function loadInitialMusicState(roomCode?: string) {
+  if (!roomCode || !userRole.value || userRole.value === 'Player') {
+    console.log('🎵 Skipping music state load - no room or not DM')
+    return
+  }
+
+  try {
+    console.log('🎵 Loading initial music state for room:', roomCode)
+
+    const response = await $fetch(`/api/music/state?roomCode=${encodeURIComponent(roomCode)}`)
+
+    if (response.success && response.musicState) {
+      console.log('🎵 Initial music state loaded:', response.musicState)
+
+      // Update local music state
+      musicState.value.isPlaying = response.musicState.isPlaying || false
+      musicState.value.currentTrack = response.musicState.currentTrack || null
+      musicState.value.volume = response.musicState.volume || 50
+      musicState.value.playlist = response.musicState.playlist || []
+
+      if (response.musicState.soundEffects) {
+        musicState.value.soundEffects.soundEffectsVolume = response.musicState.soundEffects.soundEffectsVolume || 75
+        musicState.value.soundEffects.playableTrackIds = new Set(response.musicState.soundEffects.playableTrackIds || [])
+        musicState.value.soundEffects.lastSoundEffectPlayed = response.musicState.soundEffects.lastSoundEffectPlayed || null
+      }
+
+      console.log('🎵 Updated local music state:', musicState.value)
+
+      // Initialize YouTube player with current track if available
+      if (response.musicState.currentTrack && isYouTubePlayerReady()) {
+        console.log('🎵 Syncing YouTube player with loaded music state')
+        syncPlayerWithMusicState()
+      }
+
+    } else {
+      console.log('🎵 No initial music state found for room:', roomCode)
+    }
+
+  } catch (error) {
+    console.error('🎵 Failed to load initial music state:', error)
+  }
+}
+
+// YouTube Player API Integration
+function loadYouTubeAPI() {
+  // Check if YouTube API is already loaded
+  if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
+    console.log('🎵 YouTube API already available')
+    isYouTubeAPIReady.value = true
+    return Promise.resolve(true)
+  }
+
+  if (isYouTubeAPIReady.value) {
+    console.log('🎵 YouTube API marked as ready')
+    return Promise.resolve(true)
+  }
+
+  const existingScript = document.querySelector('#youtube-api-script')
+  if (existingScript) {
+    console.log('🎵 YouTube API script already in DOM, waiting...')
+    // Script exists but API not ready, wait a bit
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (window.YT && window.YT.Player) {
+          isYouTubeAPIReady.value = true
+          console.log('🎵 YouTube API loaded after waiting')
+          resolve(true)
+        } else {
+          console.error('🎵 YouTube API script present but API not ready')
+          resolve(false)
+        }
+      }, 2000)
+    })
+  }
+
+  return new Promise((resolve) => {
+    console.log('🎵 Loading YouTube API script...')
+    const script = document.createElement('script')
+    script.id = 'youtube-api-script'
+    script.src = 'https://www.youtube.com/iframe_api'
+    script.async = true
+
+    // Store previous callback if it exists
+    const previousCallback = window.onYouTubeIframeAPIReady
+
+    // YouTube API calls this global function when ready
+    window.onYouTubeIframeAPIReady = () => {
+      isYouTubeAPIReady.value = true
+      console.log('🎵 YouTube API loaded successfully')
+
+      // Call previous callback if it existed
+      if (previousCallback && typeof previousCallback === 'function') {
+        previousCallback()
+      }
+
+      resolve(true)
+    }
+
+    script.onload = () => {
+      console.log('🎵 YouTube API script loaded, waiting for API ready...')
+    }
+
+    script.onerror = () => {
+      console.error('🎵 Failed to load YouTube API script - check network connection, CSP, or firewall')
+      resolve(false)
+    }
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      if (!isYouTubeAPIReady.value) {
+        console.error('🎵 YouTube API loading timed out')
+        resolve(false)
+      }
+    }, 10000)
+
+    document.head.appendChild(script)
+  })
+}
+
+function getYouTubeVideoId(url: string): string | null {
+  if (!url || typeof url !== 'string') {
+    console.warn('🎵 Invalid URL provided to getYouTubeVideoId:', url)
+    return null
+  }
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      const videoId = match[1]
+      // Validate video ID format
+      const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/
+      if (videoIdPattern.test(videoId)) {
+        return videoId
+      } else {
+        console.warn('🎵 Extracted video ID has invalid format:', videoId)
+      }
+    }
+  }
+
+  console.warn('🎵 Could not extract valid video ID from URL:', url)
+  return null
+}
+
+async function initializeYouTubePlayer() {
+  try {
+    console.log('🎵 Starting YouTube player initialization...')
+
+    const apiLoaded = await loadYouTubeAPI()
+    if (!apiLoaded) {
+      console.error('🎵 Failed to load YouTube API')
+      return
+    }
+
+    if (!isYouTubeAPIReady.value) {
+      console.error('🎵 YouTube API not ready after loading')
+      return
+    }
+
+    // Wait for the DOM element to be available with retries
+    let retries = 0
+    const maxRetries = 10
+    let playerElement = null
+
+    while (retries < maxRetries && !playerElement) {
+      await nextTick()
+      playerElement = document.getElementById('youtube-player')
+      if (!playerElement) {
+        console.log(`🎵 Waiting for player element... (attempt ${retries + 1}/${maxRetries})`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+        retries++
+      }
+    }
+
+    if (!playerElement) {
+      console.error('🎵 YouTube player element not found in DOM after retries')
+      return
+    }
+
+    console.log('🎵 Creating YouTube player instance...')
+    youtubePlayer.value = new window.YT.Player('youtube-player', {
+      height: '100%',
+      width: '100%',
+      playerVars: {
+        autoplay: 0,
+        controls: userRole.value === 'DM' ? 1 : 0, // Only DMs get controls
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+        disablekb: userRole.value !== 'DM' ? 1 : 0, // Disable keyboard for non-DMs
+        fs: 0, // Disable fullscreen for embedded player
+        cc_load_policy: 0,
+        enablejsapi: 1,
+        playsinline: 1,
+        origin: window.location.origin,
+        // Reduce tracking and ads
+        widget_referrer: window.location.origin,
+        host: 'https://www.youtube-nocookie.com'
+      },
+      events: {
+        onReady: (event: any) => {
+          console.log('🎵 YouTube player ready, setting initial volume to:', musicState.value.volume)
+
+          // Set initial volume
+          try {
+            event.target.setVolume(musicState.value.volume)
+            console.log('🎵 Initial volume set successfully')
+
+            // If there's already a current track, sync it
+            if (musicState.value.currentTrack) {
+              console.log('🎵 Syncing existing track:', musicState.value.currentTrack.title)
+              syncPlayerWithMusicState()
+            }
+          } catch (error) {
+            console.error('🎵 Error setting initial volume:', error)
+          }
+        },
+        onStateChange: (event: any) => {
+          handlePlayerStateChange(event)
+        },
+        onError: (event: any) => {
+          console.error('🎵 YouTube player error:', event.data)
+          console.error('🎵 Current video ID:', currentVideoId.value)
+          console.error('🎵 Music state:', musicState.value)
+
+          // Filter out CORS-related tracking errors which are safe to ignore
+          if (event.data && typeof event.data === 'object' &&
+            (event.data.toString().includes('doubleclick') ||
+              event.data.toString().includes('googleads'))) {
+            console.log('🎵 Ignoring YouTube tracking/ads error (safe):', event.data)
+            return
+          }
+
+          let errorMessage = 'There was an error playing the video'
+
+          // More specific error messages
+          switch (event.data) {
+            case 2:
+              errorMessage = `Invalid video ID: ${currentVideoId.value}`
+              break
+            case 5:
+              errorMessage = 'Video cannot be played in HTML5 player'
+              break
+            case 100:
+              errorMessage = 'Video not found or private'
+              break
+            case 101:
+            case 150:
+              errorMessage = 'Video cannot be embedded'
+              break
+          }
+
+          const toast = useToast()
+          toast.add({
+            title: 'Playback Error',
+            description: errorMessage,
+            color: 'red'
+          })
+        }
+      }
+    })
+
+    console.log('🎵 YouTube player initialization completed')
+  } catch (error) {
+    console.error('🎵 Failed to initialize YouTube player:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Player Error',
+      description: 'Failed to initialize music player',
+      color: 'red'
+    })
+  }
+}
+
+function handlePlayerStateChange(event: any) {
+  const YT = window.YT
+  if (!YT) return
+
+  const state = event.data
+  const isPlaying = state === YT.PlayerState.PLAYING
+  const isPaused = state === YT.PlayerState.PAUSED
+  const isEnded = state === YT.PlayerState.ENDED
+
+  // Only DMs can control music state via the player
+  if (userRole.value === 'DM') {
+    if (isPlaying && !musicState.value.isPlaying) {
+      // Player started, update backend
+      resumeMusic()
+    } else if (isPaused && musicState.value.isPlaying) {
+      // Player paused, update backend
+      pauseMusic()
+    } else if (isEnded) {
+      // Track ended, stop playback
+      stopMusic()
+    }
+  }
+}
+
+// Fade transition variables
+const fadeTransition = ref({
+  isActive: false,
+  targetVolume: 100,
+  currentVolume: 100,
+  duration: 1000, // 1 second fade
+  intervalId: null
+})
+
+// Smooth volume fade function
+function fadeVolume(fromVolume: number, toVolume: number, duration: number = 1000): Promise<void> {
+  return new Promise((resolve) => {
+    if (!isYouTubePlayerReady()) {
+      resolve()
+      return
+    }
+
+    const startTime = Date.now()
+    const volumeRange = toVolume - fromVolume
+
+    fadeTransition.value.isActive = true
+    fadeTransition.value.currentVolume = fromVolume
+    fadeTransition.value.targetVolume = toVolume
+
+    const fadeStep = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      // Use easeInOut curve for smoother transition
+      const easedProgress = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2
+
+      const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
+      fadeTransition.value.currentVolume = currentVolume
+
+      if (isYouTubePlayerReady()) {
+        youtubePlayer.value.setVolume(currentVolume)
+      }
+
+      if (progress >= 1) {
+        fadeTransition.value.isActive = false
+        fadeTransition.value.currentVolume = toVolume
+        resolve()
+      } else {
+        requestAnimationFrame(fadeStep)
+      }
+    }
+
+    fadeStep()
+  })
+}
+
+// Helper function to check if YouTube player is ready and has required methods
+function isYouTubePlayerReady(): boolean {
+  const isReady = !!(youtubePlayer.value &&
+    typeof youtubePlayer.value.setVolume === 'function' &&
+    typeof youtubePlayer.value.playVideo === 'function' &&
+    typeof youtubePlayer.value.pauseVideo === 'function' &&
+    typeof youtubePlayer.value.loadVideoById === 'function')
+
+  if (!isReady) {
+    console.log('🎵 YouTube player readiness check failed:', {
+      playerExists: !!youtubePlayer.value,
+      hasSetVolume: youtubePlayer.value && typeof youtubePlayer.value.setVolume === 'function',
+      hasPlayVideo: youtubePlayer.value && typeof youtubePlayer.value.playVideo === 'function',
+      hasPauseVideo: youtubePlayer.value && typeof youtubePlayer.value.pauseVideo === 'function',
+      hasLoadVideoById: youtubePlayer.value && typeof youtubePlayer.value.loadVideoById === 'function'
+    })
+  }
+
+  return isReady
+}
+
+// Diagnostic function for troubleshooting
+function diagnoseMusicSystem() {
+  const playerElement = document.getElementById('youtube-player')
+
+  console.log('🎵 Music System Diagnostic:', {
+    isYouTubeAPIReady: isYouTubeAPIReady.value,
+    isPlayerReady: isYouTubePlayerReady(),
+    musicState: musicState.value,
+    currentVideoId: currentVideoId.value,
+    fadeTransition: fadeTransition.value,
+    userRole: userRole.value,
+    currentRoom: currentRoom.value,
+    hasPlayerElement: !!playerElement,
+    playerElementHTML: playerElement ? playerElement.outerHTML : null,
+    windowYT: !!window.YT,
+    windowYTLoaded: window.YT ? !!window.YT.Player : false,
+    isConnected: isConnected.value,
+    youtubePlayerValue: youtubePlayer.value,
+    fadeConfig: fadeConfig.value
+  })
+
+  // Try to get player state if available
+  if (youtubePlayer.value && typeof youtubePlayer.value.getPlayerState === 'function') {
+    try {
+      console.log('🎵 YouTube Player State:', youtubePlayer.value.getPlayerState())
+      console.log('🎵 YouTube Player Volume:', youtubePlayer.value.getVolume())
+    } catch (error) {
+      console.log('🎵 Error getting player state:', error)
+    }
+  }
+
+  return {
+    isReady: isYouTubePlayerReady(),
+    hasAPI: isYouTubeAPIReady.value,
+    hasElement: !!playerElement,
+    hasPlayer: !!youtubePlayer.value,
+    musicState: musicState.value
+  }
+}
+
+// Force reinitialize YouTube player
+async function forceReinitializePlayer() {
+  console.log('🎵 Force reinitializing YouTube player...')
+
+  // Reset state
+  youtubePlayer.value = null
+  isYouTubeAPIReady.value = false
+  currentVideoId.value = ''
+
+  // Remove existing script
+  const existingScript = document.getElementById('youtube-api-script')
+  if (existingScript) {
+    existingScript.remove()
+  }
+
+  // Wait a moment
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  // Reinitialize
+  await initializeYouTubePlayer()
+
+  console.log('🎵 Force reinitialization complete')
+}
+
+async function switchTrackWithFade(newVideoId: string) {
+  console.log('🎵 Switching to track:', newVideoId)
+
+  // Validate video ID format
+  if (!newVideoId || typeof newVideoId !== 'string' || newVideoId.length < 10) {
+    console.error('🎵 Invalid video ID:', newVideoId)
+    return
+  }
+
+  // YouTube video IDs are 11 characters long and contain only alphanumeric characters, hyphens, and underscores
+  const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/
+  if (!videoIdPattern.test(newVideoId)) {
+    console.error('🎵 Video ID format invalid:', newVideoId)
+    return
+  }
+
+  if (!isYouTubePlayerReady()) {
+    console.log('🎵 Player not ready, using instant switch')
+    currentVideoId.value = newVideoId
+    if (isYouTubePlayerReady()) {
+      try {
+        youtubePlayer.value.loadVideoById(newVideoId)
+        console.log('🎵 Video loaded successfully')
+      } catch (error) {
+        console.error('🎵 Error loading video:', error)
+      }
+    }
+    return
+  }
+
+  const currentVolume = musicState.value.volume
+  console.log('🎵 Starting smooth track transition with volume:', currentVolume)
+
+  try {
+    // Store current player state
+    const wasPlaying = youtubePlayer.value.getPlayerState() === 1 // PLAYING = 1
+
+    // Create a temporary second player for crossfading
+    const tempPlayerDiv = document.createElement('div')
+    tempPlayerDiv.id = 'youtube-player-temp'
+    tempPlayerDiv.style.display = 'none'
+    document.body.appendChild(tempPlayerDiv)
+
+    const tempPlayer = new window.YT.Player('youtube-player-temp', {
+      height: '1',
+      width: '1',
+      videoId: newVideoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        modestbranding: 1,
+        playsinline: 1,
+        rel: 0
+      },
+      events: {
+        onReady: async (event) => {
+          console.log('🎵 Temp player ready for crossfade')
+
+          // Start new track at 0 volume
+          event.target.setVolume(0)
+          if (wasPlaying) {
+            event.target.playVideo()
+          }
+
+          // Crossfade: fade out current, fade in new simultaneously
+          const fadeDuration = fadeConfig.value.trackTransition
+          const promises = []
+
+          // Fade out current track
+          if (currentVideoId.value) {
+            promises.push(fadeVolume(currentVolume, 0, fadeDuration))
+          }
+
+          // Fade in new track on temp player
+          promises.push(new Promise(async (resolve) => {
+            await new Promise(r => setTimeout(r, 50)) // Slight delay for smoother transition
+            await fadeVolumeForPlayer(event.target, 0, currentVolume, fadeDuration)
+            resolve(true)
+          }))
+
+          // Wait for both fades to complete
+          await Promise.all(promises)
+
+          // Switch to new player
+          currentVideoId.value = newVideoId
+          youtubePlayer.value.stopVideo()
+
+          // Replace main player with new video
+          youtubePlayer.value.loadVideoById(newVideoId)
+          youtubePlayer.value.setVolume(currentVolume)
+
+          if (wasPlaying) {
+            // Small delay to ensure video is loaded
+            setTimeout(() => {
+              if (isYouTubePlayerReady()) {
+                youtubePlayer.value.playVideo()
+              }
+            }, 100)
+          }
+
+          // Cleanup temp player
+          setTimeout(() => {
+            event.target.destroy()
+            if (tempPlayerDiv.parentNode) {
+              tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
+            }
+          }, 500)
+
+          console.log('🎵 Crossfade transition completed')
+        },
+        onError: (event) => {
+          console.error('🎵 Temp player error:', event.data)
+          // Fallback to instant switch
+          currentVideoId.value = newVideoId
+          youtubePlayer.value.loadVideoById(newVideoId)
+          youtubePlayer.value.setVolume(currentVolume)
+
+          // Cleanup
+          if (tempPlayerDiv.parentNode) {
+            tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
+          }
+        }
+      }
+    })
+
+  } catch (error) {
+    console.error('🎵 Error during crossfade transition:', error)
+    // Fallback to instant switch
+    currentVideoId.value = newVideoId
+    youtubePlayer.value.loadVideoById(newVideoId)
+    youtubePlayer.value.setVolume(currentVolume)
+  }
+}
+
+// Helper function for fading volume on a specific player
+function fadeVolumeForPlayer(player: any, fromVolume: number, toVolume: number, duration: number = 1000): Promise<void> {
+  return new Promise((resolve) => {
+    if (!player || typeof player.setVolume !== 'function') {
+      resolve()
+      return
+    }
+
+    const startTime = Date.now()
+    const volumeRange = toVolume - fromVolume
+
+    const fadeStep = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      // Use easeInOut curve for smoother transition
+      const easedProgress = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2
+
+      const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
+
+      try {
+        player.setVolume(currentVolume)
+      } catch (e) {
+        console.error('🎵 Error setting volume during fade:', e)
+      }
+
+      if (progress >= 1) {
+        resolve()
+      } else {
+        requestAnimationFrame(fadeStep)
+      }
+    }
+
+    fadeStep()
+  })
+}
+
+function syncPlayerWithMusicState() {
+  if (!isYouTubePlayerReady() || !musicState.value.currentTrack) {
+    console.log('🎵 Skipping sync - player not ready or no current track')
+    return
+  }
+
+  console.log('🎵 Syncing player with music state:', {
+    track: musicState.value.currentTrack.title,
+    isPlaying: musicState.value.isPlaying,
+    volume: musicState.value.volume,
+    url: musicState.value.currentTrack.url
+  })
+
+  const videoId = getYouTubeVideoId(musicState.value.currentTrack.url)
+  if (!videoId) {
+    console.error('🎵 Invalid YouTube URL:', musicState.value.currentTrack.url)
+    console.error('🎵 Current track data:', musicState.value.currentTrack)
+    return
+  }
+
+  console.log('🎵 Extracted video ID:', videoId)
+
+  // Load video with fade transition if different from current
+  if (currentVideoId.value !== videoId) {
+    console.log('🎵 Loading new video:', videoId)
+    switchTrackWithFade(videoId)
+  }
+
+  // Sync play/pause state
+  try {
+    if (musicState.value.isPlaying) {
+      console.log('🎵 Starting playback')
+      youtubePlayer.value.playVideo()
+    } else {
+      console.log('🎵 Pausing playback')
+      youtubePlayer.value.pauseVideo()
+    }
+
+    // Sync volume with smooth transition if not already fading
+    if (!fadeTransition.value.isActive) {
+      console.log('🎵 Setting volume to:', musicState.value.volume)
+      youtubePlayer.value.setVolume(musicState.value.volume)
+    }
+  } catch (error) {
+    console.error('🎵 Error syncing player state:', error)
+  }
+}
+
+// Watch for changes in music state to sync with player
+watch(() => musicState.value.currentTrack, (newTrack) => {
+  if (newTrack && isYouTubePlayerReady()) {
+    syncPlayerWithMusicState()
+  } else if (!newTrack && isYouTubePlayerReady()) {
+    youtubePlayer.value.stopVideo()
+    currentVideoId.value = null
+  }
+}, { deep: true })
+
+watch(() => musicState.value.isPlaying, async (isPlaying, wasPlaying) => {
+  if (!isYouTubePlayerReady()) return
+
+  if (fadeConfig.value.enabled) {
+    if (isPlaying && !wasPlaying) {
+      // Starting playback - fade in
+      youtubePlayer.value.playVideo()
+
+      // Add small fade in effect
+      const currentVolume = musicState.value.volume
+      await fadeVolume(Math.max(0, currentVolume - 20), currentVolume, fadeConfig.value.playPause)
+    } else if (!isPlaying && wasPlaying) {
+      // Pausing playback - fade out then pause
+      const currentVolume = musicState.value.volume
+      await fadeVolume(currentVolume, Math.max(0, currentVolume - 15), fadeConfig.value.playPause * 0.75)
+      youtubePlayer.value.pauseVideo()
+
+      // Restore volume for when playback resumes
+      setTimeout(() => {
+        if (isYouTubePlayerReady()) {
+          youtubePlayer.value.setVolume(currentVolume)
+        }
+      }, 100)
+    }
+  } else {
+    // No fade effects - direct play/pause
+    if (isPlaying) {
+      youtubePlayer.value.playVideo()
+    } else {
+      youtubePlayer.value.pauseVideo()
+    }
+  }
+})
+
+watch(() => musicState.value.volume, (newVolume, oldVolume) => {
+  if (isYouTubePlayerReady() && !fadeTransition.value.isActive && fadeConfig.value.enabled) {
+    // Use smooth transition for volume changes if the change is significant
+    const volumeDifference = Math.abs(newVolume - (oldVolume || 0))
+
+    if (volumeDifference > 10) {
+      // Large volume change - use fade transition
+      fadeVolume(oldVolume || 0, newVolume, fadeConfig.value.volumeChange)
+    } else {
+      // Small volume change - set directly
+      youtubePlayer.value.setVolume(newVolume)
+    }
+  } else if (isYouTubePlayerReady() && !fadeTransition.value.isActive) {
+    // Fades disabled - set volume directly
+    youtubePlayer.value.setVolume(newVolume)
+  }
+})
+
 // Initialize with SSE connection
 onMounted(async () => {
   console.log('🎲 Dice room component mounted')
 
+  // Add global error handler to filter out YouTube CORS tracking errors
   const originalConsoleError = console.error
   console.error = (...args) => {
     const errorStr = args.join(' ')
     if (errorStr.includes('doubleclick.net') ||
       errorStr.includes('googleads.g.doubleclick.net') ||
       errorStr.includes('CORS policy') && errorStr.includes('youtube')) {
+      // Silently ignore YouTube tracking/ads CORS errors
       return
     }
+    // Log all other errors normally
     originalConsoleError.apply(console, args)
   }
 
+  // Don't set any initial room state
+  // Users must create or join a room explicitly
   currentRoom.value = null
 
+  // Load user characters and auto-detect role
   await loadUserCharacters()
 
+  // Initialize YouTube player if there's music content
+  console.log('🎵 Initializing YouTube player...')
+  await initializeYouTubePlayer()
+
+  // Add global diagnostic function for debugging
+  window.diagnoseMusicSystem = diagnoseMusicSystem
+  window.forceReinitializePlayer = forceReinitializePlayer
+
+  // Add debug function for testing sound effects volume
+  window.testSoundEffectVolume = (url: string, volume: number = 50) => {
+    console.log(`🔊 Testing sound effect at volume ${volume}%:`, url)
+    playSoundEffectAudio(url, volume)
+  }
+
+  // Add debug function to test with a sample YouTube URL
+  window.testSoundEffect = (volume: number = 50) => {
+    const sampleUrl = 'https://www.youtube.com/watch?v=2WPCLda_erI' // Short sound effect
+    console.log(`🔊 Testing with sample URL at volume ${volume}%`)
+    playSoundEffectAudio(sampleUrl, volume)
+  }
+
+  // Add function to check YouTube API status
+  window.checkYouTubeAPI = () => {
+    console.log('YouTube API status:', {
+      windowYT: !!window.YT,
+      YTPlayer: !!(window.YT && window.YT.Player),
+      isAPIReady: isYouTubeAPIReady.value,
+      youtubePlayerExists: !!youtubePlayer.value
+    })
+  }
+
+  // Don't automatically connect to any room
+  // Users must create or join a room explicitly
 })
 
 onUnmounted(() => {
+  // Clean up fade transition
+  if (fadeTransition.value.intervalId) {
+    cancelAnimationFrame(fadeTransition.value.intervalId)
+    fadeTransition.value.intervalId = null
+    fadeTransition.value.isActive = false
+  }
+
   disconnectSSE()
 })
 
@@ -4600,6 +6440,12 @@ useHead({
   height: 600px !important;
   max-height: 600px !important;
 }
+
+/* :deep(.modal-custom-size [id*="headlessui-dialog-panel-v-"] > div) { */
+/*   width: 100% !important; */
+/*   max-width: none !important; */
+/*   min-width: 1750px !important; */
+/* } */
 
 :deep(.modal-custom-size .grid) {
   width: 100% !important;
