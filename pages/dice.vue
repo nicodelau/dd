@@ -2154,51 +2154,15 @@ const { t, toggleLanguage, language } = useTranslations()
 // Get authenticated user
 const user = useState < any > ('user')
 
-// Campaign zones for the topographical map - Updated for Pilotes
-const campaignZones = ref([
-  { 
-    name: "PALERMO", 
-    description: "Elegante distrito residencial donde vive la nobleza y los comerciantes prósperos. Sus calles empedradas y mansiones reflejan el poder económico de la ciudad.", 
-    x: -6, 
-    z: 0, 
-    color: 0x8B4513 
-  },
-  { 
-    name: "OPUS", 
-    description: "Vibrante centro artesanal donde los mejores craftsmen de Pilotes crean obras maestras. El sonido de martillos y el olor a metal forjado llenan el aire.", 
-    x: 6, 
-    z: 0, 
-    color: 0x4A4A4A 
-  },
-  { 
-    name: "PUERTO", 
-    description: "Bullicioso distrito portuario donde llegan mercancías de tierras lejanas. Los muelles nunca descansan y siempre hay historias de aventura en las tabernas.", 
-    x: 8, 
-    z: 8, 
-    color: 0x1E90FF 
-  },
-  { 
-    name: "Castillo Central", 
-    description: "Imponente fortaleza real que domina el corazón de Pilotes. Desde sus torres se puede ver toda la ciudad y las tierras circundantes.", 
-    x: 0, 
-    z: -4, 
-    color: 0xFFD700 
-  },
-  { 
-    name: "LAFE", 
-    description: "Sereno lago de aguas cristalinas ubicado fuera de las murallas. Es un lugar de paz donde los ciudadanos van a reflexionar y los pescadores buscan su sustento.", 
-    x: -10, 
-    z: 10, 
-    color: 0x20B2AA 
-  },
-  { 
-    name: "Las Murallas", 
-    description: "Poderosas fortificaciones de piedra que han protegido Pilotes durante siglos. Sus torres de vigilancia mantienen guardia constante contra cualquier amenaza.", 
-    x: 0, 
-    z: 6, 
-    color: 0x696969 
-  }
-])
+// Heartbeat system to maintain session alive
+const roomCodeForHeartbeat = computed(() => currentRoom.value?.code || '')
+const { isHeartbeatActive, startHeartbeat, stopHeartbeat } = useHeartbeat(roomCodeForHeartbeat)
+
+// Helper function to validate dice type
+function isValidDiceType(type: string): boolean {
+  const validTypes = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd36', 'd100']
+  return validTypes.includes(type)
+}
 
 // Reactive state
 const userRole = ref < 'Player' | 'DM' > ('Player')

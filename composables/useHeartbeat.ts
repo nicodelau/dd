@@ -5,21 +5,12 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
   const errorCount = ref(0)
   const MAX_ERRORS = 3
 
-  const startHeartbeat = () => {
-    if (isHeartbeatActive.value || !roomCode.value) {
-      return
+  const stopHeartbeat = () => {
+    if (heartbeatInterval.value) {
+      clearInterval(heartbeatInterval.value)
+      heartbeatInterval.value = null
     }
-
-    isHeartbeatActive.value = true
-    errorCount.value = 0
-
-    // Send heartbeat immediately
-    sendHeartbeat()
-
-    // Set up interval to send heartbeat every 30 seconds
-    heartbeatInterval.value = setInterval(async () => {
-      await sendHeartbeat()
-    }, 30000) // 30 seconds
+    isHeartbeatActive.value = false
   }
 
   const sendHeartbeat = async () => {
@@ -52,12 +43,21 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
     }
   }
 
-  const stopHeartbeat = () => {
-    if (heartbeatInterval.value) {
-      clearInterval(heartbeatInterval.value)
-      heartbeatInterval.value = null
+  const startHeartbeat = () => {
+    if (isHeartbeatActive.value || !roomCode.value) {
+      return
     }
-    isHeartbeatActive.value = false
+
+    isHeartbeatActive.value = true
+    errorCount.value = 0
+
+    // Send heartbeat immediately
+    sendHeartbeat()
+
+    // Set up interval to send heartbeat every 30 seconds
+    heartbeatInterval.value = setInterval(async () => {
+      await sendHeartbeat()
+    }, 30000) // 30 seconds
   }
 
   // Watch for room code changes
