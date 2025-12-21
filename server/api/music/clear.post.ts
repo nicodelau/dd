@@ -47,16 +47,23 @@ export default defineEventHandler(async (event) => {
         position: 0,
         playlist: [],
         fadeTransition: false,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
+        soundEffects: {
+          soundEffectsVolume: 75,
+          playableTrackIds: new Set(),
+          lastSoundEffectPlayed: undefined
+        }
       }
     }
 
     // Clear the playlist and stop current track
-    room.musicState.playlist = []
-    room.musicState.currentTrack = undefined
-    room.musicState.isPlaying = false
-    room.musicState.position = 0
-    room.musicState.lastUpdated = new Date()
+    if (room.musicState) {
+      room.musicState.playlist = []
+      room.musicState.currentTrack = undefined
+      room.musicState.isPlaying = false
+      room.musicState.position = 0
+      room.musicState.lastUpdated = new Date()
+    }
 
     // Broadcast playlist cleared event
     diceRoomStore.sendEvent('music:playlist_cleared', {

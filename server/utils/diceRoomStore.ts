@@ -148,10 +148,10 @@ class DiceRoomStore {
       const dbRoom = await prisma.diceRoom.findUnique({
         where: { code: roomCode },
         include: {
-          participants: {
+          room_participants: {
              include: { user: true }
           },
-          rolls: {
+          dice_rolls: {
              orderBy: { timestamp: 'desc' },
              take: 50
           },
@@ -172,7 +172,7 @@ class DiceRoomStore {
       }
 
       // Map DB rolls to DiceRoll interface
-      const history: DiceRoll[] = dbRoom.rolls.map(r => {
+      const history: DiceRoll[] = dbRoom.dice_rolls.map((r: any) => {
          const data = r.data as any
          return {
             id: r.id,
@@ -203,7 +203,7 @@ class DiceRoomStore {
       }
 
       // Populate users
-      for (const p of dbRoom.participants) {
+      for (const p of dbRoom.room_participants) {
         let stats: PlayerStats | undefined
         if (p.role === 'Player') {
             stats = this.createDefaultStats()
@@ -215,7 +215,7 @@ class DiceRoomStore {
             role: p.role as UserRole,
             joinedAt: p.joinedAt,
             lastSeen: p.lastSeen,
-            roomCode: p.roomCode,
+            roomCode: roomCode,
             stats
         })
       }
@@ -274,7 +274,7 @@ class DiceRoomStore {
       // Load Music State
       if (dbRoom.musicState) {
           const ms = dbRoom.musicState as any
-          const playlist: MusicTrack[] = dbRoom.music_tracks.map(t => ({
+          const playlist: MusicTrack[] = dbRoom.music_tracks.map((t: any) => ({
               id: t.id,
               name: t.title, // Map title to name/title
               title: t.title,
@@ -366,6 +366,25 @@ class DiceRoomStore {
 
   getRoom(roomCode: string): DiceRoom | null {
     return this.rooms.get(roomCode) || null
+  }
+
+  private getOrCreateDefaultRoom(): DiceRoom {
+    const defaultRoomCode = 'default'
+    let room = this.rooms.get(defaultRoomCode)
+    if (!room) {
+      room = {
+        id: 'default_room',
+        code: defaultRoomCode,
+        name: 'Default Room',
+        createdAt: new Date(),
+        createdBy: 'system',
+        users: new Map(),
+        rollHistory: [],
+        sseConnections: new Map()
+      }
+      this.rooms.set(defaultRoomCode, room)
+    }
+    return room
   }
 
   getRoomCodes(): string[] {
