@@ -3359,10 +3359,14 @@ async function loadPlayerStats(roomCode?: string) {
   // First try to load the character stats directly if we have an active character
   if (activeCharacterId.value && userRole.value === 'Player') {
     await loadCharacterStats()
+    // Sync roll history when stats are loaded
+    await syncRollHistory(roomCode)
     return
   }
 
   // Fallback to dice room store stats (this was the old behavior)
+  await syncRollHistory(roomCode)
+  
   try {
     const response = await $fetch(`/api/dice/stats/${userId.value}?viewerUserId=${userId.value}&roomCode=${roomCode}`)
     if (response.success) {
@@ -3377,6 +3381,9 @@ async function loadPlayerStats(roomCode?: string) {
 
 async function loadAllPlayersStats(roomCode?: string) {
   if (!roomCode || isOfflineMode.value || userRole.value !== 'DM') return
+
+  // Sync roll history when loading all player stats
+  await syncRollHistory(roomCode)
 
   try {
     const response = await $fetch(`/api/dice/stats?viewerUserId=${userId.value}&roomCode=${roomCode}`)
@@ -3452,6 +3459,45 @@ async function clearHistory() {
     console.error('Failed to clear roll history:', error)
     // Still clear local history even if backend call fails
     rollHistory.value = []
+  }
+}
+
+// Sync roll history from server
+async function syncRollHistory(roomCode?: string) {
+  if (!roomCode) return
+  
+  try {
+    console.log('🎲 Syncing roll history for room:', roomCode)
+    const response = await $fetch(`/api/dice/rooms/${roomCode}/state`)
+    
+    if (response.rollHistory && Array.isArray(response.rollHistory)) {
+      // Process synced rolls to ensure proper timestamps and diceResults
+      const processedRolls = response.rollHistory.map((roll: any) => {
+        // Ensure diceResults exists (for backward compatibility)
+        let diceResults = roll.diceResults
+        if (!diceResults && roll.diceRolled) {
+          diceResults = []
+          roll.diceRolled.forEach((dice: any) => {
+            dice.results.forEach((result: number) => {
+              diceResults!.push({ type: dice.type, result })
+            })
+          })
+        }
+
+        return {
+          ...roll,
+          timestamp: new Date(roll.timestamp),
+          isOwn: roll.userId === userId.value,
+          diceResults: diceResults || []
+        }
+      })
+
+      // Replace current history with synced history
+      rollHistory.value = processedRolls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      console.log('🎲 Roll history synced manually from server')
+    }
+  } catch (error) {
+    console.error('Failed to sync roll history:', error)
   }
 }
 
@@ -3937,12 +3983,13 @@ function initializeSSE(roomCode?: string) {
           return {
             ...roll,
             timestamp: new Date(roll.timestamp),
+            isOwn: roll.userId === userId.value,
             diceResults: diceResults || []
           }
         })
 
         // Replace current history with synced history
-        rollHistory.value = processedRolls
+        rollHistory.value = processedRolls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         console.log('🎲 Roll history synced with server')
       }
     })
