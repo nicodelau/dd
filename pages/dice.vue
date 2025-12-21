@@ -2110,13 +2110,13 @@ async function sendDmImage() {
     console.error('Failed to send image:', error)
 
     let errorMessage = t('imageSendFailed')
-    if (error?.data?.statusMessage) {
+    if (error && typeof error === 'object' && error.data?.statusMessage) {
       errorMessage = error.data.statusMessage
-    } else if (error?.statusCode === 401) {
+    } else if (error && typeof error === 'object' && error.statusCode === 401) {
       errorMessage = 'Authentication required. Please log in again.'
-    } else if (error?.statusCode === 403) {
+    } else if (error && typeof error === 'object' && error.statusCode === 403) {
       errorMessage = 'Access denied. DM or Admin role required.'
-    } else if (error?.statusCode === 400) {
+    } else if (error && typeof error === 'object' && error.statusCode === 400) {
       errorMessage = 'Invalid file or no file uploaded.'
     }
 
@@ -3301,6 +3301,26 @@ async function reconnectWithRoom(roomCode: string) {
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 'undefined' && window.location.hostname !== 'localhost'
 
+// Helper function for safe SSE event handling
+function handleSSEEvent(event: MessageEvent, eventName: string, handler: (data: any) => void) {
+  try {
+    if (!event.data) {
+      console.warn(`🎲 SSE ${eventName} event with no data`)
+      return
+    }
+    const data = JSON.parse(event.data)
+    handler(data)
+  } catch (error) {
+    console.error(`🎲 Error processing ${eventName} event:`, error)
+  }
+}
+
+// Helper function to validate dice type
+function isValidDiceType(type: string): boolean {
+  const validTypes = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd36', 'd100']
+  return validTypes.includes(type)
+}
+
 // SSE Functions - Server-Sent Events for real-time updates
 function initializeSSE(roomCode?: string) {
   // Don't connect if no room code provided
@@ -3382,6 +3402,61 @@ function initializeSSE(roomCode?: string) {
         const toast = useToast()
         toast.add({
           title: 'Connection Lost',
+          description: 'Unable to reconnect to server. Using offline mode.',
+          color: 'red'
+        })
+      }
+    }
+
+    // Add connection health check - ping every 2 minutes to keep connection alive
+    window.sseHealthCheckInterval = setInterval(() => {
+      if (eventSource.value && isConnected.value) {
+        // Check if connection is still responsive
+        try {
+          fetch('/api/dice/ping', { 
+            method: 'POST',
+            body: JSON.stringify({ roomCode })
+          }).catch(() => {
+            console.warn('🎲 SSE health check failed, may need reconnection')
+          })
+        } catch (error) {
+          console.warn('🎲 SSE health check error:', error)
+        }
+      }
+    }, 120000) // 2 minutes
+  } catch (error) {
+    console.error('🎲 Failed to initialize SSE:', error)
+    console.log('🎲 Using offline mode')
+    isOfflineMode.value = true
+    isConnected.value = false
+    connectedUsers.value = 1
+  }
+
+      if (reconnectAttempts.value < maxReconnectAttempts) {
+        isReconnecting.value = true
+        reconnectAttempts.value++
+
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.value - 1), 16000)
+
+        console.log(`🎲 Attempting reconnection ${reconnectAttempts.value}/${maxReconnectAttempts} in ${delay}ms`)
+
+        reconnectTimeout.value = setTimeout(() => {
+          console.log(`🎲 Reconnection attempt ${reconnectAttempts.value}`)
+          disconnectSSE() // Clean up current connection
+          setTimeout(() => {
+            initializeSSE(roomCode) // Attempt to reconnect
+          }, 100)
+        }, delay)
+      } else {
+        console.log('🎲 Max reconnection attempts reached, falling back to offline mode')
+        isReconnecting.value = false
+        isOfflineMode.value = true
+        connectedUsers.value = 1
+
+        // Show user notification about connection issues
+        const toast = useToast()
+        toast.add({
+          title: 'Connection Lost',
           description: 'Unable to reconnect to the server. Using offline mode.',
           color: 'red'
         })
@@ -3390,18 +3465,97 @@ function initializeSSE(roomCode?: string) {
 
     // Handle specific events
     eventSource.value.addEventListener('connected', (event) => {
-      const data = JSON.parse(event.data)
-      console.log('🎲 SSE connected with ID:', data.connectionId)
+      handleSSEEvent(event, 'connected', (data) => {
+        console.log('🎲 SSE connected with ID:', data.connectionId)
+      })
     })
 
     eventSource.value.addEventListener('users:count', (event) => {
-      const data = JSON.parse(event.data)
-      connectedUsers.value = data.count
+      handleSSEEvent(event, 'users:count', (data) => {
+        connectedUsers.value = data.count
+      })
     })
 
     eventSource.value.addEventListener('dice:history', (event) => {
-      const data = JSON.parse(event.data)
-      // Merge with existing history, avoiding duplicates
+      handleSSEEvent(event, 'dice:history', (data) => {
+        // Merge with existing history, avoiding duplicates
+        const existingIds = new Set(rollHistory.value.map(r => r.id))
+        const newRolls = data.history
+          .filter((r: DiceRoll) => !existingIds.has(r.id))
+          .map((r: DiceRoll) => {
+            // Ensure diceResults exists (for backward compatibility)
+            let diceResults = r.diceResults
+            if (!diceResults && r.diceRolled) {
+              diceResults = []
+              r.diceRolled.forEach(dice => {
+                dice.results.forEach(result => {
+                  diceResults!.push({ type: dice.type, result })
+                })
+              })
+            }
+
+            return {
+              ...r,
+              timestamp: new Date(r.timestamp),
+              isOwn: r.userId === userId.value,
+              diceResults: diceResults || []
+            }
+          })
+
+        rollHistory.value = [...rollHistory.value, ...newRolls]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      })
+    })
+
+    eventSource.value.addEventListener('dice:roll', (event) => {
+      handleSSEEvent(event, 'dice:roll', (data) => {
+        const roll = data as DiceRoll
+
+        // Only add rolls from other users
+        if (roll.userId !== userId.value) {
+          // Ensure diceResults exists (for backward compatibility)
+          let diceResults = roll.diceResults
+          if (!diceResults && roll.diceRolled) {
+            diceResults = []
+            roll.diceRolled.forEach(dice => {
+              dice.results.forEach(result => {
+                // Validate dice type before adding
+                if (isValidDiceType(dice.type)) {
+                  diceResults!.push({ type: dice.type, result })
+                } else {
+                  console.warn(`🎲 Invalid dice type: ${dice.type}`)
+                }
+              })
+            })
+          }
+
+          const processedRoll = {
+            ...roll,
+            timestamp: new Date(roll.timestamp),
+            isOwn: false,
+            diceResults: diceResults || []
+          }
+
+          rollHistory.value.unshift(processedRoll)
+
+          // Show critical animation if it's a critical roll from another user
+          if (processedRoll.isCritical && processedRoll.criticalType) {
+            criticalAnimationType.value = processedRoll.criticalType
+            showCriticalAnimation.value = true
+            // Video will auto-close when it ends via @ended event
+          }
+        }
+      })
+    })
+
+    eventSource.value.addEventListener('dice:history', (event) => {
+      try {
+        if (!event.data) {
+          console.warn('🎲 SSE dice:history event with no data')
+          return
+        }
+        const data = JSON.parse(event.data)
+        // Merge with existing history, avoiding duplicates
       const existingIds = new Set(rollHistory.value.map(r => r.id))
       const newRolls = data.history
         .filter((r: DiceRoll) => !existingIds.has(r.id))
@@ -3412,7 +3566,12 @@ function initializeSSE(roomCode?: string) {
             diceResults = []
             r.diceRolled.forEach(dice => {
               dice.results.forEach(result => {
-                diceResults!.push({ type: dice.type, result })
+                // Validate dice type before adding
+                if (isValidDiceType(dice.type)) {
+                  diceResults!.push({ type: dice.type, result })
+                } else {
+                  console.warn(`🎲 Invalid dice type: ${dice.type}`)
+                }
               })
             })
           }
@@ -3427,11 +3586,19 @@ function initializeSSE(roomCode?: string) {
 
       rollHistory.value = [...rollHistory.value, ...newRolls]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      } catch (error) {
+        console.error('🎲 Error processing dice:history event:', error)
+      }
     })
 
     eventSource.value.addEventListener('dice:roll', (event) => {
-      const data = JSON.parse(event.data)
-      const roll = data as DiceRoll
+      try {
+        if (!event.data) {
+          console.warn('🎲 SSE dice:roll event with no data')
+          return
+        }
+        const data = JSON.parse(event.data)
+        const roll = data as DiceRoll
 
       // Only add rolls from other users
       if (roll.userId !== userId.value) {
@@ -3462,113 +3629,119 @@ function initializeSSE(roomCode?: string) {
           // Video will auto-close when it ends via @ended event
         }
       }
+      } catch (error) {
+        console.error('🎲 Error processing dice:roll event:', error)
+      }
     })
-
-
-    if (data.userCount) {
-      connectedUsers.value = data.userCount
-    }
 
     // Handle role and stats events
     eventSource.value.addEventListener('user:role', (event) => {
-      const data = JSON.parse(event.data)
-      console.log('🎲 Received role:', data.role)
+      handleSSEEvent(event, 'user:role', (data) => {
+        console.log('🎲 Received role:', data.role)
+      })
     })
 
     eventSource.value.addEventListener('user:stats', (event) => {
-      const data = JSON.parse(event.data)
-      if (userRole.value === 'Player') {
-        playerStats.value = data.stats
-        console.log('🎲 Received player stats')
-      }
+      handleSSEEvent(event, 'user:stats', (data) => {
+        if (userRole.value === 'Player') {
+          playerStats.value = data.stats
+          console.log('🎲 Received player stats')
+        }
+      })
     })
 
     // Handle DM show image event
     eventSource.value.addEventListener('dm:show_image', (event) => {
-      const data = JSON.parse(event.data)
-      displayedImageUrl.value = data.imageUrl
-      displayedImageCaption.value = data.caption || ''
-      showImageDisplayModal.value = true
+      handleSSEEvent(event, 'dm:show_image', (data) => {
+        displayedImageUrl.value = data.imageUrl
+        displayedImageCaption.value = data.caption || ''
+        showImageDisplayModal.value = true
 
-      // Clear existing timeout if any
-      if (imageDisplayTimeout.value) {
-        clearTimeout(imageDisplayTimeout.value)
-      }
+        // Clear existing timeout if any
+        if (imageDisplayTimeout.value) {
+          clearTimeout(imageDisplayTimeout.value)
+        }
 
-      // Auto close after 5 seconds
-      imageDisplayTimeout.value = setTimeout(() => {
-        showImageDisplayModal.value = false
-        imageDisplayTimeout.value = null
-      }, 5000)
+        // Auto close after 5 seconds
+        imageDisplayTimeout.value = setTimeout(() => {
+          showImageDisplayModal.value = false
+          imageDisplayTimeout.value = null
+        }, 5000)
+      })
     })
 
     eventSource.value.addEventListener('players:stats', (event) => {
-      const data = JSON.parse(event.data)
-      if (userRole.value === 'DM') {
-        allPlayers.value = data.players
-        console.log('🎲 Received all player stats')
-      }
+      handleSSEEvent(event, 'players:stats', (data) => {
+        if (userRole.value === 'DM') {
+          allPlayers.value = data.players
+          console.log('🎲 Received all player stats')
+        }
+      })
     })
 
     eventSource.value.addEventListener('stats:updated', (event) => {
-      const data = JSON.parse(event.data)
-      // Update stats for specific player
-      if (userRole.value === 'DM') {
-        const playerIndex = allPlayers.value.findIndex(p => p.userId === data.userId)
-        if (playerIndex !== -1) {
-          allPlayers.value[playerIndex].stats = data.stats
+      handleSSEEvent(event, 'stats:updated', (data) => {
+        // Update stats for specific player
+        if (userRole.value === 'DM') {
+          const playerIndex = allPlayers.value.findIndex(p => p.userId === data.userId)
+          if (playerIndex !== -1) {
+            allPlayers.value[playerIndex].stats = data.stats
+          }
+        } else if (data.userId === userId.value) {
+          playerStats.value = data.stats
         }
-      } else if (data.userId === userId.value) {
-        playerStats.value = data.stats
-      }
-      console.log('🎲 Stats updated for user:', data.userId)
+        console.log('🎲 Stats updated for user:', data.userId)
+      })
     })
 
     eventSource.value.addEventListener('dice:request', (event) => {
-      const data = JSON.parse(event.data)
-      // Only show notification to the target player
-      if (data.targetUserId === userId.value) {
-        pendingRollRequest.value = {
-          fromDM: data.fromDM,
-          diceType: data.diceType,
-          message: data.message,
-          modifier: data.modifier,
-          requestId: data.requestId
+      handleSSEEvent(event, 'dice:request', (data) => {
+        // Only show notification to the target player
+        if (data.targetUserId === userId.value) {
+          pendingRollRequest.value = {
+            fromDM: data.fromDM,
+            diceType: data.diceType,
+            message: data.message,
+            modifier: data.modifier,
+            requestId: data.requestId
+          }
+          showRollRequestNotification.value = true
+          console.log('🎲 Received roll request from DM:', data)
         }
-        showRollRequestNotification.value = true
-        console.log('🎲 Received roll request from DM:', data)
-      }
+      })
     })
 
     // Battle Mode Events
     eventSource.value.addEventListener('battle:started', (event) => {
-      const data = JSON.parse(event.data)
-      battleMode.value = data.battleState
-      console.log('⚔️ Battle mode started by DM:', data)
+      handleSSEEvent(event, 'battle:started', (data) => {
+        battleMode.value = data.battleState
+        console.log('⚔️ Battle mode started by DM:', data)
 
-      const toast = useToast()
-      toast.add({
-        title: 'Battle Started',
-        description: 'The DM has started battle mode',
-        color: 'green'
+        const toast = useToast()
+        toast.add({
+          title: 'Battle Started',
+          description: 'The DM has started battle mode',
+          color: 'green'
+        })
       })
     })
 
     eventSource.value.addEventListener('battle:ended', (event) => {
-      const data = JSON.parse(event.data)
-      battleMode.value = null
-      console.log('⚔️ Battle mode ended by DM:', data)
+      handleSSEEvent(event, 'battle:ended', (data) => {
+        battleMode.value = null
+        console.log('⚔️ Battle mode ended by DM:', data)
 
-      const toast = useToast()
-      toast.add({
-        title: 'Battle Ended',
-        description: 'The DM has ended battle mode',
-        color: 'blue'
+        const toast = useToast()
+        toast.add({
+          title: 'Battle Ended',
+          description: 'The DM has ended battle mode',
+          color: 'blue'
+        })
       })
     })
 
     eventSource.value.addEventListener('battle:enemy_added', (event) => {
-      const data = JSON.parse(event.data)
+      handleSSEEvent(event, 'battle:enemy_added', (data) => {
       if (battleMode.value && battleMode.value.enemies) {
         battleMode.value.enemies[data.enemy.id] = data.enemy
       }
@@ -3585,81 +3758,85 @@ function initializeSSE(roomCode?: string) {
     })
 
     eventSource.value.addEventListener('battle:enemy_removed', (event) => {
-      const data = JSON.parse(event.data)
-      if (battleMode.value && battleMode.value.enemies) {
-        delete battleMode.value.enemies[data.enemyId]
-      }
-      console.log('👹 Enemy removed from battle:', data.enemyId)
+      handleSSEEvent(event, 'battle:enemy_removed', (data) => {
+        if (battleMode.value && battleMode.value.enemies) {
+          delete battleMode.value.enemies[data.enemyId]
+        }
+        console.log('👹 Enemy removed from battle:', data.enemyId)
 
-      if (userRole.value === 'Player') {
-        const toast = useToast()
-        toast.add({
-          title: 'Enemy Defeated',
-          description: 'An enemy has been removed from battle',
-          color: 'green'
-        })
-      }
+        if (userRole.value === 'Player') {
+          const toast = useToast()
+          toast.add({
+            title: 'Enemy Defeated',
+            description: 'An enemy has been removed from battle',
+            color: 'green'
+          })
+        }
+      })
     })
 
     eventSource.value.addEventListener('battle:initiative_rolled', (event) => {
-      const data = JSON.parse(event.data)
-      if (battleMode.value) {
-        battleMode.value.initiativeOrder = data.participants
-        battleMode.value.phase = 'combat'
-        battleMode.value.currentTurnIndex = 0
-      }
-      console.log('🎲 Initiative rolled:', data.participants)
+      handleSSEEvent(event, 'battle:initiative_rolled', (data) => {
+        if (battleMode.value) {
+          battleMode.value.initiativeOrder = data.participants
+          battleMode.value.phase = 'combat'
+          battleMode.value.currentTurnIndex = 0
+        }
+        console.log('🎲 Initiative rolled:', data.participants)
 
-      const toast = useToast()
-      toast.add({
-        title: 'Initiative Rolled',
-        description: 'Initiative has been rolled for all participants',
-        color: 'blue'
+        const toast = useToast()
+        toast.add({
+          title: 'Initiative Rolled',
+          description: 'Initiative has been rolled for all participants',
+          color: 'blue'
+        })
       })
     })
 
     eventSource.value.addEventListener('battle:turn_changed', (event) => {
-      const data = JSON.parse(event.data)
-      if (battleMode.value) {
-        battleMode.value.currentTurnIndex = data.currentTurnIndex
-      }
-      console.log('🔄 Turn changed:', data)
-
-      const currentParticipant = battleMode.value?.initiativeOrder?.[data.currentTurnIndex]
-      if (currentParticipant) {
-        const toast = useToast()
-        toast.add({
-          title: 'Next Turn',
-          description: `It's now ${currentParticipant.name}'s turn`,
-          color: 'green'
-        })
-
-        // Check if it's the current user's turn and they're a player
-        if (currentParticipant.type === 'player' && currentParticipant.userId === userId.value) {
-          // Load special abilities for this character and show modal
-          loadPlayerSpecialAbilities(currentParticipant)
+      handleSSEEvent(event, 'battle:turn_changed', (data) => {
+        if (battleMode.value) {
+          battleMode.value.currentTurnIndex = data.currentTurnIndex
         }
-      }
+        console.log('🔄 Turn changed:', data)
+
+        const currentParticipant = battleMode.value?.initiativeOrder?.[data.currentTurnIndex]
+        if (currentParticipant) {
+          const toast = useToast()
+          toast.add({
+            title: 'Next Turn',
+            description: `It's now ${currentParticipant.name}'s turn`,
+            color: 'green'
+          })
+
+          // Check if it's the current user's turn and they're a player
+          if (currentParticipant.type === 'player' && currentParticipant.userId === userId.value) {
+            // Load special abilities for this character and show modal
+            loadPlayerSpecialAbilities(currentParticipant)
+          }
+        }
+      })
     })
 
     eventSource.value.addEventListener('battle:damage_dealt', (event) => {
-      const data = JSON.parse(event.data)
-      console.log('💥 Damage dealt:', data)
+      handleSSEEvent(event, 'battle:damage_dealt', (data) => {
+        console.log('💥 Damage dealt:', data)
 
-      // Update local battle state if target is an enemy
-      if (battleMode.value && battleMode.value.enemies && data.targetId in battleMode.value.enemies) {
-        const enemy = battleMode.value.enemies[data.targetId]
-        enemy.hitPoints.current = data.newHitPoints
-        if (data.isDefeated) {
-          enemy.isDefeated = true
+        // Update local battle state if target is an enemy
+        if (battleMode.value && battleMode.value.enemies && data.targetId in battleMode.value.enemies) {
+          const enemy = battleMode.value.enemies[data.targetId]
+          enemy.hitPoints.current = data.newHitPoints
+          if (data.isDefeated) {
+            enemy.isDefeated = true
+          }
         }
-      }
 
-      const toast = useToast()
-      toast.add({
-        title: 'Damage Dealt',
-        description: `${data.damage} damage dealt to ${data.targetName || 'target'}`,
-        color: 'red'
+        const toast = useToast()
+        toast.add({
+          title: 'Damage Dealt',
+          description: `${data.damage} damage dealt to ${data.targetName || 'target'}`,
+          color: 'red'
+        })
       })
     })
 
@@ -3744,6 +3921,13 @@ function disconnectSSE() {
   }
 
   isReconnecting.value = false
+
+  // Clear health check interval if it exists
+  if (window.sseHealthCheckInterval) {
+    clearInterval(window.sseHealthCheckInterval)
+    window.sseHealthCheckInterval = null
+    console.log('🎲 SSE health check stopped')
+  }
 }
 
 function toggleOfflineMode() {
@@ -3999,9 +4183,9 @@ async function loadBattlePlayers() {
   try {
     const response = await $fetch(`/api/battle/players?roomCode=${currentRoom.value.code}`)
 
-    if (response.success) {
-      selectedPlayers.value = response.data.selectedPlayers
-      unselectedPlayers.value = response.data.unselectedPlayers
+    if (response && response.success && response.data) {
+      selectedPlayers.value = response.data.selectedPlayers || []
+      unselectedPlayers.value = response.data.unselectedPlayers || []
       console.log('👥 Battle players loaded:', response.data)
     }
   } catch (error) {
@@ -4287,7 +4471,7 @@ async function showPlayerDetails(player: Player) {
   try {
     // Fetch the full character data for the player
     const response = await $fetch(`/api/characters?player=${player.userId}`)
-    if (response.success && response.data.length > 0) {
+    if (response && response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
       // Find the character that matches the participant name
       let playerCharacter = response.data.find((char: any) => char.characterName === player.name)
       // If no exact match, use the first character (assuming they only have one active)
