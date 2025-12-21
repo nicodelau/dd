@@ -25,11 +25,14 @@ export default defineEventHandler(async (event) => {
     const role: UserRole = body.role === 'DM' ? 'DM' : 'Player'
     const roomCode = body.roomCode || 'default'
 
+    // Ensure room is loaded
+    await diceRoomStore.ensureRoomLoaded(roomCode)
+
     // Add or update user
     const existingUser = diceRoomStore.getUser(body.userId, roomCode)
     const user = existingUser 
-      ? diceRoomStore.updateUser(body.userId, body.userName, roomCode, role)
-      : diceRoomStore.addUser(body.userId, body.userName, roomCode, role)
+      ? await diceRoomStore.updateUser(body.userId, body.userName, roomCode, role)
+      : await diceRoomStore.addUser(body.userId, body.userName, roomCode, role)
     
     // Update activity tracking
     diceRoomStore.updateUserActivity(body.userId, roomCode)

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,166 +8,128 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String                @id @default(cuid())
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  email               String                @unique
+  password            String
+  username            String                @unique
+  firstName           String?
+  lastName            String?
+  avatar              String?
+  bio                 String?
+  role                UserRole              @default(PLAYER)
+  isActive            Boolean               @default(true)
+  lastLoginAt         DateTime?
+  battle_participants battle_participants[]
+  ownedCharacters     Character[]           @relation("CharacterOwner")
+  characters          Character[]
+  dice_rolls          DiceRoll[]
+  dice_rooms          DiceRoom[]
+  music_tracks        music_tracks[]
+  roomParticipations  RoomParticipant[]
 
-  // Auth Info
-  email       String   @unique
-  password    String
-  username    String   @unique
-  
-  // Profile Info
-  firstName   String?
-  lastName    String?
-  avatar      String?
-  bio         String?
-  
-  // Role Management
-  role        UserRole @default(PLAYER)
-  isActive    Boolean  @default(true)
-  lastLoginAt DateTime?
-  
-  // Relationships
-  characters  Character[]
-  ownedCharacters Character[] @relation("CharacterOwner")
-  
   @@map("users")
 }
 
-enum UserRole {
-  PLAYER
-  DM
-  ADMIN
-}
-
 model Character {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Ownership
-  userId      String?   // The player who owns this character
-  ownerId     String?   // The DM who created/manages this character
-  
-  // Basic Info
-  name        String
-  playerName  String?
-  race        String?    // Now optional to allow custom input
-  subrace     String?
-  class       String?    // Now optional to allow custom input
-  level       Int      @default(1)
-  background  String?    // Now allows custom input
-  alignment   String?    // Now allows custom input
-  
-  // Character Image
-  avatar      String?    // URL or path to character image
-  
-  // Physical Characteristics
-  age         Int?
-  height      String?
-  weight      String?
-  eyes        String?
-  skin        String?
-  hair        String?
-
-  // Core Stats
-  hitPoints      Int @default(0)
-  maxHitPoints   Int @default(0)
-  tempHitPoints  Int @default(0)
-  armorClass     Int @default(10)
-  proficiencyBonus Int @default(2)
-  speed          Int @default(30)
-  initiative     Int @default(0)
-  passivePerception Int @default(10)
-
-  // Ability Scores (the 6 main stats)
-  strength       Int @default(10)
-  dexterity      Int @default(10)
-  constitution   Int @default(10)
-  intelligence   Int @default(10)
-  wisdom         Int @default(10)
-  charisma       Int @default(10)
-
-  // Experience and Currency
-  experiencePoints Int @default(0)
-  copperCoins      Int @default(0)
-  silverCoins      Int @default(0)
-  electrumCoins    Int @default(0)
-  goldCoins        Int @default(0)
-  platinumCoins    Int @default(0)
-
-  // Inventory and Equipment
-  backpack         String? // Text description of backpack contents
-  languages        String? // Known languages
-
-  // Character Details
-  inspiration     Boolean @default(false)
-  personality     String?
-  ideals          String?
-  bonds           String?
-  flaws           String?
-  backstory       String?
-  notes           String?
-
-  // Death Saves
-  deathSaveSuccesses Int @default(0)
-  deathSaveFailures  Int @default(0)
-
-  // Relationships
-  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  owner           User?         @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  savingThrows    SavingThrow[]
-  skills          Skill[]
-  spells          CharacterSpell[]
-  spellSlots      SpellSlot[]
-  inventory       InventoryItem[]
-  attacks         Attack[]
-  features        Feature[]
-  cantrips        Cantrip[]
-  specialAbilities SpecialAbility[]
-  combatActions   CombatAction[]
+  id                  String                @id @default(cuid())
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  name                String
+  playerName          String?
+  race                String?
+  class               String?
+  level               Int                   @default(1)
+  background          String?
+  alignment           String?
+  hitPoints           Int                   @default(0)
+  maxHitPoints        Int                   @default(0)
+  tempHitPoints       Int                   @default(0)
+  armorClass          Int                   @default(10)
+  proficiencyBonus    Int                   @default(2)
+  speed               Int                   @default(30)
+  strength            Int                   @default(10)
+  dexterity           Int                   @default(10)
+  constitution        Int                   @default(10)
+  intelligence        Int                   @default(10)
+  wisdom              Int                   @default(10)
+  charisma            Int                   @default(10)
+  experiencePoints    Int                   @default(0)
+  inspiration         Boolean               @default(false)
+  personality         String?
+  ideals              String?
+  bonds               String?
+  flaws               String?
+  backstory           String?
+  notes               String?
+  deathSaveSuccesses  Int                   @default(0)
+  deathSaveFailures   Int                   @default(0)
+  ownerId             String?
+  userId              String?
+  age                 Int?
+  avatar              String?
+  backpack            String?
+  copperCoins         Int                   @default(0)
+  electrumCoins       Int                   @default(0)
+  eyes                String?
+  goldCoins           Int                   @default(0)
+  hair                String?
+  height              String?
+  initiative          Int                   @default(0)
+  languages           String?
+  passivePerception   Int                   @default(10)
+  platinumCoins       Int                   @default(0)
+  silverCoins         Int                   @default(0)
+  skin                String?
+  subrace             String?
+  weight              String?
+  attacks             Attack[]
+  battle_participants battle_participants[]
+  cantrips            Cantrip[]
+  spells              CharacterSpell[]
+  owner               User?                 @relation("CharacterOwner", fields: [ownerId], references: [id])
+  user                User?                 @relation(fields: [userId], references: [id])
+  combatActions       CombatAction[]
+  features            Feature[]
+  inventory           InventoryItem[]
+  savingThrows        SavingThrow[]
+  skills              Skill[]
+  specialAbilities    SpecialAbility[]
+  spellSlots          SpellSlot[]
 
   @@map("characters")
 }
 
 model SavingThrow {
-  id           String    @id @default(cuid())
-  characterId  String
-  ability      String    // "strength", "dexterity", etc.
-  proficient   Boolean   @default(false)
-  
-  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  characterId String
+  ability     String
+  proficient  Boolean   @default(false)
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([characterId, ability])
   @@map("saving_throws")
 }
 
 model Skill {
-  id           String      @id @default(cuid())
-  characterId  String
-  name         String      // "Acrobatics", "Animal Handling", etc.
-  ability      String      // "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"
-  proficient   Boolean     @default(false)
-  expertise    Boolean     @default(false)
-  category     SkillCategory @default(OTRO)
-  description  String?     // For custom skills, especially "Otro" category
-  
-  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  id          String        @id @default(cuid())
+  characterId String
+  name        String
+  ability     String
+  proficient  Boolean       @default(false)
+  expertise   Boolean       @default(false)
+  category    SkillCategory @default(OTRO)
+  description String?
+  character   Character     @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([characterId, name])
   @@map("skills")
 }
 
-enum SkillCategory {
-  DANO    // Damage skills - create attacks
-  AYUDA   // Support skills - help allies
-  OTRO    // Other skills - general abilities, invocations, etc.
-}
-
 model Spell {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String           @id @default(cuid())
+  name        String           @unique
   level       Int
   school      String?
   castingTime String?
@@ -178,7 +137,6 @@ model Spell {
   components  String?
   duration    String?
   description String?
-  
   characters  CharacterSpell[]
 
   @@map("spells")
@@ -190,7 +148,6 @@ model CharacterSpell {
   spellId     String
   prepared    Boolean   @default(false)
   known       Boolean   @default(true)
-  
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
   spell       Spell     @relation(fields: [spellId], references: [id], onDelete: Cascade)
 
@@ -199,13 +156,12 @@ model CharacterSpell {
 }
 
 model SpellSlot {
-  id           String    @id @default(cuid())
-  characterId  String
-  level        Int       // 1-9
-  total        Int       @default(0)
-  used         Int       @default(0)
-  
-  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  characterId String
+  level       Int
+  total       Int       @default(0)
+  used        Int       @default(0)
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@unique([characterId, level])
   @@map("spell_slots")
@@ -220,7 +176,6 @@ model InventoryItem {
   weight      Float?
   value       Float?
   equipped    Boolean   @default(false)
-  
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("inventory_items")
@@ -236,8 +191,7 @@ model Attack {
   damageBonus   Int?
   range         String?
   description   String?
-  sourceSkillId String?   // Reference to the skill that created this attack
-  
+  sourceSkillId String?
   character     Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("attacks")
@@ -247,9 +201,8 @@ model Feature {
   id          String    @id @default(cuid())
   characterId String
   name        String
-  source      String?   // "Race", "Class", "Background", "Feat"
+  source      String?
   description String?
-  
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("features")
@@ -260,39 +213,136 @@ model Cantrip {
   characterId String
   name        String
   description String?
-  
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("cantrips")
 }
 
 model SpecialAbility {
-  id             String    @id @default(cuid())
-  characterId    String
-  name           String
-  diceFormula    String    // e.g., "2d6+3", "1d20", "3d8+5"
-  description    String
-  usesPerRest    Int?      // optional: limited uses per rest
-  usesRemaining  Int?      // current remaining uses
-  abilityType    AbilityType @default(ACTION)
-
-  character      Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  characterId   String
+  name          String
+  diceFormula   String
+  description   String
+  usesPerRest   Int?
+  usesRemaining Int?
+  abilityType   AbilityType @default(ACTION)
+  character     Character   @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("special_abilities")
 }
 
 model CombatAction {
-  id           String    @id @default(cuid())
-  characterId  String
-  name         String
-  type         String    // "Action", "Bonus Action", "Reaction", "Free Action", "Special"
-  currentUses  Int       @default(0)
-  maxUses      Int       @default(0)
-  description  String?
-
-  character    Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  characterId String
+  name        String
+  type        String
+  currentUses Int       @default(0)
+  maxUses     Int       @default(0)
+  description String?
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("combat_actions")
+}
+
+model DiceRoom {
+  id                String            @id
+  code              String            @unique
+  name              String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  createdBy         String
+  musicState        Json?             @default("{}")
+  battle_sessions   battle_sessions?
+  dice_rolls        DiceRoll[]
+  users             User              @relation(fields: [createdBy], references: [id])
+  music_tracks      music_tracks[]
+  room_participants RoomParticipant[]
+
+  @@map("dice_rooms")
+}
+
+model RoomParticipant {
+  id         String   @id @default(cuid())
+  roomId     String
+  userId     String
+  joinedAt   DateTime @default(now())
+  lastSeen   DateTime @default(now())
+  role       String   @default("Player")
+  dice_rooms DiceRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@map("room_participants")
+}
+
+model DiceRoll {
+  id          String   @id @default(cuid())
+  roomId      String
+  userId      String
+  timestamp   DateTime @default(now())
+  description String?
+  total       Int
+  data        Json
+  dice_rooms  DiceRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  users       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dice_rolls")
+}
+
+model battle_participants {
+  id              String          @id
+  battleId        String
+  userId          String?
+  characterId     String?
+  name            String
+  isEnemy         Boolean         @default(false)
+  initiative      Int             @default(0)
+  initiativeRoll  Int             @default(0)
+  hpCurrent       Int
+  hpMax           Int
+  armorClass      Int
+  status          String?
+  battle_sessions battle_sessions @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  characters      Character?      @relation(fields: [characterId], references: [id])
+  users           User?           @relation(fields: [userId], references: [id])
+}
+
+model battle_sessions {
+  id                  String                @id
+  roomId              String                @unique
+  isActive            Boolean               @default(false)
+  round               Int                   @default(0)
+  phase               String                @default("setup")
+  battle_participants battle_participants[]
+  dice_rooms          DiceRoom              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model music_tracks {
+  id            String   @id
+  roomId        String
+  addedBy       String
+  url           String
+  title         String
+  artist        String?
+  thumbnail     String?
+  duration      Int?
+  isSoundEffect Boolean  @default(false)
+  addedAt       DateTime @default(now())
+  users         User     @relation(fields: [addedBy], references: [id])
+  dice_rooms    DiceRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  PLAYER
+  DM
+  ADMIN
+}
+
+enum SkillCategory {
+  DANO
+  AYUDA
+  OTRO
 }
 
 enum AbilityType {

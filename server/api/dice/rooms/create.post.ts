@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
 
     try {
       // Create the room using the authenticated user's ID
-      const room = diceRoomStore.createRoom(roomCode, body.roomName, user.id)
+      const room = await diceRoomStore.createRoom(roomCode, body.roomName, user.id)
       
       console.log(`🎲 Room created: ${room.code} (${room.name}) by ${user.username} (${user.id})`)
 

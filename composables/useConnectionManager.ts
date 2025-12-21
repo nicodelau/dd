@@ -35,7 +35,7 @@ export const useConnectionManager = () => {
   const defaultConfig: ConnectionConfig = {
     maxRetries: 5,
     retryDelays: [1000, 2000, 5000, 10000, 30000], // 1s, 2s, 5s, 10s, 30s
-    heartbeatInterval: 60000, // 1 minute (increased from 30s)
+    heartbeatInterval: 15000, // 15 seconds (matching server)
     reconnectOnHeartbeatFail: true,
     connectionTimeout: 15000, // 15 seconds
     stateSync: true
@@ -54,12 +54,19 @@ export const useConnectionManager = () => {
 
   const config = ref<ConnectionConfig>(defaultConfig)
   const pendingActions = ref<PendingAction[]>([])
+  const connectionParams = ref<{
+    userId: string
+    userName: string
+    role: string
+    roomCode: string
+  } | null>(null)
   
   // Internal state
   let eventSource: EventSource | null = null
   let heartbeatTimer: NodeJS.Timeout | null = null
   let reconnectTimer: NodeJS.Timeout | null = null
   let connectionStartTime: number = 0
+  let previousHeartbeatTime: number = 0 // Track previous heartbeat for interval calc
   let isManuallyDisconnected = false
 
   /**
@@ -78,7 +85,9 @@ export const useConnectionManager = () => {
 
     connectionState.value.status = 'connecting'
     connectionStartTime = Date.now()
+    previousHeartbeatTime = Date.now()
     isManuallyDisconnected = false
+    connectionParams.value = params
 
     try {
       await establishConnection(params)
@@ -239,13 +248,16 @@ export const useConnectionManager = () => {
       clearTimeout(heartbeatTimer)
     }
 
+    // Set timeout to 2.5x the heartbeat interval (grace period)
+    const timeoutDuration = config.value.heartbeatInterval * 2.5
+
     heartbeatTimer = setTimeout(() => {
       if (connectionState.value.status === 'connected') {
         const timeSinceLastHeartbeat = connectionState.value.lastHeartbeat 
           ? Date.now() - connectionState.value.lastHeartbeat.getTime()
-          : config.value.heartbeatInterval + 10000 // Grace period
+          : timeoutDuration // Fallback
 
-        if (timeSinceLastHeartbeat > config.value.heartbeatInterval + 10000) {
+        if (timeSinceLastHeartbeat > timeoutDuration) {
           console.warn('⚡ Heartbeat timeout detected')
           connectionState.value.quality = 'criticalConnection'
           
@@ -255,10 +267,14 @@ export const useConnectionManager = () => {
             if (eventSource) {
               eventSource.close()
             }
+            // Trigger manual reconnect schedule if needed, utilizing stored params
+             if (connectionParams.value) {
+                scheduleReconnect(connectionParams.value)
+             }
           }
         }
       }
-    }, config.value.heartbeatInterval + 15000) // Check 15s after expected heartbeat
+    }, timeoutDuration) 
   }
 
   /**
@@ -377,18 +393,28 @@ export const useConnectionManager = () => {
   }
 
   const handleHeartbeat = (event: MessageEvent) => {
-    connectionState.value.lastHeartbeat = new Date()
+    const now = Date.now()
+    connectionState.value.lastHeartbeat = new Date(now)
     
     // Update connection quality based on heartbeat timing
-    const data = JSON.parse(event.data)
-    const expectedInterval = config.value.heartbeatInterval
-    const actualInterval = connectionState.value.lastHeartbeat.getTime() - connectionStartTime
+    // const data = JSON.parse(event.data) // data unused for now
     
-        if (Math.abs(actualInterval - expectedInterval) > 5000) {
-          connectionState.value.quality = 'poor'
-        } else {
-          connectionState.value.quality = 'good'
-        }
+    const expectedInterval = config.value.heartbeatInterval
+    // Use previous heartbeat time or connection start if first heartbeat
+    const lastTime = previousHeartbeatTime || connectionStartTime
+    const actualInterval = now - lastTime
+    
+    previousHeartbeatTime = now
+    
+    // Allow 50% deviation (e.g. 15s -> 7.5s margin) due to network jitter
+    // If deviation is high, quality drops
+    const deviation = Math.abs(actualInterval - expectedInterval)
+    
+    if (deviation > expectedInterval * 0.5) {
+      connectionState.value.quality = 'poor'
+    } else {
+      connectionState.value.quality = 'good'
+    }
 
     startHeartbeatMonitoring() // Reset heartbeat timer
   }

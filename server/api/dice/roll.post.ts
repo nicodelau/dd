@@ -33,11 +33,11 @@ export default defineEventHandler(async (event) => {
     }
 
     // Ensure the room exists, create it if it doesn't
-    let room = diceRoomStore.getRoom(roomCode)
+    let room = await diceRoomStore.ensureRoomLoaded(roomCode)
     if (!room) {
       // Create the room if it doesn't exist (could happen if server restarted)
       console.log(`🎲 Room ${roomCode} doesn't exist, creating it for user ${body.userId}`)
-      room = diceRoomStore.createRoom(roomCode, `Room ${roomCode}`, body.userId)
+      room = await diceRoomStore.createRoom(roomCode, `Room ${roomCode}`, body.userId)
     }
 
     // Update user's last seen time (activity tracking)
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     if (user) {
       diceRoomStore.updateUserActivity(body.userId, roomCode)
     } else {
-      diceRoomStore.addUser(body.userId, body.userName, roomCode)
+      await diceRoomStore.addUser(body.userId, body.userName, roomCode)
     }
 
     // Create and add the roll

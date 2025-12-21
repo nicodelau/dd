@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   })}\n\n`)
 
   // Add user to room with role
-  diceRoomStore.addUser(userId, userName, roomCode, role)
+  await diceRoomStore.addUser(userId, userName, roomCode, role)
 
   // Add SSE connection to store
   diceRoomStore.addSSEConnection(connectionId, response, userId, roomCode)

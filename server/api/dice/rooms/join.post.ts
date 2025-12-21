@@ -23,8 +23,10 @@ export default defineEventHandler(async (event) => {
 
     // Validate role if provided
     const role: UserRole = body.role === 'DM' ? 'DM' : 'Player'
+    
+    // Ensure room is loaded
+    await diceRoomStore.ensureRoomLoaded(body.roomCode)
 
-    // Check if room exists
     const room = diceRoomStore.getRoom(body.roomCode)
     if (!room) {
       throw createError({
@@ -33,14 +35,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    try {
-      // Check if user is already in room
-      const existingUser = diceRoomStore.getUser(body.userId, body.roomCode)
-      const user = existingUser 
-        ? diceRoomStore.updateUser(body.userId, body.userName, body.roomCode, role)
-        : diceRoomStore.addUser(body.userId, body.userName, body.roomCode, role)
-      
-      // Update activity tracking
+    // Add or update user
+    const existingUser = diceRoomStore.getUser(body.userId, body.roomCode)
+    const user = existingUser 
+      ? await diceRoomStore.updateUser(body.userId, body.userName, body.roomCode, role)
+      : await diceRoomStore.addUser(body.userId, body.userName, body.roomCode, role)
+    
+    // Update activity tracking
       diceRoomStore.updateUserActivity(body.userId, body.roomCode)
 
       console.log(`🎲 User joined room ${body.roomCode}: ${user?.name} (${body.userId}) as ${role}`)
@@ -55,13 +56,7 @@ export default defineEventHandler(async (event) => {
         },
         stats: diceRoomStore.getStats(body.roomCode)
       }
-    } catch (storeError: any) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to join room: ' + storeError.message
-      })
-    }
-  } catch (error: any) {
+    } catch (error: any) {
     if (error.statusCode) {
       throw error
     }
