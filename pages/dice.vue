@@ -2154,6 +2154,11 @@ const { t, toggleLanguage, language } = useTranslations()
 // Get authenticated user
 const user = useState < any > ('user')
 
+// Room management state (moved before heartbeat to avoid forward reference)
+const currentRoom = ref < { name: string; code: string; isOwner: boolean } | null > (null)
+const showCreateRoom = ref(false)
+const joinRoomCode = ref('')
+
 // Heartbeat system to maintain session alive
 const roomCodeForHeartbeat = computed(() => currentRoom.value?.code || '')
 const { isHeartbeatActive, startHeartbeat, stopHeartbeat } = useHeartbeat(roomCodeForHeartbeat)
@@ -2185,11 +2190,6 @@ const isSidebarOpen = computed(() => isLeftSidebarOpen.value || isRightSidebarOp
 const userCharacters = ref < any[] > ([])
 const activeCharacterId = ref < string | null > (null)
 const isRefreshingUserData = ref(false)
-
-// Room management state
-const currentRoom = ref < { name: string; code: string; isOwner: boolean } | null > (null)
-const showCreateRoom = ref(false)
-const joinRoomCode = ref('')
 
 // Player stats (for current user if they're a player)
 const playerStats = ref < PlayerStats | null > (null)
