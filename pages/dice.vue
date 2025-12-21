@@ -694,7 +694,7 @@
                     <h3 class="text-lg font-semibold text-white text-white">
                       🎯 {{ t('history') }}
                     </h3>
-                    <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs" @click="clearHistory"
+                    <UButton v-if="rollHistory.length > 0 && (user?.role === 'DM' || user?.role === 'ADMIN')" color="gray" variant="ghost" size="xs" @click="clearHistory"
                       icon="i-heroicons-trash">
                       {{ t('clear') }}
                     </UButton>
@@ -849,7 +849,7 @@
                         <h3 class="text-lg font-semibold text-white text-white">
                           🎯 {{ t('history') }}
                         </h3>
-                        <UButton v-if="rollHistory.length > 0" color="gray" variant="ghost" size="xs"
+                        <UButton v-if="rollHistory.length > 0 && (user?.role === 'DM' || user?.role === 'ADMIN')" color="gray" variant="ghost" size="xs"
                           @click="clearHistory" icon="i-heroicons-trash">
                           {{ t('clear') }}
                         </UButton>
@@ -3435,8 +3435,24 @@ function closeEditModal() {
   editingPlayerStats.value = null
 }
 
-function clearHistory() {
-  rollHistory.value = []
+async function clearHistory() {
+  try {
+    // Call backend to clear history for all players
+    await $fetch('/api/dice/clear-history', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value?.code || 'default'
+      }
+    })
+    
+    // Clear local history
+    rollHistory.value = []
+    console.log('🎲 Roll history cleared successfully')
+  } catch (error) {
+    console.error('Failed to clear roll history:', error)
+    // Still clear local history even if backend call fails
+    rollHistory.value = []
+  }
 }
 
 // Roll request functions (DM side)
@@ -3891,6 +3907,43 @@ function initializeSSE(roomCode?: string) {
           showCriticalAnimation.value = true
           // Video will auto-close when it ends via @ended event
         }
+      }
+    })
+
+    eventSource.value.addEventListener('dice:history:cleared', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🎲 Roll history cleared by another user')
+      rollHistory.value = []
+    })
+
+    eventSource.value.addEventListener('dice:history:sync', (event) => {
+      const data = JSON.parse(event)
+      const { rollHistory: syncedHistory } = data
+      
+      if (syncedHistory && Array.isArray(syncedHistory)) {
+        // Process synced rolls to ensure proper timestamps and diceResults
+        const processedRolls = syncedHistory.map(roll => {
+          // Ensure diceResults exists (for backward compatibility)
+          let diceResults = roll.diceResults
+          if (!diceResults && roll.diceRolled) {
+            diceResults = []
+            roll.diceRolled.forEach((dice: any) => {
+              dice.results.forEach((result: number) => {
+                diceResults!.push({ type: dice.type, result })
+              })
+            })
+          }
+
+          return {
+            ...roll,
+            timestamp: new Date(roll.timestamp),
+            diceResults: diceResults || []
+          }
+        })
+
+        // Replace current history with synced history
+        rollHistory.value = processedRolls
+        console.log('🎲 Roll history synced with server')
       }
     })
 

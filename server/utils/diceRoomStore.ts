@@ -777,6 +777,15 @@ class DiceRoomStore {
     }
   }
 
+  syncRollHistory(roomCode: string = 'default'): void {
+    const room = this.getRoom(roomCode)
+    if (room) {
+      this.broadcastEvent('dice:history:sync', { 
+        rollHistory: room.rollHistory 
+      }, roomCode)
+    }
+  }
+
   // SSE connection management
   addSSEConnection(connectionId: string, response: any, userId: string, roomCode: string = 'default'): void {
     const room = roomCode === 'default' ? this.getOrCreateDefaultRoom() : this.getRoom(roomCode)
