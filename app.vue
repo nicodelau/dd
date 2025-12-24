@@ -19,17 +19,6 @@ const { t } = useTranslations()
 const authLoading = useState('authLoading', () => false)
 const authLoadingMessage = useState('authLoadingMessage', () => 'Verifying authentication...')
 
-// Show loading immediately on initial page load to prevent flash
-const route = useRoute()
-if (process.client && !route.path.startsWith('/auth/')) {
-  authLoading.value = true
-  // Hide loading after a short delay to allow auth check to complete
-  setTimeout(() => {
-    if (!authLoading.value) return
-    authLoadingMessage.value = 'Taking longer than expected...'
-  }, 3000)
-}
-
 // Global app configuration
 useHead({
   titleTemplate: (title) => title ? `${title} - ${t('appTitle')}` : t('appTitle'),

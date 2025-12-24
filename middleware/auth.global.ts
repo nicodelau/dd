@@ -13,7 +13,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   authLoading.value = true
 
   try {
-    const response = await $fetch('/api/auth/me')
+    const headers = useRequestHeaders(['cookie'])
+    const response = await $fetch('/api/auth/me', {
+      headers
+    })
     
     // Based on API structure, response.data.user should exist
     if (!response.data?.user) {

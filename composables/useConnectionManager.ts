@@ -215,6 +215,18 @@ export const useConnectionManager = () => {
    * Desconecta manualmente la conexión
    */
   const disconnect = () => {
+    // Notify server of departure if connected
+    if (connectionState.value.status === 'connected' && connectionParams.value && !isManuallyDisconnected) {
+      // Use fire-and-forget fetch to avoid blocking or unmount issues
+      $fetch('/api/dice/leave', {
+        method: 'POST',
+        body: {
+          userId: connectionParams.value.userId,
+          roomCode: connectionParams.value.roomCode
+        }
+      }).catch(err => console.error('⚡ Failed to send leave notification:', err))
+    }
+
     isManuallyDisconnected = true
     cleanup()
     connectionState.value.status = 'disconnected'

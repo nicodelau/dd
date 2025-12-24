@@ -56,13 +56,17 @@ export default defineEventHandler(async (event) => {
   event.node.req.on('close', () => {
     console.log(`🎲 SSE connection closed: ${connectionId}`)
     diceRoomStore.removeSSEConnection(connectionId, roomCode)
-    diceRoomStore.removeUser(userId, roomCode)
+    // Don't remove user immediately on disconnect to allow reconnection
+    // User will be removed by cleanup job if inactive for too long
+    // diceRoomStore.removeUser(userId, roomCode)
   })
 
   event.node.req.on('error', (error) => {
     console.error(`🎲 SSE connection error: ${connectionId}`, error)
     diceRoomStore.removeSSEConnection(connectionId, roomCode)
-    diceRoomStore.removeUser(userId, roomCode)
+    // Don't remove user immediately on disconnect to allow reconnection
+    // User will be removed by cleanup job if inactive for too long
+    // diceRoomStore.removeUser(userId, roomCode)
   })
 
   // Keep connection alive with more frequent heartbeat to prevent timeouts
@@ -84,7 +88,7 @@ export default defineEventHandler(async (event) => {
       console.error(`🎲 Heartbeat failed for ${connectionId}:`, error)
       clearInterval(heartbeatInterval)
       diceRoomStore.removeSSEConnection(connectionId, roomCode)
-      diceRoomStore.removeUser(userId, roomCode)
+      // diceRoomStore.removeUser(userId, roomCode)
     }
   }, 15000) // Reduced to 15 seconds to prevent proxy timeouts
 

@@ -106,7 +106,7 @@
       </div>
 
       <!-- Room Selection/Creation Card -->
-      <UCard v-if="!currentRoom || !isConnected || currentRoom.code === 'default'" class="mb-6">
+      <UCard v-if="!currentRoom || currentRoom.code === 'default'" class="mb-6">
         <template #header>
           <h3 class="text-lg font-semibold text-white flex items-center">
             <UIcon name="i-heroicons-home" class="w-5 h-5 text-red-500 mr-2" />
@@ -3640,6 +3640,8 @@ async function createRoom() {
         code: response.room.code,
         isOwner: true
       }
+      // Update URL
+      updateUrlForRoom(response.room.code)
       console.log('🏠 Created room:', response.room.code)
       showCreateRoom.value = false
 
@@ -6485,9 +6487,9 @@ onMounted(async () => {
     originalConsoleError.apply(console, args)
   }
 
-  // Don't set any initial room state
-  // Users must create or join a room explicitly
-  currentRoom.value = null
+  // Check for room code in route params (for /dice/:roomCode)
+  const route = useRoute()
+  const routeRoomCode = route.params.roomCode
 
   // Load user characters and auto-detect role
   await loadUserCharacters()
@@ -6498,6 +6500,17 @@ onMounted(async () => {
 
   // Add global diagnostic function for debugging
   window.diagnoseMusicSystem = diagnoseMusicSystem
+  
+  // Auto-join room if code provided in URL
+  if (routeRoomCode && typeof routeRoomCode === 'string') {
+    console.log(`🎲 Auto-joining room from URL: ${routeRoomCode}`)
+    joinRoomCode.value = routeRoomCode
+    await joinExistingRoom()
+  } else {
+    // No room code, reset state
+    currentRoom.value = null
+  }
+
   window.forceReinitializePlayer = forceReinitializePlayer
 
   // Add debug function for testing sound effects volume
@@ -6522,10 +6535,17 @@ onMounted(async () => {
       youtubePlayerExists: !!youtubePlayer.value
     })
   }
-
-  // Don't automatically connect to any room
-  // Users must create or join a room explicitly
 })
+
+// Update URL when joining/creating rooms
+const updateUrlForRoom = (roomCode: string) => {
+  if (roomCode && roomCode !== 'default') {
+    // Update URL without reloading page
+    window.history.pushState({}, '', `/dice/${roomCode}`)
+  } else {
+    window.history.pushState({}, '', '/dice')
+  }
+}
 
 onUnmounted(() => {
   // Clean up fade transition

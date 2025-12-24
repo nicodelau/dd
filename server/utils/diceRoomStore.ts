@@ -153,7 +153,8 @@ class DiceRoomStore {
           },
           dice_rolls: {
              orderBy: { timestamp: 'desc' },
-             take: 50
+             take: 50,
+             include: { users: true }
           },
           battle_sessions: {
              include: {
@@ -424,36 +425,45 @@ class DiceRoomStore {
       throw new Error(`Room ${roomCode} does not exist`)
     }
 
-    const user: DiceUser = {
-      id: userId,
-      name: name || `User${Date.now()}`,
-      role,
-      joinedAt: new Date(),
-      lastSeen: new Date(),
-      roomCode,
-      stats: role === 'Player' ? this.createDefaultStats() : undefined
-    }
+    let user = room.users.get(userId)
     
-    room.users.set(userId, user)
+    if (user) {
+      // User already exists, update info but preserve state
+      user.name = name
+      user.lastSeen = new Date()
+      
+      // Update role if changed
+      if (role && role !== user.role) {
+        user.role = role
+        // If switching to Player, ensure stats exist
+        if (role === 'Player' && !user.stats) {
+          user.stats = this.createDefaultStats()
+        } else if (role === 'DM') {
+          // If switching to DM, remove stats
+          user.stats = undefined
+        }
+      }
+      
+      room.users.set(userId, user)
+      console.log(`🎲 User reconnected to room ${roomCode}: ${user.name} (${userId}) as ${role}`)
+    } else {
+      // New user
+      user = {
+        id: userId,
+        name: name || `User${Date.now()}`,
+        role,
+        joinedAt: new Date(),
+        lastSeen: new Date(),
+        roomCode,
+        stats: role === 'Player' ? this.createDefaultStats() : undefined
+      }
+      
+      room.users.set(userId, user)
+      console.log(`🎲 User joined room ${roomCode}: ${user.name} (${userId}) as ${role}`)
+    }
 
     // Persist to DB
     try {
-        // We need to ensure the user exists in the User table first?
-        // Usually the user comes from auth so they exist.
-        // But for "Anonymous" users? The system might use temporary IDs.
-        // If the userId is not in User table, this will fail due to FK constraint.
-        // The original code allowed `user_...` IDs.
-        // If we want persistence, we must have real users or create shadow users.
-        // For now, let's wrap in try/catch and ignore FK errors for anon users if they occur, 
-        // OR upsert the User table too if we really want to support anon persistence.
-        
-        // Check if userId looks like a real ID or a temp one?
-        // Prisma CUIDs are specific. `user_...` is definitely temp.
-        
-        // If it is a temporary user, we might skip DB persistence or create a User record.
-        // Creating a User record requires email/username/password.
-        // So we can only persist registered users.
-        
         if (!userId.startsWith('user_')) {
              await prisma.roomParticipant.upsert({
                 where: {
@@ -480,8 +490,6 @@ class DiceRoomStore {
     }
 
     this.broadcastUserCount(roomCode)
-    
-    console.log(`🎲 User joined room ${roomCode}: ${user.name} (${userId}) as ${role}`)
     return user
   }
 
