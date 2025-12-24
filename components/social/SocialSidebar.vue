@@ -106,11 +106,17 @@
               <div class="flex items-center gap-3">
                 <div class="relative">
                   <UAvatar :src="friend.avatar" :alt="friend.username" size="sm" />
-                  <div class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-zinc-900" :class="friend.isOnline ? 'bg-green-500' : 'bg-zinc-500'"></div>
+                  <div class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-zinc-900" 
+                    :class="{
+                      'bg-green-500': friend.status === 'online',
+                      'bg-yellow-500': friend.status === 'idle',
+                      'bg-zinc-500': !friend.status || friend.status === 'offline'
+                    }">
+                  </div>
                 </div>
                 <div>
                   <div class="text-sm font-medium text-zinc-200">{{ friend.username }}</div>
-                  <div class="text-xs text-zinc-500">{{ friend.isOnline ? 'Online' : 'Offline' }}</div>
+                  <div class="text-xs text-zinc-500 capitalize">{{ friend.status || 'Offline' }}</div>
                 </div>
               </div>
               <UButton size="xs" color="gray" variant="ghost" icon="i-heroicons-chat-bubble-oval-left" class="opacity-0 group-hover:opacity-100" />

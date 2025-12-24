@@ -1366,10 +1366,13 @@ class DiceRoomStore {
        deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
 
        // Remove users who haven't been seen in 1 hour (increased from 5 minutes)
+       // AND who don't have an active connection
        const removedUsers: string[] = []
 
        for (const [userId, user] of room.users) {
-         if (user.lastSeen < oneHourAgo) {
+         const hasActiveConnection = Array.from(room.sseConnections.values()).some(conn => conn.userId === userId)
+         
+         if (!hasActiveConnection && user.lastSeen < oneHourAgo) {
            this.removeUser(userId, roomCode)
            removedUsers.push(user.name)
          }
@@ -1426,18 +1429,22 @@ class DiceRoomStore {
   }
 
   // Invite system methods
-  getAllConnectedUsers(): Array<{ id: string; name: string; role: UserRole; roomCode: string }> {
-    const connectedUsers = new Map<string, { id: string; name: string; role: UserRole; roomCode: string }>()
+  getAllConnectedUsers(): Array<{ id: string; name: string; role: UserRole; roomCode: string; status: 'online' | 'idle' }> {
+    const connectedUsers = new Map<string, { id: string; name: string; role: UserRole; roomCode: string; status: 'online' | 'idle' }>()
+    const now = Date.now()
+    const IDLE_THRESHOLD = 15 * 60 * 1000 // 15 minutes
 
     for (const [roomCode, room] of this.rooms) {
       for (const [connectionId, connection] of room.sseConnections) {
         const user = room.users.get(connection.userId)
         if (user && !connectedUsers.has(user.id)) {
+          const isIdle = (now - user.lastSeen.getTime()) > IDLE_THRESHOLD
           connectedUsers.set(user.id, {
             id: user.id,
             name: user.name,
             role: user.role,
-            roomCode: room.code
+            roomCode: room.code,
+            status: isIdle ? 'idle' : 'online'
           })
         }
       }

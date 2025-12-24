@@ -3913,10 +3913,11 @@ function initializeSSE(roomCode?: string) {
 
     eventSource.value.onerror = (error) => {
       console.error('🎲 SSE connection error:', error)
-      console.log('🎲 Fallback to offline mode')
+      // Don't switch to offline mode automatically on temporary errors
+      // EventSource will automatically attempt to reconnect
       isConnected.value = false
-      isOfflineMode.value = true
-      connectedUsers.value = 1
+      // isOfflineMode.value = true 
+      // connectedUsers.value = 1
     }
 
     // Handle specific events

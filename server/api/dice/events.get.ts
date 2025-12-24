@@ -72,8 +72,8 @@ export default defineEventHandler(async (event) => {
   // Keep connection alive with more frequent heartbeat to prevent timeouts
   const heartbeatInterval = setInterval(() => {
     try {
-      // Update user activity on heartbeat
-      diceRoomStore.updateUserActivity(userId, roomCode)
+      // Don't update user activity on automatic heartbeat - let client explicit heartbeat handle that
+      // diceRoomStore.updateUserActivity(userId, roomCode)
       
       // Send heartbeat with timestamp and connection health info
       const heartbeatData = {

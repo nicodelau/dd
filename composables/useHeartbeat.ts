@@ -2,8 +2,14 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
   const isHeartbeatActive = ref(false)
   const heartbeatInterval = ref<NodeJS.Timeout | null>(null)
   const lastHeartbeat = ref<Date | null>(null)
+  const lastActivity = ref<number>(Date.now()) // Track local user activity
   const errorCount = ref(0)
   const MAX_ERRORS = 3
+
+  // Activity tracking
+  const updateActivity = () => {
+    lastActivity.value = Date.now()
+  }
 
   const stopHeartbeat = () => {
     if (heartbeatInterval.value) {
@@ -11,11 +17,28 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
       heartbeatInterval.value = null
     }
     isHeartbeatActive.value = false
+    
+    // Remove activity listeners
+    if (process.client) {
+      window.removeEventListener('mousemove', updateActivity)
+      window.removeEventListener('keydown', updateActivity)
+      window.removeEventListener('click', updateActivity)
+      window.removeEventListener('touchstart', updateActivity)
+    }
   }
 
   const sendHeartbeat = async () => {
     if (!roomCode.value) {
       stopHeartbeat()
+      return
+    }
+
+    // Only send heartbeat if user has been active in the last 30 seconds
+    // This allows the server to detect "Idle" state (connected but inactive)
+    const timeSinceActivity = Date.now() - lastActivity.value
+    if (timeSinceActivity > 30000) {
+      // User is idle locally, don't send heartbeat to server
+      // Server 'lastSeen' will age, eventually marking user as 'idle'
       return
     }
 
@@ -50,6 +73,15 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
 
     isHeartbeatActive.value = true
     errorCount.value = 0
+    lastActivity.value = Date.now()
+
+    // Add activity listeners
+    if (process.client) {
+      window.addEventListener('mousemove', updateActivity)
+      window.addEventListener('keydown', updateActivity)
+      window.addEventListener('click', updateActivity)
+      window.addEventListener('touchstart', updateActivity)
+    }
 
     // Send heartbeat immediately
     sendHeartbeat()
