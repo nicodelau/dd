@@ -3,35 +3,36 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                  String                @id @default(cuid())
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  email               String                @unique
-  password            String
-  username            String                @unique
-  firstName           String?
-  lastName            String?
-  avatar              String?
-  bio                 String?
-  role                UserRole              @default(PLAYER)
-  isActive            Boolean               @default(true)
-  lastLoginAt         DateTime?
-  battle_participants battle_participants[]
-  ownedCharacters     Character[]           @relation("CharacterOwner")
-  characters          Character[]
-  dice_rolls          DiceRoll[]
-  dice_rooms          DiceRoom[]
-  music_tracks        music_tracks[]
-  roomParticipations  RoomParticipant[]
-  friendshipsInitiated Friendship[] @relation("FriendshipInitiator")
-  friendshipsReceived  Friendship[] @relation("FriendshipReceiver")
-  messagesSent         DirectMessage[] @relation("MessageSender")
-  messagesReceived     DirectMessage[] @relation("MessageReceiver")
+  id                   String                @id @default(cuid())
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  email                String                @unique
+  password             String
+  username             String                @unique
+  firstName            String?
+  lastName             String?
+  avatar               String?
+  bio                  String?
+  role                 UserRole              @default(PLAYER)
+  isActive             Boolean               @default(true)
+  lastLoginAt          DateTime?
+  battle_participants  battle_participants[]
+  ownedCharacters      Character[]           @relation("CharacterOwner")
+  characters           Character[]
+  dice_rolls           DiceRoll[]
+  dice_rooms           DiceRoom[]
+  music_tracks         music_tracks[]
+  roomParticipations   RoomParticipant[]
+  friendshipsInitiated Friendship[]          @relation("FriendshipInitiator")
+  friendshipsReceived  Friendship[]          @relation("FriendshipReceiver")
+  messagesSent         DirectMessage[]       @relation("MessageSender")
+  messagesReceived     DirectMessage[]       @relation("MessageReceiver")
 
   @@map("users")
 }
