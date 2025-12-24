@@ -1425,6 +1425,64 @@ class DiceRoomStore {
     return rooms
   }
 
+  // Invite system methods
+  getAllConnectedUsers(): Array<{ id: string; name: string; role: UserRole; roomCode: string }> {
+    const connectedUsers = new Map<string, { id: string; name: string; role: UserRole; roomCode: string }>()
+
+    for (const [roomCode, room] of this.rooms) {
+      for (const [connectionId, connection] of room.sseConnections) {
+        const user = room.users.get(connection.userId)
+        if (user && !connectedUsers.has(user.id)) {
+          connectedUsers.set(user.id, {
+            id: user.id,
+            name: user.name,
+            role: user.role,
+            roomCode: room.code
+          })
+        }
+      }
+    }
+
+    return Array.from(connectedUsers.values())
+  }
+
+  sendInvite(senderId: string, senderName: string, targetUserId: string, targetRoomCode: string): boolean {
+    // Find target user's connection in any room
+    let targetConnection: { response: any; userId: string; roomCode: string } | null = null
+    
+    // Search all rooms for the user
+    for (const room of this.rooms.values()) {
+        for (const conn of room.sseConnections.values()) {
+            if (conn.userId === targetUserId) {
+                targetConnection = conn
+                break
+            }
+        }
+        if (targetConnection) break
+    }
+
+    if (!targetConnection) {
+      return false
+    }
+
+    try {
+      const inviteData = {
+        senderId,
+        senderName,
+        targetRoomCode,
+        timestamp: new Date()
+      }
+      
+      const sseData = `event: room:invite\ndata: ${JSON.stringify(inviteData)}\n\n`
+      targetConnection.response.write(sseData)
+      console.log(`📨 Invite sent from ${senderName} to user ${targetUserId} for room ${targetRoomCode}`)
+      return true
+    } catch (error) {
+      console.error(`❌ Failed to send invite to ${targetUserId}:`, error)
+      return false
+    }
+  }
+
   // Music system methods
   initializeMusicState(roomCode: string, dmUserId: string): MusicState {
     const room = this.getRoom(roomCode)

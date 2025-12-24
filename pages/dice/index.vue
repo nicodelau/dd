@@ -82,6 +82,10 @@
 
         <!-- Room Actions -->
         <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
+          <UButton v-if="userRole === 'DM'" color="blue" variant="outline" icon="i-heroicons-paper-airplane"
+            @click="openInviteModal">
+            {{ t('invite') }}
+          </UButton>
           <UButton color="red" variant="outline" icon="i-heroicons-arrow-right-on-rectangle"
             @click="leaveRoom">
             {{ t('leaveRoom') }}
@@ -1704,6 +1708,49 @@
           </div>
         </div>
     </main>
+    <!-- Invite Players Modal -->
+    <UModal v-model="showInviteModal" :ui="{ width: 'max-w-md' }">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-semibold text-white">
+            📨 {{ t('invitePlayers') }}
+          </h3>
+          <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="showInviteModal = false" />
+        </div>
+
+        <div v-if="isLoadingOnlineUsers" class="text-center py-8">
+          <UIcon name="i-heroicons-arrow-path" class="animate-spin h-8 w-8 text-blue-500 mx-auto" />
+          <p class="mt-2 text-zinc-400">{{ t('loadingUsers') }}...</p>
+        </div>
+
+        <div v-else-if="onlineUsers.length === 0" class="text-center py-8">
+          <div class="text-4xl mb-4">😴</div>
+          <p class="text-zinc-400">{{ t('noOnlineUsers') }}</p>
+          <p class="text-xs text-zinc-500 mt-2">{{ t('usersMustBeOnline') }}</p>
+        </div>
+
+        <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+          <div v-for="onlineUser in onlineUsers" :key="onlineUser.id" 
+            class="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-lg">
+            <div>
+              <div class="font-medium text-white">{{ onlineUser.name }}</div>
+              <div class="text-xs text-zinc-400">
+                {{ onlineUser.role }} • {{ onlineUser.roomCode === 'default' ? 'Lobby' : 'In Game' }}
+              </div>
+            </div>
+            <UButton 
+              size="xs" 
+              color="blue" 
+              icon="i-heroicons-paper-airplane"
+              @click="sendInviteToUser(onlineUser)"
+            >
+              {{ t('send') }}
+            </UButton>
+          </div>
+        </div>
+      </div>
+    </UModal>
+
     <!-- Room Creation Modal -->
     <UModal v-model="showCreateRoom" :ui="{ width: 'max-w-md' }">
       <div class="p-6">
@@ -6468,6 +6515,61 @@ watch(() => musicState.value.volume, (newVolume, oldVolume) => {
     youtubePlayer.value.setVolume(newVolume)
   }
 })
+
+// Invite System
+const showInviteModal = ref(false)
+const onlineUsers = ref<any[]>([])
+const isLoadingOnlineUsers = ref(false)
+
+const openInviteModal = async () => {
+  showInviteModal.value = true
+  isLoadingOnlineUsers.value = true
+  try {
+    const response = await $fetch<any>('/api/dice/users/online')
+    if (response.success) {
+      onlineUsers.value = response.users
+    }
+  } catch (error) {
+    console.error('Failed to load online users:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to load online users',
+      color: 'red'
+    })
+  } finally {
+    isLoadingOnlineUsers.value = false
+  }
+}
+
+const sendInviteToUser = async (targetUser: any) => {
+  if (!currentRoom.value) return
+
+  try {
+    await $fetch('/api/dice/invite', {
+      method: 'POST',
+      body: {
+        targetUserId: targetUser.id,
+        targetRoomCode: currentRoom.value.code
+      }
+    })
+    
+    const toast = useToast()
+    toast.add({
+      title: 'Sent',
+      description: `Invite sent to ${targetUser.name}`,
+      color: 'green'
+    })
+  } catch (error) {
+    console.error('Failed to send invite:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to send invite',
+      color: 'red'
+    })
+  }
+}
 
 // Initialize with SSE connection
 onMounted(async () => {

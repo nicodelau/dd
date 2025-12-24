@@ -416,6 +416,14 @@ export const useTranslations = () => {
       webgl: 'WebGL',
       renderer: 'Renderer',
       sceneObjects: 'Scene objects',
+      // Invites
+      invite: 'Invite',
+      invitePlayers: 'Invite Players',
+      loadingUsers: 'Loading online users...',
+      noOnlineUsers: 'No other users online',
+      usersMustBeOnline: 'Players must be on the dashboard or in a room to appear here.',
+      send: 'Send',
+
       welcomeToAdventure: 'Welcome to Your D&D Adventure',
       adventureDescription: 'Manage your characters, track your campaigns, and embark on epic quests. Your adventure awaits in the digital realm.',
       featureCharacters: 'Create and manage characters',
@@ -917,6 +925,14 @@ export const useTranslations = () => {
       webgl: 'WebGL',
       renderer: 'Renderizador',
       sceneObjects: 'Objetos en escena',
+      // Invites
+      invite: 'Invitar',
+      invitePlayers: 'Invitar Jugadores',
+      loadingUsers: 'Cargando usuarios conectados...',
+      noOnlineUsers: 'No hay otros usuarios conectados',
+      usersMustBeOnline: 'Los jugadores deben estar en el tablero o en una sala para aparecer aquí.',
+      send: 'Enviar',
+
       welcomeToAdventure: 'Bienvenido a tu Aventura D&D',
       adventureDescription: 'Gestiona tus personajes, sigue tus campañas y embárcate en misiones épicas. Tu aventura te espera en el reino digital.',
       featureCharacters: 'Crea y gestiona personajes',

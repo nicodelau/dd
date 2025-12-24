@@ -158,6 +158,7 @@ export const useConnectionManager = () => {
     eventSource.addEventListener('users:count', handleUsersCount)
     eventSource.addEventListener('battle:update', handleBattleUpdate)
     eventSource.addEventListener('music:update', handleMusicUpdate)
+    eventSource.addEventListener('room:invite', handleRoomInvite)
 
     // Handle connection errors
     eventSource.onerror = (error) => {
@@ -457,6 +458,12 @@ export const useConnectionManager = () => {
   const handleMusicUpdate = (event: MessageEvent) => {
     const data = JSON.parse(event.data)
     const customEvent = new CustomEvent('music:update', { detail: data })
+    window.dispatchEvent(customEvent)
+  }
+
+  const handleRoomInvite = (event: MessageEvent) => {
+    const data = JSON.parse(event.data)
+    const customEvent = new CustomEvent('room:invite', { detail: data })
     window.dispatchEvent(customEvent)
   }
 

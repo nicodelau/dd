@@ -314,4 +314,67 @@ useHead({
     { name: 'description', content: computed(() => t('dashboardDesc')) }
   ]
 })
+
+// Connection Manager for Lobby Presence & Invites
+const { connect, disconnect } = useConnectionManager()
+const router = useRouter()
+const toast = useToast()
+
+onMounted(async () => {
+  if (user.value) {
+    // Connect to default room to be "online"
+    await connect({
+      userId: user.value.id,
+      userName: user.value.username || user.value.firstName || 'User',
+      role: user.value.role,
+      roomCode: 'default'
+    })
+
+    // Listen for invites
+    window.addEventListener('room:invite', handleInvite)
+  }
+})
+
+onUnmounted(() => {
+  disconnect()
+  window.removeEventListener('room:invite', handleInvite)
+})
+
+const handleInvite = (event: any) => {
+  const data = event.detail ? event.detail : (event.data ? JSON.parse(event.data) : null)
+  // The SSE event might come as a CustomEvent if dispatched from useConnectionManager
+  // But wait, useConnectionManager dispatches CustomEvents for known types.
+  // We need to ensure useConnectionManager handles 'room:invite' or we handle the raw message.
+  
+  // Actually, let's update useConnectionManager to dispatch this event, 
+  // OR we can just check `event.detail` if we update `useConnectionManager` 
+  // to dispatch it.
+  
+  // For now, let's assume useConnectionManager's onmessage handler 
+  // needs to be updated or we need to check how it handles unknown events.
+  // Looking at useConnectionManager.ts, it only dispatches specific events.
+  // We should probably update useConnectionManager.ts first to handle generic events or this specific one.
+  
+  // However, we can also just listen to the raw CustomEvent if we update the composable.
+  // Let's assume the composable will emit 'room:invite' to window.
+  
+  if (data) {
+     toast.add({
+      title: '🎲 Game Invitation',
+      description: `${data.senderName} invited you to join Room ${data.targetRoomCode}`,
+      icon: 'i-heroicons-envelope-open',
+      color: 'green',
+      timeout: 10000,
+      actions: [{
+        label: 'Join',
+        click: () => {
+          router.push(`/dice/${data.targetRoomCode}`)
+        }
+      }, {
+        label: 'Dismiss',
+        click: () => {}
+      }]
+    })
+  }
+}
 </script>

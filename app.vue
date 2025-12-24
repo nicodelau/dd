@@ -8,16 +8,22 @@
     
     <!-- Main Content -->
     <NuxtPage />
+    <SocialSidebar v-if="user" />
     <UNotifications />
   </div>
 </template>
 
 <script setup>
+import SocialSidebar from '~/components/social/SocialSidebar.vue'
+
 const { t } = useTranslations()
 
 // Auth loading state
 const authLoading = useState('authLoading', () => false)
 const authLoadingMessage = useState('authLoadingMessage', () => 'Verifying authentication...')
+
+// User state for conditional rendering
+const user = useState('user')
 
 // Global app configuration
 useHead({
