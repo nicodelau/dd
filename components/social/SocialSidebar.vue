@@ -119,7 +119,18 @@
                   <div class="text-xs text-zinc-500 capitalize">{{ friend.status || 'Offline' }}</div>
                 </div>
               </div>
-              <UButton size="xs" color="gray" variant="ghost" icon="i-heroicons-chat-bubble-oval-left" class="opacity-0 group-hover:opacity-100" />
+              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <UButton 
+                  v-if="friend.roomCode && friend.roomCode !== 'default'"
+                  size="xs" 
+                  color="green" 
+                  variant="ghost" 
+                  icon="i-heroicons-arrow-right-end-on-rectangle" 
+                  :title="`Join Room: ${friend.roomCode}`"
+                  @click.stop="joinRoom(friend.roomCode)"
+                />
+                <UButton size="xs" color="gray" variant="ghost" icon="i-heroicons-chat-bubble-oval-left" />
+              </div>
             </div>
           </div>
         </div>

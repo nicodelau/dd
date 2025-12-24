@@ -82,7 +82,7 @@
 
         <!-- Room Actions -->
         <div v-if="currentRoom && currentRoom.code !== 'default'" class="flex items-center space-x-2">
-          <UButton v-if="userRole === 'DM'" color="blue" variant="outline" icon="i-heroicons-paper-airplane"
+          <UButton color="blue" variant="outline" icon="i-heroicons-paper-airplane"
             @click="openInviteModal">
             {{ t('invite') }}
           </UButton>

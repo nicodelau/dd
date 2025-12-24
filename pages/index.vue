@@ -320,6 +320,10 @@ const { connect, disconnect } = useConnectionManager()
 const router = useRouter()
 const toast = useToast()
 
+// Heartbeat for dashboard presence
+const dashboardRoomCode = ref('default')
+const { startHeartbeat, stopHeartbeat } = useHeartbeat(dashboardRoomCode)
+
 onMounted(async () => {
   if (user.value) {
     // Connect to default room to be "online"
@@ -329,6 +333,9 @@ onMounted(async () => {
       role: user.value.role,
       roomCode: 'default'
     })
+    
+    // Start heartbeat to maintain "Online" status while active
+    startHeartbeat()
 
     // Listen for invites
     window.addEventListener('room:invite', handleInvite)
@@ -337,6 +344,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   disconnect()
+  stopHeartbeat()
   window.removeEventListener('room:invite', handleInvite)
 })
 

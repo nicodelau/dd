@@ -20,16 +20,17 @@ export default defineEventHandler(async (event) => {
 
   // Get online status from diceRoomStore
   const onlineUsers = diceRoomStore.getAllConnectedUsers()
-  // Map userId -> status
-  const userStatusMap = new Map<string, 'online' | 'idle'>()
-  onlineUsers.forEach(u => userStatusMap.set(u.id, u.status))
+  // Map userId -> connection info
+  const userConnectionMap = new Map<string, typeof onlineUsers[0]>()
+  onlineUsers.forEach(u => userConnectionMap.set(u.id, u))
 
   const friends = friendships.map(f => {
     const friendUser = f.userId === user.id ? f.friend : f.user
-    const status = userStatusMap.get(friendUser.id) || 'offline'
+    const connection = userConnectionMap.get(friendUser.id)
     return {
       ...friendUser,
-      status // 'online' | 'idle' | 'offline'
+      status: connection?.status || 'offline',
+      roomCode: connection?.roomCode || null
     }
   })
 
