@@ -4280,18 +4280,25 @@ function initializeSSE(roomCode?: string) {
       console.log('💥 Damage dealt:', data)
 
       // Update local battle state if target is an enemy
-      if (battleMode.value && battleMode.value.enemies && data.targetId in battleMode.value.enemies) {
-        const enemy = battleMode.value.enemies[data.targetId]
-        enemy.hitPoints.current = data.newHitPoints
-        if (data.isDefeated) {
-          enemy.isDefeated = true
+      if (battleMode.value && battleMode.value.enemies) {
+        // Check if target is an enemy
+        if (data.targetId in battleMode.value.enemies) {
+           const enemy = battleMode.value.enemies[data.targetId]
+           enemy.hitPoints.current = data.newHp // Use newHp from event
+           enemy.isDefeated = data.isDefeated
+        } else {
+           // Might be a player, update allPlayers list if DM
+           const player = allPlayers.value.find(p => p.userId === data.targetId)
+           if (player) {
+               player.stats.hitPoints.current = data.newHp
+           }
         }
       }
 
       const toast = useToast()
       toast.add({
         title: 'Damage Dealt',
-        description: `${data.damage} damage dealt to ${data.targetName || 'target'}`,
+        description: `${data.damage} damage dealt to ${data.targetId}`,
         color: 'red'
       })
     })

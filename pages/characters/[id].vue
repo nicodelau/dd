@@ -1260,10 +1260,20 @@
                   <span class="font-medium text-gray-900 dark:text-white">{{ (character.experience || 0).toLocaleString() }} XP</span>
                 </div>
                 
-                <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('proficiencyBonus') }}</span>
-                  <span class="font-medium text-gray-900 dark:text-white">+{{ character.proficiencyBonus || 2 }}</span>
-                </div>
+                 <div class="flex justify-between items-center">
+                   <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('proficiencyBonus') }}</span>
+                   <div v-if="editMode" class="flex items-center space-x-2">
+                     <UInput
+                       v-model.number="editForm.proficiencyBonus"
+                       type="number"
+                       min="1"
+                       max="6"
+                       class="w-16 text-center"
+                       :placeholder="character.proficiencyBonus || 2"
+                     />
+                   </div>
+                   <span v-else class="font-medium text-gray-900 dark:text-white">+{{ character.proficiencyBonus || 2 }}</span>
+                 </div>
 
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('passivePerception') }}</span>
