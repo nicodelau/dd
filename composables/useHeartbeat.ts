@@ -1,12 +1,11 @@
 export const useHeartbeat = (roomCode: Ref<string>) => {
   const isHeartbeatActive = ref(false)
-  const heartbeatInterval = ref<NodeJS.Timeout | null>(null)
+  const heartbeatInterval = ref<ReturnType<typeof setInterval> | null>(null)
   const lastHeartbeat = ref<Date | null>(null)
-  const lastActivity = ref<number>(Date.now()) // Track local user activity
+  const lastActivity = ref<number>(Date.now())
   const errorCount = ref(0)
-  const MAX_ERRORS = 3
+  const backoffDelay = ref(30000) // Start at normal 30s interval
 
-  // Activity tracking
   const updateActivity = () => {
     lastActivity.value = Date.now()
   }
@@ -17,14 +16,23 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
       heartbeatInterval.value = null
     }
     isHeartbeatActive.value = false
-    
-    // Remove activity listeners
-    if (process.client) {
+    backoffDelay.value = 30000
+
+    if (import.meta.client) {
       window.removeEventListener('mousemove', updateActivity)
       window.removeEventListener('keydown', updateActivity)
       window.removeEventListener('click', updateActivity)
       window.removeEventListener('touchstart', updateActivity)
     }
+  }
+
+  const scheduleNext = () => {
+    if (heartbeatInterval.value) {
+      clearInterval(heartbeatInterval.value)
+    }
+    heartbeatInterval.value = setInterval(async () => {
+      await sendHeartbeat()
+    }, backoffDelay.value)
   }
 
   const sendHeartbeat = async () => {
@@ -33,12 +41,8 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
       return
     }
 
-    // Only send heartbeat if user has been active in the last 30 seconds
-    // This allows the server to detect "Idle" state (connected but inactive)
     const timeSinceActivity = Date.now() - lastActivity.value
     if (timeSinceActivity > 30000) {
-      // User is idle locally, don't send heartbeat to server
-      // Server 'lastSeen' will age, eventually marking user as 'idle'
       return
     }
 
@@ -53,14 +57,21 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
       lastHeartbeat.value = new Date()
       errorCount.value = 0
 
-      console.log('Heartbeat sent successfully:', response.timestamp)
-    } catch (error) {
-      console.error('Heartbeat failed:', error)
+      // Reset to normal interval after success
+      if (backoffDelay.value !== 30000) {
+        backoffDelay.value = 30000
+        scheduleNext()
+      }
+    } catch (error: any) {
       errorCount.value++
 
-      // Stop heartbeat after too many consecutive errors
-      if (errorCount.value >= MAX_ERRORS) {
-        console.error('Too many heartbeat failures, stopping heartbeat')
+      // On auth failure, back off but keep trying
+      if (error?.statusCode === 401 || error?.statusCode === 403) {
+        // Exponential backoff: 30s -> 60s -> 120s, max 120s
+        backoffDelay.value = Math.min(backoffDelay.value * 2, 120000)
+        scheduleNext()
+      } else if (errorCount.value >= 10) {
+        // Only stop on persistent non-auth errors
         stopHeartbeat()
       }
     }
@@ -73,26 +84,20 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
 
     isHeartbeatActive.value = true
     errorCount.value = 0
+    backoffDelay.value = 30000
     lastActivity.value = Date.now()
 
-    // Add activity listeners
-    if (process.client) {
+    if (import.meta.client) {
       window.addEventListener('mousemove', updateActivity)
       window.addEventListener('keydown', updateActivity)
       window.addEventListener('click', updateActivity)
       window.addEventListener('touchstart', updateActivity)
     }
 
-    // Send heartbeat immediately
     sendHeartbeat()
-
-    // Set up interval to send heartbeat every 30 seconds
-    heartbeatInterval.value = setInterval(async () => {
-      await sendHeartbeat()
-    }, 30000) // 30 seconds
+    scheduleNext()
   }
 
-  // Watch for room code changes
   watch(roomCode, (newRoomCode, oldRoomCode) => {
     if (oldRoomCode && !newRoomCode) {
       stopHeartbeat()
@@ -102,12 +107,10 @@ export const useHeartbeat = (roomCode: Ref<string>) => {
     }
   })
 
-  // Clean up on component unmount
   onUnmounted(() => {
     stopHeartbeat()
   })
 
-  // Also clean up when page becomes hidden
   onMounted(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
