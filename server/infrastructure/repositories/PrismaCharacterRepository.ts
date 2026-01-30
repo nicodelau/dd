@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '~/prisma/generated/client'
 import type { ICharacterRepository } from '../../domain/repositories'
 import type { Character } from '../../domain/entities/Character'
 

@@ -25,6 +25,7 @@ logs
 
 # Generated files
 /generated/prisma
+prisma/generated
 
 # Uploaded files (temporary)
 public/uploads/

@@ -27,8 +27,11 @@ export default defineNuxtConfig({
 
   // Nitro configuration for better SSE support
   nitro: {
-    experimental: {
-      wasm: true
+    // Support top-level await in Prisma WASM compiler
+    esbuild: {
+      options: {
+        target: 'esnext'
+      }
     },
     // Increase timeouts to prevent SSE disconnections
     routeRules: {
