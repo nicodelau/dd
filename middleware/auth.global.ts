@@ -5,11 +5,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // Get or initialize state
-  const authLoading = useState('authLoading', () => true)
+  const authLoading = useState('authLoading', () => false)
   const authLoadingMessage = useState('authLoadingMessage', () => 'Verifying authentication...')
   const redirectPath = useState('redirectPath', () => null as string | null)
+  const user = useState('user')
 
-  // Set loading state
+  // If we already have user data on client-side navigation, skip the API call
+  if (import.meta.client && user.value) {
+    return
+  }
+
+  // Set loading state only if we don't have user data yet
   authLoading.value = true
 
   try {
@@ -17,38 +23,25 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const response = await $fetch('/api/auth/me', {
       headers
     })
-    
-    // Based on API structure, response.data.user should exist
+
     if (!response.data?.user) {
-      // Store the intended path for redirect after login
       redirectPath.value = to.fullPath
-      console.log('🔀 Auth middleware: Storing redirect path:', to.fullPath)
       authLoading.value = false
       return navigateTo('/auth/login')
     }
 
-    // Store user in app state
-    useState('user', () => response.data.user)
+    // Update user state
+    user.value = response.data.user
     authLoading.value = false
-
-    // Check if we should redirect to stored path after login
-    if (redirectPath.value) {
-      const path = redirectPath.value
-      console.log('🔀 Auth middleware: Redirecting to stored path:', path)
-      redirectPath.value = null
-      return navigateTo(path)
-    }
 
   } catch (error) {
     console.error('Auth middleware error:', error)
-    
-    // Store the intended path for redirect after login
+
+    // Only redirect to login, don't destroy the session cookie
     redirectPath.value = to.fullPath
     authLoading.value = false
-    
-    // Clear any invalid tokens
-    await $fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
-    
+    user.value = null
+
     return navigateTo('/auth/login')
   }
 })
