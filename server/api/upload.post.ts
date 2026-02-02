@@ -1,6 +1,8 @@
 import { put, del } from '@vercel/blob'
 import { randomUUID } from 'crypto'
 import { requireDMOrAdmin } from '../utils/auth'
+import { writeFile, mkdir } from 'fs/promises'
+import { join } from 'path'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -45,31 +47,72 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const ext = file.filename.split('.').pop()
-    const fileName = `uploads/${randomUUID()}.${ext}`
-    console.log('Generated blob filename:', fileName)
+    // Check if we're in development or production
+    const isProduction = process.env.NODE_ENV === 'production'
+    const hasVercelBlobToken = !!process.env.BLOB_READ_WRITE_TOKEN
 
-    console.log('Uploading to Vercel Blob...')
-    const blob = await put(fileName, file.data, { 
-      access: 'public',
-      contentType: file.type
-    })
-    console.log('File uploaded successfully to:', blob.url)
+    if (isProduction && hasVercelBlobToken) {
+      // Use Vercel Blob in production
+      const ext = file.filename.split('.').pop()
+      const fileName = `uploads/${randomUUID()}.${ext}`
+      console.log('Generated blob filename:', fileName)
 
-    // Delete file after 10 seconds
-    setTimeout(async () => {
-      try {
-        await del(blob.url)
-        console.log(`Deleted temporary file: ${blob.url}`)
-      } catch (error) {
-        console.error(`Failed to delete temporary file: ${blob.url}`, error)
+      console.log('Uploading to Vercel Blob...')
+      const blob = await put(fileName, file.data, { 
+        access: 'public',
+        contentType: file.type
+      })
+      console.log('File uploaded successfully to:', blob.url)
+
+      // Delete file after 10 seconds
+      setTimeout(async () => {
+        try {
+          await del(blob.url)
+          console.log(`Deleted temporary file: ${blob.url}`)
+        } catch (error) {
+          console.error(`Failed to delete temporary file: ${blob.url}`, error)
+        }
+      }, 10000)
+
+      console.log('Upload successful, returning Vercel Blob URL')
+      return {
+        url: blob.url
       }
-    }, 10000)
+    } else {
+      // Use local file storage for development
+      const ext = file.filename.split('.').pop()
+      const fileName = `${randomUUID()}.${ext}`
+      const publicDir = join(process.cwd(), 'public', 'uploads')
+      const filePath = join(publicDir, fileName)
+      
+      try {
+        await mkdir(publicDir, { recursive: true })
+      } catch (error) {
+        console.log('Upload directory already exists or created successfully')
+      }
+      
+      await writeFile(filePath, file.data)
+      console.log('File saved locally to:', filePath)
+      
+      const localUrl = `/uploads/${fileName}`
+      console.log('Upload successful, returning local URL:', localUrl)
 
-    console.log('Upload successful, returning URL')
-    return {
-      url: blob.url
+      // Delete file after 10 seconds for temporary use
+      setTimeout(async () => {
+        try {
+          const { unlink } = await import('fs/promises')
+          await unlink(filePath)
+          console.log(`Deleted temporary file: ${filePath}`)
+        } catch (error) {
+          console.error(`Failed to delete temporary file: ${filePath}`, error)
+        }
+      }, 10000)
+
+      return {
+        url: localUrl
+      }
     }
+
   } catch (error) {
     console.error('Upload endpoint error:', error)
     
