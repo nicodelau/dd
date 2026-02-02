@@ -88,9 +88,10 @@ export default defineEventHandler(async (event) => {
       console.error(`🎲 Heartbeat failed for ${connectionId}:`, error)
       clearInterval(heartbeatInterval)
       diceRoomStore.removeSSEConnection(connectionId, roomCode)
+      // Don't remove user immediately on heartbeat failure - let cleanup handle it
       // diceRoomStore.removeUser(userId, roomCode)
     }
-  }, 15000) // Reduced to 15 seconds to prevent proxy timeouts
+  }, 10000) // Reduced to 10 seconds for better connection monitoring
 
   // Clean up interval on disconnect
   event.node.req.on('close', () => {

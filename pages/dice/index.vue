@@ -25,8 +25,8 @@
                     {{ currentRoom.code }}
                   </span>
                   <UButton v-if="currentRoom.code !== 'default'" color="gray" variant="ghost" size="xs"
-                    icon="i-heroicons-clipboard-document" @click="copyRoomCode">
-                    {{ t('copy') }}
+                    icon="i-heroicons-link" @click="copyRoomCode">
+                    Share Link
                   </UButton>
                 </div>
               </div>
@@ -109,8 +109,43 @@
         </div>
       </div>
 
+      <!-- Temporary Disconnection Banner -->
+      <div v-if="isInRoom && !isConnected && !isOfflineMode" 
+           class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+          <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-orange-600 dark:text-orange-400 mr-3" />
+          <div>
+            <h3 class="text-sm font-medium text-orange-800 dark:text-orange-200">
+              Temporary Connection Issue
+            </h3>
+            <p class="text-sm text-orange-700 dark:text-orange-300 mt-1">
+              Attempting to reconnect to room {{ currentRoom?.code || 'unknown' }}...
+              {{ reconnectAttempts > 0 ? `(Attempt ${reconnectAttempts})` : '' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-joining Banner -->
+      <div v-if="isAutoJoining" 
+           class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+          <UIcon name="i-heroicons-cube" class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 animate-spin" />
+          <div>
+            <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+              Joining Room
+            </h3>
+            <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              Connecting to room {{ route?.params?.roomCode || props.roomCode }}...
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Room Selection/Creation Card -->
-      <UCard v-if="!currentRoom || currentRoom.code === 'default'" class="mb-6">
+      <!-- Only show if user has never joined a room or explicitly left -->
+      <!-- Hide if we're auto-joining from props/URL -->
+      <UCard v-if="(!currentRoom || currentRoom.code === 'default') && !isInRoom && !props.autoJoin && !route?.params?.roomCode && !isAutoJoining" class="mb-6">
         <template #header>
           <h3 class="text-lg font-semibold text-white flex items-center">
             <UIcon name="i-heroicons-home" class="w-5 h-5 text-red-500 mr-2" />
@@ -2101,6 +2136,17 @@
 </template>
 
 <script setup lang="ts">
+// Props for external control (when used as component)
+interface Props {
+  roomCode?: string
+  autoJoin?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  roomCode: '',
+  autoJoin: false
+})
+
 // SSE-based dice room implementation (replaces Socket.IO)
 
 // Battle mode interfaces
@@ -2203,6 +2249,9 @@ const user = useState < any > ('user')
 
 // Room management state (moved before heartbeat to avoid forward reference)
 const currentRoom = ref < { name: string; code: string; isOwner: boolean } | null > (null)
+// Track if user is in a room (even during temporary disconnections)
+const isInRoom = ref(false)
+const isAutoJoining = ref(false)
 const showCreateRoom = ref(false)
 const joinRoomCode = ref('')
 
@@ -2222,6 +2271,17 @@ const isConnected = ref(false)
 const isOfflineMode = ref(false)
 const isOfflineModePreference = ref(false) // Persistent offline mode preference
 const connectedUsers = ref(1)
+const lastHeartbeat = ref(null as Date | null)
+const reconnectAttempts = ref(0)
+// Connection diagnostics for debugging
+const connectionDiagnostics = ref({
+  lastHeartbeat: null as Date | null,
+  disconnectCount: 0,
+  reconnectCount: 0,
+  totalUptime: 0,
+  lastDisconnectReason: '',
+  connectionId: ''
+})
 const isRolling = ref(false)
 const eventSource = ref < EventSource | null > (null)
 const animatingDice = ref < Set < string >> (new Set())
@@ -3687,6 +3747,7 @@ async function createRoom() {
         code: response.room.code,
         isOwner: true
       }
+      isInRoom.value = true
       // Update URL
       updateUrlForRoom(response.room.code)
       console.log('🏠 Created room:', response.room.code)
@@ -3733,8 +3794,12 @@ async function joinExistingRoom() {
         code: response.room.code,
         isOwner: false
       }
+      isInRoom.value = true
       console.log('🏠 Joined room:', response.room.code)
       joinRoomCode.value = ''
+      
+      // Update URL
+      updateUrlForRoom(response.room.code)
 
       // Show success notification
       const toast = useToast()
@@ -3771,6 +3836,7 @@ async function leaveRoom() {
     })
     console.log('🏠 Left room:', currentRoom.value.code)
     currentRoom.value = null
+    isInRoom.value = false
 
     // Show success notification
     const toast = useToast()
@@ -3797,20 +3863,23 @@ async function leaveRoom() {
 async function copyRoomCode() {
   if (!currentRoom.value || currentRoom.value.code === 'default') return
 
+  // Copy full URL instead of just room code
+  const roomUrl = `${window.location.origin}/dice/${currentRoom.value.code}`
+
   try {
-    await navigator.clipboard.writeText(currentRoom.value.code)
+    await navigator.clipboard.writeText(roomUrl)
     const toast = useToast()
     toast.add({
-      title: 'Room Code Copied',
-      description: `Room code ${currentRoom.value.code} copied to clipboard`,
+      title: 'Room Link Copied',
+      description: `Share this link: ${roomUrl}`,
       color: 'green'
     })
   } catch (error) {
-    console.error('Failed to copy room code:', error)
+    console.error('Failed to copy room URL:', error)
     // Fallback for older browsers or when clipboard API fails
     try {
       const textArea = document.createElement('textarea')
-      textArea.value = currentRoom.value.code
+      textArea.value = roomUrl
       document.body.appendChild(textArea)
       textArea.select()
       document.execCommand('copy')
@@ -3818,8 +3887,8 @@ async function copyRoomCode() {
 
       const toast = useToast()
       toast.add({
-        title: 'Room Code Copied',
-        description: `Room code ${currentRoom.value.code} copied to clipboard`,
+        title: 'Room Link Copied',
+        description: `Share this link: ${roomUrl}`,
         color: 'green'
       })
     } catch (fallbackError) {
@@ -3827,7 +3896,7 @@ async function copyRoomCode() {
       const toast = useToast()
       toast.add({
         title: 'Copy Failed',
-        description: 'Failed to copy room code. Please copy manually.',
+        description: 'Failed to copy room link. Please copy manually.',
         color: 'red'
       })
     }
@@ -3860,13 +3929,19 @@ async function reconnectWithRoom(roomCode: string) {
   // Close existing SSE connection
   disconnectSSE()
 
-  // Clear state
+  // Clear state (but preserve user data)
   rollHistory.value = []
   allPlayers.value = []
+  // Note: Don't clear battleMode here - let sync handle it
 
   // Reinitialize with room code
-  setTimeout(() => {
-    initializeSSE(roomCode)
+  setTimeout(async () => {
+    await initializeSSE(roomCode)
+    
+    // Sync state after reconnection (with delay to ensure SSE is ready)
+    setTimeout(() => {
+      syncCompleteRoomState(roomCode)
+    }, 1000)
   }, 100)
 }
 
@@ -3897,9 +3972,23 @@ function initializeSSE(roomCode?: string) {
 
     // Connection events
     eventSource.value.onopen = () => {
-      console.log('🎲 SSE connection established')
+      const now = new Date()
+      console.log('🎲 SSE connection established', {
+        roomCode,
+        userId: userId.value,
+        timestamp: now.toISOString(),
+        reconnectAttempts: reconnectAttempts.value
+      })
+      
       isConnected.value = true
       isOfflineMode.value = false
+      
+      // Reset reconnection attempts on successful connection
+      reconnectAttempts.value = 0
+      lastHeartbeat.value = now
+      
+      // Update diagnostics
+      connectionDiagnostics.value.lastHeartbeat = now
 
       // Start heartbeat to maintain session alive
       if (roomCode && roomCode !== 'default') {
@@ -3913,16 +4002,42 @@ function initializeSSE(roomCode?: string) {
 
     eventSource.value.onerror = (error) => {
       console.error('🎲 SSE connection error:', error)
+      
+      // Log detailed connection diagnostics
+      const diagnostics = {
+        readyState: eventSource.value?.readyState,
+        url: eventSource.value?.url,
+        roomCode,
+        userId: userId.value,
+        userRole: userRole.value,
+        lastHeartbeat: lastHeartbeat.value,
+        timeSinceLastHeartbeat: lastHeartbeat.value ? Date.now() - lastHeartbeat.value.getTime() : null,
+        reconnectAttempts: reconnectAttempts.value,
+        timestamp: new Date().toISOString()
+      }
+      
+      console.error('🎲 Connection error details:', diagnostics)
+      
       isConnected.value = false
+      connectionDiagnostics.value.disconnectCount++
+      connectionDiagnostics.value.lastDisconnectReason = 'SSE Error Event'
 
       // If EventSource is closed (not reconnecting), manually reconnect
       if (eventSource.value?.readyState === EventSource.CLOSED && roomCode) {
         console.log('🎲 SSE connection closed, scheduling reconnect...')
+        
+        // Use exponential backoff for reconnections
+        const reconnectDelay = Math.min(3000 * Math.pow(1.5, (reconnectAttempts.value || 0)), 30000)
+        reconnectAttempts.value = (reconnectAttempts.value || 0) + 1
+        
+        console.log(`🎲 Attempting reconnection #${reconnectAttempts.value} after ${reconnectDelay}ms`)
+        
         setTimeout(() => {
           if (!isOfflineModePreference.value && roomCode) {
+            connectionDiagnostics.value.reconnectCount++
             reconnectWithRoom(roomCode)
           }
-        }, 3000)
+        }, reconnectDelay)
       }
     }
 
@@ -4066,6 +4181,25 @@ function initializeSSE(roomCode?: string) {
     window.addEventListener('room:state:sync', (event) => {
       const data = (event as any).detail
       
+      // Sync battle state if it exists
+      if (data.battleState) {
+        battleMode.value = data.battleState
+        console.log('⚔️ Battle state synced from room state:', data.battleState)
+        
+        // Show notification if battle is in progress
+        if (data.battleState.isActive || data.battleState.phase === 'setup') {
+          const toast = useToast()
+          const message = data.battleState.isActive 
+            ? 'Joined ongoing battle' 
+            : 'Battle setup in progress'
+          toast.add({
+            title: 'Battle Mode',
+            description: message,
+            color: data.battleState.isActive ? 'green' : 'blue'
+          })
+        }
+      }
+      
       if (data.rollHistory && Array.isArray(data.rollHistory)) {
         // Process synced rolls to ensure proper timestamps and diceResults
         const processedRolls = data.rollHistory.map((roll: any) => {
@@ -4102,9 +4236,28 @@ function initializeSSE(roomCode?: string) {
 
     eventSource.value.addEventListener('heartbeat', (event) => {
       const data = JSON.parse(event.data)
+      const now = new Date()
+      lastHeartbeat.value = now
+      
+      // Update diagnostics
+      connectionDiagnostics.value.lastHeartbeat = now
+      if (data.connectionId) {
+        connectionDiagnostics.value.connectionId = data.connectionId
+      }
+      
       // Optional: Update user count from heartbeat
       if (data.userCount) {
         connectedUsers.value = data.userCount
+      }
+      
+      // Ensure connection is marked as active
+      if (!isConnected.value) {
+        isConnected.value = true
+        console.log('🎲 Connection restored via heartbeat', {
+          connectionId: data.connectionId,
+          uptime: data.uptime,
+          userCount: data.userCount
+        })
       }
     })
 
@@ -4180,6 +4333,22 @@ function initializeSSE(roomCode?: string) {
     })
 
     // Battle Mode Events
+    eventSource.value.addEventListener('battle:setup_started', (event) => {
+      const data = JSON.parse(event.data)
+      battleMode.value = data.battleState
+      console.log('⚔️ Battle setup started by DM:', data)
+
+      // Only show notification to DMs, players shouldn't see setup phase
+      if (userRole.value === 'DM') {
+        const toast = useToast()
+        toast.add({
+          title: 'Battle Setup',
+          description: 'Setting up a new battle',
+          color: 'blue'
+        })
+      }
+    })
+
     eventSource.value.addEventListener('battle:started', (event) => {
       const data = JSON.parse(event.data)
       battleMode.value = data.battleState
@@ -4213,7 +4382,8 @@ function initializeSSE(roomCode?: string) {
       }
       console.log('👹 Enemy added to battle:', data.enemy)
 
-      if (userRole.value === 'Player') {
+      // Only show notification to players when battle is actually active (not during setup)
+      if (userRole.value === 'Player' && battleMode.value?.isActive && battleMode.value?.phase === 'combat') {
         const toast = useToast()
         toast.add({
           title: 'Enemy Added',
@@ -4230,7 +4400,8 @@ function initializeSSE(roomCode?: string) {
       }
       console.log('👹 Enemy removed from battle:', data.enemyId)
 
-      if (userRole.value === 'Player') {
+      // Only show notification to players when battle is actually active (not during setup)
+      if (userRole.value === 'Player' && battleMode.value?.isActive && battleMode.value?.phase === 'combat') {
         const toast = useToast()
         toast.add({
           title: 'Enemy Defeated',
@@ -4243,8 +4414,11 @@ function initializeSSE(roomCode?: string) {
     eventSource.value.addEventListener('battle:initiative_rolled', (event) => {
       const data = JSON.parse(event.data)
       if (battleMode.value) {
-        battleMode.value.initiativeOrder = data.participants
+        battleMode.value.participants = data.participants
+        battleMode.value.initiativeRolled = true
         battleMode.value.phase = 'combat'
+        battleMode.value.isActive = true
+        battleMode.value.round = 1
         battleMode.value.currentTurnIndex = 0
       }
       console.log('🎲 Initiative rolled:', data.participants)
@@ -4525,6 +4699,54 @@ function initializeSSE(roomCode?: string) {
   }
 }
 
+// Debug function for connection diagnostics
+function logConnectionDiagnostics() {
+  const now = new Date()
+  const diagnostics = {
+    isConnected: isConnected.value,
+    isOfflineMode: isOfflineMode.value,
+    roomCode: route?.params?.roomCode || route?.params?.room,
+    userId: userId.value,
+    userRole: userRole.value,
+    connectedUsers: connectedUsers.value,
+    lastHeartbeat: lastHeartbeat.value,
+    timeSinceLastHeartbeat: lastHeartbeat.value ? now.getTime() - lastHeartbeat.value.getTime() : null,
+    reconnectAttempts: reconnectAttempts.value,
+    connectionDiagnostics: connectionDiagnostics.value,
+    sseReadyState: eventSource.value?.readyState,
+    sseUrl: eventSource.value?.url,
+    currentTimestamp: now.toISOString()
+  }
+  
+  console.table(diagnostics)
+  return diagnostics
+}
+
+// Make it available globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).diceRoomDiagnostics = logConnectionDiagnostics
+}
+
+// Sync complete room state including battle state
+async function syncCompleteRoomState(roomCode: string) {
+  if (!roomCode || roomCode === 'default') return
+  
+  try {
+    console.log('🔄 Syncing complete room state for:', roomCode)
+    const roomState = await $fetch(`/api/dice/rooms/${roomCode}/state?userId=${userId.value}`)
+    
+    // Emit sync event for the existing handler to process
+    const event = new CustomEvent('room:state:sync', { 
+      detail: roomState 
+    })
+    window.dispatchEvent(event)
+    
+    console.log('🔄 Room state sync completed')
+  } catch (error) {
+    console.error('🔄 Failed to sync room state:', error)
+  }
+}
+
 async function joinRoom(roomCode?: string) {
   if (!roomCode) return // Don't join if no room code provided
   
@@ -4551,6 +4773,9 @@ async function joinRoom(roomCode?: string) {
 
       // Load initial music state for DMs
       await loadInitialMusicState(roomCode)
+      
+      // Sync complete room state (including battle state) after successful join
+      await syncCompleteRoomState(roomCode)
     }
   } catch (error) {
     console.error('Failed to join room:', error)
@@ -6603,9 +6828,16 @@ onMounted(async () => {
     originalConsoleError.apply(console, args)
   }
 
-  // Check for room code in route params (for /dice/:roomCode)
+  // Check for room code in route params (for /dice/:roomCode) or props
   const route = useRoute()
-  const routeRoomCode = route.params.roomCode
+  const routeRoomCode = computed(() => {
+    try {
+      return route?.params?.roomCode || props.roomCode
+    } catch (error) {
+      console.warn('Failed to get route params:', error)
+      return props.roomCode
+    }
+  })
 
   // Load user characters and auto-detect role
   await loadUserCharacters()
@@ -6617,14 +6849,25 @@ onMounted(async () => {
   // Add global diagnostic function for debugging
   window.diagnoseMusicSystem = diagnoseMusicSystem
   
-  // Auto-join room if code provided in URL
-  if (routeRoomCode && typeof routeRoomCode === 'string') {
-    console.log(`🎲 Auto-joining room from URL: ${routeRoomCode}`)
-    joinRoomCode.value = routeRoomCode
-    await joinExistingRoom()
+  // Auto-join room if code provided in URL or props
+  if (routeRoomCode.value && typeof routeRoomCode.value === 'string') {
+    console.log(`🎲 Auto-joining room from URL/props: ${routeRoomCode.value}`)
+    isAutoJoining.value = true
+    isInRoom.value = true // Mark as in room before joining
+    joinRoomCode.value = routeRoomCode.value as string
+    
+    try {
+      await joinExistingRoom()
+    } catch (error) {
+      console.error('🎲 Auto-join failed:', error)
+      isInRoom.value = false
+    } finally {
+      isAutoJoining.value = false
+    }
   } else {
     // No room code, reset state
     currentRoom.value = null
+    isInRoom.value = false
   }
 
   window.forceReinitializePlayer = forceReinitializePlayer

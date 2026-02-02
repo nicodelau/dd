@@ -2,14 +2,15 @@
 import { diceRoomStore } from '~/server/utils/diceRoomStore'
 import { requireDMOrAdmin } from '~/server/utils/auth'
 
-// Helper function to generate room code
+// Helper function to generate room code (now returns URL-friendly IDs)
 function generateRoomCode(): string {
+  // Generate a more URL-friendly ID like "DICE-ABC123" or just "ABC123"
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let result = ''
   for (let i = 0; i < 6; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return result
+  return result // Keep it simple: just 6 chars like "SQLK23"
 }
 
 export default defineEventHandler(async (event) => {

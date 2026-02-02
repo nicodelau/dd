@@ -967,7 +967,9 @@ class DiceRoomStore {
         await prisma.battle_participants.deleteMany({ where: { battleId: session.id } })
     }).catch(e => console.error('Failed to persist battle start', e))
 
-    // Don't broadcast battle started until initiative is rolled
+    // Broadcast battle setup started so all players know battle mode is being configured
+    this.broadcastEvent('battle:setup_started', { battleState }, roomCode)
+    
     console.log(`⚔️ Battle mode started in room ${roomCode} by ${dmUserId} (setup phase)`)
     return battleState
   }
@@ -991,10 +993,10 @@ class DiceRoomStore {
 
     room.battleState.enemies.set(enemy.id, enemy)
     
-    // Only broadcast enemy additions during combat phase, not during setup
-    if (room.battleState.phase === 'combat') {
-      this.broadcastEvent('battle:enemy_added', { enemy }, roomCode)
-    }
+    // Always broadcast enemy additions, regardless of phase
+    // Players should see enemies being added during setup too
+    this.broadcastEvent('battle:enemy_added', { enemy }, roomCode)
+    
     console.log(`⚔️ Enemy added: ${enemy.name} in room ${roomCode} (${room.battleState.phase} phase)`)
     return enemy
   }
@@ -1011,10 +1013,10 @@ class DiceRoomStore {
 
     const success = room.battleState.enemies.delete(enemyId)
     if (success) {
-      // Only broadcast enemy removals during combat phase, not during setup
-      if (room.battleState.phase === 'combat') {
-        this.broadcastEvent('battle:enemy_removed', { enemyId }, roomCode)
-      }
+      // Always broadcast enemy removals, regardless of phase
+      // Players should see enemies being removed during setup too
+      this.broadcastEvent('battle:enemy_removed', { enemyId }, roomCode)
+      
       console.log(`⚔️ Enemy removed: ${enemyId} in room ${roomCode} (${room.battleState.phase} phase)`)
     }
     return success
@@ -1347,8 +1349,8 @@ class DiceRoomStore {
    // Cleanup inactive connections and users
    cleanup(): void {
      const now = new Date()
-     // Increased timeout to 1 hour for persistent sessions
-     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+     // Increased timeout to 3 hours for more persistent sessions
+     const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000)
 
      for (const [roomCode, room] of this.rooms) {
        const deadConnections: string[] = []
@@ -1365,14 +1367,14 @@ class DiceRoomStore {
 
        deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
 
-       // Remove users who haven't been seen in 1 hour (increased from 5 minutes)
-       // AND who don't have an active connection
-       const removedUsers: string[] = []
+        // Remove users who haven't been seen in 3 hours (increased from 1 hour)
+        // AND who don't have an active connection
+        const removedUsers: string[] = []
 
-       for (const [userId, user] of room.users) {
-         const hasActiveConnection = Array.from(room.sseConnections.values()).some(conn => conn.userId === userId)
-         
-         if (!hasActiveConnection && user.lastSeen < oneHourAgo) {
+        for (const [userId, user] of room.users) {
+          const hasActiveConnection = Array.from(room.sseConnections.values()).some(conn => conn.userId === userId)
+          
+          if (!hasActiveConnection && user.lastSeen < threeHoursAgo) {
            this.removeUser(userId, roomCode)
            removedUsers.push(user.name)
          }
