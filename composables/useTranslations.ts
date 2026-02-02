@@ -423,6 +423,16 @@ export const useTranslations = () => {
       noOnlineUsers: 'No other users online',
       usersMustBeOnline: 'Players must be on the dashboard or in a room to appear here.',
       send: 'Send',
+      
+      // Initiative rolling phase translations
+      initiativeRollingPhase: 'Initiative Rolling Phase',
+      initiativeRollingDesc: 'Roll initiative for each participant individually. Once everyone has rolled, combat will begin.',
+      rollInitiativeForParticipants: 'Roll Initiative for Participants',
+      rolled: 'rolled',
+      reroll: 'Re-roll',
+      allInitiativeRolled: 'All Initiative Rolled!',
+      allInitiativeRolledDesc: 'All participants have rolled initiative. Ready to start combat.',
+      startCombat: 'Start Combat',
 
       welcomeToAdventure: 'Welcome to Your D&D Adventure',
       adventureDescription: 'Manage your characters, track your campaigns, and embark on epic quests. Your adventure awaits in the digital realm.',
@@ -932,6 +942,16 @@ export const useTranslations = () => {
       noOnlineUsers: 'No hay otros usuarios conectados',
       usersMustBeOnline: 'Los jugadores deben estar en el tablero o en una sala para aparecer aquí.',
       send: 'Enviar',
+      
+      // Initiative rolling phase translations
+      initiativeRollingPhase: 'Fase de Tirada de Iniciativa',
+      initiativeRollingDesc: 'Tira iniciativa para cada participante individualmente. Una vez que todos hayan tirado, comenzará el combate.',
+      rollInitiativeForParticipants: 'Tirar Iniciativa para Participantes',
+      rolled: 'tirado',
+      reroll: 'Re-tirar',
+      allInitiativeRolled: '¡Toda la Iniciativa Tirada!',
+      allInitiativeRolledDesc: 'Todos los participantes han tirado iniciativa. Listo para comenzar el combate.',
+      startCombat: 'Comenzar Combate',
 
       welcomeToAdventure: 'Bienvenido a tu Aventura D&D',
       adventureDescription: 'Gestiona tus personajes, sigue tus campañas y embárcate en misiones épicas. Tu aventura te espera en el reino digital.',

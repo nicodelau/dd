@@ -66,6 +66,7 @@ export interface BattleState {
   round: number
   currentTurnIndex: number
   participants: BattleParticipant[]
+  initiativeOrder: BattleParticipant[] // Sorted by initiative for display
   enemies: Map<string, Enemy>
   initiativeRolled: boolean
   phase: 'setup' | 'rolling_initiative' | 'combat' | 'ended'
@@ -265,6 +266,7 @@ class DiceRoomStore {
               round: bs.round,
               currentTurnIndex: 0, // Defaulting to 0 as it's missing in DB
               participants,
+              initiativeOrder: [...participants], // Initialize with sorted participants
               enemies,
               initiativeRolled: participants.length > 0,
               phase: bs.phase as any,
@@ -942,6 +944,7 @@ class DiceRoomStore {
       round: 0,
       currentTurnIndex: 0,
       participants: [],
+      initiativeOrder: [], // Initialize empty
       enemies: new Map(),
       initiativeRolled: false,
       phase: 'setup',
@@ -1034,16 +1037,16 @@ class DiceRoomStore {
 
     const participants: BattleParticipant[] = []
 
-    // Add selected players
+    // Add selected players (set initiative to 0 - will be rolled individually)
     for (const [userId, user] of room.users) {
       if (user.role === 'Player' && user.stats && room.battleState.selectedPlayerIds.has(userId)) {
-        const initiativeRoll = this.rollD20() + this.getModifier(user.stats.abilities.dexterity)
+        // Don't auto-roll - let DM roll for each participant individually
         participants.push({
           id: userId,
           name: user.name,
           type: 'player',
           initiative: user.stats.initiative,
-          initiativeRoll,
+          initiativeRoll: 0, // Will be rolled manually by DM
           hitPoints: { ...user.stats.hitPoints },
           armorClass: user.stats.armorClass,
           isDefeated: false,
@@ -1052,35 +1055,76 @@ class DiceRoomStore {
       }
     }
 
-    // Add enemies
+    // Add enemies (set initiative to 0 - will be rolled individually)
     for (const [enemyId, enemy] of room.battleState.enemies) {
-      const initiativeRoll = this.rollD20() + this.getModifier(10) // Default dex modifier for enemies
+      // Don't auto-roll - let DM roll for each enemy individually
       participants.push({
         id: enemyId,
         name: enemy.name,
         type: 'enemy',
         initiative: enemy.initiative,
-        initiativeRoll,
+        initiativeRoll: 0, // Will be rolled manually by DM
         hitPoints: { ...enemy.hitPoints },
         armorClass: enemy.armorClass,
         isDefeated: enemy.isDefeated
       })
     }
 
-    // Sort by initiative roll (highest first)
-    participants.sort((a, b) => b.initiativeRoll - a.initiativeRoll)
-
     room.battleState.participants = participants
-    room.battleState.initiativeRolled = true
+    room.battleState.phase = 'rolling_initiative'
+    room.battleState.isActive = false // Not active until all initiative is rolled
+
+    // Broadcast that initiative phase started (DM needs to roll for each participant)
+    this.broadcastEvent('battle:initiative_phase_started', { 
+      participants,
+      message: 'DM needs to roll initiative for each participant'
+    }, roomCode)
+    
+    console.log(`⚔️ Initiative phase started in room ${roomCode} - DM needs to roll for each participant`)
+    return participants
+  }
+
+  // Start combat phase after all initiative is rolled
+  startCombatPhase(roomCode: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState) {
+      throw new Error('Battle mode not active')
+    }
+
+    // Verify all participants have rolled initiative
+    const allRolled = room.battleState.participants?.every(p => p.initiativeRoll > 0)
+    if (!allRolled) {
+      throw new Error('Not all participants have rolled initiative yet')
+    }
+
+    // Sort participants by initiative (highest first)
+    room.battleState.participants.sort((a, b) => b.initiativeRoll - a.initiativeRoll)
+    
+    // Start combat phase
     room.battleState.phase = 'combat'
     room.battleState.isActive = true
     room.battleState.round = 1
+    room.battleState.currentTurnIndex = 0
+    room.battleState.initiativeRolled = true
 
-    // Now broadcast that battle has started with initiative rolled
-    this.broadcastEvent('battle:started', { battleState: room.battleState }, roomCode)
-    this.broadcastEvent('battle:initiative_rolled', { participants }, roomCode)
-    console.log(`⚔️ Initiative rolled in room ${roomCode} - combat begins!`)
-    return participants
+    // Create initiative order for display
+    room.battleState.initiativeOrder = [...room.battleState.participants]
+
+    // Broadcast combat started event
+    this.broadcastEvent('battle:combat_started', {
+      participants: room.battleState.participants,
+      initiativeOrder: room.battleState.initiativeOrder,
+      currentTurn: room.battleState.participants[0],
+      round: 1
+    }, roomCode)
+
+    console.log(`⚔️ Combat started in room ${roomCode} - Initiative order:`, 
+      room.battleState.participants.map(p => `${p.name}: ${p.initiativeRoll}`))
+  }
+
+  // Public method to broadcast events to a room
+  sendEventToRoom(eventType: string, data: any, roomCode: string): void {
+    this.broadcastEvent(eventType, data, roomCode)
   }
 
   nextTurn(dmUserId: string, roomCode: string): { currentParticipant: BattleParticipant; round: number } {

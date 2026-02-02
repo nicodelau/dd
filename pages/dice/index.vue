@@ -590,7 +590,7 @@
                             class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0">{{ t('exp') }}</span>
                         </div>
                         <span class="text-xs font-mono text-gray-600 text-zinc-400 ml-2">
-                          {{ formatModifier(calculateSkillModifierForSkill(skill, activeCharacter)) }}
+                          {{ formatModifier(calculateSkillModifier(skill, activeCharacter)) }}
                         </span>
                       </div>
                     </div>
@@ -1142,6 +1142,99 @@
                           <p class="text-sm text-yellow-700 dark:text-yellow-300">
                             {{ t('addEnemyWarning') }}
                           </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Initiative Rolling Phase -->
+                    <div v-else-if="battleMode.phase === 'rolling_initiative'" class="space-y-4">
+                      <div
+                        class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                          <UIcon name="i-heroicons-cube"
+                            class="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+                          <div>
+                            <h4 class="text-sm font-medium text-orange-900 dark:text-orange-100">{{ t('initiativeRollingPhase') }}</h4>
+                            <p class="text-sm text-orange-700 dark:text-orange-300 mt-1">
+                              {{ t('initiativeRollingDesc') }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Participants List for Initiative Rolling -->
+                      <div>
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('rollInitiativeForParticipants') }}</h4>
+                          <div class="text-xs text-zinc-400">
+                            {{ participantsWithInitiative.length }} / {{ totalParticipants }} {{ t('rolled') }}
+                          </div>
+                        </div>
+
+                        <div v-if="battleMode.participants && battleMode.participants.length > 0" class="space-y-2">
+                          <div v-for="participant in battleMode.participants" :key="participant.id"
+                            class="flex items-center justify-between p-3 rounded-lg border"
+                            :class="participant.initiativeRoll > 0 
+                              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                              : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'">
+                            <div class="flex items-center space-x-3">
+                              <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="sm">
+                                {{ t(participant.type) }}
+                              </UBadge>
+                              <div>
+                                <div class="font-medium text-white">{{ participant.name }}</div>
+                                <div class="text-xs text-zinc-400">
+                                  {{ t('initiativeModifier') }}: {{ participant.initiative >= 0 ? '+' : '' }}{{ participant.initiative }}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                              <div v-if="participant.initiativeRoll > 0" class="text-right">
+                                <div class="text-lg font-bold text-green-600 dark:text-green-400">
+                                  {{ participant.initiativeRoll }}
+                                </div>
+                                <div class="text-xs text-zinc-400">
+                                  {{ t('rolled') }}
+                                </div>
+                              </div>
+                              <UButton 
+                                v-if="participant.initiativeRoll === 0"
+                                color="blue" 
+                                size="sm" 
+                                @click="rollIndividualInitiative(participant.id, participant.type)"
+                                :loading="isRollingIndividualInitiative === participant.id"
+                                icon="i-heroicons-cube">
+                                {{ t('rollInitiative') }}
+                              </UButton>
+                              <UButton 
+                                v-else
+                                color="gray" 
+                                variant="outline"
+                                size="sm" 
+                                @click="rollIndividualInitiative(participant.id, participant.type)"
+                                :loading="isRollingIndividualInitiative === participant.id"
+                                icon="i-heroicons-arrow-path">
+                                {{ t('reroll') }}
+                              </UButton>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- All Initiative Rolled - Start Combat -->
+                        <div v-if="allInitiativeRolled" 
+                          class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-4">
+                          <div class="text-center">
+                            <div class="text-green-900 dark:text-green-100 font-medium mb-2">
+                              {{ t('allInitiativeRolled') }}
+                            </div>
+                            <p class="text-sm text-green-700 dark:text-green-300 mb-3">
+                              {{ t('allInitiativeRolledDesc') }}
+                            </p>
+                            <UButton color="green" size="sm" @click="startCombatPhase" icon="i-heroicons-play">
+                              {{ t('startCombat') }}
+                            </UButton>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2177,8 +2270,9 @@ interface BattleState {
   isActive: boolean
   round: number
   currentTurnIndex: number
-  phase: 'setup' | 'combat' | 'ended'
+  phase: 'setup' | 'rolling_initiative' | 'combat' | 'ended'
   initiativeOrder: BattleParticipant[]
+  participants: BattleParticipant[] // All participants during setup/initiative rolling
   enemies: { [key: string]: Enemy }
   selectedPlayerIds: Set<string>
 }
@@ -2323,6 +2417,23 @@ const newEnemy = ref({ name: '', hitPoints: 10, armorClass: 10, initiative: 0 })
 const isBattleLoading = ref(false)
 const showSpecialAbilitiesModal = ref(false)
 const currentPlayerAbilities = ref < any[] > ([])
+
+// Individual initiative rolling state
+const isRollingIndividualInitiative = ref<string | null>(null)
+
+// Computed properties for initiative rolling
+const participantsWithInitiative = computed(() => {
+  return battleMode.value?.participants?.filter(p => p.initiativeRoll > 0) || []
+})
+
+const totalParticipants = computed(() => {
+  return battleMode.value?.participants?.length || 0
+})
+
+const allInitiativeRolled = computed(() => {
+  if (!battleMode.value?.participants) return false
+  return battleMode.value.participants.every(p => p.initiativeRoll > 0)
+})
 
 // Character Detail Modal state (for DM)
 const showCharacterDetailModal = ref(false)
@@ -2567,7 +2678,17 @@ const shouldShowDiceInterface = computed(() => {
   // 1. User is connected AND
   // 2. There's a current room AND 
   // 3. It's NOT the default room (only show dice in DM-created rooms)
-  return isConnected.value && currentRoom.value && currentRoom.value.code !== 'default'
+  const result = isConnected.value && currentRoom.value && currentRoom.value.code !== 'default'
+  
+  // Debug logging to understand what's happening
+  console.log('🎲 shouldShowDiceInterface debug:', {
+    isConnected: isConnected.value,
+    currentRoom: currentRoom.value,
+    roomCode: currentRoom.value?.code,
+    result: result
+  })
+  
+  return result
 })
 
 // User role and character management functions
@@ -2893,35 +3014,68 @@ function getAllSkills(character: any): any[] {
   })
 }
 
-// Helper function to calculate skill modifier for a specific skill object
-function calculateSkillModifierForSkill(skill: any, character: any): number {
-  if (!skill || !character) return 0
+// Individual initiative rolling functions
+async function rollIndividualInitiative(participantId: string, participantType: 'player' | 'enemy') {
+  if (!currentRoom.value || isRollingIndividualInitiative.value) return
 
-  // Get the base ability score
-  const abilityMap: Record<string, string> = {
-    'STR': 'strength',
-    'DEX': 'dexterity',
-    'CON': 'constitution',
-    'INT': 'intelligence',
-    'WIS': 'wisdom',
-    'CHA': 'charisma'
-  }
+  isRollingIndividualInitiative.value = participantId
+  
+  try {
+    const response = await $fetch('/api/battle/roll-individual-initiative', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        participantId,
+        participantType
+      }
+    })
 
-  const abilityField = abilityMap[skill.ability] || skill.ability.toLowerCase()
-  const abilityScore = character[abilityField] || 10
-  const abilityModifier = calculateModifier(abilityScore)
-
-  // Add proficiency bonus if proficient
-  let proficiencyBonus = 0
-  if (skill.proficient) {
-    proficiencyBonus = character.proficiencyBonus || 2
-    // Double proficiency bonus if expertise
-    if (skill.expertise) {
-      proficiencyBonus *= 2
+    if (response.success) {
+      console.log(`🎲 Individual initiative rolled for ${response.participant.name}:`, response.total)
+      
+      // The participant update will come via SSE events
+      // If all have rolled, combat will start automatically
+      if (response.allRolled) {
+        console.log('🎲 All participants have rolled initiative, starting combat phase')
+      }
     }
+  } catch (error) {
+    console.error('Failed to roll individual initiative:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to roll initiative for participant',
+      color: 'red'
+    })
+  } finally {
+    isRollingIndividualInitiative.value = null
   }
+}
 
-  return abilityModifier + proficiencyBonus
+async function startCombatPhase() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/battle/start-combat', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      console.log('⚔️ Combat phase started')
+      // The phase change will come via SSE events
+    }
+  } catch (error) {
+    console.error('Failed to start combat phase:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: 'Failed to start combat phase',
+      color: 'red'
+    })
+  }
 }
 
 function toggleDice(diceType: string) {
@@ -3795,7 +3949,12 @@ async function joinExistingRoom() {
         isOwner: false
       }
       isInRoom.value = true
-      console.log('🏠 Joined room:', response.room.code)
+      console.log('🏠 Joined room successfully:', {
+        room: response.room,
+        currentRoom: currentRoom.value,
+        isInRoom: isInRoom.value,
+        isConnected: isConnected.value
+      })
       joinRoomCode.value = ''
       
       // Update URL
@@ -4480,6 +4639,87 @@ function initializeSSE(roomCode?: string) {
         title: 'Damage Dealt',
         description: `${data.damage} damage dealt to ${data.targetId}`,
         color: 'red'
+      })
+    })
+
+    // Initiative rolling phase event handlers
+    eventSource.value.addEventListener('battle:initiative_phase_started', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('⚔️ Initiative rolling phase started:', data)
+      
+      if (battleMode.value) {
+        battleMode.value.phase = 'rolling_initiative'
+        battleMode.value.participants = data.participants || []
+        console.log('⚔️ Battle participants loaded:', battleMode.value.participants)
+      }
+
+      // Only show notification to DMs
+      if (userRole.value === 'DM') {
+        const toast = useToast()
+        toast.add({
+          title: 'Initiative Rolling',
+          description: 'Ready to roll initiative for each participant',
+          color: 'blue'
+        })
+      }
+    })
+
+    eventSource.value.addEventListener('battle:individual_initiative_rolled', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('⚔️ Individual initiative rolled:', data)
+      
+      if (battleMode.value?.participants) {
+        const participant = battleMode.value.participants.find(p => p.id === data.participantId)
+        if (participant) {
+          participant.initiativeRoll = data.total
+          console.log(`⚔️ Updated initiative for ${participant.name}: ${data.total} (${data.roll} + ${data.modifier})`)
+        }
+      }
+
+      const toast = useToast()
+      toast.add({
+        title: 'Initiative Rolled',
+        description: `${data.participantName}: ${data.total} (${data.roll} + ${data.modifier})`,
+        color: 'green'
+      })
+    })
+
+    eventSource.value.addEventListener('battle:all_initiative_rolled', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('⚔️ All participants have rolled initiative:', data)
+      
+      if (battleMode.value) {
+        battleMode.value.phase = 'combat'
+        battleMode.value.initiativeOrder = data.initiativeOrder
+        battleMode.value.currentTurnIndex = 0
+        battleMode.value.isActive = true
+      }
+
+      const toast = useToast()
+      toast.add({
+        title: 'Combat Begins!',
+        description: 'All initiative rolled, combat has started',
+        color: 'green'
+      })
+    })
+
+    eventSource.value.addEventListener('battle:combat_started', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('⚔️ Combat phase started:', data)
+      
+      if (battleMode.value) {
+        battleMode.value.phase = 'combat'
+        battleMode.value.initiativeOrder = data.initiativeOrder
+        battleMode.value.currentTurnIndex = data.currentTurnIndex || 0
+        battleMode.value.isActive = true
+        battleMode.value.round = data.round || 1
+      }
+
+      const toast = useToast()
+      toast.add({
+        title: 'Combat Started!',
+        description: `All participants have rolled initiative. The battle begins with ${data.initiativeOrder?.[0]?.name || 'the first participant'}!`,
+        color: 'green'
       })
     })
 
