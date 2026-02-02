@@ -56,6 +56,7 @@ export default defineEventHandler(async (event) => {
       total: body.total || 0,
       details: body.details || [],
       diceRolled: body.diceRolled,
+      diceResults: body.diceResults || [],
       modifier: body.modifier || 0,
       rollType: body.rollType || 'normal',
       isCritical: body.isCritical || false,

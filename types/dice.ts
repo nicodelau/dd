@@ -50,7 +50,7 @@ export interface DiceRoll {
   total: number
   details: (string | number)[]
   diceRolled: { type: string; count: number; results: number[] }[]
-  diceResults: { type: string; result: number }[]
+  diceResults: { type: string; result: number; isAdvantageDisadvantage?: boolean; discardedRoll?: number; selectedRoll?: number }[]
   modifier: number
   rollType: string
   isCritical: boolean
@@ -81,10 +81,16 @@ export interface Player {
   stats: PlayerStats
 }
 
+export type RollMode = 'normal' | 'advantage' | 'disadvantage'
+
 export interface QuickRoll {
   label: string
   dice: Record<string, number>
   modifier?: number
+  type?: 'skill' | 'save' | 'static'
+  abilityKey?: string
+  skillName?: string
+  rollMode?: RollMode
 }
 
 export interface RoomInfo {

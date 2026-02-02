@@ -122,19 +122,19 @@ export const useDiceRoom = () => {
 
       if (response.success) {
         currentRoom.value = {
-          name: response.data.name,
-          code: response.data.code,
+          name: response.room.name,
+          code: response.room.code,
           isOwner: false
         }
         isInRoom.value = true
         
         // Connect to the room
-        await connectToRoom(response.data.code)
+        await connectToRoom(response.room.code)
         
         // Update URL
-        await navigateTo(`/dice/${response.data.code}`)
+        await navigateTo(`/dice/${response.room.code}`)
         
-        console.log('✅ Joined room:', response.data.code)
+        console.log('✅ Joined room:', response.room.code)
       }
     } catch (error) {
       console.error('❌ Failed to join room:', error)
@@ -226,37 +226,35 @@ export const useDiceRoom = () => {
   /**
    * Sync room state from server
    */
-  const syncRoomState = async (roomCode: string) => {
-    try {
-      const response = await $fetch(`/api/dice/rooms/${roomCode}/state?userId=${userId.value}`)
-      
-      if (response.success) {
-        // Update roll history
-        if (response.data.rollHistory) {
-          rollHistory.value = response.data.rollHistory.map((roll: any) => ({
-            ...roll,
-            timestamp: new Date(roll.timestamp),
-            isOwn: roll.userId === userId.value
-          }))
-        }
-        
-        // Update room info
-        if (response.data.room && currentRoom.value) {
-          currentRoom.value = {
-            ...currentRoom.value,
-            name: response.data.room.name
-          }
-        }
-        
-        // Update user count
-        if (response.data.connectedUsers) {
-          connectedUsers.value = response.data.connectedUsers
-        }
-      }
-    } catch (error) {
-      console.error('Failed to sync room state:', error)
-    }
-  }
+   const syncRoomState = async (roomCode: string) => {
+     try {
+       const response = await $fetch(`/api/dice/rooms/${roomCode}/state?userId=${userId.value}`)
+       
+       // Update roll history
+       if (response.rollHistory) {
+         rollHistory.value = response.rollHistory.map((roll: any) => ({
+           ...roll,
+           timestamp: new Date(roll.timestamp),
+           isOwn: roll.userId === userId.value
+         }))
+       }
+       
+       // Update room info
+       if (response.room && currentRoom.value) {
+         currentRoom.value = {
+           ...currentRoom.value,
+           name: response.room.name
+         }
+       }
+       
+       // Update user count
+       if (response.room) {
+         connectedUsers.value = response.room.userCount
+       }
+     } catch (error) {
+       console.error('Failed to sync room state:', error)
+     }
+   }
 
   /**
    * Leave the current room

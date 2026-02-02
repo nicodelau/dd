@@ -168,20 +168,6 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('electrum') }} (ep)
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.electrumCoins"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                />
-                <p v-else class="text-2xl font-bold text-blue-400">{{ character.electrumCoins || 0 }}</p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {{ t('gold') }} (gp)
                 </label>
                 <UInput
@@ -1537,11 +1523,12 @@ async function adjustHp() {
 function calculateTotalWealth() {
   const copper = character.value?.copperCoins || 0
   const silver = character.value?.silverCoins || 0
-  const electrum = character.value?.electrumCoins || 0
   const gold = character.value?.goldCoins || 0
   const platinum = character.value?.platinumCoins || 0
 
-  const total = (copper * 0.01) + (silver * 0.1) + (electrum * 0.5) + gold + (platinum * 10)
+  // Convert everything to gold pieces
+  // 1 platinum = 100 gold, 1 gold = 100 silver, 1 silver = 100 copper
+  const total = (platinum * 100) + gold + (silver * 0.01) + (copper * 0.0001)
   return total.toFixed(2)
 }
 

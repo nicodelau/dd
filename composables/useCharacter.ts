@@ -166,6 +166,46 @@ export const useCharacter = (userId: string) => {
   }
 
   /**
+   * Update character currency
+   */
+  const updateCharacterCurrency = async (currencyData: {
+    copperCoins?: number,
+    silverCoins?: number,
+    goldCoins?: number,
+    platinumCoins?: number
+  }) => {
+    if (!activeCharacter.value) {
+      console.warn('No active character to update currency for')
+      return false
+    }
+
+    try {
+      // Update the local character data immediately for responsive UI
+      const characterIndex = userCharacters.value.findIndex(c => c.id === activeCharacter.value!.id)
+      if (characterIndex !== -1) {
+        userCharacters.value[characterIndex] = {
+          ...userCharacters.value[characterIndex],
+          ...currencyData
+        }
+      }
+
+      // Send update to server
+      const response = await $fetch(`/api/characters/${activeCharacter.value.id}`, {
+        method: 'PATCH',
+        body: currencyData
+      })
+
+      console.log('✅ Currency updated successfully')
+      return true
+    } catch (error) {
+      console.error('❌ Failed to update currency:', error)
+      // Revert optimistic update on error
+      await loadUserCharacters()
+      return false
+    }
+  }
+
+  /**
    * Calculate ability modifier
    */
   const calculateModifier = (abilityScore: number): number => {
@@ -181,18 +221,20 @@ export const useCharacter = (userId: string) => {
 
   /**
    * Calculate total wealth in gold pieces
+   * Conversion rates: 1 pp = 100 gp, 1 gp = 1 gp, 1 sp = 0.01 gp, 1 cp = 0.0001 gp
+   * Electrum is not used in this campaign
    */
   const calculateTotalWealth = (character: any): number => {
     if (!character) return 0
 
     const copper = character.copperCoins || 0
     const silver = character.silverCoins || 0
-    const electrum = character.electrumCoins || 0
     const gold = character.goldCoins || 0
     const platinum = character.platinumCoins || 0
 
     // Convert everything to gold pieces
-    const total = (platinum * 10) + gold + (electrum * 0.5) + (silver * 0.1) + (copper * 0.01)
+    // 1 platinum = 100 gold, 1 gold = 100 silver, 1 silver = 100 copper
+    const total = (platinum * 100) + gold + (silver * 0.01) + (copper * 0.0001)
     return Math.round(total * 100) / 100
   }
 
@@ -331,7 +373,7 @@ export const useCharacter = (userId: string) => {
 
       const description = `${attack.name} Attack: 1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`
       const details = [`1d20=${d20Roll}`, attackBonus]
-      const diceResults = [{ type: 'd20', result: d20Roll }]
+      const diceResults = [{ type: 'd20', result: d20Roll, isAdvantageDisadvantage: false, discardedRoll: undefined, selectedRoll: undefined }]
 
       return {
         id: Date.now().toString(),
@@ -439,7 +481,7 @@ export const useCharacter = (userId: string) => {
       total,
       details: [`1d20=${d20Roll}`, skillModifier],
       diceRolled: [{ type: 'd20', count: 1, results: [d20Roll] }],
-      diceResults: [{ type: 'd20', result: d20Roll }],
+      diceResults: [{ type: 'd20', result: d20Roll, isAdvantageDisadvantage: false, discardedRoll: undefined, selectedRoll: undefined }],
       modifier: skillModifier,
       rollType: 'normal',
       isCritical,
@@ -477,7 +519,7 @@ export const useCharacter = (userId: string) => {
       total,
       details: [`1d20=${d20Roll}`, saveModifier],
       diceRolled: [{ type: 'd20', count: 1, results: [d20Roll] }],
-      diceResults: [{ type: 'd20', result: d20Roll }],
+      diceResults: [{ type: 'd20', result: d20Roll, isAdvantageDisadvantage: false, discardedRoll: undefined, selectedRoll: undefined }],
       modifier: saveModifier,
       rollType: 'normal',
       isCritical,
@@ -507,6 +549,7 @@ export const useCharacter = (userId: string) => {
     loadCharacterStats,
     setActiveCharacter,
     resetStats,
+    updateCharacterCurrency,
 
     // Calculations
     calculateModifier,

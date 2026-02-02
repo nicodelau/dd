@@ -11,6 +11,7 @@ export interface DiceRoll {
   total: number
   details: (string | number)[]
   diceRolled: { type: string; count: number; results: number[] }[]
+  diceResults: { type: string; result: number; isAdvantageDisadvantage?: boolean; discardedRoll?: number; selectedRoll?: number }[]
   modifier: number
   rollType: string
   isCritical: boolean
@@ -185,6 +186,7 @@ class DiceRoomStore {
             total: r.total,
             details: data.details || [],
             diceRolled: data.diceRolled || [],
+            diceResults: data.diceResults || [],
             modifier: data.modifier || 0,
             rollType: data.rollType || 'normal',
             isCritical: data.isCritical || false,
@@ -758,6 +760,7 @@ class DiceRoomStore {
             data: {
                 details: completeRoll.details,
                 diceRolled: completeRoll.diceRolled,
+                diceResults: completeRoll.diceResults,
                 modifier: completeRoll.modifier,
                 rollType: completeRoll.rollType,
                 isCritical: completeRoll.isCritical,

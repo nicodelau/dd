@@ -20,16 +20,17 @@ export const ROLL_TYPE_OPTIONS = [
 ]
 
 export const QUICK_ROLLS: QuickRoll[] = [
-  { label: 'Attack', dice: { d20: 1 } },
-  { label: 'Damage', dice: { d8: 1 } },
-  { label: 'Initiative', dice: { d20: 1 } },
-  { label: 'Skill Check', dice: { d20: 1 } },
-  { label: 'Saving Throw', dice: { d20: 1 } },
-  { label: '2d6', dice: { d6: 2 } },
-  { label: '3d6', dice: { d6: 3 } },
-  { label: '4d6', dice: { d6: 4 } },
-  { label: 'd36 Roll', dice: { d36: 1 } }
+  // Keep some basic static rolls as fallback
+  { label: 'Initiative', dice: { d20: 1 }, type: 'static' },
+  { label: 'Attack Roll', dice: { d20: 1 }, type: 'static' },
+  { label: 'Damage', dice: { d8: 1 }, type: 'static' },
+  { label: 'Death Save', dice: { d20: 1 }, type: 'static' },
+  { label: '2d6', dice: { d6: 2 }, type: 'static' },
+  { label: '3d6', dice: { d6: 3 }, type: 'static' }
 ]
+
+// For backwards compatibility
+export const QUICK_ROLL_OPTIONS = QUICK_ROLLS
 
 export const STANDARD_SKILLS: StandardSkill[] = [
   { name: 'Acrobatics', ability: 'DEX', key: 'skillAcrobatics' },

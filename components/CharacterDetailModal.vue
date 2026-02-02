@@ -232,10 +232,6 @@
                 <span class="font-medium">{{ character.silverCoins || 0 }} sp</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-sm text-blue-400">{{ t('electrum') }}</span>
-                <span class="font-medium">{{ character.electrumCoins || 0 }} ep</span>
-              </div>
-              <div class="flex justify-between items-center">
                 <span class="text-sm text-yellow-500">{{ t('gold') }}</span>
                 <span class="font-medium">{{ character.goldCoins || 0 }} gp</span>
               </div>
@@ -481,11 +477,12 @@ const calculateTotalWealth = () => {
 
   const copper = props.character.copperCoins || 0
   const silver = props.character.silverCoins || 0
-  const electrum = props.character.electrumCoins || 0
   const gold = props.character.goldCoins || 0
   const platinum = props.character.platinumCoins || 0
 
-  const total = (copper * 0.01) + (silver * 0.1) + (electrum * 0.5) + gold + (platinum * 10)
+  // Convert everything to gold pieces
+  // 1 platinum = 100 gold, 1 gold = 100 silver, 1 silver = 100 copper
+  const total = (platinum * 100) + gold + (silver * 0.01) + (copper * 0.0001)
   return total.toFixed(2)
 }
 

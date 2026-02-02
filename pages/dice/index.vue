@@ -244,11 +244,25 @@
 
                 <!-- Currency -->
                 <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-                  <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
-                    <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4 text-yellow-500" />
-                    {{ t('currency') }}
+                  <h6 class="text-sm font-medium text-white mb-3 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4 text-yellow-500" />
+                      {{ t('currency') }}
+                    </div>
+                    <UButton 
+                      v-if="!isOfflineMode" 
+                      color="gray" 
+                      variant="ghost" 
+                      size="xs"
+                      :icon="isEditingCurrency ? 'i-heroicons-check' : 'i-heroicons-pencil'"
+                      @click="toggleCurrencyEditing"
+                    >
+                      {{ isEditingCurrency ? t('save') : t('edit') }}
+                    </UButton>
                   </h6>
-                  <div class="grid grid-cols-2 gap-2 text-xs">
+                  
+                  <!-- Read-only currency display -->
+                  <div v-if="!isEditingCurrency" class="grid grid-cols-2 gap-2 text-xs">
                     <div class="flex justify-between">
                       <span class="text-orange-600">{{ t('copper') }}:</span>
                       <span class="font-mono">{{ activeCharacter.copperCoins || 0 }} cp</span>
@@ -256,10 +270,6 @@
                     <div class="flex justify-between">
                       <span class="text-gray-400">{{ t('silver') }}:</span>
                       <span class="font-mono">{{ activeCharacter.silverCoins || 0 }} sp</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-blue-400">{{ t('electrum') }}:</span>
-                      <span class="font-mono">{{ activeCharacter.electrumCoins || 0 }} ep</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-yellow-500">{{ t('gold') }}:</span>
@@ -270,11 +280,68 @@
                       <span class="font-mono">{{ activeCharacter.platinumCoins || 0 }} pp</span>
                     </div>
                   </div>
+                  
+                  <!-- Editable currency inputs -->
+                  <div v-else class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center justify-between">
+                      <span class="text-orange-600">{{ t('copper') }}:</span>
+                      <UInput 
+                        v-model.number="currencyEdits.copperCoins"
+                        type="number"
+                        min="0"
+                        size="xs"
+                        class="w-16"
+                      />
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-gray-400">{{ t('silver') }}:</span>
+                      <UInput 
+                        v-model.number="currencyEdits.silverCoins"
+                        type="number"
+                        min="0"
+                        size="xs"
+                        class="w-16"
+                      />
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-yellow-500">{{ t('gold') }}:</span>
+                      <UInput 
+                        v-model.number="currencyEdits.goldCoins"
+                        type="number"
+                        min="0"
+                        size="xs"
+                        class="w-16"
+                      />
+                    </div>
+                    <div class="flex items-center justify-between col-span-2">
+                      <span class="text-gray-300">{{ t('platinum') }}:</span>
+                      <UInput 
+                        v-model.number="currencyEdits.platinumCoins"
+                        type="number"
+                        min="0"
+                        size="xs"
+                        class="w-16"
+                      />
+                    </div>
+                    
+                    <!-- Action buttons -->
+                    <div class="col-span-2 flex gap-2 mt-2">
+                      <UButton color="green" variant="outline" size="xs" @click="saveCurrencyChanges" class="flex-1">
+                        <UIcon name="i-heroicons-check" class="w-3 h-3 mr-1" />
+                        {{ t('save') }}
+                      </UButton>
+                      <UButton color="gray" variant="outline" size="xs" @click="cancelCurrencyEditing" class="flex-1">
+                        <UIcon name="i-heroicons-x-mark" class="w-3 h-3 mr-1" />
+                        {{ t('cancel') }}
+                      </UButton>
+                    </div>
+                  </div>
+                  
                   <div class="mt-2 pt-2 border-t border-zinc-800 border-zinc-800">
                     <div class="flex justify-between items-center text-sm">
                       <span class="font-medium text-gray-700 dark:text-gray-300">{{ t('totalValue') }}:</span>
                       <span class="font-bold text-white text-white">
-                        {{ calculateTotalWealth(activeCharacter) }} gp
+                        {{ isEditingCurrency ? calculateTotalWealthFromEdits() : calculateTotalWealth(activeCharacter) }} gp
                       </span>
                     </div>
                   </div>
@@ -757,15 +824,42 @@
                         </div>
                         <!-- Dice Visual Display -->
                         <div class="flex flex-wrap gap-1 mb-2">
-                          <div v-for="(diceResult, index) in roll.diceResults" :key="index"
-                            class="relative inline-block">
-                            <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
-                              class="w-8 h-8" />
-                            <span
-                              class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
-                              {{ diceResult.result }}
-                            </span>
-                          </div>
+                          <template v-for="(diceResult, index) in roll.diceResults" :key="index">
+                             <!-- Normal dice or selected die in advantage/disadvantage -->
+                             <div class="relative inline-block" 
+                                  :title="diceResult.isAdvantageDisadvantage ? (roll.rollType === 'advantage' ? 'Selected (higher roll)' : 'Selected (lower roll)') : undefined">
+                               <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
+                                 :class="[
+                                   'w-8 h-8',
+                                   diceResult.isAdvantageDisadvantage ? 'ring-2 ring-green-500' : ''
+                                 ]" />
+                               <span
+                                 class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                                 {{ diceResult.result }}
+                               </span>
+                               <!-- Green check mark for selected die in advantage/disadvantage -->
+                               <div v-if="diceResult.isAdvantageDisadvantage" 
+                                    class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                 <span class="text-[8px] text-white font-bold">✓</span>
+                               </div>
+                             </div>
+                             
+                             <!-- Discarded die for advantage/disadvantage -->
+                             <div v-if="diceResult.isAdvantageDisadvantage && diceResult.discardedRoll !== undefined" 
+                                  class="relative inline-block ml-1"
+                                  :title="roll.rollType === 'advantage' ? 'Discarded (lower roll)' : 'Discarded (higher roll)'">
+                              <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
+                                class="w-8 h-8 opacity-50 ring-2 ring-red-500" />
+                              <span
+                                class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg opacity-75">
+                                {{ diceResult.discardedRoll }}
+                              </span>
+                              <!-- Red X mark for discarded die -->
+                              <div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                                <span class="text-[8px] text-white font-bold">✗</span>
+                              </div>
+                            </div>
+                          </template>
                         </div>
 
                         <div v-if="roll.details.length > 1" class="text-xs text-zinc-400 text-zinc-400 mb-1">
@@ -842,8 +936,94 @@
 
                       <!-- Quick Roll Buttons -->
                       <div>
-                        <h4 class="text-sm font-medium text-white text-white mb-3">{{ t('quickRolls') }}</h4>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="flex items-center justify-between mb-3">
+                          <h4 class="text-sm font-medium text-white text-white">{{ t('quickRolls') }}</h4>
+                          
+                          <!-- Advantage/Disadvantage Toggle -->
+                          <div class="flex items-center gap-1">
+                            <UButton 
+                              :color="rollType === 'disadvantage' ? 'red' : 'gray'"
+                              :variant="rollType === 'disadvantage' ? 'solid' : 'outline'"
+                              size="xs"
+                              @click="rollType = rollType === 'disadvantage' ? 'normal' : 'disadvantage'"
+                              :title="t('disadvantage')"
+                            >
+                              👎
+                            </UButton>
+                            <UButton 
+                              :color="rollType === 'normal' ? 'blue' : 'gray'"
+                              :variant="rollType === 'normal' ? 'solid' : 'outline'"
+                              size="xs"
+                              @click="rollType = 'normal'"
+                              :title="t('normal')"
+                            >
+                              ⚖️
+                            </UButton>
+                            <UButton 
+                              :color="rollType === 'advantage' ? 'green' : 'gray'"
+                              :variant="rollType === 'advantage' ? 'solid' : 'outline'"
+                              size="xs"
+                              @click="rollType = rollType === 'advantage' ? 'normal' : 'advantage'"
+                              :title="t('advantage')"
+                            >
+                              👍
+                            </UButton>
+                          </div>
+                        </div>
+                        
+                        <!-- Character-based organized rolls -->
+                        <div v-if="activeCharacter" class="space-y-4">
+                          <!-- Static rolls -->
+                          <div v-if="organizedQuickRolls.static.length > 0">
+                            <h5 class="text-xs font-medium text-zinc-400 text-zinc-400 mb-2">{{ t('common') }}</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              <UButton v-for="roll in organizedQuickRolls.static" :key="roll.label" 
+                                color="gray" variant="outline" size="sm" @click="performQuickRoll(roll)" 
+                                class="text-xs">
+                                {{ roll.label }}
+                              </UButton>
+                            </div>
+                          </div>
+                          
+                          <!-- Saving throws -->
+                          <div v-if="organizedQuickRolls.saves.length > 0">
+                            <h5 class="text-xs font-medium text-zinc-400 text-zinc-400 mb-2">{{ t('savingThrows') }}</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              <UButton v-for="roll in organizedQuickRolls.saves" :key="roll.label"
+                                color="red" variant="outline" size="sm" @click="performQuickRoll(roll)"
+                                class="text-xs">
+                                {{ roll.label }}
+                              </UButton>
+                            </div>
+                          </div>
+                          
+                          <!-- Spell Attacks -->
+                          <div v-if="organizedQuickRolls.spellAttacks && organizedQuickRolls.spellAttacks.length > 0">
+                            <h5 class="text-xs font-medium text-zinc-400 text-zinc-400 mb-2">{{ t('spellcasting') }}</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              <UButton v-for="roll in organizedQuickRolls.spellAttacks" :key="roll.label"
+                                color="purple" variant="outline" size="sm" @click="performQuickRoll(roll)"
+                                class="text-xs">
+                                {{ getDisplayLabel(roll) }}
+                              </UButton>
+                            </div>
+                          </div>
+                          
+                          <!-- Skills -->
+                          <div v-if="organizedQuickRolls.skills.length > 0">
+                            <h5 class="text-xs font-medium text-zinc-400 text-zinc-400 mb-2">{{ t('skills') }}</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-1 max-h-32 overflow-y-auto">
+                              <UButton v-for="roll in organizedQuickRolls.skills" :key="roll.label"
+                                color="blue" variant="outline" size="xs" @click="performQuickRoll(roll)"
+                                class="text-xs">
+                                {{ roll.label }}
+                              </UButton>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Fallback simple grid for no character -->
+                        <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-2">
                           <UButton v-for="roll in quickRolls" :key="roll.label" color="gray" variant="outline" size="sm"
                             @click="performQuickRoll(roll)" class="text-xs">
                             {{ roll.label }}
@@ -2095,6 +2275,15 @@ const activeCharacterAttacks = ref < any[] > ([])
 const showCharacterAttacks = ref(false)
 const isRollingAttack = ref(false)
 
+// Currency editing state
+const isEditingCurrency = ref(false)
+const currencyEdits = ref({
+  copperCoins: 0,
+  silverCoins: 0, 
+  goldCoins: 0,
+  platinumCoins: 0
+})
+
 // All players stats (for DMs)
 const allPlayers = ref < Player[] > ([])
 
@@ -2303,17 +2492,57 @@ const rollTypeOptions = [
   { label: 'Disadvantage', value: 'disadvantage' }
 ]
 
-const quickRolls: QuickRoll[] = [
-  { label: 'Attack', dice: { d20: 1 } },
-  { label: 'Damage', dice: { d8: 1 } },
-  { label: 'Initiative', dice: { d20: 1 } },
-  { label: 'Skill Check', dice: { d20: 1 } },
-  { label: 'Saving Throw', dice: { d20: 1 } },
-  { label: '2d6', dice: { d6: 2 } },
-  { label: '3d6', dice: { d6: 3 } },
-  { label: '4d6', dice: { d6: 4 } },
-  { label: 'd36 Roll', dice: { d36: 1 } }
-]
+// Dynamic quick rolls based on active character
+const { getQuickRollsFlat, getDisplayLabel, getAllQuickRolls } = useQuickRolls()
+
+// Organized quick rolls by category
+const organizedQuickRolls = computed(() => {
+  if (activeCharacter.value) {
+    const rolls = getAllQuickRolls(activeCharacter.value)
+    return {
+      static: rolls.static.map(roll => ({ ...roll, label: getDisplayLabel(roll) })),
+      saves: rolls.savingThrows.map(roll => ({ ...roll, label: getDisplayLabel(roll) })),
+      abilities: rolls.abilityChecks.map(roll => ({ ...roll, label: getDisplayLabel(roll) })),
+      spellAttacks: rolls.spellAttacks.map(roll => ({ ...roll, label: getDisplayLabel(roll) })),
+      skills: rolls.skills.map(roll => ({ ...roll, label: getDisplayLabel(roll) }))
+    }
+  }
+  
+  return {
+    static: [
+      { label: 'Attack Roll', dice: { d20: 1 }, type: 'static' },
+      { label: 'Initiative', dice: { d20: 1 }, type: 'static' },
+      { label: 'Death Save', dice: { d20: 1 }, type: 'static' },
+      { label: '2d6', dice: { d6: 2 }, type: 'static' },
+      { label: '3d6', dice: { d6: 3 }, type: 'static' },
+      { label: '4d6', dice: { d6: 4 }, type: 'static' }
+    ],
+    saves: [],
+    abilities: [],
+    skills: []
+  }
+})
+
+// Flat quick rolls for backwards compatibility
+const quickRolls = computed(() => {
+  // If we have an active character, use their skills and saves
+  if (activeCharacter.value) {
+    return getQuickRollsFlat(activeCharacter.value).map(roll => ({
+      ...roll,
+      label: getDisplayLabel(roll) // Include modifiers in the label
+    }))
+  }
+  
+  // Fallback to basic static rolls if no character
+  return [
+    { label: 'Attack Roll', dice: { d20: 1 }, type: 'static' },
+    { label: 'Initiative', dice: { d20: 1 }, type: 'static' },
+    { label: 'Death Save', dice: { d20: 1 }, type: 'static' },
+    { label: '2d6', dice: { d6: 2 }, type: 'static' },
+    { label: '3d6', dice: { d6: 3 }, type: 'static' },
+    { label: '4d6', dice: { d6: 4 }, type: 'static' }
+  ]
+})
 
 // Computed properties
 const totalDiceSelected = computed(() => {
@@ -2534,14 +2763,75 @@ function calculateTotalWealth(character: any): number {
 
   const copper = character.copperCoins || 0
   const silver = character.silverCoins || 0
-  const electrum = character.electrumCoins || 0
   const gold = character.goldCoins || 0
   const platinum = character.platinumCoins || 0
 
   // Convert everything to gold pieces
-  // 1 pp = 10 gp, 1 ep = 0.5 gp, 1 sp = 0.1 gp, 1 cp = 0.01 gp
-  const total = (platinum * 10) + gold + (electrum * 0.5) + (silver * 0.1) + (copper * 0.01)
+  // 1 platinum = 100 gold, 1 gold = 100 silver, 1 silver = 100 copper
+  const total = (platinum * 100) + gold + (silver * 0.01) + (copper * 0.0001)
   return Math.round(total * 100) / 100 // Round to 2 decimal places
+}
+
+// Currency editing functions
+function calculateTotalWealthFromEdits(): number {
+  const copper = currencyEdits.value.copperCoins || 0
+  const silver = currencyEdits.value.silverCoins || 0
+  const gold = currencyEdits.value.goldCoins || 0
+  const platinum = currencyEdits.value.platinumCoins || 0
+
+  const total = (platinum * 100) + gold + (silver * 0.01) + (copper * 0.0001)
+  return Math.round(total * 100) / 100
+}
+
+function toggleCurrencyEditing() {
+  if (!isEditingCurrency.value && activeCharacter.value) {
+    // Start editing - populate current values
+    currencyEdits.value = {
+      copperCoins: activeCharacter.value.copperCoins || 0,
+      silverCoins: activeCharacter.value.silverCoins || 0,
+      goldCoins: activeCharacter.value.goldCoins || 0,
+      platinumCoins: activeCharacter.value.platinumCoins || 0
+    }
+    isEditingCurrency.value = true
+  } else if (isEditingCurrency.value) {
+    // Save and exit editing
+    saveCurrencyChanges()
+  }
+}
+
+async function saveCurrencyChanges() {
+  if (!activeCharacter.value) {
+    console.warn('No active character to save currency for')
+    return
+  }
+
+  try {
+    // Use the character composable's update function
+    const { updateCharacterCurrency } = useCharacter(user.value?.id || '')
+    const success = await updateCharacterCurrency(currencyEdits.value)
+    
+    if (success) {
+      isEditingCurrency.value = false
+      console.log('✅ Currency updated successfully')
+    } else {
+      console.error('❌ Failed to save currency changes')
+    }
+  } catch (error) {
+    console.error('❌ Error saving currency:', error)
+  }
+}
+
+function cancelCurrencyEditing() {
+  isEditingCurrency.value = false
+  // Reset edits to current character values
+  if (activeCharacter.value) {
+    currencyEdits.value = {
+      copperCoins: activeCharacter.value.copperCoins || 0,
+      silverCoins: activeCharacter.value.silverCoins || 0,
+      goldCoins: activeCharacter.value.goldCoins || 0,
+      platinumCoins: activeCharacter.value.platinumCoins || 0
+    }
+  }
 }
 
 function calculateModifier(abilityScore: number): number {
@@ -2792,6 +3082,7 @@ async function rollDice(customSelection?: Record<string, number> | any) {
   // Simulate rolling animation delay with staggered effects
   setTimeout(async () => {
     const diceRolled: { type: string; count: number; results: number[] }[] = []
+    const diceResults: { type: string; result: number; isAdvantageDisadvantage?: boolean; discardedRoll?: number; selectedRoll?: number }[] = []
     let total = 0
     const details: (string | number)[] = []
 
@@ -2803,19 +3094,37 @@ async function rollDice(customSelection?: Record<string, number> | any) {
 
         for (let i = 0; i < count; i++) {
           let roll = rollSingleDie(dice.sides)
+          let discardedRoll: number | undefined
+          let selectedRoll: number | undefined
+          let isAdvantageDisadvantage = false
 
           // Handle advantage/disadvantage for d20s
           if (diceType === 'd20' && rollType.value !== 'normal') {
             const secondRoll = rollSingleDie(dice.sides)
+            isAdvantageDisadvantage = true
+            
             if (rollType.value === 'advantage') {
-              roll = Math.max(roll, secondRoll)
+              selectedRoll = Math.max(roll, secondRoll)
+              discardedRoll = Math.min(roll, secondRoll)
             } else {
-              roll = Math.min(roll, secondRoll)
+              selectedRoll = Math.min(roll, secondRoll)
+              discardedRoll = Math.max(roll, secondRoll)
             }
+            
+            roll = selectedRoll
           }
 
           results.push(roll)
           total += roll
+          
+          // Store detailed roll info for dice results
+          diceResults.push({
+            type: diceType,
+            result: roll,
+            isAdvantageDisadvantage,
+            discardedRoll,
+            selectedRoll: isAdvantageDisadvantage ? selectedRoll : undefined
+          })
         }
 
         diceRolled.push({
@@ -2876,14 +3185,6 @@ async function rollDice(customSelection?: Record<string, number> | any) {
     if (rollType.value !== 'normal') {
       description += ` (${rollType.value})`
     }
-
-    // Create flat array of individual dice results
-    const diceResults: { type: string; result: number }[] = []
-    diceRolled.forEach(dice => {
-      dice.results.forEach(result => {
-        diceResults.push({ type: dice.type, result })
-      })
-    })
 
     const roll: DiceRoll = {
       id: Date.now().toString(),
@@ -2966,7 +3267,7 @@ async function rollAttack(attack: any) {
     const description = `${attack.name} Attack: 1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`
     const details = [`1d20=${d20Roll}`, attackBonus]
 
-    const diceResults = [{ type: 'd20', result: d20Roll }]
+    const diceResults = [{ type: 'd20', result: d20Roll, isAdvantageDisadvantage: false, discardedRoll: undefined, selectedRoll: undefined }]
 
     const roll: DiceRoll = {
       id: Date.now().toString(),
@@ -3044,6 +3345,15 @@ async function rollDamage(attack: any) {
       total: total.total,
       details: total.details,
       diceRolled: total.diceRolled,
+      diceResults: total.diceRolled.flatMap(diceGroup => 
+        diceGroup.results.map(result => ({
+          type: diceGroup.type,
+          result,
+          isAdvantageDisadvantage: false,
+          discardedRoll: undefined,
+          selectedRoll: undefined
+        }))
+      ),
       modifier: total.modifier,
       rollType: 'normal',
       isCritical: false,
@@ -3170,7 +3480,7 @@ function performQuickRoll(quickRoll: QuickRoll) {
     modifier.value = quickRoll.modifier
   }
 
-  // Roll immediately
+  // Roll immediately (advantage/disadvantage is handled by the existing rollType system)
   rollDice()
 }
 

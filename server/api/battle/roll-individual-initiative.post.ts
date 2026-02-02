@@ -65,6 +65,31 @@ export default defineEventHandler(async (event) => {
     // Update participant's initiative
     participant.initiativeRoll = total
 
+    // Create a DiceRoll object for the initiative roll history
+    const initiativeRoll = {
+      userName: participant.name,
+      userId: participant.type === 'player' ? (participant.userId || 'unknown') : 'dm',
+      description: `${participant.name} Initiative: 1d20${modifier >= 0 ? '+' : ''}${modifier}`,
+      total,
+      details: [`1d20=${roll}`, modifier] as (string | number)[],
+      diceRolled: [{ type: 'd20', count: 1, results: [roll] }],
+      diceResults: [{ 
+        type: 'd20', 
+        result: roll, 
+        isAdvantageDisadvantage: false, 
+        discardedRoll: undefined, 
+        selectedRoll: undefined 
+      }],
+      modifier,
+      rollType: 'normal' as string,
+      isCritical: roll === 20 || roll === 1,
+      criticalType: roll === 20 ? 'success' as const : roll === 1 ? 'failure' as const : undefined,
+      isOwn: false
+    }
+
+    // Add the roll to the room history
+    diceRoomStore.addRoll(initiativeRoll, roomCode)
+
     // Broadcast the individual initiative roll
     diceRoomStore.sendEventToRoom('battle:individual_initiative_rolled', {
       participantId: participant.id,
