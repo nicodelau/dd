@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between h-16">
           <!-- Logo/Title -->
           <div class="flex items-center space-x-4">
-            <img src="/assets/dices/d20.svg" alt="D20" class="w-10 h-10" />
+            <img src="/assets/dices/D20.svg" alt="D20" class="w-10 h-10" />
             <div>
               <h1 class="text-2xl font-bold text-white">{{ t('diceRoom') }}</h1>
               <p class="text-sm text-zinc-400">{{ t('diceRoomSubtitle') }}</p>
