@@ -1,6 +1,6 @@
 /**
- * Composable para manejo avanzado de conexiones persistentes
- * Incluye reconexión automática, heartbeat mejorado, y recuperación de estado
+ * Enhanced connection manager with callback-based event system
+ * Includes exponential backoff reconnection, state sync, and comprehensive SSE handling
  */
 
 interface ConnectionConfig {
@@ -30,6 +30,8 @@ interface PendingAction {
   timestamp: Date
   retries: number
 }
+
+type EventCallback = (data: any) => void
 
 export const useConnectionManager = () => {
   // Default configuration
@@ -63,6 +65,9 @@ export const useConnectionManager = () => {
     roomCode: string
   } | null>(null)
   
+  // Callback registry for events
+  const eventCallbacks = ref<Record<string, EventCallback[]>>({})
+  
   // Internal state
   let eventSource: EventSource | null = null
   let heartbeatTimer: NodeJS.Timeout | null = null
@@ -72,7 +77,44 @@ export const useConnectionManager = () => {
   let isManuallyDisconnected = false
 
   /**
-   * Establece conexión SSE con reconexión automática
+   * Register a callback for a specific event type
+   */
+  const on = (eventType: string, handler: EventCallback) => {
+    if (!eventCallbacks.value[eventType]) {
+      eventCallbacks.value[eventType] = []
+    }
+    eventCallbacks.value[eventType].push(handler)
+  }
+
+  /**
+   * Remove a callback for a specific event type
+   */
+  const off = (eventType: string, handler: EventCallback) => {
+    if (eventCallbacks.value[eventType]) {
+      const index = eventCallbacks.value[eventType].indexOf(handler)
+      if (index > -1) {
+        eventCallbacks.value[eventType].splice(index, 1)
+      }
+    }
+  }
+
+  /**
+   * Emit an event to all registered callbacks
+   */
+  const emit = (eventType: string, data: any) => {
+    if (eventCallbacks.value[eventType]) {
+      eventCallbacks.value[eventType].forEach(callback => {
+        try {
+          callback(data)
+        } catch (error) {
+          console.error(`⚡ Error in event callback for ${eventType}:`, error)
+        }
+      })
+    }
+  }
+
+  /**
+   * Establishes SSE connection with automatic reconnection
    */
   const connect = async (params: {
     userId: string
@@ -105,7 +147,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Establece la conexión SSE actual
+   * Establishes the SSE connection
    */
   const establishConnection = async (params: {
     userId: string
@@ -146,19 +188,49 @@ export const useConnectionManager = () => {
       if (config.value.stateSync) {
         syncRoomState(params.roomCode)
       }
+
+      // Emit connection event
+      emit('connected', { connectionId: connectionState.value.connectionId, latency })
     }
 
     // Handle incoming messages
     eventSource.onmessage = handleMessage
     
-    // Handle specific event types
-    eventSource.addEventListener('connected', handleConnected)
-    eventSource.addEventListener('heartbeat', handleHeartbeat)
-    eventSource.addEventListener('dice:roll', handleDiceRoll)
-    eventSource.addEventListener('users:count', handleUsersCount)
-    eventSource.addEventListener('battle:update', handleBattleUpdate)
-    eventSource.addEventListener('music:update', handleMusicUpdate)
-    eventSource.addEventListener('room:invite', handleRoomInvite)
+    // Register all SSE event types
+    const eventTypes = [
+      'connected', 'heartbeat', 'users:count', 'dice:history', 'dice:roll', 'dice:request',
+      'user:role', 'user:stats', 'user:kicked', 'stats:updated', 'players:stats',
+      'dm:show_image', 'room:state:sync', 'room:info', 'room:invite',
+      'battle:setup_started', 'battle:enemy_added', 'battle:enemy_removed',
+      'battle:initiative_phase_started', 'battle:initiative_rolled',
+      'battle:individual_initiative_rolled', 'battle:combat_started',
+      'battle:next_turn', 'battle:damage_applied', 'battle:ended',
+      'battle:player_added', 'battle:player_removed'
+    ]
+
+    eventTypes.forEach(type => {
+      eventSource!.addEventListener(type, (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data)
+          
+          // Handle specific events for internal state
+          switch (type) {
+            case 'connected':
+              connectionState.value.connectionId = data.connectionId
+              console.log('⚡ Connection confirmed:', data.connectionId)
+              break
+            case 'heartbeat':
+              handleHeartbeat(event)
+              break
+          }
+          
+          // Emit to registered callbacks
+          emit(type, data)
+        } catch (error) {
+          console.error(`⚡ Failed to parse ${type} event:`, error)
+        }
+      })
+    })
 
     // Handle connection errors
     eventSource.onerror = (error) => {
@@ -185,7 +257,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Programa una reconexión con backoff exponencial
+   * Schedules reconnection with exponential backoff
    */
   const scheduleReconnect = (params: {
     userId: string
@@ -213,7 +285,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Desconecta manualmente la conexión
+   * Manually disconnects the connection
    */
   const disconnect = () => {
     // Notify server of departure if connected
@@ -236,7 +308,17 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Limpia todos los timers y conexiones
+   * Reconnect manually
+   */
+  const reconnect = () => {
+    if (connectionParams.value) {
+      connectionState.value.reconnectAttempts = 0
+      connect(connectionParams.value)
+    }
+  }
+
+  /**
+   * Cleans up all timers and connections
    */
   const cleanup = () => {
     if (eventSource) {
@@ -256,7 +338,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Inicia el monitoreo de heartbeat mejorado
+   * Starts enhanced heartbeat monitoring
    */
   const startHeartbeatMonitoring = () => {
     if (heartbeatTimer) {
@@ -296,7 +378,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Calcula la calidad de conexión basada en la latencia
+   * Calculates connection quality based on latency
    */
   const calculateConnectionQuality = (latency: number): ConnectionState['quality'] => {
     if (latency < 100) return 'excellent'
@@ -306,7 +388,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Agrega una acción a la cola de pendientes
+   * Adds an action to the pending queue
    */
   const queueAction = (type: string, data: any) => {
     const action: PendingAction = {
@@ -326,7 +408,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Procesa las acciones pendientes
+   * Processes pending actions
    */
   const processPendingActions = async () => {
     if (pendingActions.value.length === 0) return
@@ -352,7 +434,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Procesa una acción individual
+   * Processes an individual action
    */
   const processAction = async (action: PendingAction) => {
     switch (action.type) {
@@ -368,6 +450,12 @@ export const useConnectionManager = () => {
           body: action.data
         })
         break
+      case 'battle:action':
+        await $fetch('/api/dice/battle', {
+          method: 'POST',
+          body: action.data
+        })
+        break
       // Add more action types as needed
       default:
         console.warn('⚡ Unknown action type:', action.type)
@@ -375,7 +463,7 @@ export const useConnectionManager = () => {
   }
 
   /**
-   * Sincroniza el estado de la sala
+   * Syncs room state after reconnection
    */
   const syncRoomState = async (roomCode: string) => {
     try {
@@ -384,39 +472,21 @@ export const useConnectionManager = () => {
       const roomState = await $fetch(`/api/dice/rooms/${roomCode}/state`)
       
       // Emit sync event for components to handle
-      const event = new CustomEvent('room:state:sync', { 
-        detail: roomState 
-      })
-      window.dispatchEvent(event)
+      emit('room:state:sync', roomState)
       
     } catch (error) {
       console.error('⚡ Failed to sync room state:', error)
     }
   }
 
-  // Event handlers
-  const handleMessage = (event: MessageEvent) => {
-    try {
-      const data = JSON.parse(event.data)
-      console.log('⚡ Received SSE message:', event.type, data)
-    } catch (error) {
-      console.error('⚡ Failed to parse SSE message:', error)
-    }
-  }
-
-  const handleConnected = (event: MessageEvent) => {
-    const data = JSON.parse(event.data)
-    connectionState.value.connectionId = data.connectionId
-    console.log('⚡ Connection confirmed:', data.connectionId)
-  }
-
+  /**
+   * Handle heartbeat events
+   */
   const handleHeartbeat = (event: MessageEvent) => {
     const now = Date.now()
     connectionState.value.lastHeartbeat = new Date(now)
     
     // Update connection quality based on heartbeat timing
-    // const data = JSON.parse(event.data) // data unused for now
-    
     const expectedInterval = config.value.heartbeatInterval
     // Use previous heartbeat time or connection start if first heartbeat
     const lastTime = previousHeartbeatTime || connectionStartTime
@@ -437,34 +507,16 @@ export const useConnectionManager = () => {
     startHeartbeatMonitoring() // Reset heartbeat timer
   }
 
-  const handleDiceRoll = (event: MessageEvent) => {
-    const data = JSON.parse(event.data)
-    const customEvent = new CustomEvent('dice:roll', { detail: data })
-    window.dispatchEvent(customEvent)
-  }
-
-  const handleUsersCount = (event: MessageEvent) => {
-    const data = JSON.parse(event.data)
-    const customEvent = new CustomEvent('users:count', { detail: data })
-    window.dispatchEvent(customEvent)
-  }
-
-  const handleBattleUpdate = (event: MessageEvent) => {
-    const data = JSON.parse(event.data)
-    const customEvent = new CustomEvent('battle:update', { detail: data })
-    window.dispatchEvent(customEvent)
-  }
-
-  const handleMusicUpdate = (event: MessageEvent) => {
-    const data = JSON.parse(event.data)
-    const customEvent = new CustomEvent('music:update', { detail: data })
-    window.dispatchEvent(customEvent)
-  }
-
-  const handleRoomInvite = (event: MessageEvent) => {
-    const data = JSON.parse(event.data)
-    const customEvent = new CustomEvent('room:invite', { detail: data })
-    window.dispatchEvent(customEvent)
+  /**
+   * Handle generic messages
+   */
+  const handleMessage = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data)
+      console.log('⚡ Received SSE message:', event.type, data)
+    } catch (error) {
+      console.error('⚡ Failed to parse SSE message:', error)
+    }
   }
 
   // Cleanup on unmount
@@ -476,7 +528,10 @@ export const useConnectionManager = () => {
     connectionState: readonly(connectionState),
     connect,
     disconnect,
+    reconnect,
     queueAction,
+    on,
+    off,
     config
   }
 }

@@ -9,14 +9,22 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const authLoadingMessage = useState('authLoadingMessage', () => 'Verifying authentication...')
   const redirectPath = useState('redirectPath', () => null as string | null)
   const user = useState('user')
+  const authChecked = useState('authChecked', () => false)
 
   // If we already have user data on client-side navigation, skip the API call
   if (import.meta.client && user.value) {
     return
   }
 
-  // Set loading state only if we don't have user data yet
-  authLoading.value = true
+  // If auth was already verified this session and user exists, skip re-check
+  if (import.meta.client && authChecked.value && user.value) {
+    return
+  }
+
+  // Only show loading overlay on client-side when we don't have user data
+  if (import.meta.client && !user.value) {
+    authLoading.value = true
+  }
 
   try {
     const headers = useRequestHeaders(['cookie'])
@@ -32,6 +40,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     // Update user state
     user.value = response.data.user
+    authChecked.value = true
     authLoading.value = false
 
   } catch (error) {

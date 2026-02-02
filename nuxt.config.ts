@@ -25,6 +25,18 @@ export default defineNuxtConfig({
     https: true
   },
 
+  // Fix for app manifest import issues
+  experimental: {
+    appManifest: false
+  },
+
+  // Vite configuration to handle import resolution
+  vite: {
+    optimizeDeps: {
+      include: ['vue', '@nuxt/ui']
+    }
+  },
+
   // Nitro configuration for better SSE support
   nitro: {
     // Support top-level await in Prisma WASM compiler
