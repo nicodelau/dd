@@ -3265,7 +3265,6 @@ async function rollDice(customSelection?: Record<string, number> | any) {
     isRolling.value = false
   }, 800) // Reduced from 1500ms to 800ms for faster local feedback
 }
-}
 
 // Character Attack Functions
 async function rollAttack(attack: any) {
