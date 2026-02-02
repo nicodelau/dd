@@ -50,7 +50,7 @@ export interface DiceRoll {
   total: number
   details: (string | number)[]
   diceRolled: { type: string; count: number; results: number[] }[]
-  diceResults: { type: string; result: number; isAdvantageDisadvantage?: boolean; discardedRoll?: number; selectedRoll?: number }[]
+  diceResults: { type: string; result: number; isAdvantageDisadvantage?: boolean; discardedRoll?: number; selectedRoll?: number; isSelectedDie?: boolean }[]
   modifier: number
   rollType: string
   isCritical: boolean

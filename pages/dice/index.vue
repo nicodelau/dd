@@ -825,8 +825,9 @@
                          <!-- Dice Visual Display -->
                          <div class="flex flex-wrap gap-1 mb-2">
                            <template v-for="(diceResult, index) in roll.diceResults" :key="index">
-                              <!-- Check if this is a selected die (has selectedRoll) or normal die -->
-                              <div v-if="!diceResult.discardedRoll" class="relative inline-block" 
+                              <!-- Selected die (normal dice or selected in advantage/disadvantage) -->
+                              <div v-if="!diceResult.isAdvantageDisadvantage || diceResult.isSelectedDie" 
+                                   class="relative inline-block" 
                                    :title="diceResult.isAdvantageDisadvantage ? (roll.rollType === 'advantage' ? 'Selected (higher roll)' : 'Selected (lower roll)') : undefined">
                                 <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
                                   :class="[
@@ -845,14 +846,14 @@
                               </div>
                               
                               <!-- Discarded die for advantage/disadvantage -->
-                              <div v-else-if="diceResult.discardedRoll" 
+                              <div v-if="diceResult.isAdvantageDisadvantage && !diceResult.isSelectedDie" 
                                    class="relative inline-block ml-1"
                                    :title="roll.rollType === 'advantage' ? 'Discarded (lower roll)' : 'Discarded (higher roll)'">
                                <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
                                  class="w-8 h-8 opacity-50 ring-2 ring-red-500" />
                                <span
                                  class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg opacity-75">
-                                 {{ diceResult.discardedRoll }}
+                                 {{ diceResult.result }}
                                </span>
                                <!-- Red X mark for discarded die -->
                                <div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
@@ -3122,7 +3123,8 @@ async function rollDice(customSelection?: Record<string, number> | any) {
             result: selectedRoll,
             isAdvantageDisadvantage: true,
             discardedRoll: undefined,
-            selectedRoll: selectedRoll
+            selectedRoll: selectedRoll,
+            isSelectedDie: true
           })
           
           // Add discarded die  
@@ -3131,7 +3133,8 @@ async function rollDice(customSelection?: Record<string, number> | any) {
             result: discardedRoll,
             isAdvantageDisadvantage: true,
             discardedRoll: discardedRoll,
-            selectedRoll: undefined
+            selectedRoll: undefined,
+            isSelectedDie: false
           })
           
         } else {
@@ -5557,6 +5560,19 @@ onMounted(async () => {
 
   // Load user characters and auto-detect role
   await loadUserCharacters()
+
+  // Auto-join room if there's a room code in the URL
+  if (routeRoomCode.value && routeRoomCode.value !== 'default') {
+    console.log('🎲 Auto-joining room from URL:', routeRoomCode.value)
+    isAutoJoining.value = true
+    try {
+      await joinRoom(routeRoomCode.value)
+    } catch (error) {
+      console.error('❌ Failed to auto-join room:', error)
+    } finally {
+      isAutoJoining.value = false
+    }
+  }
 
   // Add global diagnostic function for debugging
 })
