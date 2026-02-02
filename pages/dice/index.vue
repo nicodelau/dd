@@ -822,45 +822,45 @@
                             {{ formatTime(roll.timestamp) }}
                           </span>
                         </div>
-                        <!-- Dice Visual Display -->
-                        <div class="flex flex-wrap gap-1 mb-2">
-                          <template v-for="(diceResult, index) in roll.diceResults" :key="index">
-                             <!-- Normal dice or selected die in advantage/disadvantage -->
-                             <div class="relative inline-block" 
-                                  :title="diceResult.isAdvantageDisadvantage ? (roll.rollType === 'advantage' ? 'Selected (higher roll)' : 'Selected (lower roll)') : undefined">
+                         <!-- Dice Visual Display -->
+                         <div class="flex flex-wrap gap-1 mb-2">
+                           <template v-for="(diceResult, index) in roll.diceResults" :key="index">
+                              <!-- Check if this is a selected die (has selectedRoll) or normal die -->
+                              <div v-if="!diceResult.discardedRoll" class="relative inline-block" 
+                                   :title="diceResult.isAdvantageDisadvantage ? (roll.rollType === 'advantage' ? 'Selected (higher roll)' : 'Selected (lower roll)') : undefined">
+                                <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
+                                  :class="[
+                                    'w-8 h-8',
+                                    diceResult.isAdvantageDisadvantage ? 'ring-2 ring-green-500' : ''
+                                  ]" />
+                                <span
+                                  class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                                  {{ diceResult.result }}
+                                </span>
+                                <!-- Green check mark for selected die in advantage/disadvantage -->
+                                <div v-if="diceResult.isAdvantageDisadvantage" 
+                                     class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                  <span class="text-[8px] text-white font-bold">✓</span>
+                                </div>
+                              </div>
+                              
+                              <!-- Discarded die for advantage/disadvantage -->
+                              <div v-else-if="diceResult.discardedRoll" 
+                                   class="relative inline-block ml-1"
+                                   :title="roll.rollType === 'advantage' ? 'Discarded (lower roll)' : 'Discarded (higher roll)'">
                                <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
-                                 :class="[
-                                   'w-8 h-8',
-                                   diceResult.isAdvantageDisadvantage ? 'ring-2 ring-green-500' : ''
-                                 ]" />
+                                 class="w-8 h-8 opacity-50 ring-2 ring-red-500" />
                                <span
-                                 class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
-                                 {{ diceResult.result }}
+                                 class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg opacity-75">
+                                 {{ diceResult.discardedRoll }}
                                </span>
-                               <!-- Green check mark for selected die in advantage/disadvantage -->
-                               <div v-if="diceResult.isAdvantageDisadvantage" 
-                                    class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
-                                 <span class="text-[8px] text-white font-bold">✓</span>
+                               <!-- Red X mark for discarded die -->
+                               <div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                                 <span class="text-[8px] text-white font-bold">✗</span>
                                </div>
                              </div>
-                             
-                             <!-- Discarded die for advantage/disadvantage -->
-                             <div v-if="diceResult.isAdvantageDisadvantage && diceResult.discardedRoll !== undefined" 
-                                  class="relative inline-block ml-1"
-                                  :title="roll.rollType === 'advantage' ? 'Discarded (lower roll)' : 'Discarded (higher roll)'">
-                              <img :src="`/assets/dices/${diceResult.type.toUpperCase()}.svg`" :alt="diceResult.type"
-                                class="w-8 h-8 opacity-50 ring-2 ring-red-500" />
-                              <span
-                                class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg opacity-75">
-                                {{ diceResult.discardedRoll }}
-                              </span>
-                              <!-- Red X mark for discarded die -->
-                              <div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                                <span class="text-[8px] text-white font-bold">✗</span>
-                              </div>
-                            </div>
-                          </template>
-                        </div>
+                           </template>
+                         </div>
 
                         <div v-if="roll.details.length > 1" class="text-xs text-zinc-400 text-zinc-400 mb-1">
                           ({{ roll.details.join(' + ') }})
@@ -3112,19 +3112,43 @@ async function rollDice(customSelection?: Record<string, number> | any) {
             }
             
             roll = selectedRoll
-          }
 
-          results.push(roll)
-          total += roll
-          
-          // Store detailed roll info for dice results
-          diceResults.push({
-            type: diceType,
-            result: roll,
-            isAdvantageDisadvantage,
-            discardedRoll,
-            selectedRoll: isAdvantageDisadvantage ? selectedRoll : undefined
-          })
+            // For advantage/disadvantage, create two diceResult entries
+            results.push(roll)
+            total += roll
+            
+            // Add selected die
+            diceResults.push({
+              type: diceType,
+              result: selectedRoll,
+              isAdvantageDisadvantage: true,
+              discardedRoll: undefined,
+              selectedRoll: selectedRoll
+            })
+            
+            // Add discarded die  
+            diceResults.push({
+              type: diceType,
+              result: discardedRoll,
+              isAdvantageDisadvantage: true,
+              discardedRoll: discardedRoll,
+              selectedRoll: undefined
+            })
+            
+          } else {
+            // Normal roll
+            results.push(roll)
+            total += roll
+            
+            // Store detailed roll info for dice results
+            diceResults.push({
+              type: diceType,
+              result: roll,
+              isAdvantageDisadvantage,
+              discardedRoll,
+              selectedRoll: isAdvantageDisadvantage ? selectedRoll : undefined
+            })
+          }
         }
 
         diceRolled.push({
@@ -3223,6 +3247,7 @@ async function rollDice(customSelection?: Record<string, number> | any) {
           total: roll.total,
           details: roll.details,
           diceRolled: roll.diceRolled,
+          diceResults: roll.diceResults,
           modifier: roll.modifier,
           rollType: roll.rollType,
           isCritical: roll.isCritical,
@@ -3299,6 +3324,7 @@ async function rollAttack(attack: any) {
           total: roll.total,
           details: roll.details,
           diceRolled: roll.diceRolled,
+          diceResults: roll.diceResults,
           modifier: roll.modifier,
           rollType: roll.rollType,
           isCritical: roll.isCritical,
@@ -3373,6 +3399,7 @@ async function rollDamage(attack: any) {
           total: roll.total,
           details: roll.details,
           diceRolled: roll.diceRolled,
+          diceResults: roll.diceResults,
           modifier: roll.modifier,
           rollType: roll.rollType,
           isCritical: roll.isCritical,
@@ -5310,6 +5337,7 @@ function handleRollAbility(ability: any) {
             total: roll.total,
             details: roll.details,
             diceRolled: roll.diceRolled,
+            diceResults: roll.diceResults,
             modifier: roll.modifier,
             rollType: roll.rollType,
             isCritical: roll.isCritical,
