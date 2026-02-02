@@ -3072,161 +3072,184 @@ async function rollDice(customSelection?: Record<string, number> | any) {
 
   isRolling.value = true
 
-  // Add dramatic animation  all selected dice
+  // Add dramatic animation for all selected dice
   Object.entries(diceSelection).forEach(([diceType, count]) => {
     if (count > 0) {
       animatingDice.value.add(diceType)
     }
   })
 
-  // Simulate rolling animation delay with staggered effects
-  setTimeout(async () => {
-    const diceRolled: { type: string; count: number; results: number[] }[] = []
-    const diceResults: { type: string; result: number; isAdvantageDisadvantage?: boolean; discardedRoll?: number; selectedRoll?: number }[] = []
-    let total = 0
-    const details: (string | number)[] = []
+  // IMMEDIATE: Calculate roll results (no delay for synchronization)
+  const diceRolled: { type: string; count: number; results: number[] }[] = []
+  const diceResults: { type: string; result: number; isAdvantageDisadvantage?: boolean; discardedRoll?: number; selectedRoll?: number }[] = []
+  let total = 0
+  const details: (string | number)[] = []
 
-    // Roll each type of dice
-    for (const [diceType, count] of Object.entries(diceSelection)) {
-      if (count > 0) {
-        const dice = diceTypes.find(d => d.type === diceType)!
-        const results: number[] = []
+  // Roll each type of dice
+  for (const [diceType, count] of Object.entries(diceSelection)) {
+    if (count > 0) {
+      const dice = diceTypes.find(d => d.type === diceType)!
+      const results: number[] = []
 
-        for (let i = 0; i < count; i++) {
-          let roll = rollSingleDie(dice.sides)
-          let discardedRoll: number | undefined
-          let selectedRoll: number | undefined
-          let isAdvantageDisadvantage = false
+      for (let i = 0; i < count; i++) {
+        let roll = rollSingleDie(dice.sides)
+        let discardedRoll: number | undefined
+        let selectedRoll: number | undefined
+        let isAdvantageDisadvantage = false
 
-          // Handle advantage/disadvantage for d20s
-          if (diceType === 'd20' && rollType.value !== 'normal') {
-            const secondRoll = rollSingleDie(dice.sides)
-            isAdvantageDisadvantage = true
-            
-            if (rollType.value === 'advantage') {
-              selectedRoll = Math.max(roll, secondRoll)
-              discardedRoll = Math.min(roll, secondRoll)
-            } else {
-              selectedRoll = Math.min(roll, secondRoll)
-              discardedRoll = Math.max(roll, secondRoll)
-            }
-            
-            roll = selectedRoll
-
-            // For advantage/disadvantage, create two diceResult entries
-            results.push(roll)
-            total += roll
-            
-            // Add selected die
-            diceResults.push({
-              type: diceType,
-              result: selectedRoll,
-              isAdvantageDisadvantage: true,
-              discardedRoll: undefined,
-              selectedRoll: selectedRoll
-            })
-            
-            // Add discarded die  
-            diceResults.push({
-              type: diceType,
-              result: discardedRoll,
-              isAdvantageDisadvantage: true,
-              discardedRoll: discardedRoll,
-              selectedRoll: undefined
-            })
-            
+        // Handle advantage/disadvantage for d20s
+        if (diceType === 'd20' && rollType.value !== 'normal') {
+          const secondRoll = rollSingleDie(dice.sides)
+          isAdvantageDisadvantage = true
+          
+          if (rollType.value === 'advantage') {
+            selectedRoll = Math.max(roll, secondRoll)
+            discardedRoll = Math.min(roll, secondRoll)
           } else {
-            // Normal roll
-            results.push(roll)
-            total += roll
-            
-            // Store detailed roll info for dice results
-            diceResults.push({
-              type: diceType,
-              result: roll,
-              isAdvantageDisadvantage,
-              discardedRoll,
-              selectedRoll: isAdvantageDisadvantage ? selectedRoll : undefined
-            })
+            selectedRoll = Math.min(roll, secondRoll)
+            discardedRoll = Math.max(roll, secondRoll)
           }
+          
+          roll = selectedRoll
+
+          // For advantage/disadvantage, create two diceResult entries
+          results.push(roll)
+          total += roll
+          
+          // Add selected die
+          diceResults.push({
+            type: diceType,
+            result: selectedRoll,
+            isAdvantageDisadvantage: true,
+            discardedRoll: undefined,
+            selectedRoll: selectedRoll
+          })
+          
+          // Add discarded die  
+          diceResults.push({
+            type: diceType,
+            result: discardedRoll,
+            isAdvantageDisadvantage: true,
+            discardedRoll: discardedRoll,
+            selectedRoll: undefined
+          })
+          
+        } else {
+          // Normal roll
+          results.push(roll)
+          total += roll
+          
+          // Store detailed roll info for dice results
+          diceResults.push({
+            type: diceType,
+            result: roll,
+            isAdvantageDisadvantage,
+            discardedRoll,
+            selectedRoll: isAdvantageDisadvantage ? selectedRoll : undefined
+          })
         }
-
-        diceRolled.push({
-          type: diceType,
-          count,
-          results
-        })
-
-        details.push(`${count}${diceType}=${results.join(',')}`)
       }
+
+      diceRolled.push({
+        type: diceType,
+        count,
+        results
+      })
+
+      details.push(`${count}${diceType}=${results.join(',')}`)
     }
+  }
 
-    // Add modifier
-    if (modifier.value !== 0) {
-      total += modifier.value
-      details.push(modifier.value)
+  // Add modifier
+  if (modifier.value !== 0) {
+    total += modifier.value
+    details.push(modifier.value)
+  }
+
+  // Check for criticals (only on single d20 rolls)
+  let isCritical = false
+  let criticalType: 'success' | 'failure' | undefined
+
+  const d20Results = diceRolled.find(d => d.type === 'd20')
+  if (d20Results && d20Results.count === 1) {
+    const roll = d20Results.results[0]
+    if (roll === 20) {
+      isCritical = true
+      criticalType = 'success'
+    } else if (roll === 1) {
+      isCritical = true
+      criticalType = 'failure'
     }
+  }
 
-    // Check for criticals (only on single d20 rolls)
-    let isCritical = false
-    let criticalType: 'success' | 'failure' | undefined
-
-    const d20Results = diceRolled.find(d => d.type === 'd20')
-    if (d20Results && d20Results.count === 1) {
-      const roll = d20Results.results[0]
-      if (roll === 20) {
-        isCritical = true
-        criticalType = 'success'
-      } else if (roll === 1) {
-        isCritical = true
-        criticalType = 'failure'
-      }
+  // Check for d36 special values
+  const d36Results = diceRolled.find(d => d.type === 'd36')
+  if (d36Results && d36Results.count === 1) {
+    const roll = d36Results.results[0]
+    if (roll === 36) {
+      isCritical = true
+      criticalType = 'success'
+    } else if (roll === 1) {
+      isCritical = true
+      criticalType = 'failure'
     }
+  }
 
-    // Check for d36 special values
-    const d36Results = diceRolled.find(d => d.type === 'd36')
-    if (d36Results && d36Results.count === 1) {
-      const roll = d36Results.results[0]
-      if (roll === 36) {
-        isCritical = true
-        criticalType = 'success'
-      } else if (roll === 1) {
-        isCritical = true
-        criticalType = 'failure'
-      }
+  // Create roll description
+  const diceDesc = Object.entries(diceSelection)
+    .filter(([_, count]) => count > 0)
+    .map(([type, count]) => `${count}${type}`)
+    .join(' + ')
+
+  let description = diceDesc
+  if (modifier.value !== 0) {
+    description += ` ${modifier.value > 0 ? '+' : ''}${modifier.value}`
+  }
+  if (rollType.value !== 'normal') {
+    description += ` (${rollType.value})`
+  }
+
+  const roll: DiceRoll = {
+    id: Date.now().toString(),
+    userName: userName.value || 'Anonymous',
+    userId: 'local-user',
+    timestamp: new Date(),
+    description,
+    total,
+    details,
+    diceRolled,
+    diceResults,
+    modifier: modifier.value,
+    rollType: rollType.value,
+    isCritical,
+    criticalType,
+    isOwn: true
+  }
+
+  // IMMEDIATE: Submit to server for other players (no delay for synchronization)
+  if (isConnected.value && !isOfflineMode.value) {
+    try {
+      await submitDiceRoll({
+        userName: roll.userName,
+        userId: roll.userId,
+        description: roll.description,
+        total: roll.total,
+        details: roll.details,
+        diceRolled: roll.diceRolled,
+        diceResults: roll.diceResults,
+        modifier: roll.modifier,
+        rollType: roll.rollType,
+        isCritical: roll.isCritical,
+        criticalType: roll.criticalType
+      })
+    } catch (error) {
+      console.error('🎲 Failed to submit roll to server:', error)
+      // Roll still works locally even if server submission fails
     }
+  }
 
-    // Create roll description
-    const diceDesc = Object.entries(selectedDice.value)
-      .filter(([_, count]) => count > 0)
-      .map(([type, count]) => `${count}${type}`)
-      .join(' + ')
-
-    let description = diceDesc
-    if (modifier.value !== 0) {
-      description += ` ${modifier.value > 0 ? '+' : ''}${modifier.value}`
-    }
-    if (rollType.value !== 'normal') {
-      description += ` (${rollType.value})`
-    }
-
-    const roll: DiceRoll = {
-      id: Date.now().toString(),
-      userName: userName.value || 'Anonymous',
-      userId: 'local-user',
-      timestamp: new Date(),
-      description,
-      total,
-      details,
-      diceRolled,
-      diceResults,
-      modifier: modifier.value,
-      rollType: rollType.value,
-      isCritical,
-      criticalType,
-      isOwn: true
-    }
-
+  // DELAYED: Show local animation and update history (for visual effect)
+  setTimeout(() => {
     // Add to history (newest first)
     rollHistory.value.unshift(roll)
 
@@ -3237,32 +3260,11 @@ async function rollDice(customSelection?: Record<string, number> | any) {
       // Video will auto-close when it ends via @ended event
     }
 
-    // Submit to server for other s (only if connected and not in offline mode)
-    if (isConnected.value && !isOfflineMode.value) {
-      try {
-        await submitDiceRoll({
-          userName: roll.userName,
-          userId: roll.userId,
-          description: roll.description,
-          total: roll.total,
-          details: roll.details,
-          diceRolled: roll.diceRolled,
-          diceResults: roll.diceResults,
-          modifier: roll.modifier,
-          rollType: roll.rollType,
-          isCritical: roll.isCritical,
-          criticalType: roll.criticalType
-        })
-      } catch (error) {
-        console.error('🎲 Failed to submit roll to server:', error)
-        // Roll still works locally even if server submission fails
-      }
-    }
-
     // Clear animations
     animatingDice.value.clear()
     isRolling.value = false
-  }, 1500) // Longer animation framatic effect
+  }, 800) // Reduced from 1500ms to 800ms for faster local feedback
+}
 }
 
 // Character Attack Functions
