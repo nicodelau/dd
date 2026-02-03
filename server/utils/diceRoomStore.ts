@@ -917,7 +917,19 @@ class DiceRoomStore {
   }
 
   private broadcastUserCount(roomCode: string): void {
-    this.broadcastEvent('users:count', { count: this.getUserCount(roomCode) }, roomCode)
+    const userCount = this.getUserCount(roomCode)
+    this.broadcastEvent('users:count', { count: userCount }, roomCode)
+
+    // Trigger lobby music when enough players have joined
+    // (2+ total users, indicating party formation)
+    if (userCount >= 2) {
+      try {
+        this.triggerLobbyMusic(roomCode)
+      } catch (musicError) {
+        console.warn('Failed to trigger lobby music:', musicError)
+        // Don't fail the user broadcast if music fails
+      }
+    }
   }
 
   private broadcastStatsUpdate(userId: string, stats: PlayerStats, roomCode: string): void {
@@ -1834,6 +1846,203 @@ class DiceRoomStore {
 
     room.musicState.position = position
     room.musicState.lastUpdated = new Date()
+  }
+
+  /**
+   * Setup default music tracks for a room (lobby, tense, battle)
+   */
+  async setupDefaultTracks(roomCode: string, dmUserId: string, trackDefinitions: Array<{
+    url: string;
+    title: string;
+    type: string;
+  }>): Promise<MusicTrack[]> {
+    const room = this.getRoom(roomCode)
+    if (!room) {
+      throw new Error('Room not found')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can setup default tracks')
+    }
+
+    // Initialize music state if it doesn't exist
+    if (!room.musicState) {
+      this.initializeMusicState(roomCode, dmUserId)
+    }
+
+    const addedTracks: MusicTrack[] = []
+
+    for (const trackDef of trackDefinitions) {
+      // Check if track already exists in playlist
+      const existingTrack = room.musicState!.playlist.find(t => t.url === trackDef.url)
+      if (existingTrack) {
+        addedTracks.push(existingTrack)
+        continue
+      }
+
+      // Add new track with metadata
+      const track: MusicTrack = {
+        id: `${trackDef.type}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        name: trackDef.title,
+        title: trackDef.title,
+        url: trackDef.url,
+        addedBy: dmUserId,
+        addedAt: new Date(),
+        isSoundEffect: false,
+        isPlayableWhileMusic: false
+      }
+
+      room.musicState!.playlist.push(track)
+      addedTracks.push(track)
+    }
+
+    room.musicState!.lastUpdated = new Date()
+
+    // Broadcast the updated playlist
+    this.broadcastEvent('music:default_tracks_added', { 
+      tracks: addedTracks, 
+      playlist: room.musicState!.playlist 
+    }, roomCode)
+
+    console.log(`🎵 Added ${addedTracks.length} default tracks to room ${roomCode}`)
+
+    return addedTracks
+  }
+
+  /**
+   * Auto-trigger lobby music when all players have joined
+   */
+  triggerLobbyMusic(roomCode: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room) {
+      console.log(`🎵 triggerLobbyMusic: Room ${roomCode} not found`)
+      return
+    }
+    
+    if (!room.musicState) {
+      console.log(`🎵 triggerLobbyMusic: No music state for room ${roomCode}`)
+      return
+    }
+
+    console.log(`🎵 triggerLobbyMusic: Room ${roomCode} - playlist has ${room.musicState.playlist.length} tracks`)
+
+    // Find lobby music track
+    const lobbyTrack = room.musicState.playlist.find(track => 
+      track.url.includes('LCfEqudu4pc') || track.name.toLowerCase().includes('lobby')
+    )
+
+    if (!lobbyTrack) {
+      console.log(`🎵 triggerLobbyMusic: No lobby track found in room ${roomCode}`)
+      return
+    }
+
+    if (room.musicState.isPlaying) {
+      console.log(`🎵 triggerLobbyMusic: Music already playing in room ${roomCode}`)
+      return
+    }
+
+    console.log(`🎵 triggerLobbyMusic: Starting lobby music "${lobbyTrack.title}" in room ${roomCode}`)
+
+    // Auto-play lobby music
+    room.musicState.currentTrack = lobbyTrack
+    room.musicState.isPlaying = true
+    room.musicState.position = 0
+    room.musicState.fadeTransition = false
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:auto_play', {
+      track: lobbyTrack,
+      type: 'lobby',
+      fadeTransition: false,
+      volume: room.musicState.volume
+    }, roomCode)
+
+    console.log(`🎵 Auto-playing lobby music in room ${roomCode}`)
+  }
+
+  /**
+   * Auto-trigger battle music when combat starts
+   */
+  triggerBattleMusic(roomCode: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room) {
+      console.log(`🎵 triggerBattleMusic: Room ${roomCode} not found`)
+      return
+    }
+    
+    if (!room.musicState) {
+      console.log(`🎵 triggerBattleMusic: No music state for room ${roomCode}`)
+      return
+    }
+
+    console.log(`🎵 triggerBattleMusic: Room ${roomCode} - playlist has ${room.musicState.playlist.length} tracks`)
+
+    // Find battle music track
+    const battleTrack = room.musicState.playlist.find(track => 
+      track.url.includes('t3B802PIuB0') || track.name.toLowerCase().includes('battle')
+    )
+
+    if (!battleTrack) {
+      console.log(`🎵 triggerBattleMusic: No battle track found in room ${roomCode}`)
+      return
+    }
+
+    console.log(`🎵 triggerBattleMusic: Starting battle music "${battleTrack.title}" in room ${roomCode}`)
+
+    // Set fade transition if music is currently playing
+    const wasPlaying = room.musicState.isPlaying && !!room.musicState.currentTrack
+    
+    room.musicState.fadeTransition = wasPlaying
+    room.musicState.currentTrack = battleTrack
+    room.musicState.isPlaying = true
+    room.musicState.position = 0
+    room.musicState.lastUpdated = new Date()
+
+    this.broadcastEvent('music:auto_play', {
+      track: battleTrack,
+      type: 'battle',
+      fadeTransition: wasPlaying,
+      volume: room.musicState.volume
+    }, roomCode)
+
+    console.log(`🎵 Auto-playing battle music in room ${roomCode} with fade: ${wasPlaying}`)
+  }
+
+  /**
+   * Play tense music with fade transition (DM-controlled)
+   */
+  playTenseMusic(roomCode: string, dmUserId: string): void {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.musicState) return
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can control tense music')
+    }
+
+    // Find tense music track
+    const tenseTrack = room.musicState.playlist.find(track => 
+      track.url.includes('fv_7EurNAss') || track.name.toLowerCase().includes('tense')
+    )
+
+    if (tenseTrack) {
+      // Always use fade transition for tense music
+      const wasPlaying = room.musicState.isPlaying && !!room.musicState.currentTrack
+      
+      room.musicState.fadeTransition = true
+      room.musicState.currentTrack = tenseTrack
+      room.musicState.isPlaying = true
+      room.musicState.position = 0
+      room.musicState.lastUpdated = new Date()
+
+      this.broadcastEvent('music:tense_activated', {
+        track: tenseTrack,
+        type: 'tense',
+        fadeTransition: true,
+        volume: room.musicState.volume
+      }, roomCode)
+
+      console.log(`🎵 DM activated tense music in room ${roomCode} with fade transition`)
+    }
   }
 
   getMusicState(roomCode: string): MusicState | null {

@@ -30,6 +30,16 @@
       >
         {{ t('showImage') }}
       </UButton>
+
+      <UButton 
+        v-if="userRole === 'DM'" 
+        color="amber" 
+        variant="outline" 
+        icon="i-heroicons-musical-note"
+        @click="$emit('toggleMusicPanel')"
+      >
+        {{ t('music') }}
+      </UButton>
     </div>
 
     <!-- Room Actions -->
@@ -72,6 +82,7 @@ const emit = defineEmits<{
   toggleLeftSidebar: []
   toggleRightSidebar: []
   showDmImage: []
+  toggleMusicPanel: []
   openInvite: []
   leaveRoom: []
 }>()

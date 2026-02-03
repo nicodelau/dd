@@ -72,6 +72,14 @@ export default defineEventHandler(async (event) => {
     // Use the existing broadcast method from the store
     diceRoomStore.sendEvent('battle:combat_started', eventData, roomCode)
 
+    // Trigger battle music automatically
+    try {
+      diceRoomStore.triggerBattleMusic(roomCode)
+    } catch (musicError) {
+      console.warn('Failed to trigger battle music:', musicError)
+      // Don't fail the combat start if music fails
+    }
+
     return {
       success: true,
       message: 'Combat phase started',

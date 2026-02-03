@@ -75,9 +75,34 @@
             {{ isRightSidebarOpen ? t('hide') : t('show') }} {{ userRole === 'DM' ? t('requestDices') : t('abilities') }}
           </UButton>
           <UButton v-if="userRole === 'DM'" color="purple" variant="outline" icon="i-heroicons-photo"
-            @click="showDmImageModal = true">
+            @click="() => { 
+              console.log('🖼️ Image button clicked!'); 
+              showDmImageModal = true; 
+              console.log('🖼️ showDmImageModal set to:', showDmImageModal);
+            }">
             {{ t('showImage') }}
           </UButton>
+
+          <UButton v-if="userRole === 'DM'" color="amber" variant="outline" icon="i-heroicons-musical-note"
+            @click="async () => { 
+              console.log('🎵 Music button clicked!'); 
+              console.log('🎵 Current showMusicPanel value:', showMusicPanel); 
+              console.log('🎵 Current showDmImageModal value:', showDmImageModal); 
+              showMusicPanel = true; 
+              await nextTick();
+              console.log('🎵 After nextTick - showMusicPanel:', showMusicPanel);
+              console.log('🎵 After nextTick - showDmImageModal:', showDmImageModal);
+              console.log('🎵 Room code:', currentRoom?.code);
+            }">
+            {{ t('music') }}
+          </UButton>
+
+          <!-- Debug: Force DM Role Button (for testing music system) -->
+          <UButton v-if="userRole !== 'DM'" color="orange" variant="outline" icon="i-heroicons-wrench-screwdriver"
+            @click="userRole = 'DM'">
+            🎵 Test Music (Force DM)
+          </UButton>
+
         </div>
 
         <!-- Room Actions -->
@@ -1693,24 +1718,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Topographical Map Section -->
-        <div class="mt-12 border-t border-zinc-800 border-zinc-800 pt-8">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-6">
-              <h2 class="text-2xl font-bold text-white text-white mb-2">
-                🗺️ {{ t('campaignMap') }}
-              </h2>
-              <p class="text-gray-600 text-zinc-400">
-                {{ t('campaignMapDesc') }}
-              </p>
-            </div>
-            <TopoMap 
-              @zone-selected="handleMapZoneSelected"
-              :zones="campaignZones"
-            />
-          </div>
-        </div>
     </main>
     <!-- Invite Players Modal -->
     <UModal v-model="showInviteModal" :ui="{ width: 'max-w-md' }">
@@ -2079,6 +2086,81 @@
       </div>
     </UModal>
 
+    <!-- Music Panel Modal -->
+    <UModal v-model="showMusicPanel" :ui="{ width: 'sm:max-w-md' }">
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">🎵 Music Control Panel</h3>
+            <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="showMusicPanel = false" />
+          </div>
+        </template>
+        <div class="p-4 space-y-4">
+          <p><strong>Room:</strong> {{ currentRoom?.code }} | <strong>Role:</strong> {{ userRole }}</p>
+          
+          <div class="space-y-3">
+            <!-- Setup Default Tracks -->
+            <UButton 
+              color="green" 
+              icon="i-heroicons-plus"
+              :loading="isSettingUpMusic"
+              @click="setupDefaultMusicTracks"
+              class="w-full"
+            >
+              Setup Default Music Tracks
+            </UButton>
+            
+            <!-- Tense Music Control -->
+            <UButton 
+              color="orange" 
+              icon="i-heroicons-exclamation-triangle"
+              :loading="isActivatingTense"
+              @click="activateTenseMusic"
+              class="w-full"
+              variant="outline"
+            >
+              🎭 Activate Tense Music (with fade)
+            </UButton>
+
+            <!-- Manual Triggers for Testing -->
+            <div class="border-t pt-3">
+              <p class="text-sm font-medium mb-2">Manual Test Triggers:</p>
+              <div class="space-y-2">
+                <UButton 
+                  color="blue" 
+                  size="sm"
+                  @click="triggerLobbyMusicManually"
+                  :loading="isTestingLobby"
+                  class="w-full"
+                >
+                  🏰 Test Lobby Music
+                </UButton>
+                
+                <UButton 
+                  color="red" 
+                  size="sm"
+                  @click="triggerBattleMusicManually" 
+                  :loading="isTestingBattle"
+                  class="w-full"
+                >
+                  ⚔️ Test Battle Music
+                </UButton>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-xs text-gray-400 p-2 bg-zinc-800 rounded">
+            <p><strong>Auto-triggers:</strong></p>
+            <ul class="mt-1 space-y-1 text-xs">
+              <li>🏰 Lobby music: Plays when 2+ players join</li>
+              <li>⚔️ Battle music: Plays when combat starts</li>
+              <li>🎭 Tense music: DM-controlled with fade</li>
+            </ul>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
+
     <!-- Critical Roll Animation Modal -->
     <Teleport to="body">
       <Transition enter-active-class="transition-opacity duration-300" enter-from-class="opacity-0"
@@ -2207,9 +2289,6 @@ interface QuickRoll {
   dice: Record<string, number>
   modifier?: number
 }
-
-// Component imports
-import TopoMap from '~/components/TopoMap.vue'
 
 // Translations
 const { t, toggleLanguage, language } = useTranslations()
@@ -2378,6 +2457,13 @@ const dmImageUrl = ref('')
 const dmImageCaption = ref('')
 const dmImageFile = ref<File | null>(null)
 const isSendingImage = ref(false)
+
+// Music Panel state
+const showMusicPanel = ref(false)
+const isSettingUpMusic = ref(false)
+const isActivatingTense = ref(false)
+const isTestingLobby = ref(false)
+const isTestingBattle = ref(false)
 
 // Player Image Display state
 const showImageDisplayModal = ref(false)
@@ -3533,30 +3619,6 @@ function rollSingleDiceType(diceType: string) {
 }
 
 // Handle topographical map zone selection
-function handleMapZoneSelected(zone: { name: string; description: string }) {
-  console.log('Zone selected:', zone)
-  
-  // Could trigger different actions based on user role
-  if (userRole.value === 'DM') {
-    showZoneInfoToast(zone, t('dmZoneInfo'))
-  } else {
-    // Players get basic zone information
-    showZoneInfoToast(zone)
-  }
-}
-
-function showZoneInfoToast(zone: { name: string; description: string }, additionalInfo?: string) {
-  const toast = useToast()
-  toast.add({
-    title: `📍 ${zone.name}`,
-    description: zone.description + (additionalInfo ? `\n\n${additionalInfo}` : ''),
-    timeout: 5000,
-    ui: {
-      icon: 'i-heroicons-map-pin'
-    }
-  })
-}
-
 async function updateUserName() {
   if (userName.value.trim()) {
     // Load characters for the new user name and auto-detect role
@@ -5526,6 +5588,159 @@ const sendInviteToUser = async (targetUser: any) => {
       description: 'Failed to send invite',
       color: 'red'
     })
+  }
+}
+
+// Music control functions
+async function setupDefaultMusicTracks() {
+  if (!currentRoom.value || userRole.value !== 'DM') {
+    console.warn('Cannot setup music: no room or not DM')
+    return
+  }
+
+  isSettingUpMusic.value = true
+  
+  try {
+    console.log('🎵 Setting up default music tracks for room:', currentRoom.value.code)
+    
+    const response = await $fetch('/api/music/setup-default-tracks', {
+      method: 'POST',
+      body: { roomCode: currentRoom.value.code }
+    }) as any
+
+    if (response.success) {
+      const toast = useToast()
+      toast.add({
+        title: t('musicSetupComplete'),
+        description: t('defaultTracksAdded'),
+        color: 'green'
+      })
+      console.log('✅ Default music tracks setup complete')
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to setup music tracks:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: error.data?.message || 'Failed to setup music tracks',
+      color: 'red'
+    })
+  } finally {
+    isSettingUpMusic.value = false
+  }
+}
+
+async function activateTenseMusic() {
+  if (!currentRoom.value || userRole.value !== 'DM') {
+    console.warn('Cannot activate tense music: no room or not DM')
+    return
+  }
+
+  isActivatingTense.value = true
+  
+  try {
+    console.log('🎵 Activating tense music for room:', currentRoom.value.code)
+    
+    const response = await $fetch('/api/music/play-tense', {
+      method: 'POST',
+      body: { roomCode: currentRoom.value.code }
+    }) as any
+
+    if (response.success) {
+      const toast = useToast()
+      toast.add({
+        title: t('tenseMusicActivated'),
+        description: t('tenseMusicFade'),
+        color: 'orange'
+      })
+      console.log('✅ Tense music activated')
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to activate tense music:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: error.data?.message || 'Failed to activate tense music',
+      color: 'red'
+    })
+  } finally {
+    isActivatingTense.value = false
+  }
+}
+
+async function triggerLobbyMusicManually() {
+  if (!currentRoom.value) {
+    console.warn('Cannot trigger lobby music: no room')
+    return
+  }
+
+  isTestingLobby.value = true
+  
+  try {
+    console.log('🎵 Manually triggering lobby music for room:', currentRoom.value.code)
+    
+    const response = await $fetch('/api/music/trigger-lobby', {
+      method: 'POST',
+      body: { roomCode: currentRoom.value.code }
+    }) as any
+
+    if (response.success) {
+      const toast = useToast()
+      toast.add({
+        title: 'Lobby Music Test',
+        description: 'Lobby music manually triggered',
+        color: 'blue'
+      })
+      console.log('✅ Lobby music manually triggered')
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to trigger lobby music:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: error.data?.message || 'Failed to trigger lobby music',
+      color: 'red'
+    })
+  } finally {
+    isTestingLobby.value = false
+  }
+}
+
+async function triggerBattleMusicManually() {
+  if (!currentRoom.value) {
+    console.warn('Cannot trigger battle music: no room')
+    return
+  }
+
+  isTestingBattle.value = true
+  
+  try {
+    console.log('🎵 Manually triggering battle music for room:', currentRoom.value.code)
+    
+    const response = await $fetch('/api/music/trigger-battle', {
+      method: 'POST',
+      body: { roomCode: currentRoom.value.code }
+    }) as any
+
+    if (response.success) {
+      const toast = useToast()
+      toast.add({
+        title: 'Battle Music Test',
+        description: 'Battle music manually triggered',
+        color: 'red'
+      })
+      console.log('✅ Battle music manually triggered')
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to trigger battle music:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Error',
+      description: error.data?.message || 'Failed to trigger battle music',
+      color: 'red'
+    })
+  } finally {
+    isTestingBattle.value = false
   }
 }
 
