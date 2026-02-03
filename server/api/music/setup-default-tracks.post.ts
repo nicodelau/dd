@@ -8,18 +8,18 @@ import { authenticateUser } from '~/server/utils/auth'
 
 const DEFAULT_TRACKS = [
   {
-    url: 'https://www.youtube.com/watch?v=LCfEqudu4pc',
+    url: 'https://www.youtube.com/watch?v=ddMSMwKQkKI',
     title: 'D&D Lobby Music',
     type: 'lobby'
   },
   {
-    url: 'https://www.youtube.com/watch?v=fv_7EurNAss', 
+    url: 'https://www.youtube.com/watch?v=fv_7EurNAss',
     title: 'D&D Tense Music',
     type: 'tense'
   },
   {
     url: 'https://www.youtube.com/watch?v=t3B802PIuB0',
-    title: 'D&D Battle Music', 
+    title: 'D&D Battle Music',
     type: 'battle'
   }
 ]
@@ -59,11 +59,11 @@ export default defineEventHandler(async (event) => {
 
   } catch (error: any) {
     console.error('Error setting up default tracks:', error)
-    
+
     if (error.statusCode) {
       throw error
     }
-    
+
     throw createError({
       statusCode: 500,
       statusMessage: error.message || 'Internal server error'

@@ -26,8 +26,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Trigger battle music manually
-    diceRoomStore.triggerBattleMusic(roomCode)
+     // Trigger battle music manually
+     await diceRoomStore.triggerBattleMusic(roomCode)
 
     console.log(`🎵 Battle music manually triggered in room ${roomCode} by ${user.username}`)
 

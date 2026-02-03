@@ -28,6 +28,15 @@ export default defineEventHandler(async (event) => {
 
     console.log(`⚔️ Battle mode started by ${user.id} in room ${roomCode}`)
 
+    // Trigger battle music automatically when battle mode starts
+    try {
+      await diceRoomStore.triggerBattleMusic(roomCode)
+      console.log(`🎵 Battle music triggered for room ${roomCode}`)
+    } catch (musicError) {
+      console.warn('Failed to trigger battle music on battle start:', musicError)
+      // Don't fail the battle start if music fails
+    }
+
     return {
       success: true,
       message: 'Battle mode started',

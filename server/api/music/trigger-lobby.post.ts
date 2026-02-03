@@ -26,8 +26,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Trigger lobby music manually
-    diceRoomStore.triggerLobbyMusic(roomCode)
+     // Trigger lobby music manually
+     await diceRoomStore.triggerLobbyMusic(roomCode)
 
     console.log(`🎵 Lobby music manually triggered in room ${roomCode} by ${user.username}`)
 

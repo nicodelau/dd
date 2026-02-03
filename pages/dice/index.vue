@@ -98,11 +98,6 @@
           </UButton>
 
           <!-- Debug: Force DM Role Button (for testing music system) -->
-          <UButton v-if="userRole !== 'DM'" color="orange" variant="outline" icon="i-heroicons-wrench-screwdriver"
-            @click="userRole = 'DM'">
-            🎵 Test Music (Force DM)
-          </UButton>
-
         </div>
 
         <!-- Room Actions -->
@@ -2119,7 +2114,7 @@
               class="w-full"
               variant="outline"
             >
-              🎭 Activate Tense Music (with fade)
+              🎵 Play Music
             </UButton>
 
             <!-- Manual Triggers for Testing -->
@@ -2183,6 +2178,29 @@
         </div>
       </Transition>
     </Teleport>
+    <!-- Hidden YouTube Music Player (always present for music to work) -->
+    <div class="hidden">
+      <iframe
+        :id="'youtube-player-' + currentRoom?.code"
+        src=""
+        width="560"
+        height="315"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <!-- Music Status Display (visible to all users) -->
+    <div v-if="currentMusicTrack" class="fixed bottom-4 right-4 bg-black/80 text-white p-3 rounded-lg shadow-lg z-40">
+      <div class="flex items-center space-x-2">
+        <UIcon name="i-heroicons-musical-note" class="w-4 h-4" />
+        <span class="text-sm">{{ currentMusicTrack.title }}</span>
+        <UBadge v-if="isMusicPlaying" color="green" variant="soft" size="xs">Playing</UBadge>
+        <UBadge v-else color="gray" variant="soft" size="xs">Paused</UBadge>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -4781,6 +4799,86 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
+    // Music System Event Listeners
+    eventSource.value.addEventListener('music:auto_play', (event) => {
+      const data = JSON.parse(event.data)
+      console.log(`🎵 SSE Event received: music:auto_play`)
+      console.log(`🎵 Event data:`, data)
+      console.log(`🎵 Track:`, data.track)
+      console.log(`🎵 Auto-playing ${data.type} music:`, data.track.title)
+      
+      // Update music player
+      updateMusicPlayer(data.track, true)
+      
+      // Show user notification for auto-triggered music
+      const toast = useToast()
+      if (data.type === 'lobby') {
+        toast.add({
+          title: '🎵 Welcome!',
+          description: `Now playing: ${data.track.title}`,
+          color: 'blue'
+        })
+      } else if (data.type === 'battle') {
+        toast.add({
+          title: '⚔️ Battle Begins!',
+          description: `Now playing: ${data.track.title}`,
+          color: 'red'
+        })
+      }
+    })
+
+    eventSource.value.addEventListener('music:tense_activated', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🎵 SSE Event received: music:tense_activated')
+      console.log('🎵 Event data:', data)
+      console.log('🎵 Track:', data.track)
+      console.log('🎵 Tense music activated with fade transition')
+      
+      // Update music player
+      updateMusicPlayer(data.track, true)
+      
+      const toast = useToast()
+      toast.add({
+        title: '🎭 Tension Rises...',
+        description: `Now playing: ${data.track.title}`,
+        color: 'orange'
+      })
+    })
+
+    eventSource.value.addEventListener('music:playback_changed', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🎵 Music playback changed:', data)
+      
+      if (data.currentTrack) {
+        updateMusicPlayer(data.currentTrack, data.isPlaying)
+      } else {
+        // No track selected - stop music
+        updateMusicPlayer(null, false)
+      }
+    })
+
+    eventSource.value.addEventListener('music:default_tracks_added', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🎵 Default tracks added:', data.tracks)
+      
+      const toast = useToast()
+      toast.add({
+        title: 'Music System Ready',
+        description: `${data.tracks.length} default tracks added`,
+        color: 'green'
+      })
+    })
+
+    eventSource.value.addEventListener('music:state_updated', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🎵 Music state updated:', data)
+    })
+
+    eventSource.value.addEventListener('music:playback_changed', (event) => {
+      const data = JSON.parse(event.data)
+      console.log('🎵 Music playback changed:', data)
+    })
+
   } catch (error) {
     console.error('🎲 Failed to initialize SSE:', error)
     console.log('🎲 Using offline mode')
@@ -4842,6 +4940,7 @@ async function joinRoom(roomCode?: string) {
   if (!roomCode) return // Don't join if no room code provided
   
   try {
+    console.log('🎲 Attempting to join room:', roomCode)
     const response = await $fetch('/api/dice/join', {
       method: 'POST',
       body: {
@@ -4855,6 +4954,17 @@ async function joinRoom(roomCode?: string) {
     if (response.success) {
       console.log('🎲 Successfully joined room', roomCode, 'as', userRole.value)
 
+      // Set current room state  
+      currentRoom.value = {
+        name: response.room.name,
+        code: response.room.code,
+        isOwner: false // Auto-join from URL means we didn't create it
+      }
+      isInRoom.value = true
+
+      // Update URL to match the joined room
+      updateUrlForRoom(roomCode)
+
       // Load stats based on role
       if (userRole.value === 'Player') {
         await loadPlayerStats(roomCode)
@@ -4864,6 +4974,15 @@ async function joinRoom(roomCode?: string) {
 
       // Sync complete room state (including battle state) after successful join
       await syncCompleteRoomState(roomCode)
+      
+      // Ensure we have a fresh SSE connection to the joined room
+      disconnectSSE() // Close any existing connection
+      await initializeSSE(roomCode) // Connect to the new room
+      
+      console.log('🎲 Room state updated:', {
+        currentRoom: currentRoom.value,
+        isInRoom: isInRoom.value
+      })
     }
   } catch (error) {
     console.error('Failed to join room:', error)
@@ -5591,7 +5710,108 @@ const sendInviteToUser = async (targetUser: any) => {
   }
 }
 
-// Music control functions
+// Music system state
+const currentMusicTrack = ref<{ title: string; url: string } | null>(null)
+const isMusicPlaying = ref(false)
+
+// Helper function to convert YouTube URL to embed URL with autoplay
+function getYouTubeEmbedUrl(url: string): string {
+  const videoId = extractYouTubeVideoId(url)
+  if (!videoId) {
+    console.error('🎵 Cannot create embed URL - no video ID extracted from:', url)
+    return ''
+  }
+  
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0&enablejsapi=1`
+  console.log('🎵 Generated embed URL:', embedUrl)
+  return embedUrl
+}
+
+function extractYouTubeVideoId(url: string): string | null {
+  console.log('🎵 Extracting video ID from URL:', url)
+  
+  // Handle different YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/, // Just the video ID
+    /watch\?v=([a-zA-Z0-9_-]{11})/, // Partial YouTube URL like "watch?v=VIDEO_ID"
+    /embed\/([a-zA-Z0-9_-]{11})/ // Embed format
+  ]
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      console.log('🎵 Extracted video ID:', match[1])
+      return match[1]
+    }
+  }
+  
+  console.warn('🎵 Failed to extract video ID from:', url)
+  return null
+}
+
+// Function to update the YouTube player
+function updateMusicPlayer(track: { title: string; url: string } | null, isPlaying: boolean) {
+  console.log('🎵 updateMusicPlayer called:', { track: track?.title, isPlaying, url: track?.url })
+  
+  currentMusicTrack.value = track
+  isMusicPlaying.value = isPlaying
+  
+  if (!track) {
+    console.log('🎵 No track provided, stopping music')
+    return
+  }
+  
+  // Give the DOM time to update, then update the iframe
+  setTimeout(() => {
+    const iframeId = `youtube-player-${currentRoom.value?.code}`
+    console.log('🎵 Looking for iframe with ID:', iframeId)
+    
+    const iframe = document.getElementById(iframeId) as HTMLIFrameElement
+    if (iframe && track) {
+      const embedUrl = getYouTubeEmbedUrl(track.url)
+      if (embedUrl) {
+        console.log('🎵 Setting iframe src to:', embedUrl)
+        iframe.src = embedUrl
+        
+        // Force the iframe to reload by setting and resetting the src
+        setTimeout(() => {
+          if (iframe.src !== embedUrl) {
+            iframe.src = embedUrl
+          }
+        }, 50)
+      } else {
+        console.error('🎵 Failed to generate embed URL for track:', track)
+      }
+    } else if (!iframe) {
+      console.error('🎵 YouTube iframe not found with ID:', iframeId)
+    }
+  }, 100)
+}
+
+// Debug function for testing lobby music
+async function debugRoomState() {
+  if (!currentRoom.value) return
+  
+  try {
+    const response = await $fetch(`/api/debug/room-state?roomCode=${currentRoom.value.code}`) as any
+    console.log('🐛 DEBUG: Room State:', response)
+    
+    if (response.success && response.roomInfo.musicState) {
+      console.log('🎵 Music State:', response.roomInfo.musicState)
+      console.log('🎵 Playlist tracks:', response.roomInfo.musicState.playlist)
+    }
+  } catch (error) {
+    console.error('🐛 Failed to get room state:', error)
+  }
+}
+
+// Make it available for manual testing
+if (typeof window !== 'undefined') {
+  (window as any).debugRoomState = debugRoomState
+}
+
+// Manual music control functions (existing)
 async function setupDefaultMusicTracks() {
   if (!currentRoom.value || userRole.value !== 'DM') {
     console.warn('Cannot setup music: no room or not DM')
@@ -5632,16 +5852,17 @@ async function setupDefaultMusicTracks() {
 
 async function activateTenseMusic() {
   if (!currentRoom.value || userRole.value !== 'DM') {
-    console.warn('Cannot activate tense music: no room or not DM')
+    console.warn('Cannot play music: no room or not DM')
     return
   }
 
   isActivatingTense.value = true
   
   try {
-    console.log('🎵 Activating tense music for room:', currentRoom.value.code)
+    console.log('🎵 Playing lobby music for room:', currentRoom.value.code)
     
-    const response = await $fetch('/api/music/play-tense', {
+    // Try to play lobby music (first available track)
+    const response = await $fetch('/api/music/trigger-lobby', {
       method: 'POST',
       body: { roomCode: currentRoom.value.code }
     }) as any
@@ -5649,18 +5870,18 @@ async function activateTenseMusic() {
     if (response.success) {
       const toast = useToast()
       toast.add({
-        title: t('tenseMusicActivated'),
-        description: t('tenseMusicFade'),
-        color: 'orange'
+        title: 'Music Playing',
+        description: 'Music has started playing',
+        color: 'green'
       })
-      console.log('✅ Tense music activated')
+      console.log('✅ Music started')
     }
   } catch (error: any) {
-    console.error('❌ Failed to activate tense music:', error)
+    console.error('❌ Failed to play music:', error)
     const toast = useToast()
     toast.add({
       title: 'Error',
-      description: error.data?.message || 'Failed to activate tense music',
+      description: error.data?.message || 'Failed to play music',
       color: 'red'
     })
   } finally {
@@ -5776,8 +5997,8 @@ onMounted(async () => {
   // Load user characters and auto-detect role
   await loadUserCharacters()
 
-  // Auto-join room if there's a room code in the URL
-  if (routeRoomCode.value && routeRoomCode.value !== 'default') {
+  // Auto-join room if there's a room code in the URL and we're not already in a room
+  if (routeRoomCode.value && routeRoomCode.value !== 'default' && !isInRoom.value) {
     console.log('🎲 Auto-joining room from URL:', routeRoomCode.value)
     isAutoJoining.value = true
     try {

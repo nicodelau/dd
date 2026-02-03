@@ -145,54 +145,54 @@ class DiceRoomStore {
     }
 
     // If default room, we'll handle creation if DB load fails
-    
+
     try {
       const dbRoom = await prisma.diceRoom.findUnique({
         where: { code: roomCode },
         include: {
           room_participants: {
-             include: { user: true }
+            include: { user: true }
           },
           dice_rolls: {
-             orderBy: { timestamp: 'desc' },
-             take: 50,
-             include: { users: true }
+            orderBy: { timestamp: 'desc' },
+            take: 50,
+            include: { users: true }
           },
           battle_sessions: {
-             include: {
-                 battle_participants: true
-             }
+            include: {
+              battle_participants: true
+            }
           },
           music_tracks: true
         }
       })
 
       if (!dbRoom) {
-         if (roomCode === 'default') {
-             return this.createRoom('default', 'Default Room', 'system')
-         }
-         return null
+        if (roomCode === 'default') {
+          return this.createRoom('default', 'Default Room', 'system')
+        }
+        return null
       }
 
       // Map DB rolls to DiceRoll interface
       const history: DiceRoll[] = dbRoom.dice_rolls.map((r: any) => {
-         const data = r.data as any
-         return {
-            id: r.id,
-            userName: r.users?.username || 'Unknown',
-            userId: r.userId,
-            timestamp: r.timestamp,
-            description: r.description || '',
-            total: r.total,
-            details: data.details || [],
-            diceRolled: data.diceRolled || [],
-            diceResults: data.diceResults || [],
-            modifier: data.modifier || 0,
-            rollType: data.rollType || 'normal',
-            isCritical: data.isCritical || false,
-            criticalType: data.criticalType,
-            isOwn: false
-         }
+        const data = r.data as any
+        return {
+          id: r.id,
+          userName: r.users?.username || 'Unknown',
+          userId: r.userId,
+          timestamp: r.timestamp,
+          description: r.description || '',
+          total: r.total,
+          details: data.details || [],
+          diceRolled: data.diceRolled || [],
+          diceResults: data.diceResults || [],
+          modifier: data.modifier || 0,
+          rollType: data.rollType || 'normal',
+          isCritical: data.isCritical || false,
+          criticalType: data.criticalType,
+          isOwn: false
+        }
       })
 
       const room: DiceRoom = {
@@ -210,103 +210,103 @@ class DiceRoomStore {
       for (const p of dbRoom.room_participants) {
         let stats: PlayerStats | undefined
         if (p.role === 'Player') {
-            stats = this.createDefaultStats()
+          stats = this.createDefaultStats()
         }
 
         room.users.set(p.userId, {
-            id: p.userId,
-            name: p.user?.username || `User_${p.userId.substring(0,4)}`,
-            role: p.role as UserRole,
-            joinedAt: p.joinedAt,
-            lastSeen: p.lastSeen,
-            roomCode: roomCode,
-            stats
+          id: p.userId,
+          name: p.user?.username || `User_${p.userId.substring(0, 4)}`,
+          role: p.role as UserRole,
+          joinedAt: p.joinedAt,
+          lastSeen: p.lastSeen,
+          roomCode: roomCode,
+          stats
         })
       }
-      
+
       // Load Battle State
       if (dbRoom.battle_sessions) {
-          const bs = dbRoom.battle_sessions
-          const enemies = new Map<string, Enemy>()
-          const participants: BattleParticipant[] = []
-          const selectedPlayerIds = new Set<string>()
-          
-          for (const bp of bs.battle_participants) {
-              const participant: BattleParticipant = {
-                  id: bp.id,
-                  name: bp.name,
-                  type: bp.isEnemy ? 'enemy' : 'player',
-                  initiative: bp.initiative,
-                  initiativeRoll: bp.initiativeRoll,
-                  hitPoints: { current: bp.hpCurrent, max: bp.hpMax },
-                  armorClass: bp.armorClass,
-                  isDefeated: bp.hpCurrent <= 0,
-                  userId: bp.userId || undefined
-              }
-              participants.push(participant)
-              
-              if (bp.isEnemy) {
-                  enemies.set(bp.id, {
-                      id: bp.id,
-                      name: bp.name,
-                      hitPoints: { current: bp.hpCurrent, max: bp.hpMax },
-                      armorClass: bp.armorClass,
-                      initiative: bp.initiative,
-                      initiativeRoll: bp.initiativeRoll,
-                      isDefeated: bp.hpCurrent <= 0,
-                      createdBy: 'system'
-                  })
-              } else if (bp.userId) {
-                  selectedPlayerIds.add(bp.userId)
-              }
+        const bs = dbRoom.battle_sessions
+        const enemies = new Map<string, Enemy>()
+        const participants: BattleParticipant[] = []
+        const selectedPlayerIds = new Set<string>()
+
+        for (const bp of bs.battle_participants) {
+          const participant: BattleParticipant = {
+            id: bp.id,
+            name: bp.name,
+            type: bp.isEnemy ? 'enemy' : 'player',
+            initiative: bp.initiative,
+            initiativeRoll: bp.initiativeRoll,
+            hitPoints: { current: bp.hpCurrent, max: bp.hpMax },
+            armorClass: bp.armorClass,
+            isDefeated: bp.hpCurrent <= 0,
+            userId: bp.userId || undefined
           }
-          
-          participants.sort((a, b) => b.initiativeRoll - a.initiativeRoll)
-          
-          room.battleState = {
-              isActive: bs.isActive,
-              round: bs.round,
-              currentTurnIndex: 0, // Defaulting to 0 as it's missing in DB
-              participants,
-              initiativeOrder: [...participants], // Initialize with sorted participants
-              enemies,
-              initiativeRolled: participants.length > 0,
-              phase: bs.phase as any,
-              selectedPlayerIds
+          participants.push(participant)
+
+          if (bp.isEnemy) {
+            enemies.set(bp.id, {
+              id: bp.id,
+              name: bp.name,
+              hitPoints: { current: bp.hpCurrent, max: bp.hpMax },
+              armorClass: bp.armorClass,
+              initiative: bp.initiative,
+              initiativeRoll: bp.initiativeRoll,
+              isDefeated: bp.hpCurrent <= 0,
+              createdBy: 'system'
+            })
+          } else if (bp.userId) {
+            selectedPlayerIds.add(bp.userId)
           }
+        }
+
+        participants.sort((a, b) => b.initiativeRoll - a.initiativeRoll)
+
+        room.battleState = {
+          isActive: bs.isActive,
+          round: bs.round,
+          currentTurnIndex: 0, // Defaulting to 0 as it's missing in DB
+          participants,
+          initiativeOrder: [...participants], // Initialize with sorted participants
+          enemies,
+          initiativeRolled: participants.length > 0,
+          phase: bs.phase as any,
+          selectedPlayerIds
+        }
       }
 
       // Load Music State
       if (dbRoom.musicState) {
-          const ms = dbRoom.musicState as any
-          const playlist: MusicTrack[] = dbRoom.music_tracks.map((t: any) => ({
-              id: t.id,
-              name: t.title, // Map title to name/title
-              title: t.title,
-              artist: t.artist || undefined,
-              url: t.url,
-              duration: t.duration || undefined,
-              addedBy: t.addedBy,
-              addedAt: t.addedAt,
-              thumbnail: t.thumbnail || undefined,
-              isSoundEffect: t.isSoundEffect,
-              isPlayableWhileMusic: false // Not in DB currently
-          }))
-          
-          room.musicState = {
-              isPlaying: ms.isPlaying || false,
-              volume: ms.volume || 50,
-              position: ms.position || 0,
-              playlist,
-              fadeTransition: ms.fadeTransition || false,
-              lastUpdated: new Date(),
-              currentTrack: playlist.find(t => t.id === ms.currentTrackId),
-              soundEffects: {
-                  soundEffectsVolume: ms.soundEffectsVolume || 75,
-                  playableTrackIds: new Set(),
-                  lastSoundEffectPlayed: undefined
-              }
+        const ms = dbRoom.musicState as any
+        const playlist: MusicTrack[] = dbRoom.music_tracks.map((t: any) => ({
+          id: t.id,
+          name: t.title, // Map title to name/title
+          title: t.title,
+          artist: t.artist || undefined,
+          url: t.url,
+          duration: t.duration || undefined,
+          addedBy: t.addedBy,
+          addedAt: t.addedAt,
+          thumbnail: t.thumbnail || undefined,
+          isSoundEffect: t.isSoundEffect,
+          isPlayableWhileMusic: false // Not in DB currently
+        }))
+
+        room.musicState = {
+          isPlaying: ms.isPlaying || false,
+          volume: ms.volume || 50,
+          position: ms.position || 0,
+          playlist,
+          fadeTransition: ms.fadeTransition || false,
+          lastUpdated: new Date(),
+          currentTrack: playlist.find(t => t.id === ms.currentTrackId),
+          soundEffects: {
+            soundEffectsVolume: ms.soundEffectsVolume || 75,
+            playableTrackIds: new Set(),
+            lastSoundEffectPlayed: undefined
           }
+        }
       }
 
       this.rooms.set(roomCode, room)
@@ -317,7 +317,7 @@ class DiceRoomStore {
       return null
     }
   }
-  
+
   // Room management
   async createRoom(roomCode: string, roomName: string, creatorUserId: string): Promise<DiceRoom> {
     if (this.rooms.has(roomCode)) {
@@ -328,9 +328,9 @@ class DiceRoomStore {
     let existing = null
     try {
       if (!prisma.diceRoom) {
-          console.error('❌ Critical Error: prisma.diceRoom is undefined. Available models:', 
-              Object.keys(prisma).filter(k => typeof (prisma as any)[k] === 'object' && (prisma as any)[k] !== null))
-          throw new Error('Database model DiceRoom is missing. Please restart the server.')
+        console.error('❌ Critical Error: prisma.diceRoom is undefined. Available models:',
+          Object.keys(prisma).filter(k => typeof (prisma as any)[k] === 'object' && (prisma as any)[k] !== null))
+        throw new Error('Database model DiceRoom is missing. Please restart the server.')
       }
       existing = await prisma.diceRoom.findUnique({ where: { code: roomCode } })
     } catch (dbError) {
@@ -338,12 +338,12 @@ class DiceRoomStore {
       // In production, if DB is unavailable, we can still create in-memory room as fallback
       console.warn('⚠️ Creating room in-memory only due to DB unavailability')
     }
-    
+
     if (existing) {
-        throw new Error(`Room with code ${roomCode} already exists`)
+      throw new Error(`Room with code ${roomCode} already exists`)
     }
-    
-    const roomId = `room_${Date.now()}_${Math.random().toString(36).substring(2,9)}`
+
+    const roomId = `room_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
     const room: DiceRoom = {
       id: roomId,
@@ -355,25 +355,25 @@ class DiceRoomStore {
       rollHistory: [],
       sseConnections: new Map()
     }
-    
+
     // Persist to DB (optional in fallback mode)
     try {
-        if (prisma.diceRoom) {
-            await prisma.diceRoom.create({
-                data: {
-                    id: roomId,
-                    code: roomCode,
-                    name: roomName,
-                    createdBy: creatorUserId,
-                    updatedAt: new Date()
-                }
-            })
-        }
+      if (prisma.diceRoom) {
+        await prisma.diceRoom.create({
+          data: {
+            id: roomId,
+            code: roomCode,
+            name: roomName,
+            createdBy: creatorUserId,
+            updatedAt: new Date()
+          }
+        })
+      }
     } catch (e) {
-        console.error('Failed to create room in DB, continuing with in-memory only:', e)
-        // Don't throw error - allow room to exist in memory
+      console.error('Failed to create room in DB, continuing with in-memory only:', e)
+      // Don't throw error - allow room to exist in memory
     }
-    
+
     this.rooms.set(roomCode, room)
     console.log(`🎲 Created new room: ${roomCode} (${roomName}) by ${creatorUserId}`)
     return room
@@ -430,12 +430,12 @@ class DiceRoomStore {
     }
 
     let user = room.users.get(userId)
-    
+
     if (user) {
       // User already exists, update info but preserve state
       user.name = name
       user.lastSeen = new Date()
-      
+
       // Update role if changed
       if (role && role !== user.role) {
         user.role = role
@@ -447,7 +447,7 @@ class DiceRoomStore {
           user.stats = undefined
         }
       }
-      
+
       room.users.set(userId, user)
       console.log(`🎲 User reconnected to room ${roomCode}: ${user.name} (${userId}) as ${role}`)
     } else {
@@ -461,39 +461,97 @@ class DiceRoomStore {
         roomCode,
         stats: role === 'Player' ? this.createDefaultStats() : undefined
       }
-      
+
       room.users.set(userId, user)
       console.log(`🎲 User joined room ${roomCode}: ${user.name} (${userId}) as ${role}`)
     }
 
+    // Auto-initialize music system when first DM joins
+    if (role === 'DM') {
+      console.log(`🎵 === DM JOINED ROOM ${roomCode} - MUSIC AUTO-SETUP STARTING ===`)
+      console.log(`🎵 DM user: ${user.name} (${userId})`)
+      console.log(`🎵 Room musicState exists: ${!!room.musicState}`)
+      console.log(`🎵 Room musicState playlist length: ${room.musicState?.playlist?.length || 0}`)
+
+      // Initialize if no music state OR if music state exists but has empty playlist
+      const needsSetup = !room.musicState || !room.musicState.playlist || room.musicState.playlist.length === 0
+
+      if (needsSetup) {
+        try {
+          console.log(`🎵 Auto-initializing music system for room ${roomCode} - DM joined`)
+
+          if (!room.musicState) {
+            this.initializeMusicState(roomCode, userId)
+            console.log(`🎵 Music state initialized for room ${roomCode}`)
+          }
+
+          // Auto-setup default tracks for convenience (now with await for proper timing)
+          const defaultTracks = [
+            { url: 'https://www.youtube.com/watch?v=ddMSMwKQkKI', title: 'D&D Lobby Music', type: 'lobby' },
+            { url: 'https://www.youtube.com/watch?v=fv_7EurNAss', title: 'D&D Tense Music', type: 'tense' },
+            { url: 'https://www.youtube.com/watch?v=t3B802PIuB0', title: 'D&D Battle Music', type: 'battle' }
+          ]
+
+          console.log(`🎵 Setting up ${defaultTracks.length} default tracks...`)
+          // Make this synchronous so tracks are ready when user count is broadcast
+          await this.setupDefaultTracks(roomCode, userId, defaultTracks)
+          console.log(`🎵 ✅ Auto-setup complete: ${defaultTracks.length} default tracks added to room ${roomCode}`)
+          console.log(`🎵 Final playlist length: ${room.musicState!.playlist.length}`)
+
+        } catch (musicError) {
+          console.error('❌ Failed to auto-initialize music system:', musicError)
+          // Don't fail user addition if music setup fails
+        }
+      } else {
+        console.log(`🎵 ✅ Music system already setup for room ${roomCode} (${room.musicState!.playlist.length} tracks)`)
+      }
+      console.log(`🎵 === DM AUTO-SETUP COMPLETE for room ${roomCode} ===`)
+    }
+
     // Persist to DB
     try {
-        if (!userId.startsWith('user_')) {
-             await prisma.roomParticipant.upsert({
-                where: {
-                    roomId_userId: {
-                        roomId: room.id,
-                        userId: userId
-                    }
-                },
-                update: {
-                    lastSeen: new Date(),
-                    role: role
-                },
-                create: {
-                    roomId: room.id,
-                    userId: userId,
-                    role: role,
-                    lastSeen: new Date(),
-                    joinedAt: new Date()
-                }
-            })
-        }
+      if (!userId.startsWith('user_')) {
+        await prisma.roomParticipant.upsert({
+          where: {
+            roomId_userId: {
+              roomId: room.id,
+              userId: userId
+            }
+          },
+          update: {
+            lastSeen: new Date(),
+            role: role
+          },
+          create: {
+            roomId: room.id,
+            userId: userId,
+            role: role,
+            lastSeen: new Date(),
+            joinedAt: new Date()
+          }
+        })
+      }
     } catch (e) {
-        console.error('Failed to persist user to DB', e)
+      console.error('Failed to persist user to DB', e)
     }
 
     this.broadcastUserCount(roomCode)
+
+    // Extra debug: Force check lobby music trigger after user addition
+    setTimeout(async () => {
+      console.log(`🎵 DEBUG: Post-user-addition check for lobby music in room ${roomCode}`)
+      const currentUserCount = this.getUserCount(roomCode)
+      console.log(`🎵 DEBUG: Current user count: ${currentUserCount}`)
+      if (currentUserCount >= 2) {
+        console.log(`🎵 DEBUG: Manually triggering lobby music check`)
+        try {
+          await this.triggerLobbyMusic(roomCode)
+        } catch (error) {
+          console.error('🎵 DEBUG: Failed to trigger lobby music:', error)
+        }
+      }
+    }, 1000)
+
     return user
   }
 
@@ -524,7 +582,7 @@ class DiceRoomStore {
     if (user) {
       user.name = name
       user.lastSeen = new Date()
-      
+
       // If role is being changed, update stats accordingly
       if (role && role !== user.role) {
         user.role = role
@@ -534,19 +592,19 @@ class DiceRoomStore {
           user.stats = undefined
         }
       }
-      
+
       room.users.set(userId, user)
 
       // Persist
       try {
-          if (!userId.startsWith('user_')) {
-               await prisma.roomParticipant.update({
-                   where: { roomId_userId: { roomId: room.id, userId } },
-                   data: { role, lastSeen: new Date() }
-               })
-          }
-      } catch (e) { 
-        console.error('Failed to persist user update', e) 
+        if (!userId.startsWith('user_')) {
+          await prisma.roomParticipant.update({
+            where: { roomId_userId: { roomId: room.id, userId } },
+            data: { role, lastSeen: new Date() }
+          })
+        }
+      } catch (e) {
+        console.error('Failed to persist user update', e)
       }
 
       console.log(`🎲 User updated in room ${roomCode}: ${user.name} (${userId}) as ${user.role}`)
@@ -562,7 +620,7 @@ class DiceRoomStore {
     const user = room.users.get(userId)
     if (user) {
       room.users.delete(userId)
-      
+
       // Remove user's SSE connections
       const connectionsToRemove: string[] = []
       for (const [connectionId, connection] of room.sseConnections) {
@@ -571,7 +629,7 @@ class DiceRoomStore {
         }
       }
       connectionsToRemove.forEach(id => this.removeSSEConnection(id, roomCode))
-      
+
       this.broadcastUserCount(roomCode)
       console.log(`🎲 User left room ${roomCode}: ${user.name} (${userId})`)
       return true
@@ -595,7 +653,7 @@ class DiceRoomStore {
     if (!target) {
       throw new Error('Target user not found')
     }
-    
+
     if (target.role === 'DM') {
       throw new Error('Cannot kick other DMs')
     }
@@ -604,10 +662,10 @@ class DiceRoomStore {
     const success = this.removeUser(targetUserId, roomCode)
     if (success) {
       // Broadcast kick event
-      this.broadcastEvent('user:kicked', { 
-        kickedUserId: targetUserId, 
+      this.broadcastEvent('user:kicked', {
+        kickedUserId: targetUserId,
         kickedUserName: target.name,
-        kickerName: kicker.name 
+        kickerName: kicker.name
       }, roomCode)
       console.log(`🎲 User ${target.name} was kicked from room ${roomCode} by ${kicker.name}`)
     }
@@ -685,10 +743,10 @@ class DiceRoomStore {
     }
 
     room.users.set(targetUserId, user)
-    
+
     // Broadcast stats update to all users in the room
     this.broadcastStatsUpdate(targetUserId, user.stats, roomCode)
-    
+
     console.log(`🎲 Stats updated for ${user.name} by ${this.getUser(modifierUserId, roomCode)?.name} in room ${roomCode}`)
     return user.stats
   }
@@ -717,7 +775,7 @@ class DiceRoomStore {
     if (!room) return []
 
     const playersWithStats: Array<{ userId: string; name: string; stats: PlayerStats }> = []
-    
+
     for (const [userId, user] of room.users) {
       if (user.role === 'Player' && user.stats) {
         playersWithStats.push({
@@ -752,27 +810,27 @@ class DiceRoomStore {
 
     // Persist to DB (fire-and-forget)
     prisma.diceRoll.create({
+      data: {
+        roomId: room.id,
+        userId: roll.userId,
+        total: completeRoll.total,
+        description: completeRoll.description,
         data: {
-            roomId: room.id,
-            userId: roll.userId,
-            total: completeRoll.total,
-            description: completeRoll.description,
-            data: {
-                details: completeRoll.details,
-                diceRolled: completeRoll.diceRolled,
-                diceResults: completeRoll.diceResults,
-                modifier: completeRoll.modifier,
-                rollType: completeRoll.rollType,
-                isCritical: completeRoll.isCritical,
-                criticalType: completeRoll.criticalType
-            },
-            timestamp: completeRoll.timestamp
-        }
+          details: completeRoll.details,
+          diceRolled: completeRoll.diceRolled,
+          diceResults: completeRoll.diceResults,
+          modifier: completeRoll.modifier,
+          rollType: completeRoll.rollType,
+          isCritical: completeRoll.isCritical,
+          criticalType: completeRoll.criticalType
+        },
+        timestamp: completeRoll.timestamp
+      }
     }).catch(e => console.error('Failed to save roll to DB', e))
 
     // Broadcast to all connected users in the room
     this.broadcastRoll(completeRoll, roomCode)
-    
+
     console.log(`🎲 Roll added in room ${roomCode}: ${completeRoll.userName} rolled ${completeRoll.total}`)
     return completeRoll
   }
@@ -793,8 +851,8 @@ class DiceRoomStore {
   syncRollHistory(roomCode: string = 'default'): void {
     const room = this.getRoom(roomCode)
     if (room) {
-      this.broadcastEvent('dice:history:sync', { 
-        rollHistory: room.rollHistory 
+      this.broadcastEvent('dice:history:sync', {
+        rollHistory: room.rollHistory
       }, roomCode)
     }
   }
@@ -807,7 +865,7 @@ class DiceRoomStore {
     }
 
     room.sseConnections.set(connectionId, { response, userId, roomCode })
-    
+
     // Send initial data to new connection
     this.sendToConnection(connectionId, 'users:count', { count: this.getUserCount(roomCode) }, roomCode)
     this.sendToConnection(connectionId, 'dice:history', { history: this.getRollHistory(roomCode) }, roomCode)
@@ -822,7 +880,7 @@ class DiceRoomStore {
         playlist: room.musicState.playlist
       }, roomCode)
     }
-    
+
     // Send user's own role and stats if they're a player
     const user = this.getUser(userId, roomCode)
     if (user) {
@@ -830,7 +888,7 @@ class DiceRoomStore {
       if (user.role === 'Player' && user.stats) {
         this.sendToConnection(connectionId, 'user:stats', { stats: user.stats }, roomCode)
       }
-      
+
       // If user is DM, send all player stats
       if (user.role === 'DM') {
         try {
@@ -841,7 +899,7 @@ class DiceRoomStore {
         }
       }
     }
-    
+
     console.log(`🎲 SSE connection added to room ${roomCode}: ${connectionId} for user ${userId}`)
   }
 
@@ -886,7 +944,7 @@ class DiceRoomStore {
     if (!room) return
 
     const deadConnections: string[] = []
-    
+
     for (const [connectionId, connection] of room.sseConnections) {
       try {
         const sseData = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
@@ -908,9 +966,9 @@ class DiceRoomStore {
     // Send roll to all connections except the sender
     for (const [connectionId, connection] of room.sseConnections) {
       if (connection.userId !== roll.userId) {
-        this.sendToConnection(connectionId, 'dice:roll', { 
-          ...roll, 
-          isOwn: false 
+        this.sendToConnection(connectionId, 'dice:roll', {
+          ...roll,
+          isOwn: false
         }, roomCode)
       }
     }
@@ -918,17 +976,26 @@ class DiceRoomStore {
 
   private broadcastUserCount(roomCode: string): void {
     const userCount = this.getUserCount(roomCode)
+    console.log(`🎵 broadcastUserCount: Room ${roomCode} has ${userCount} users`)
     this.broadcastEvent('users:count', { count: userCount }, roomCode)
 
     // Trigger lobby music when enough players have joined
     // (2+ total users, indicating party formation)
     if (userCount >= 2) {
-      try {
-        this.triggerLobbyMusic(roomCode)
-      } catch (musicError) {
-        console.warn('Failed to trigger lobby music:', musicError)
-        // Don't fail the user broadcast if music fails
-      }
+      console.log(`🎵 broadcastUserCount: Triggering lobby music for ${userCount} users in room ${roomCode}`)
+
+      // Add a small delay to ensure all setup is complete, then trigger
+      setTimeout(async () => {
+        try {
+          await this.triggerLobbyMusic(roomCode)
+          console.log(`🎵 broadcastUserCount: Lobby music trigger completed for room ${roomCode}`)
+        } catch (musicError) {
+          console.warn('Failed to trigger lobby music:', musicError)
+        }
+      }, 100) // Small delay to ensure setup completion
+
+    } else {
+      console.log(`🎵 broadcastUserCount: Not enough users (${userCount}) for lobby music in room ${roomCode}`)
     }
   }
 
@@ -971,23 +1038,23 @@ class DiceRoomStore {
     // Persist to DB (fire-and-forget)
     const battleId = `battle_${Date.now()}`
     prisma.battle_sessions.upsert({
-        where: { roomId: room.id },
-        update: { isActive: false, round: 0, phase: 'setup' },
-        create: {
-            id: battleId,
-            roomId: room.id,
-            isActive: false,
-            round: 0,
-            phase: 'setup'
-        }
+      where: { roomId: room.id },
+      update: { isActive: false, round: 0, phase: 'setup' },
+      create: {
+        id: battleId,
+        roomId: room.id,
+        isActive: false,
+        round: 0,
+        phase: 'setup'
+      }
     }).then(async (session) => {
-        // Clear old participants if any (new battle started)
-        await prisma.battle_participants.deleteMany({ where: { battleId: session.id } })
+      // Clear old participants if any (new battle started)
+      await prisma.battle_participants.deleteMany({ where: { battleId: session.id } })
     }).catch(e => console.error('Failed to persist battle start', e))
 
     // Broadcast battle setup started so all players know battle mode is being configured
     this.broadcastEvent('battle:setup_started', { battleState }, roomCode)
-    
+
     console.log(`⚔️ Battle mode started in room ${roomCode} by ${dmUserId} (setup phase)`)
     return battleState
   }
@@ -1010,11 +1077,11 @@ class DiceRoomStore {
     }
 
     room.battleState.enemies.set(enemy.id, enemy)
-    
+
     // Always broadcast enemy additions, regardless of phase
     // Players should see enemies being added during setup too
     this.broadcastEvent('battle:enemy_added', { enemy }, roomCode)
-    
+
     console.log(`⚔️ Enemy added: ${enemy.name} in room ${roomCode} (${room.battleState.phase} phase)`)
     return enemy
   }
@@ -1034,7 +1101,7 @@ class DiceRoomStore {
       // Always broadcast enemy removals, regardless of phase
       // Players should see enemies being removed during setup too
       this.broadcastEvent('battle:enemy_removed', { enemyId }, roomCode)
-      
+
       console.log(`⚔️ Enemy removed: ${enemyId} in room ${roomCode} (${room.battleState.phase} phase)`)
     }
     return success
@@ -1090,11 +1157,11 @@ class DiceRoomStore {
     room.battleState.isActive = false // Not active until all initiative is rolled
 
     // Broadcast that initiative phase started (DM needs to roll for each participant)
-    this.broadcastEvent('battle:initiative_phase_started', { 
+    this.broadcastEvent('battle:initiative_phase_started', {
       participants,
       message: 'DM needs to roll initiative for each participant'
     }, roomCode)
-    
+
     console.log(`⚔️ Initiative phase started in room ${roomCode} - DM needs to roll for each participant`)
     return participants
   }
@@ -1114,7 +1181,7 @@ class DiceRoomStore {
 
     // Sort participants by initiative (highest first)
     room.battleState.participants.sort((a, b) => b.initiativeRoll - a.initiativeRoll)
-    
+
     // Start combat phase
     room.battleState.phase = 'combat'
     room.battleState.isActive = true
@@ -1133,7 +1200,7 @@ class DiceRoomStore {
       round: 1
     }, roomCode)
 
-    console.log(`⚔️ Combat started in room ${roomCode} - Initiative order:`, 
+    console.log(`⚔️ Combat started in room ${roomCode} - Initiative order:`,
       room.battleState.participants.map(p => `${p.name}: ${p.initiativeRoll}`))
   }
 
@@ -1157,7 +1224,7 @@ class DiceRoomStore {
     }
 
     room.battleState.currentTurnIndex++
-    
+
     // Check if we need to start a new round
     if (room.battleState.currentTurnIndex >= room.battleState.participants.length) {
       room.battleState.currentTurnIndex = 0
@@ -1165,15 +1232,15 @@ class DiceRoomStore {
     }
 
     const currentParticipant = room.battleState.participants[room.battleState.currentTurnIndex]
-    
+
     if (!currentParticipant) {
       throw new Error(`No participant found at index ${room.battleState.currentTurnIndex}`)
     }
-    
-    this.broadcastEvent('battle:turn_changed', { 
-      currentParticipant, 
+
+    this.broadcastEvent('battle:turn_changed', {
+      currentParticipant,
       round: room.battleState.round,
-      currentTurnIndex: room.battleState.currentTurnIndex 
+      currentTurnIndex: room.battleState.currentTurnIndex
     }, roomCode)
 
     return { currentParticipant, round: room.battleState.round }
@@ -1211,11 +1278,11 @@ class DiceRoomStore {
       }
     }
 
-    this.broadcastEvent('battle:damage_dealt', { 
-      targetId, 
-      damage, 
+    this.broadcastEvent('battle:damage_dealt', {
+      targetId,
+      damage,
       newHp: participant.hitPoints.current,
-      isDefeated: participant.isDefeated 
+      isDefeated: participant.isDefeated
     }, roomCode)
 
     console.log(`⚔️ ${damage} damage dealt to ${participant.name} in room ${roomCode}`)
@@ -1405,51 +1472,51 @@ class DiceRoomStore {
     return Math.floor((abilityScore - 10) / 2)
   }
 
-   // Cleanup inactive connections and users
-   cleanup(): void {
-     const now = new Date()
-     // Increased timeout to 3 hours for more persistent sessions
-     const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000)
+  // Cleanup inactive connections and users
+  cleanup(): void {
+    const now = new Date()
+    // Increased timeout to 3 hours for more persistent sessions
+    const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000)
 
-     for (const [roomCode, room] of this.rooms) {
-       const deadConnections: string[] = []
+    for (const [roomCode, room] of this.rooms) {
+      const deadConnections: string[] = []
 
-       // Remove connections that have errors
-       for (const [connectionId, connection] of room.sseConnections) {
-         try {
-           // Send ping to test connection
-           connection.response.write(`event: ping\ndata: ${now.toISOString()}\n\n`)
-         } catch (error) {
-           deadConnections.push(connectionId)
-         }
-       }
+      // Remove connections that have errors
+      for (const [connectionId, connection] of room.sseConnections) {
+        try {
+          // Send ping to test connection
+          connection.response.write(`event: ping\ndata: ${now.toISOString()}\n\n`)
+        } catch (error) {
+          deadConnections.push(connectionId)
+        }
+      }
 
-       deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
+      deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
 
-        // Remove users who haven't been seen in 3 hours (increased from 1 hour)
-        // AND who don't have an active connection
-        const removedUsers: string[] = []
+      // Remove users who haven't been seen in 3 hours (increased from 1 hour)
+      // AND who don't have an active connection
+      const removedUsers: string[] = []
 
-        for (const [userId, user] of room.users) {
-          const hasActiveConnection = Array.from(room.sseConnections.values()).some(conn => conn.userId === userId)
-          
-          if (!hasActiveConnection && user.lastSeen < threeHoursAgo) {
-           this.removeUser(userId, roomCode)
-           removedUsers.push(user.name)
-         }
-       }
+      for (const [userId, user] of room.users) {
+        const hasActiveConnection = Array.from(room.sseConnections.values()).some(conn => conn.userId === userId)
 
-       // Log timeout activity
-       if (removedUsers.length > 0) {
-         console.log(`🎲 Auto-removed ${removedUsers.length} inactive users from room ${roomCode}: ${removedUsers.join(', ')}`)
-       }
+        if (!hasActiveConnection && user.lastSeen < threeHoursAgo) {
+          this.removeUser(userId, roomCode)
+          removedUsers.push(user.name)
+        }
+      }
 
-       // Remove empty rooms (except default)
-       if (roomCode !== 'default' && room.users.size === 0 && room.sseConnections.size === 0) {
-         this.deleteRoom(roomCode)
-       }
-     }
-   }
+      // Log timeout activity
+      if (removedUsers.length > 0) {
+        console.log(`🎲 Auto-removed ${removedUsers.length} inactive users from room ${roomCode}: ${removedUsers.join(', ')}`)
+      }
+
+      // Remove empty rooms (except default)
+      if (roomCode !== 'default' && room.users.size === 0 && room.sseConnections.size === 0) {
+        this.deleteRoom(roomCode)
+      }
+    }
+  }
 
   // Get room statistics
   getStats(roomCode: string = 'default') {
@@ -1517,16 +1584,16 @@ class DiceRoomStore {
   sendInvite(senderId: string, senderName: string, targetUserId: string, targetRoomCode: string): boolean {
     // Find target user's connection in any room
     let targetConnection: { response: any; userId: string; roomCode: string } | null = null
-    
+
     // Search all rooms for the user
     for (const room of this.rooms.values()) {
-        for (const conn of room.sseConnections.values()) {
-            if (conn.userId === targetUserId) {
-                targetConnection = conn
-                break
-            }
+      for (const conn of room.sseConnections.values()) {
+        if (conn.userId === targetUserId) {
+          targetConnection = conn
+          break
         }
-        if (targetConnection) break
+      }
+      if (targetConnection) break
     }
 
     if (!targetConnection) {
@@ -1540,7 +1607,7 @@ class DiceRoomStore {
         targetRoomCode,
         timestamp: new Date()
       }
-      
+
       const sseData = `event: room:invite\ndata: ${JSON.stringify(inviteData)}\n\n`
       targetConnection.response.write(sseData)
       console.log(`📨 Invite sent from ${senderName} to user ${targetUserId} for room ${targetRoomCode}`)
@@ -1578,16 +1645,16 @@ class DiceRoomStore {
 
     room.musicState = musicState
     this.broadcastEvent('music:state_updated', musicState, roomCode)
-    
+
     console.log(`🎵 Music system initialized in room ${roomCode}`)
     return musicState
   }
 
-  addTrackToPlaylist(roomCode: string, dmUserId: string, trackData: { 
-    name: string; 
-    title?: string; 
-    artist?: string; 
-    url: string; 
+  addTrackToPlaylist(roomCode: string, dmUserId: string, trackData: {
+    name: string;
+    title?: string;
+    artist?: string;
+    url: string;
     duration?: number;
     thumbnail?: string;
     publishedAt?: string;
@@ -1636,7 +1703,7 @@ class DiceRoomStore {
     }
 
     this.broadcastEvent('music:track_added', { track, playlist: room.musicState!.playlist }, roomCode)
-    
+
     console.log(`🎵 Track "${track.name}" added to playlist in room ${roomCode}`)
     return track
   }
@@ -1669,13 +1736,13 @@ class DiceRoomStore {
       room.musicState.position = 0
     }
 
-    this.broadcastEvent('music:track_removed', { 
-      trackId, 
+    this.broadcastEvent('music:track_removed', {
+      trackId,
       playlist: room.musicState.playlist,
       currentTrack: room.musicState.currentTrack,
       isPlaying: room.musicState.isPlaying
     }, roomCode)
-    
+
     console.log(`🎵 Track "${removedTrack.name}" removed from playlist in room ${roomCode}`)
     return true
   }
@@ -1710,7 +1777,7 @@ class DiceRoomStore {
       fadeTransition: room.musicState.fadeTransition,
       volume: room.musicState.volume
     }, roomCode)
-    
+
     console.log(`🎵 Now playing "${track.name}" in room ${roomCode}`)
   }
 
@@ -1734,7 +1801,7 @@ class DiceRoomStore {
       fadeTransition: false,
       volume: room.musicState.volume
     }, roomCode)
-    
+
     console.log(`⏸️ Music paused in room ${roomCode}`)
   }
 
@@ -1762,7 +1829,7 @@ class DiceRoomStore {
       fadeTransition: false,
       volume: room.musicState.volume
     }, roomCode)
-    
+
     console.log(`▶️ Music resumed in room ${roomCode}`)
   }
 
@@ -1782,7 +1849,7 @@ class DiceRoomStore {
     room.musicState.lastUpdated = new Date()
 
     this.broadcastEvent('music:volume_changed', { volume }, roomCode)
-    
+
     console.log(`🔊 Volume set to ${volume}% in room ${roomCode}`)
   }
 
@@ -1802,7 +1869,7 @@ class DiceRoomStore {
     room.musicState.lastUpdated = new Date()
 
     this.broadcastEvent('music:sound_effects_volume_changed', { soundEffectsVolume }, roomCode)
-    
+
     console.log(`🔊 Sound effects volume set to ${soundEffectsVolume}% in room ${roomCode}`)
   }
 
@@ -1834,7 +1901,7 @@ class DiceRoomStore {
       volume: room.musicState.soundEffects.soundEffectsVolume,
       timestamp: new Date()
     }, roomCode)
-    
+
     console.log(`🎵 Sound effect "${track.name}" played in room ${roomCode}`)
   }
 
@@ -1899,9 +1966,9 @@ class DiceRoomStore {
     room.musicState!.lastUpdated = new Date()
 
     // Broadcast the updated playlist
-    this.broadcastEvent('music:default_tracks_added', { 
-      tracks: addedTracks, 
-      playlist: room.musicState!.playlist 
+    this.broadcastEvent('music:default_tracks_added', {
+      tracks: addedTracks,
+      playlist: room.musicState!.playlist
     }, roomCode)
 
     console.log(`🎵 Added ${addedTracks.length} default tracks to room ${roomCode}`)
@@ -1912,122 +1979,242 @@ class DiceRoomStore {
   /**
    * Auto-trigger lobby music when all players have joined
    */
-  triggerLobbyMusic(roomCode: string): void {
+  async triggerLobbyMusic(roomCode: string): Promise<void> {
+    console.log(`🎵 triggerLobbyMusic: === STARTING LOBBY MUSIC TRIGGER for room ${roomCode} ===`)
+
     const room = this.getRoom(roomCode)
     if (!room) {
       console.log(`🎵 triggerLobbyMusic: Room ${roomCode} not found`)
       return
     }
-    
+
+    // Auto-initialize music state if missing and there's a DM
     if (!room.musicState) {
-      console.log(`🎵 triggerLobbyMusic: No music state for room ${roomCode}`)
-      return
+      const dmUser = Array.from(room.users.values()).find(u => u.role === 'DM')
+      if (dmUser) {
+        console.log(`🎵 triggerLobbyMusic: Auto-initializing music for room ${roomCode}`)
+        try {
+          this.initializeMusicState(roomCode, dmUser.id)
+          const defaultTracks = [
+            { url: 'https://www.youtube.com/watch?v=ddMSMwKQkKI', title: 'D&D Lobby Music', type: 'lobby' },
+            { url: 'https://www.youtube.com/watch?v=fv_7EurNAss', title: 'D&D Tense Music', type: 'tense' },
+            { url: 'https://www.youtube.com/watch?v=t3B802PIuB0', title: 'D&D Battle Music', type: 'battle' }
+          ]
+          await this.setupDefaultTracks(roomCode, dmUser.id, defaultTracks)
+        } catch (error) {
+          console.error(`🎵 Failed to auto-initialize music for room ${roomCode}:`, error)
+          return
+        }
+      } else {
+        console.log(`🎵 triggerLobbyMusic: No music state and no DM in room ${roomCode}`)
+        return
+      }
     }
 
-    console.log(`🎵 triggerLobbyMusic: Room ${roomCode} - playlist has ${room.musicState.playlist.length} tracks`)
+    console.log(`🎵 triggerLobbyMusic: Room ${roomCode} - playlist has ${room.musicState!.playlist.length} tracks`)
+    console.log(`🎵 triggerLobbyMusic: Current music state - isPlaying: ${room.musicState!.isPlaying}, currentTrack: ${room.musicState!.currentTrack?.title || 'none'}`)
 
-    // Find lobby music track
-    const lobbyTrack = room.musicState.playlist.find(track => 
-      track.url.includes('LCfEqudu4pc') || track.name.toLowerCase().includes('lobby')
+    // Debug: log all playlist tracks
+    console.log(`🎵 triggerLobbyMusic: Playlist tracks:`, room.musicState!.playlist.map(t => ({
+      title: t.title,
+      name: t.name,
+      url: t.url.substring(t.url.lastIndexOf('/') + 1)
+    })))
+
+    // Find lobby music track - Enhanced search logic
+    let lobbyTrack = room.musicState!.playlist.find(track =>
+      track.url.includes('LCfEqudu4pc')
     )
 
+    // Fallback: search by name
     if (!lobbyTrack) {
-      console.log(`🎵 triggerLobbyMusic: No lobby track found in room ${roomCode}`)
+      lobbyTrack = room.musicState!.playlist.find(track =>
+        track.name.toLowerCase().includes('lobby') || track.title.toLowerCase().includes('lobby')
+      )
+    }
+
+    console.log(`🎵 triggerLobbyMusic: Searching for lobby track with criteria:`)
+    console.log(`🎵 triggerLobbyMusic: - Primary: URL contains 'LCfEqudu4pc'`)
+    console.log(`🎵 triggerLobbyMusic: - Fallback: name/title contains 'lobby' (case-insensitive)`)
+    console.log(`🎵 triggerLobbyMusic: Found lobby track:`, lobbyTrack ? { title: lobbyTrack.title, name: lobbyTrack.name, url: lobbyTrack.url.substring(lobbyTrack.url.lastIndexOf('/') + 1) } : 'NONE')
+
+    if (!lobbyTrack) {
+      console.log(`🎵 triggerLobbyMusic: ❌ No lobby track found in room ${roomCode}`)
       return
     }
 
-    if (room.musicState.isPlaying) {
-      console.log(`🎵 triggerLobbyMusic: Music already playing in room ${roomCode}`)
+    if (room.musicState!.isPlaying && room.musicState!.currentTrack) {
+      // If lobby music is already playing, don't restart it
+      if (room.musicState!.currentTrack.url.includes('LCfEqudu4pc') ||
+        room.musicState!.currentTrack.name.toLowerCase().includes('lobby') ||
+        room.musicState!.currentTrack.title.toLowerCase().includes('lobby')) {
+        console.log(`🎵 triggerLobbyMusic: ✅ Lobby music already playing in room ${roomCode} - skipping`)
+        return
+      }
+
+      // If other music is playing, we could either:
+      // 1. Skip lobby music (current behavior)
+      // 2. Override with lobby music (more aggressive)
+      // For now, let's still skip but with better logging
+      console.log(`🎵 triggerLobbyMusic: ⚠️ Other music (${room.musicState!.currentTrack.title || room.musicState!.currentTrack.name}) already playing in room ${roomCode} - skipping lobby music`)
       return
     }
 
-    console.log(`🎵 triggerLobbyMusic: Starting lobby music "${lobbyTrack.title}" in room ${roomCode}`)
+    console.log(`🎵 triggerLobbyMusic: ✅ Starting lobby music "${lobbyTrack.title}" in room ${roomCode}`)
 
     // Auto-play lobby music
-    room.musicState.currentTrack = lobbyTrack
-    room.musicState.isPlaying = true
-    room.musicState.position = 0
-    room.musicState.fadeTransition = false
-    room.musicState.lastUpdated = new Date()
+    room.musicState!.currentTrack = lobbyTrack
+    room.musicState!.isPlaying = true
+    room.musicState!.position = 0
+    room.musicState!.fadeTransition = false
+    room.musicState!.lastUpdated = new Date()
 
     this.broadcastEvent('music:auto_play', {
       track: lobbyTrack,
       type: 'lobby',
       fadeTransition: false,
-      volume: room.musicState.volume
+      volume: room.musicState!.volume
     }, roomCode)
 
-    console.log(`🎵 Auto-playing lobby music in room ${roomCode}`)
+    console.log(`🎵 ✅ Auto-playing lobby music in room ${roomCode} - Event broadcast complete`)
   }
 
   /**
    * Auto-trigger battle music when combat starts
    */
-  triggerBattleMusic(roomCode: string): void {
+  async triggerBattleMusic(roomCode: string): Promise<void> {
+    console.log(`🎵 triggerBattleMusic: === STARTING BATTLE MUSIC TRIGGER for room ${roomCode} ===`)
+
     const room = this.getRoom(roomCode)
     if (!room) {
       console.log(`🎵 triggerBattleMusic: Room ${roomCode} not found`)
       return
     }
-    
+
+    // Auto-initialize music state if missing and there's a DM
     if (!room.musicState) {
-      console.log(`🎵 triggerBattleMusic: No music state for room ${roomCode}`)
-      return
+      const dmUser = Array.from(room.users.values()).find(u => u.role === 'DM')
+      if (dmUser) {
+        console.log(`🎵 triggerBattleMusic: Auto-initializing music for room ${roomCode}`)
+        try {
+          this.initializeMusicState(roomCode, dmUser.id)
+          const defaultTracks = [
+            { url: 'https://www.youtube.com/watch?v=ddMSMwKQkKI', title: 'D&D Lobby Music', type: 'lobby' },
+            { url: 'https://www.youtube.com/watch?v=fv_7EurNAss', title: 'D&D Tense Music', type: 'tense' },
+            { url: 'https://www.youtube.com/watch?v=t3B802PIuB0', title: 'D&D Battle Music', type: 'battle' }
+          ]
+          await this.setupDefaultTracks(roomCode, dmUser.id, defaultTracks)
+        } catch (error) {
+          console.error(`🎵 Failed to auto-initialize music for room ${roomCode}:`, error)
+          return
+        }
+      } else {
+        console.log(`🎵 triggerBattleMusic: No music state and no DM in room ${roomCode}`)
+        return
+      }
     }
 
-    console.log(`🎵 triggerBattleMusic: Room ${roomCode} - playlist has ${room.musicState.playlist.length} tracks`)
+    console.log(`🎵 triggerBattleMusic: Room ${roomCode} - playlist has ${room.musicState!.playlist.length} tracks`)
 
-    // Find battle music track
-    const battleTrack = room.musicState.playlist.find(track => 
-      track.url.includes('t3B802PIuB0') || track.name.toLowerCase().includes('battle')
+    // Debug: log all playlist tracks
+    console.log(`🎵 triggerBattleMusic: Playlist tracks:`, room.musicState!.playlist.map(t => ({
+      title: t.title,
+      name: t.name,
+      url: t.url.substring(t.url.lastIndexOf('/') + 1)
+    })))
+
+    // Find battle music track - Enhanced search logic
+    let battleTrack = room.musicState!.playlist.find(track =>
+      track.url.includes('t3B802PIuB0')
     )
 
+    // Fallback: search by name  
     if (!battleTrack) {
-      console.log(`🎵 triggerBattleMusic: No battle track found in room ${roomCode}`)
+      battleTrack = room.musicState!.playlist.find(track =>
+        track.name.toLowerCase().includes('battle') || track.title.toLowerCase().includes('battle')
+      )
+    }
+
+    console.log(`🎵 triggerBattleMusic: Searching for battle track with criteria:`)
+    console.log(`🎵 triggerBattleMusic: - Primary: URL contains 't3B802PIuB0'`)
+    console.log(`🎵 triggerBattleMusic: - Fallback: name/title contains 'battle' (case-insensitive)`)
+    console.log(`🎵 triggerBattleMusic: Found battle track:`, battleTrack ? { title: battleTrack.title, name: battleTrack.name, url: battleTrack.url.substring(battleTrack.url.lastIndexOf('/') + 1) } : 'NONE')
+
+    if (!battleTrack) {
+      console.log(`🎵 triggerBattleMusic: ❌ No battle track found in room ${roomCode}`)
       return
     }
 
-    console.log(`🎵 triggerBattleMusic: Starting battle music "${battleTrack.title}" in room ${roomCode}`)
+    console.log(`🎵 triggerBattleMusic: ✅ Starting battle music "${battleTrack.title}" in room ${roomCode}`)
 
     // Set fade transition if music is currently playing
-    const wasPlaying = room.musicState.isPlaying && !!room.musicState.currentTrack
-    
-    room.musicState.fadeTransition = wasPlaying
-    room.musicState.currentTrack = battleTrack
-    room.musicState.isPlaying = true
-    room.musicState.position = 0
-    room.musicState.lastUpdated = new Date()
+    const wasPlaying = room.musicState!.isPlaying && !!room.musicState!.currentTrack
+
+    room.musicState!.fadeTransition = wasPlaying
+    room.musicState!.currentTrack = battleTrack
+    room.musicState!.isPlaying = true
+    room.musicState!.position = 0
+    room.musicState!.lastUpdated = new Date()
 
     this.broadcastEvent('music:auto_play', {
       track: battleTrack,
       type: 'battle',
       fadeTransition: wasPlaying,
-      volume: room.musicState.volume
+      volume: room.musicState!.volume
     }, roomCode)
 
-    console.log(`🎵 Auto-playing battle music in room ${roomCode} with fade: ${wasPlaying}`)
+    console.log(`🎵 ✅ Auto-playing battle music in room ${roomCode} with fade: ${wasPlaying} - Event broadcast complete`)
   }
 
   /**
    * Play tense music with fade transition (DM-controlled)
    */
   playTenseMusic(roomCode: string, dmUserId: string): void {
+    console.log(`🎵 playTenseMusic: === STARTING TENSE MUSIC TRIGGER for room ${roomCode} ===`)
+    console.log(`🎵 playTenseMusic: DM user: ${dmUserId}`)
+    
     const room = this.getRoom(roomCode)
-    if (!room || !room.musicState) return
+    if (!room || !room.musicState) {
+      console.log(`🎵 playTenseMusic: Room ${roomCode} not found or no music state`)
+      return
+    }
 
     if (!this.isDM(dmUserId, roomCode)) {
+      console.log(`🎵 playTenseMusic: User ${dmUserId} is not DM in room ${roomCode}`)
       throw new Error('Only DMs can control tense music')
     }
 
-    // Find tense music track
-    const tenseTrack = room.musicState.playlist.find(track => 
-      track.url.includes('fv_7EurNAss') || track.name.toLowerCase().includes('tense')
+    console.log(`🎵 playTenseMusic: Room ${roomCode} - playlist has ${room.musicState.playlist.length} tracks`)
+    
+    // Debug: log all playlist tracks
+    console.log(`🎵 playTenseMusic: Playlist tracks:`, room.musicState.playlist.map(t => ({
+      title: t.title,
+      name: t.name,
+      url: t.url.substring(t.url.lastIndexOf('/') + 1)
+    })))
+
+    // Find tense music track - Enhanced search logic
+    let tenseTrack = room.musicState.playlist.find(track =>
+      track.url.includes('fv_7EurNAss')
     )
+    
+    // Fallback: search by name
+    if (!tenseTrack) {
+      tenseTrack = room.musicState.playlist.find(track =>
+        track.name.toLowerCase().includes('tense') || track.title.toLowerCase().includes('tense')
+      )
+    }
+
+    console.log(`🎵 playTenseMusic: Searching for tense track with criteria:`)
+    console.log(`🎵 playTenseMusic: - Primary: URL contains 'fv_7EurNAss'`)
+    console.log(`🎵 playTenseMusic: - Fallback: name/title contains 'tense' (case-insensitive)`)
+    console.log(`🎵 playTenseMusic: Found tense track:`, tenseTrack ? { title: tenseTrack.title, name: tenseTrack.name, url: tenseTrack.url.substring(tenseTrack.url.lastIndexOf('/') + 1) } : 'NONE')
 
     if (tenseTrack) {
       // Always use fade transition for tense music
       const wasPlaying = room.musicState.isPlaying && !!room.musicState.currentTrack
-      
+      console.log(`🎵 playTenseMusic: Current music playing: ${wasPlaying}, track: ${room.musicState.currentTrack?.title || 'none'}`)
+
       room.musicState.fadeTransition = true
       room.musicState.currentTrack = tenseTrack
       room.musicState.isPlaying = true
@@ -2041,7 +2228,9 @@ class DiceRoomStore {
         volume: room.musicState.volume
       }, roomCode)
 
-      console.log(`🎵 DM activated tense music in room ${roomCode} with fade transition`)
+      console.log(`🎵 ✅ DM activated tense music "${tenseTrack.title}" in room ${roomCode} with fade transition - Event broadcast complete`)
+    } else {
+      console.log(`🎵 playTenseMusic: ❌ No tense track found in room ${roomCode}`)
     }
   }
 
