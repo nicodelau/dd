@@ -25,19 +25,7 @@ export default defineNuxtConfig({
     https: true
   },
 
-  // Fix for app manifest import issues
-  experimental: {
-    appManifest: false
-  },
-
-  // Vite configuration to handle import resolution
-  vite: {
-    optimizeDeps: {
-      include: ['vue', '@nuxt/ui']
-    }
-  },
-
-  // Nitro configuration for better SSE support
+  // Nitro configuration
   nitro: {
     // Support top-level await in Prisma WASM compiler
     esbuild: {
@@ -45,14 +33,9 @@ export default defineNuxtConfig({
         target: 'esnext'
       }
     },
-    // Increase timeouts to prevent SSE disconnections
-    routeRules: {
-      '/api/dice/events': {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'X-Accel-Buffering': 'no'
-        }
-      }
+    // Enable WebSocket support for Socket.IO
+    experimental: {
+      websocket: true
     }
   }
 })

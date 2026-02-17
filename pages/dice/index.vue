@@ -2216,7 +2216,7 @@ const props = withDefaults(defineProps<Props>(), {
   autoJoin: false
 })
 
-// SSE-based dice room implementation (replaces Socket.IO)
+// Socket.IO-based dice room implementation
 
 // Battle mode interfaces
 interface Enemy {
@@ -2334,23 +2334,14 @@ function isValidDiceType(type: string): boolean {
 
 // Reactive state
 const userRole = ref < 'Player' | 'DM' > ('Player')
-const isConnected = ref(false)
+// Socket.IO connection
+const { connectionState: socketState, connect: socketConnect, disconnect: socketDisconnect, getSocket, on: socketOn } = useSocketIO()
+const isConnected = computed(() => socketState.value.status === 'connected')
 const isOfflineMode = ref(false)
 const isOfflineModePreference = ref(false) // Persistent offline mode preference
 const connectedUsers = ref(1)
-const lastHeartbeat = ref(null as Date | null)
-const reconnectAttempts = ref(0)
-// Connection diagnostics for debugging
-const connectionDiagnostics = ref({
-  lastHeartbeat: null as Date | null,
-  disconnectCount: 0,
-  reconnectCount: 0,
-  totalUptime: 0,
-  lastDisconnectReason: '',
-  connectionId: ''
-})
+const reconnectAttempts = computed(() => socketState.value.reconnectAttempts)
 const isRolling = ref(false)
-const eventSource = ref < EventSource | null > (null)
 const animatingDice = ref < Set < string >> (new Set())
 
 // Sidebar state
@@ -3095,7 +3086,7 @@ async function rollIndividualInitiative(participantId: string, participantType: 
     if (response.success) {
       console.log(`🎲 Individual initiative rolled for ${response.participant.name}:`, response.total)
       
-      // The participant update will come via SSE events
+      // The participant update will come via socket events
       // If all have rolled, combat will start automatically
       if (response.allRolled) {
         console.log('🎲 All participants have rolled initiative, starting combat phase')
@@ -3127,7 +3118,7 @@ async function startCombatPhase() {
 
     if (response.success) {
       console.log('⚔️ Combat phase started')
-      // The phase change will come via SSE events
+      // The phase change will come via socket events
     }
   } catch (error) {
     console.error('Failed to start combat phase:', error)
@@ -3991,7 +3982,7 @@ async function createRoom() {
         color: 'green'
       })
 
-      // Reconnect SSE with room code
+      // Reconnect socket with room code
       await reconnectWithRoom(response.room.code)
     }
   } catch (error) {
@@ -4044,7 +4035,7 @@ async function joinExistingRoom() {
         color: 'green'
       })
 
-      // Reconnect SSE with room code
+      // Reconnect socket with room code
       await reconnectWithRoom(response.room.code)
     }
   } catch (error) {
@@ -4081,9 +4072,8 @@ async function leaveRoom() {
       color: 'green'
     })
 
-    // Disconnect from SSE and clear room state
-    disconnectSSE()
-    isConnected.value = false
+    // Disconnect from socket and clear room state
+    disconnectSocket()
   } catch (error) {
     console.error('🏠 Failed to leave room:', error)
     const toast = useToast()
@@ -4161,8 +4151,8 @@ async function kickPlayer(player: Player) {
 }
 
 async function reconnectWithRoom(roomCode: string) {
-  // Close existing SSE connection
-  disconnectSSE()
+  // Close existing socket connection
+  disconnectSocket()
 
   // Clear state (but preserve user data)
   rollHistory.value = []
@@ -4171,9 +4161,9 @@ async function reconnectWithRoom(roomCode: string) {
 
   // Reinitialize with room code
   setTimeout(async () => {
-    await initializeSSE(roomCode)
-    
-    // Sync state after reconnection (with delay to ensure SSE is ready)
+    initializeSocket(roomCode)
+
+    // Sync state after reconnection (with delay to ensure socket is ready)
     setTimeout(() => {
       syncCompleteRoomState(roomCode)
     }, 1000)
@@ -4183,134 +4173,56 @@ async function reconnectWithRoom(roomCode: string) {
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production' || typeof window !== 'undefined' && window.location.hostname !== 'localhost'
 
-// SSE Functions - Server-Sent Events for real-time updates
-function initializeSSE(roomCode?: string) {
+// Socket.IO Functions - Real-time updates via Socket.IO
+function initializeSocket(roomCode?: string) {
   // Don't connect if no room code provided
   if (!roomCode) return
-  
+
   // Check if user has explicitly chosen offline mode
   if (isOfflineModePreference.value) {
     console.log('🎲 Staying in offline mode per user preference')
-    isConnected.value = false
     isOfflineMode.value = true
     connectedUsers.value = 1
     return
   }
 
-  // Always try SSE first (works in all environments)
-  console.log('🎲 Initializing SSE connection for real-time dice room, room:', roomCode)
+  console.log('🔌 Initializing Socket.IO connection for room:', roomCode)
 
   try {
-    // Create SSE connection with room code
-    const sseUrl = `/api/dice/events?userId=${encodeURIComponent(userId.value)}&userName=${encodeURIComponent(userName.value)}&role=${encodeURIComponent(userRole.value)}&roomCode=${encodeURIComponent(roomCode)}`
-    eventSource.value = new EventSource(sseUrl)
-
-    // Connection events
-    eventSource.value.onopen = () => {
-      const now = new Date()
-      console.log('🎲 SSE connection established', {
-        roomCode,
-        userId: userId.value,
-        timestamp: now.toISOString(),
-        reconnectAttempts: reconnectAttempts.value
-      })
-      
-      isConnected.value = true
-      isOfflineMode.value = false
-      
-      // Reset reconnection attempts on successful connection
-      reconnectAttempts.value = 0
-      lastHeartbeat.value = now
-      
-      // Update diagnostics
-      connectionDiagnostics.value.lastHeartbeat = now
-
-      // Start heartbeat to maintain session alive
-      if (roomCode && roomCode !== 'default') {
-        startHeartbeat()
-        console.log('🎲 Heartbeat started for room:', roomCode)
-      }
-
-      // Send join request via HTTP
-      joinRoom(roomCode)
-    }
-
-    eventSource.value.onerror = (error) => {
-      console.error('🎲 SSE connection error:', error)
-      
-      // Log detailed connection diagnostics
-      const diagnostics = {
-        readyState: eventSource.value?.readyState,
-        url: eventSource.value?.url,
-        roomCode,
-        userId: userId.value,
-        userRole: userRole.value,
-        lastHeartbeat: lastHeartbeat.value,
-        timeSinceLastHeartbeat: lastHeartbeat.value ? Date.now() - lastHeartbeat.value.getTime() : null,
-        reconnectAttempts: reconnectAttempts.value,
-        timestamp: new Date().toISOString()
-      }
-      
-      console.error('🎲 Connection error details:', diagnostics)
-      
-      isConnected.value = false
-      connectionDiagnostics.value.disconnectCount++
-      connectionDiagnostics.value.lastDisconnectReason = 'SSE Error Event'
-
-      // If EventSource is closed (not reconnecting), manually reconnect
-      if (eventSource.value?.readyState === EventSource.CLOSED && roomCode) {
-        console.log('🎲 SSE connection closed, scheduling reconnect...')
-        
-        // Use exponential backoff for reconnections
-        const reconnectDelay = Math.min(3000 * Math.pow(1.5, (reconnectAttempts.value || 0)), 30000)
-        reconnectAttempts.value = (reconnectAttempts.value || 0) + 1
-        
-        console.log(`🎲 Attempting reconnection #${reconnectAttempts.value} after ${reconnectDelay}ms`)
-        
-        setTimeout(() => {
-          if (!isOfflineModePreference.value && roomCode) {
-            connectionDiagnostics.value.reconnectCount++
-            reconnectWithRoom(roomCode)
-          }
-        }, reconnectDelay)
-      }
-    }
-
-    // Handle specific events
-    eventSource.value.addEventListener('connected', (event) => {
-      try {
-        if (!event.data) {
-          console.warn('🎲 SSE connected event with no data')
-          return
-        }
-        const data = JSON.parse(event.data)
-        console.log('🎲 SSE connected with ID:', data.connectionId)
-      } catch (error) {
-        console.error('🎲 Error processing connected event:', error)
-      }
+    // Connect via Socket.IO composable
+    socketConnect({
+      userId: userId.value,
+      userName: userName.value,
+      role: userRole.value,
+      roomCode
     })
 
-    eventSource.value.addEventListener('users:count', (event) => {
-      try {
-        if (!event.data) {
-          console.warn('🎲 SSE users:count event with no data')
-          return
-        }
-        const data = JSON.parse(event.data)
-        connectedUsers.value = data.count
-      } catch (error) {
-        console.error('🎲 Error processing users:count event:', error)
-      }
+    isOfflineMode.value = false
+
+    // Start heartbeat to maintain session alive
+    if (roomCode && roomCode !== 'default') {
+      startHeartbeat()
+      console.log('🎲 Heartbeat started for room:', roomCode)
+    }
+
+    // Send join request via HTTP
+    joinRoom(roomCode)
+
+    // Register Socket.IO event listeners
+    socketOn('connected', (data: any) => {
+      console.log('🔌 Socket.IO connected with ID:', data.connectionId)
     })
 
-    eventSource.value.addEventListener('dice:history', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('users:count', (data: any) => {
+      connectedUsers.value = data.count
+    })
+
+    socketOn('dice:history', (data: any) => {
       // Merge with existing history, avoiding duplicates
       const existingIds = new Set(rollHistory.value.map(r => r.id))
       const newRolls = data.history
         .filter((r: DiceRoll) => !existingIds.has(r.id))
         .map((r: DiceRoll) => {
-          // Ensure diceResults exists (for backward compatibility)
           let diceResults = r.diceResults
           if (!diceResults && r.diceRolled) {
             diceResults = []
@@ -4320,7 +4232,6 @@ function initializeSSE(roomCode?: string) {
               })
             })
           }
-
           return {
             ...r,
             timestamp: new Date(r.timestamp),
@@ -4333,13 +4244,11 @@ function initializeSSE(roomCode?: string) {
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     })
 
-    eventSource.value.addEventListener('dice:roll', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('dice:roll', (data: any) => {
       const roll = data as DiceRoll
 
       // Only add rolls from other users
       if (roll.userId !== userId.value) {
-        // Ensure diceResults exists (for backward compatibility)
         let diceResults = roll.diceResults
         if (!diceResults && roll.diceRolled) {
           diceResults = []
@@ -4359,29 +4268,23 @@ function initializeSSE(roomCode?: string) {
 
         rollHistory.value.unshift(processedRoll)
 
-        // Show critical animation if it's a critical roll from another user
         if (processedRoll.isCritical && processedRoll.criticalType) {
           criticalAnimationType.value = processedRoll.criticalType
           showCriticalAnimation.value = true
-          // Video will auto-close when it ends via @ended event
         }
       }
     })
 
-    eventSource.value.addEventListener('dice:history:cleared', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('dice:history:cleared', () => {
       console.log('🎲 Roll history cleared by another user')
       rollHistory.value = []
     })
 
-    eventSource.value.addEventListener('dice:history:sync', (event) => {
-      const data = JSON.parse(event)
+    socketOn('dice:history:sync', (data: any) => {
       const { rollHistory: syncedHistory } = data
-      
+
       if (syncedHistory && Array.isArray(syncedHistory)) {
-        // Process synced rolls to ensure proper timestamps and diceResults
-        const processedRolls = syncedHistory.map(roll => {
-          // Ensure diceResults exists (for backward compatibility)
+        const processedRolls = syncedHistory.map((roll: any) => {
           let diceResults = roll.diceResults
           if (!diceResults && roll.diceRolled) {
             diceResults = []
@@ -4391,7 +4294,6 @@ function initializeSSE(roomCode?: string) {
               })
             })
           }
-
           return {
             ...roll,
             timestamp: new Date(roll.timestamp),
@@ -4400,14 +4302,12 @@ function initializeSSE(roomCode?: string) {
           }
         })
 
-        // Merge with existing history, avoiding duplicates
         const existingIds = new Set(rollHistory.value.map(r => r.id))
         const newRolls = processedRolls.filter((roll: any) => !existingIds.has(roll.id))
-        
-        // Combine and sort by timestamp (newest first)
+
         rollHistory.value = [...newRolls, ...rollHistory.value]
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        
+
         console.log(`🎲 Roll history synced: added ${newRolls.length} new rolls`)
       }
     })
@@ -4415,17 +4315,15 @@ function initializeSSE(roomCode?: string) {
     // Handle room state sync (for reconnection scenarios)
     window.addEventListener('room:state:sync', (event) => {
       const data = (event as any).detail
-      
-      // Sync battle state if it exists
+
       if (data.battleState) {
         battleMode.value = data.battleState
         console.log('⚔️ Battle state synced from room state:', data.battleState)
-        
-        // Show notification if battle is in progress
+
         if (data.battleState.isActive || data.battleState.phase === 'setup') {
           const toast = useToast()
-          const message = data.battleState.isActive 
-            ? 'Joined ongoing battle' 
+          const message = data.battleState.isActive
+            ? 'Joined ongoing battle'
             : 'Battle setup in progress'
           toast.add({
             title: 'Battle Mode',
@@ -4434,11 +4332,9 @@ function initializeSSE(roomCode?: string) {
           })
         }
       }
-      
+
       if (data.rollHistory && Array.isArray(data.rollHistory)) {
-        // Process synced rolls to ensure proper timestamps and diceResults
         const processedRolls = data.rollHistory.map((roll: any) => {
-          // Ensure diceResults exists (for backward compatibility)
           let diceResults = roll.diceResults
           if (!diceResults && roll.diceRolled) {
             diceResults = []
@@ -4448,7 +4344,6 @@ function initializeSSE(roomCode?: string) {
               })
             })
           }
-
           return {
             ...roll,
             timestamp: new Date(roll.timestamp),
@@ -4457,53 +4352,22 @@ function initializeSSE(roomCode?: string) {
           }
         })
 
-        // Merge with existing history, avoiding duplicates
         const existingIds = new Set(rollHistory.value.map(r => r.id))
         const newRolls = processedRolls.filter((roll: any) => !existingIds.has(roll.id))
-        
-        // Combine and sort by timestamp (newest first)
+
         rollHistory.value = [...newRolls, ...rollHistory.value]
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        
+
         console.log(`🎲 Roll history synced from room state: added ${newRolls.length} new rolls`)
       }
     })
 
-    eventSource.value.addEventListener('heartbeat', (event) => {
-      const data = JSON.parse(event.data)
-      const now = new Date()
-      lastHeartbeat.value = now
-      
-      // Update diagnostics
-      connectionDiagnostics.value.lastHeartbeat = now
-      if (data.connectionId) {
-        connectionDiagnostics.value.connectionId = data.connectionId
-      }
-      
-      // Optional: Update user count from heartbeat
-      if (data.userCount) {
-        connectedUsers.value = data.userCount
-      }
-      
-      // Ensure connection is marked as active
-      if (!isConnected.value) {
-        isConnected.value = true
-        console.log('🎲 Connection restored via heartbeat', {
-          connectionId: data.connectionId,
-          uptime: data.uptime,
-          userCount: data.userCount
-        })
-      }
-    })
-
     // Handle role and stats events
-    eventSource.value.addEventListener('user:role', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('user:role', (data: any) => {
       console.log('🎲 Received role:', data.role)
     })
 
-    eventSource.value.addEventListener('user:stats', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('user:stats', (data: any) => {
       if (userRole.value === 'Player') {
         playerStats.value = data.stats
         console.log('🎲 Received player stats')
@@ -4511,35 +4375,29 @@ function initializeSSE(roomCode?: string) {
     })
 
     // Handle DM show image event
-    eventSource.value.addEventListener('dm:show_image', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('dm:show_image', (data: any) => {
       displayedImageUrl.value = data.imageUrl
       displayedImageCaption.value = data.caption || ''
       showImageDisplayModal.value = true
 
-      // Clear existing timeout if any
       if (imageDisplayTimeout.value) {
         clearTimeout(imageDisplayTimeout.value)
       }
 
-      // Auto close after 5 seconds
       imageDisplayTimeout.value = setTimeout(() => {
         showImageDisplayModal.value = false
         imageDisplayTimeout.value = null
       }, 5000)
     })
 
-    eventSource.value.addEventListener('players:stats', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('players:stats', (data: any) => {
       if (userRole.value === 'DM') {
         allPlayers.value = data.players
         console.log('🎲 Received all player stats')
       }
     })
 
-    eventSource.value.addEventListener('stats:updated', (event) => {
-      const data = JSON.parse(event.data)
-      // Update stats for specific player
+    socketOn('stats:updated', (data: any) => {
       if (userRole.value === 'DM') {
         const playerIndex = allPlayers.value.findIndex(p => p.userId === data.userId)
         if (playerIndex !== -1) {
@@ -4551,9 +4409,7 @@ function initializeSSE(roomCode?: string) {
       console.log('🎲 Stats updated for user:', data.userId)
     })
 
-    eventSource.value.addEventListener('dice:request', (event) => {
-      const data = JSON.parse(event.data)
-      // Only show notification to the target player
+    socketOn('dice:request', (data: any) => {
       if (data.targetUserId === userId.value) {
         pendingRollRequest.value = {
           fromDM: data.fromDM,
@@ -4568,12 +4424,10 @@ function initializeSSE(roomCode?: string) {
     })
 
     // Battle Mode Events
-    eventSource.value.addEventListener('battle:setup_started', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:setup_started', (data: any) => {
       battleMode.value = data.battleState
       console.log('⚔️ Battle setup started by DM:', data)
 
-      // Only show notification to DMs, players shouldn't see setup phase
       if (userRole.value === 'DM') {
         const toast = useToast()
         toast.add({
@@ -4584,8 +4438,7 @@ function initializeSSE(roomCode?: string) {
       }
     })
 
-    eventSource.value.addEventListener('battle:started', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:started', (data: any) => {
       battleMode.value = data.battleState
       console.log('⚔️ Battle mode started by DM:', data)
 
@@ -4597,10 +4450,9 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    eventSource.value.addEventListener('battle:ended', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:ended', () => {
       battleMode.value = null
-      console.log('⚔️ Battle mode ended by DM:', data)
+      console.log('⚔️ Battle mode ended by DM')
 
       const toast = useToast()
       toast.add({
@@ -4610,14 +4462,12 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    eventSource.value.addEventListener('battle:enemy_added', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:enemy_added', (data: any) => {
       if (battleMode.value && battleMode.value.enemies) {
         battleMode.value.enemies[data.enemy.id] = data.enemy
       }
       console.log('👹 Enemy added to battle:', data.enemy)
 
-      // Only show notification to players when battle is actually active (not during setup)
       if (userRole.value === 'Player' && battleMode.value?.isActive && battleMode.value?.phase === 'combat') {
         const toast = useToast()
         toast.add({
@@ -4628,14 +4478,12 @@ function initializeSSE(roomCode?: string) {
       }
     })
 
-    eventSource.value.addEventListener('battle:enemy_removed', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:enemy_removed', (data: any) => {
       if (battleMode.value && battleMode.value.enemies) {
         delete battleMode.value.enemies[data.enemyId]
       }
       console.log('👹 Enemy removed from battle:', data.enemyId)
 
-      // Only show notification to players when battle is actually active (not during setup)
       if (userRole.value === 'Player' && battleMode.value?.isActive && battleMode.value?.phase === 'combat') {
         const toast = useToast()
         toast.add({
@@ -4646,8 +4494,7 @@ function initializeSSE(roomCode?: string) {
       }
     })
 
-    eventSource.value.addEventListener('battle:initiative_rolled', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:initiative_rolled', (data: any) => {
       if (battleMode.value) {
         battleMode.value.participants = data.participants
         battleMode.value.initiativeRolled = true
@@ -4666,8 +4513,7 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    eventSource.value.addEventListener('battle:turn_changed', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:turn_changed', (data: any) => {
       if (battleMode.value) {
         battleMode.value.currentTurnIndex = data.currentTurnIndex
       }
@@ -4682,27 +4528,21 @@ function initializeSSE(roomCode?: string) {
           color: 'green'
         })
 
-        // Check if it's the current user's turn and they're a player
         if (currentParticipant.type === 'player' && currentParticipant.userId === userId.value) {
-          // Load special abilities for this character and show modal
           loadPlayerSpecialAbilities(currentParticipant)
         }
       }
     })
 
-    eventSource.value.addEventListener('battle:damage_dealt', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:damage_dealt', (data: any) => {
       console.log('💥 Damage dealt:', data)
 
-      // Update local battle state if target is an enemy
       if (battleMode.value && battleMode.value.enemies) {
-        // Check if target is an enemy
         if (data.targetId in battleMode.value.enemies) {
            const enemy = battleMode.value.enemies[data.targetId]
-           enemy.hitPoints.current = data.newHp // Use newHp from event
+           enemy.hitPoints.current = data.newHp
            enemy.isDefeated = data.isDefeated
         } else {
-           // Might be a player, update allPlayers list if DM
            const player = allPlayers.value.find(p => p.userId === data.targetId)
            if (player) {
                player.stats.hitPoints.current = data.newHp
@@ -4718,18 +4558,15 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    // Initiative rolling phase event handlers
-    eventSource.value.addEventListener('battle:initiative_phase_started', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:initiative_phase_started', (data: any) => {
       console.log('⚔️ Initiative rolling phase started:', data)
-      
+
       if (battleMode.value) {
         battleMode.value.phase = 'rolling_initiative'
         battleMode.value.participants = data.participants || []
         console.log('⚔️ Battle participants loaded:', battleMode.value.participants)
       }
 
-      // Only show notification to DMs
       if (userRole.value === 'DM') {
         const toast = useToast()
         toast.add({
@@ -4740,10 +4577,9 @@ function initializeSSE(roomCode?: string) {
       }
     })
 
-    eventSource.value.addEventListener('battle:individual_initiative_rolled', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:individual_initiative_rolled', (data: any) => {
       console.log('⚔️ Individual initiative rolled:', data)
-      
+
       if (battleMode.value?.participants) {
         const participant = battleMode.value.participants.find(p => p.id === data.participantId)
         if (participant) {
@@ -4760,10 +4596,9 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    eventSource.value.addEventListener('battle:all_initiative_rolled', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:all_initiative_rolled', (data: any) => {
       console.log('⚔️ All participants have rolled initiative:', data)
-      
+
       if (battleMode.value) {
         battleMode.value.phase = 'combat'
         battleMode.value.initiativeOrder = data.initiativeOrder
@@ -4779,10 +4614,9 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    eventSource.value.addEventListener('battle:combat_started', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('battle:combat_started', (data: any) => {
       console.log('⚔️ Combat phase started:', data)
-      
+
       if (battleMode.value) {
         battleMode.value.phase = 'combat'
         battleMode.value.initiativeOrder = data.initiativeOrder
@@ -4799,18 +4633,23 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    // Music System Event Listeners
-    eventSource.value.addEventListener('music:auto_play', (event) => {
-      const data = JSON.parse(event.data)
-      console.log(`🎵 SSE Event received: music:auto_play`)
-      console.log(`🎵 Event data:`, data)
-      console.log(`🎵 Track:`, data.track)
-      console.log(`🎵 Auto-playing ${data.type} music:`, data.track.title)
-      
-      // Update music player
-      updateMusicPlayer(data.track, true)
-      
-      // Show user notification for auto-triggered music
+    // Music event listeners
+    socketOn('music:state_changed', (data: any) => {
+      console.log('🎵 Received music:state_changed event:', data)
+
+      musicState.value.isPlaying = data.isPlaying
+      musicState.value.isPaused = data.isPaused
+      musicState.value.currentTrack = data.currentTrack
+      musicState.value.volume = data.volume
+
+      if (data.currentTrack && !isYouTubePlayerReady()) {
+        initializeYouTubePlayer()
+      }
+
+      if (isYouTubePlayerReady()) {
+        syncPlayerWithMusicState()
+      }
+
       const toast = useToast()
       if (data.type === 'lobby') {
         toast.add({
@@ -4827,30 +4666,119 @@ function initializeSSE(roomCode?: string) {
       }
     })
 
-    eventSource.value.addEventListener('music:tense_activated', (event) => {
-      const data = JSON.parse(event.data)
-      console.log('🎵 SSE Event received: music:tense_activated')
-      console.log('🎵 Event data:', data)
-      console.log('🎵 Track:', data.track)
-      console.log('🎵 Tense music activated with fade transition')
-      
-      // Update music player
-      updateMusicPlayer(data.track, true)
-      
+    socketOn('music:playlist_updated', (data: any) => {
+      musicState.value.playlist = data.playlist
+      console.log('🎵 Playlist updated:', data.playlist)
+
       const toast = useToast()
       toast.add({
-        title: '🎭 Tension Rises...',
-        description: `Now playing: ${data.track.title}`,
+        title: 'Playlist Updated',
+        description: `📋 Playlist now has ${data.playlist.length} tracks`,
+        color: 'blue'
+      })
+    })
+
+    socketOn('music:track_added', (data: any) => {
+      // Check if track already exists to prevent duplicates
+      const existingTrack = musicState.value.playlist.find(t => t.id === data.track.id)
+      if (!existingTrack) {
+        musicState.value.playlist.push(data.track)
+
+        if (data.track.isSoundEffect || data.track.isPlayableWhileMusic) {
+          musicState.value.soundEffects.playableTrackIds.add(data.track.id)
+        }
+
+        console.log('🎵 Track added to playlist:', data.track.title)
+
+        // Ensure YouTube player is initialized if this is the first track
+        if (musicState.value.playlist.length === 1 && !isYouTubePlayerReady()) {
+          initializeYouTubePlayer()
+        }
+
+        const toast = useToast()
+        toast.add({
+          title: data.track.isSoundEffect ? 'Sound Effect Added' : 'Track Added',
+          description: `${data.track.isSoundEffect ? '🔊' : '🎵'} ${data.track.title}`,
+          color: data.track.isSoundEffect ? 'purple' : 'green'
+        })
+      }
+    })
+
+    socketOn('music:playback_changed', (data: any) => {
+      console.log('🎵 Playback changed:', data)
+
+      musicState.value.currentTrack = data.currentTrack
+      musicState.value.isPlaying = data.isPlaying
+      musicState.value.position = data.position
+      musicState.value.volume = data.volume
+      fadeTransition.value.isActive = data.fadeTransition || false
+
+      if (data.currentTrack && !isYouTubePlayerReady()) {
+        initializeYouTubePlayer()
+      }
+
+      if (isYouTubePlayerReady()) {
+        syncPlayerWithMusicState()
+      }
+
+      const toast = useToast()
+      if (data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Now Playing',
+          description: `🎵 ${data.currentTrack.title}`,
+          color: 'green'
+        })
+      } else if (!data.isPlaying && data.currentTrack) {
+        toast.add({
+          title: 'Music Paused',
+          description: '⏸️ Playback paused',
+          color: 'yellow'
+        })
+      }
+    })
+
+    socketOn('music:track_removed', (data: any) => {
+      musicState.value.playlist = musicState.value.playlist.filter(track => track.id !== data.trackId)
+      console.log('🎵 Track removed from playlist:', data.trackId)
+
+      const toast = useToast()
+      toast.add({
+        title: 'Track Removed',
+        description: '➖ Track removed from playlist',
         color: 'orange'
       })
     })
 
-    eventSource.value.addEventListener('music:playback_changed', (event) => {
-      const data = JSON.parse(event.data)
-      console.log('🎵 Music playback changed:', data)
-      
-      if (data.currentTrack) {
-        updateMusicPlayer(data.currentTrack, data.isPlaying)
+    socketOn('music:volume_changed', (data: any) => {
+      musicState.value.volume = data.volume
+      console.log('🎵 Volume changed:', data.volume)
+    })
+
+    socketOn('music:playlist_cleared', () => {
+      musicState.value.playlist = []
+      console.log('🎵 Playlist cleared')
+
+      const toast = useToast()
+      toast.add({
+        title: 'Playlist Cleared',
+        description: '🗑️ All tracks removed from playlist',
+        color: 'red'
+      })
+    })
+
+    // Sound Effects Event Handlers
+    socketOn('music:sound_effects_volume_changed', (data: any) => {
+      musicState.value.soundEffects.soundEffectsVolume = data.soundEffectsVolume
+      console.log('🔊 Sound effects volume changed:', data.soundEffectsVolume)
+    })
+
+    socketOn('music:sound_effect_played', (data: any) => {
+      console.log('🔊 Sound effect played event received:', data)
+
+      musicState.value.soundEffects.lastSoundEffectPlayed = new Date(data.timestamp)
+
+      if (data.track?.url) {
+        playSoundEffectAudio(data.track.url, data.volume || musicState.value.soundEffects.soundEffectsVolume)
       } else {
         // No track selected - stop music
         updateMusicPlayer(null, false)
@@ -4869,21 +4797,17 @@ function initializeSSE(roomCode?: string) {
       })
     })
 
-    eventSource.value.addEventListener('music:state_updated', (event) => {
-      const data = JSON.parse(event.data)
-      console.log('🎵 Music state updated:', data)
-    })
-
-    eventSource.value.addEventListener('music:playback_changed', (event) => {
-      const data = JSON.parse(event.data)
-      console.log('🎵 Music playback changed:', data)
+    // Room invite event
+    socketOn('room:invite', (data: any) => {
+      console.log('📨 Room invite received:', data)
+      const customEvent = new CustomEvent('room:invite', { detail: data })
+      window.dispatchEvent(customEvent)
     })
 
   } catch (error) {
-    console.error('🎲 Failed to initialize SSE:', error)
+    console.error('🔌 Failed to initialize Socket.IO:', error)
     console.log('🎲 Using offline mode')
     isOfflineMode.value = true
-    isConnected.value = false
     connectedUsers.value = 1
   }
 }
@@ -4898,15 +4822,11 @@ function logConnectionDiagnostics() {
     userId: userId.value,
     userRole: userRole.value,
     connectedUsers: connectedUsers.value,
-    lastHeartbeat: lastHeartbeat.value,
-    timeSinceLastHeartbeat: lastHeartbeat.value ? now.getTime() - lastHeartbeat.value.getTime() : null,
     reconnectAttempts: reconnectAttempts.value,
-    connectionDiagnostics: connectionDiagnostics.value,
-    sseReadyState: eventSource.value?.readyState,
-    sseUrl: eventSource.value?.url,
+    socketStatus: socketState.value.status,
     currentTimestamp: now.toISOString()
   }
-  
+
   console.table(diagnostics)
   return diagnostics
 }
@@ -5013,12 +4933,9 @@ async function submitDiceRoll(roll: Omit<DiceRoll, 'id' | 'timestamp' | 'isOwn'>
   }
 }
 
-function disconnectSSE() {
-  if (eventSource.value) {
-    eventSource.value.close()
-    eventSource.value = null
-    console.log('🎲 SSE connection closed')
-  }
+function disconnectSocket() {
+  socketDisconnect()
+  console.log('🔌 Socket.IO connection closed')
 
   // Stop heartbeat when disconnecting
   stopHeartbeat()
@@ -5030,8 +4947,7 @@ function toggleOfflineMode() {
 
   if (isOfflineModePreference.value) {
     // Switch to offline mode
-    disconnectSSE()
-    isConnected.value = false
+    disconnectSocket()
     isOfflineMode.value = true
     connectedUsers.value = 1
     console.log('🎲 Switched to persistent offline mode')
@@ -5056,7 +4972,7 @@ function toggleOfflineMode() {
 
     // Reconnect with current room (if we have a valid room)
     if (currentRoom.value && currentRoom.value.code !== 'default') {
-      initializeSSE(currentRoom.value.code)
+      initializeSocket(currentRoom.value.code)
     }
   }
 }
@@ -5655,6 +5571,1312 @@ async function dealDamageToEnemy(enemy: Enemy) {
   }
 }
 
+// Music System Functions
+async function addTrackToPlaylist() {
+  console.log('🎵 addTrackToPlaylist called with URL:', newTrackUrl.value, 'currentRoom:', currentRoom.value)
+
+  if (!newTrackUrl.value.trim()) {
+    console.log('🎵 No URL provided')
+    return
+  }
+
+  if (!currentRoom.value) {
+    console.log('🎵 No current room')
+    return
+  }
+
+  if (currentRoom.value.code === 'default') {
+    console.log('🎵 Cannot add tracks to default room')
+    return
+  }
+
+  const startTime = Date.now()
+  isAddingTrack.value = true
+
+  // Check socket connection status
+  console.log('🎵 Starting to add track:', newTrackUrl.value.trim(), `(timestamp: ${startTime}) Socket Status: ${socketState.value.status} Room: ${currentRoom.value.code}`)
+
+  // Add a fallback timeout to reset isAddingTrack in case something goes wrong
+  const fallbackTimeout = setTimeout(() => {
+    if (isAddingTrack.value) {
+      console.warn('🎵 ⚠️ Fallback timeout: Resetting isAddingTrack after 10 seconds')
+      isAddingTrack.value = false
+    }
+  }, 10000) // 10 second fallback
+
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim()
+      }
+    })
+
+    const apiResponseTime = Date.now()
+    console.log('🎵 API Response:', response, `(response time: ${apiResponseTime - startTime}ms)`)
+
+    if (response && response.success) {
+      console.log('🎵 Track added to playlist:', response.track, `(api completed in ${apiResponseTime - startTime}ms)`)
+
+      // Don't update local state manually - let socket handle it
+      // This prevents conflicts between local updates and server events
+      newTrackUrl.value = ''
+
+      showMusicToast('Track Added', `Added "${response.track.title}" to playlist`, 'green')
+    } else {
+      console.error('🎵 API returned unsuccessful response:', response)
+      throw new Error(response?.message || 'API returned unsuccessful response')
+    }
+  } catch (error: any) {
+    console.error('🎵 Failed to add track:', error)
+
+    showMusicToast('Error', error.data?.statusMessage || error.message || 'Failed to add track to playlist', 'red')
+  } finally {
+    clearTimeout(fallbackTimeout) // Clear the fallback timeout
+    const finalTime = Date.now()
+    console.log('🎵 Setting isAddingTrack to false', `(total time: ${finalTime - startTime}ms)`)
+    isAddingTrack.value = false
+  }
+}
+
+// Sound Effects Functions
+async function setSoundEffectsVolume() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/sound-effects-volume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        soundEffectsVolume: musicState.value.soundEffects.soundEffectsVolume
+      }
+    })
+
+    if (response.success) {
+      console.log('🔊 Sound effects volume set to:', musicState.value.soundEffects.soundEffectsVolume)
+    }
+  } catch (error) {
+    console.error('Failed to set sound effects volume:', error)
+    // Don't show toast for volume changes as they happen frequently
+  }
+}
+
+async function playSoundEffect(trackId: string) {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/play-sound-effect', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: trackId
+      }
+    })
+
+    if (response.success) {
+      console.log('🔊 Sound effect played:', trackId)
+
+      showMusicToast('Sound Effect Played', '🔊 Sound effect triggered for all players', 'blue')
+    }
+  } catch (error) {
+    console.error('Failed to play sound effect:', error)
+    showMusicToast('Error', 'Failed to play sound effect', 'red')
+  }
+}
+
+// Function to actually play sound effect audio for all clients
+// Ensure YouTube API is ready for sound effects
+function ensureYouTubeAPIForSoundEffects(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
+      console.log('🔊 YouTube API already available for sound effects')
+      resolve(true)
+      return
+    }
+
+    // If the main music player has already loaded the API, it should be available
+    if (isYouTubeAPIReady.value) {
+      console.log('🔊 YouTube API marked as ready')
+      // Wait a moment for the API to fully initialize
+      setTimeout(() => {
+        if (window.YT && window.YT.Player) {
+          resolve(true)
+        } else {
+          console.error('🔊 YouTube API marked ready but not actually available')
+          resolve(false)
+        }
+      }, 100)
+      return
+    }
+
+    // Try to wait for the API to become available
+    let attempts = 0
+    const checkAPI = () => {
+      attempts++
+      if (window.YT && window.YT.Player) {
+        console.log('🔊 YouTube API became available after', attempts, 'attempts')
+        resolve(true)
+      } else if (attempts < 20) { // Wait up to 10 seconds
+        setTimeout(checkAPI, 500)
+      } else {
+        console.error('🔊 YouTube API not available after waiting')
+        resolve(false)
+      }
+    }
+
+    checkAPI()
+  })
+}
+
+function playSoundEffectAudio(youtubeUrl: string, volume: number = 50) {
+  try {
+    // Extract YouTube video ID
+    const videoId = extractYouTubeVideoId(youtubeUrl)
+    if (!videoId) {
+      console.error('🔊 Invalid YouTube URL for sound effect:', youtubeUrl)
+      return
+    }
+
+    console.log('🔊 Playing sound effect:', videoId, 'at volume:', volume)
+
+    // Ensure YouTube API is available, then create player
+    ensureYouTubeAPIForSoundEffects().then((apiReady) => {
+      if (apiReady) {
+        createSoundEffectPlayer(videoId, volume)
+      } else {
+        console.error('🔊 Cannot play sound effect - YouTube API not available')
+        // Could add a fallback here, but for volume control we need the API
+      }
+    })
+
+  } catch (error) {
+    console.error('🔊 Error playing sound effect audio:', error)
+  }
+}
+
+// Create a YouTube Player specifically for sound effects with volume control
+function createSoundEffectPlayer(videoId: string, volume: number) {
+  // Create unique ID for this sound effect player
+  const playerId = `sound-effect-player-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+  // Create container div
+  const playerDiv = document.createElement('div')
+  playerDiv.id = playerId
+  playerDiv.style.position = 'absolute'
+  playerDiv.style.left = '-9999px'
+  playerDiv.style.top = '-9999px'
+  playerDiv.style.width = '1px'
+  playerDiv.style.height = '1px'
+  playerDiv.style.opacity = '0'
+  playerDiv.style.pointerEvents = 'none'
+
+  // Add to sound effects container
+  let container = document.getElementById('sound-effects-container')
+  if (!container) {
+    console.log('🔊 Creating sound effects container')
+    container = document.createElement('div')
+    container.id = 'sound-effects-container'
+    container.style.display = 'none'
+    container.style.position = 'absolute'
+    container.style.left = '-9999px'
+    document.body.appendChild(container)
+  }
+
+  container.appendChild(playerDiv)
+  console.log('🔊 Sound effect player container created:', playerId)
+
+  // Add small delay to avoid conflicts with main player
+  setTimeout(() => {
+    try {
+      if (!window.YT || !window.YT.Player) {
+        console.error('🔊 YouTube API not available when creating sound effect player')
+        if (playerDiv && playerDiv.parentNode) {
+          playerDiv.parentNode.removeChild(playerDiv)
+        }
+        return
+      }
+
+      console.log('🔊 Creating YouTube Player for sound effect')
+      const player = new window.YT.Player(playerId, {
+        height: '1',
+        width: '1',
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          disablekb: 1,
+          enablejsapi: 1,
+          modestbranding: 1,
+          playsinline: 1,
+          rel: 0,
+          start: 0,
+          end: 10,  // Play only first 10 seconds
+          origin: window.location.origin
+        },
+        events: {
+          onReady: (event) => {
+            console.log('🔊 Sound effect player ready, setting volume to:', volume)
+            try {
+              // Set volume and play
+              event.target.setVolume(Math.max(0, Math.min(100, volume)))
+              event.target.playVideo()
+              console.log('🔊 Sound effect playback started at volume:', volume)
+            } catch (e) {
+              console.error('🔊 Error setting volume or starting playback:', e)
+            }
+          },
+          onStateChange: (event) => {
+            console.log('🔊 Sound effect player state changed:', event.data)
+            // Clean up when finished (ENDED = 0)
+            if (event.data === 0) {
+              console.log('🔊 Sound effect ended, cleaning up')
+              setTimeout(() => cleanupPlayer(player, playerDiv), 1000)
+            }
+          },
+          onError: (event) => {
+            console.error('🔊 Sound effect player error:', event.data)
+            setTimeout(() => cleanupPlayer(player, playerDiv), 1000)
+          }
+        }
+      })
+
+      // Safety cleanup after 15 seconds
+      setTimeout(() => {
+        console.log('🔊 Safety cleanup for sound effect player')
+        cleanupPlayer(player, playerDiv)
+      }, 15000)
+
+    } catch (error) {
+      console.error('🔊 Error creating YouTube player for sound effect:', error)
+      // Remove the div if player creation failed
+      if (playerDiv && playerDiv.parentNode) {
+        playerDiv.parentNode.removeChild(playerDiv)
+      }
+    }
+  }, 100) // Small delay to avoid conflicts
+}
+
+// Clean up a sound effect player
+function cleanupPlayer(player: any, playerDiv: HTMLElement) {
+  try {
+    if (player && typeof player.destroy === 'function') {
+      player.destroy()
+      console.log('🔊 YouTube player destroyed')
+    }
+  } catch (e) {
+    console.log('🔊 Error destroying player:', e.message)
+  }
+
+  try {
+    if (playerDiv && playerDiv.parentNode) {
+      playerDiv.parentNode.removeChild(playerDiv)
+      console.log('🔊 Player div removed from DOM')
+    }
+  } catch (e) {
+    console.log('🔊 Error removing player div:', e.message)
+  }
+}
+
+
+
+// Helper function to extract YouTube video ID
+function extractYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+
+  return null
+}
+
+async function addTrackAsSoundEffect() {
+  if (!newTrackUrl.value.trim() || !currentRoom.value) return
+
+  isAddingTrack.value = true
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim(),
+        isSoundEffect: true,
+        isPlayableWhileMusic: true
+      }
+    })
+
+    if (response.success) {
+      console.log('🔊 Sound effect added:', response.track)
+
+      // Clear the input field
+      newTrackUrl.value = ''
+
+      // The track will be added to playlist via socket event
+      showMusicToast('Sound Effect Added', `Added "${response.track.title}" as sound effect`, 'green')
+    }
+  } catch (error) {
+    console.error('Failed to add sound effect:', error)
+    showMusicToast('Error', 'Failed to add sound effect', 'red')
+  } finally {
+    isAddingTrack.value = false
+  }
+}
+
+async function addAndPlayTrack() {
+  if (!newTrackUrl.value.trim() || !currentRoom.value) return
+
+  isAddingTrack.value = true
+  try {
+    const response = await $fetch('/api/music/add-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        url: newTrackUrl.value.trim(),
+        playImmediately: true
+      }
+    })
+
+    if (response.success) {
+      console.log('🎵 Track added and playing:', response.track)
+
+      // Clear the input field
+      newTrackUrl.value = ''
+
+      // The track and playback state will be updated via socket events
+      showMusicToast('Track Added & Playing', `🎵 ${response.track.title}`, 'green')
+    }
+  } catch (error) {
+    console.error('Failed to add and play track:', error)
+    showMusicToast('Error', 'Failed to add and play track', 'red')
+  } finally {
+    isAddingTrack.value = false
+  }
+}
+
+async function pauseMusic() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/pause', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.isPlaying = false
+      console.log('🎵 Music paused')
+
+      showMusicToast('Music Paused', 'Music has been paused for all participants', 'yellow')
+    }
+  } catch (error) {
+    console.error('Failed to pause music:', error)
+    showMusicToast('Error', 'Failed to pause music', 'red')
+  }
+}
+
+async function resumeMusic() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/resume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.isPlaying = true
+      console.log('🎵 Music resumed')
+
+      showMusicToast('Music Resumed', 'Music has been resumed for all participants', 'green')
+    }
+  } catch (error) {
+    console.error('Failed to resume music:', error)
+    showMusicToast('Error', 'Failed to resume music', 'red')
+  }
+}
+
+async function stopMusic() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/stop', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.isPlaying = false
+      musicState.value.currentTrack = null
+      console.log('🎵 Music stopped')
+
+      showMusicToast('Music Stopped', 'Music has been stopped for all participants', 'blue')
+    }
+  } catch (error) {
+    console.error('Failed to stop music:', error)
+    showMusicToast('Error', 'Failed to stop music', 'red')
+  }
+}
+
+async function setVolume() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/volume', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        volume: musicState.value.volume
+      }
+    })
+
+    if (response.success) {
+      console.log('🎵 Volume set to:', musicState.value.volume)
+    }
+  } catch (error) {
+    console.error('Failed to set volume:', error)
+    // Don't show toast for volume changes as they happen frequently
+  }
+}
+
+async function clearPlaylist() {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/clear', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code
+      }
+    })
+
+    if (response.success) {
+      musicState.value.playlist = []
+      musicState.value.currentTrack = null
+      musicState.value.isPlaying = false
+      console.log('🎵 Playlist cleared')
+
+      showMusicToast('Playlist Cleared', 'All tracks have been removed from the playlist', 'blue')
+    }
+  } catch (error) {
+    console.error('Failed to clear playlist:', error)
+    showMusicToast('Error', 'Failed to clear playlist', 'red')
+  }
+}
+
+async function playTrackFromPlaylist(track: any) {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/play', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: track.id
+      }
+    })
+
+    if (response.success) {
+      musicState.value.currentTrack = track
+      musicState.value.isPlaying = true
+      console.log('🎵 Playing track from playlist:', track.title)
+
+      showMusicToast('Now Playing', `Playing "${track.title}"`, 'green')
+    }
+  } catch (error) {
+    console.error('Failed to play track:', error)
+    showMusicToast('Error', 'Failed to play track', 'red')
+  }
+}
+
+async function removeTrackFromPlaylist(trackId: string) {
+  if (!currentRoom.value) return
+
+  try {
+    const response = await $fetch('/api/music/remove-track', {
+      method: 'POST',
+      body: {
+        roomCode: currentRoom.value.code,
+        trackId: trackId
+      }
+    })
+
+    if (response.success) {
+      // Update local state
+      musicState.value.playlist = musicState.value.playlist.filter(t => t.id !== trackId)
+
+      // Clean up sound effects tracking
+      musicState.value.soundEffects.playableTrackIds.delete(trackId)
+
+      // If the removed track was currently playing, stop playback
+      if (musicState.value.currentTrack?.id === trackId) {
+        musicState.value.currentTrack = null
+        musicState.value.isPlaying = false
+      }
+
+      console.log('🎵 Track removed from playlist:', trackId)
+
+      const toast = useToast()
+      toast.add({
+        title: 'Track Removed',
+        description: 'Track has been removed from the playlist',
+        color: 'blue'
+      })
+    }
+  } catch (error) {
+    console.error('Failed to remove track:', error)
+    showMusicToast('Error', 'Failed to remove track', 'red')
+  }
+}
+
+// Utility function to format duration in seconds to MM:SS format
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return '0:00'
+
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// Load initial music state when joining a room
+async function loadInitialMusicState(roomCode?: string) {
+  if (!roomCode || !userRole.value || userRole.value === 'Player') {
+    console.log('🎵 Skipping music state load - no room or not DM')
+    return
+  }
+
+  try {
+    console.log('🎵 Loading initial music state for room:', roomCode)
+
+    const response = await $fetch(`/api/music/state?roomCode=${encodeURIComponent(roomCode)}`)
+
+    if (response.success && response.musicState) {
+      console.log('🎵 Initial music state loaded:', response.musicState)
+
+      // Update local music state
+      musicState.value.isPlaying = response.musicState.isPlaying || false
+      musicState.value.currentTrack = response.musicState.currentTrack || null
+      musicState.value.volume = response.musicState.volume || 50
+      musicState.value.playlist = response.musicState.playlist || []
+
+      if (response.musicState.soundEffects) {
+        musicState.value.soundEffects.soundEffectsVolume = response.musicState.soundEffects.soundEffectsVolume || 75
+        musicState.value.soundEffects.playableTrackIds = new Set(response.musicState.soundEffects.playableTrackIds || [])
+        musicState.value.soundEffects.lastSoundEffectPlayed = response.musicState.soundEffects.lastSoundEffectPlayed || null
+      }
+
+      console.log('🎵 Updated local music state:', musicState.value)
+
+      // Initialize YouTube player with current track if available
+      if (response.musicState.currentTrack && isYouTubePlayerReady()) {
+        console.log('🎵 Syncing YouTube player with loaded music state')
+        syncPlayerWithMusicState()
+      }
+
+    } else {
+      console.log('🎵 No initial music state found for room:', roomCode)
+    }
+
+  } catch (error) {
+    console.error('🎵 Failed to load initial music state:', error)
+  }
+}
+
+// YouTube Player API Integration
+function loadYouTubeAPI() {
+  // Check if YouTube API is already loaded
+  if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
+    console.log('🎵 YouTube API already available')
+    isYouTubeAPIReady.value = true
+    return Promise.resolve(true)
+  }
+
+  if (isYouTubeAPIReady.value) {
+    console.log('🎵 YouTube API marked as ready')
+    return Promise.resolve(true)
+  }
+
+  const existingScript = document.querySelector('#youtube-api-script')
+  if (existingScript) {
+    console.log('🎵 YouTube API script already in DOM, waiting...')
+    // Script exists but API not ready, wait a bit
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (window.YT && window.YT.Player) {
+          isYouTubeAPIReady.value = true
+          console.log('🎵 YouTube API loaded after waiting')
+          resolve(true)
+        } else {
+          console.error('🎵 YouTube API script present but API not ready')
+          resolve(false)
+        }
+      }, 2000)
+    })
+  }
+
+  return new Promise((resolve) => {
+    console.log('🎵 Loading YouTube API script...')
+    const script = document.createElement('script')
+    script.id = 'youtube-api-script'
+    script.src = 'https://www.youtube.com/iframe_api'
+    script.async = true
+
+    // Store previous callback if it exists
+    const previousCallback = window.onYouTubeIframeAPIReady
+
+    // YouTube API calls this global function when ready
+    window.onYouTubeIframeAPIReady = () => {
+      isYouTubeAPIReady.value = true
+      console.log('🎵 YouTube API loaded successfully')
+
+      // Call previous callback if it existed
+      if (previousCallback && typeof previousCallback === 'function') {
+        previousCallback()
+      }
+
+      resolve(true)
+    }
+
+    script.onload = () => {
+      console.log('🎵 YouTube API script loaded, waiting for API ready...')
+    }
+
+    script.onerror = () => {
+      console.error('🎵 Failed to load YouTube API script - check network connection, CSP, or firewall')
+      resolve(false)
+    }
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      if (!isYouTubeAPIReady.value) {
+        console.error('🎵 YouTube API loading timed out')
+        resolve(false)
+      }
+    }, 10000)
+
+    document.head.appendChild(script)
+  })
+}
+
+function getYouTubeVideoId(url: string): string | null {
+  if (!url || typeof url !== 'string') {
+    console.warn('🎵 Invalid URL provided to getYouTubeVideoId:', url)
+    return null
+  }
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      const videoId = match[1]
+      // Validate video ID format
+      const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/
+      if (videoIdPattern.test(videoId)) {
+        return videoId
+      } else {
+        console.warn('🎵 Extracted video ID has invalid format:', videoId)
+      }
+    }
+  }
+
+  console.warn('🎵 Could not extract valid video ID from URL:', url)
+  return null
+}
+
+async function initializeYouTubePlayer() {
+  try {
+    console.log('🎵 Starting YouTube player initialization...')
+
+    const apiLoaded = await loadYouTubeAPI()
+    if (!apiLoaded) {
+      console.error('🎵 Failed to load YouTube API')
+      return
+    }
+
+    if (!isYouTubeAPIReady.value) {
+      console.error('🎵 YouTube API not ready after loading')
+      return
+    }
+
+    // Wait for the DOM element to be available with retries
+    let retries = 0
+    const maxRetries = 10
+    let playerElement = null
+
+    while (retries < maxRetries && !playerElement) {
+      await nextTick()
+      playerElement = document.getElementById('youtube-player')
+      if (!playerElement) {
+        console.log(`🎵 Waiting for player element... (attempt ${retries + 1}/${maxRetries})`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+        retries++
+      }
+    }
+
+    if (!playerElement) {
+      console.error('🎵 YouTube player element not found in DOM after retries')
+      return
+    }
+
+    console.log('🎵 Creating YouTube player instance...')
+    youtubePlayer.value = new window.YT.Player('youtube-player', {
+      height: '100%',
+      width: '100%',
+      playerVars: {
+        autoplay: 0,
+        controls: userRole.value === 'DM' ? 1 : 0, // Only DMs get controls
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+        disablekb: userRole.value !== 'DM' ? 1 : 0, // Disable keyboard for non-DMs
+        fs: 0, // Disable fullscreen for embedded player
+        cc_load_policy: 0,
+        enablejsapi: 1,
+        playsinline: 1,
+        origin: window.location.origin,
+        // Reduce tracking and ads
+        widget_referrer: window.location.origin,
+        host: 'https://www.youtube-nocookie.com'
+      },
+      events: {
+        onReady: (event: any) => {
+          console.log('🎵 YouTube player ready, setting initial volume to:', musicState.value.volume)
+
+          // Set initial volume
+          try {
+            event.target.setVolume(musicState.value.volume)
+            console.log('🎵 Initial volume set successfully')
+
+            // If there's already a current track, sync it
+            if (musicState.value.currentTrack) {
+              console.log('🎵 Syncing existing track:', musicState.value.currentTrack.title)
+              syncPlayerWithMusicState()
+            }
+          } catch (error) {
+            console.error('🎵 Error setting initial volume:', error)
+          }
+        },
+        onStateChange: (event: any) => {
+          handlePlayerStateChange(event)
+        },
+        onError: (event: any) => {
+          console.error('🎵 YouTube player error:', event.data)
+          console.error('🎵 Current video ID:', currentVideoId.value)
+          console.error('🎵 Music state:', musicState.value)
+
+          // Filter out CORS-related tracking errors which are safe to ignore
+          if (event.data && typeof event.data === 'object' &&
+            (event.data.toString().includes('doubleclick') ||
+              event.data.toString().includes('googleads'))) {
+            console.log('🎵 Ignoring YouTube tracking/ads error (safe):', event.data)
+            return
+          }
+
+          let errorMessage = 'There was an error playing the video'
+
+          // More specific error messages
+          switch (event.data) {
+            case 2:
+              errorMessage = `Invalid video ID: ${currentVideoId.value}`
+              break
+            case 5:
+              errorMessage = 'Video cannot be played in HTML5 player'
+              break
+            case 100:
+              errorMessage = 'Video not found or private'
+              break
+            case 101:
+            case 150:
+              errorMessage = 'Video cannot be embedded'
+              break
+          }
+
+          const toast = useToast()
+          toast.add({
+            title: 'Playback Error',
+            description: errorMessage,
+            color: 'red'
+          })
+        }
+      }
+    })
+
+    console.log('🎵 YouTube player initialization completed')
+  } catch (error) {
+    console.error('🎵 Failed to initialize YouTube player:', error)
+    const toast = useToast()
+    toast.add({
+      title: 'Player Error',
+      description: 'Failed to initialize music player',
+      color: 'red'
+    })
+  }
+}
+
+function handlePlayerStateChange(event: any) {
+  const YT = window.YT
+  if (!YT) return
+
+  const state = event.data
+  const isPlaying = state === YT.PlayerState.PLAYING
+  const isPaused = state === YT.PlayerState.PAUSED
+  const isEnded = state === YT.PlayerState.ENDED
+
+  // Only DMs can control music state via the player
+  if (userRole.value === 'DM') {
+    if (isPlaying && !musicState.value.isPlaying) {
+      // Player started, update backend
+      resumeMusic()
+    } else if (isPaused && musicState.value.isPlaying) {
+      // Player paused, update backend
+      pauseMusic()
+    } else if (isEnded) {
+      // Track ended, stop playback
+      stopMusic()
+    }
+  }
+}
+
+// Fade transition variables
+const fadeTransition = ref({
+  isActive: false,
+  targetVolume: 100,
+  currentVolume: 100,
+  duration: 1000, // 1 second fade
+  intervalId: null
+})
+
+// Smooth volume fade function
+function fadeVolume(fromVolume: number, toVolume: number, duration: number = 1000): Promise<void> {
+  return new Promise((resolve) => {
+    if (!isYouTubePlayerReady()) {
+      resolve()
+      return
+    }
+
+    const startTime = Date.now()
+    const volumeRange = toVolume - fromVolume
+
+    fadeTransition.value.isActive = true
+    fadeTransition.value.currentVolume = fromVolume
+    fadeTransition.value.targetVolume = toVolume
+
+    const fadeStep = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      // Use easeInOut curve for smoother transition
+      const easedProgress = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2
+
+      const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
+      fadeTransition.value.currentVolume = currentVolume
+
+      if (isYouTubePlayerReady()) {
+        youtubePlayer.value.setVolume(currentVolume)
+      }
+
+      if (progress >= 1) {
+        fadeTransition.value.isActive = false
+        fadeTransition.value.currentVolume = toVolume
+        resolve()
+      } else {
+        requestAnimationFrame(fadeStep)
+      }
+    }
+
+    fadeStep()
+  })
+}
+
+// Helper function to check if YouTube player is ready and has required methods
+function isYouTubePlayerReady(): boolean {
+  const isReady = !!(youtubePlayer.value &&
+    typeof youtubePlayer.value.setVolume === 'function' &&
+    typeof youtubePlayer.value.playVideo === 'function' &&
+    typeof youtubePlayer.value.pauseVideo === 'function' &&
+    typeof youtubePlayer.value.loadVideoById === 'function')
+
+  if (!isReady) {
+    console.log('🎵 YouTube player readiness check failed:', {
+      playerExists: !!youtubePlayer.value,
+      hasSetVolume: youtubePlayer.value && typeof youtubePlayer.value.setVolume === 'function',
+      hasPlayVideo: youtubePlayer.value && typeof youtubePlayer.value.playVideo === 'function',
+      hasPauseVideo: youtubePlayer.value && typeof youtubePlayer.value.pauseVideo === 'function',
+      hasLoadVideoById: youtubePlayer.value && typeof youtubePlayer.value.loadVideoById === 'function'
+    })
+  }
+
+  return isReady
+}
+
+// Diagnostic function for troubleshooting
+function diagnoseMusicSystem() {
+  const playerElement = document.getElementById('youtube-player')
+
+  console.log('🎵 Music System Diagnostic:', {
+    isYouTubeAPIReady: isYouTubeAPIReady.value,
+    isPlayerReady: isYouTubePlayerReady(),
+    musicState: musicState.value,
+    currentVideoId: currentVideoId.value,
+    fadeTransition: fadeTransition.value,
+    userRole: userRole.value,
+    currentRoom: currentRoom.value,
+    hasPlayerElement: !!playerElement,
+    playerElementHTML: playerElement ? playerElement.outerHTML : null,
+    windowYT: !!window.YT,
+    windowYTLoaded: window.YT ? !!window.YT.Player : false,
+    isConnected: isConnected.value,
+    youtubePlayerValue: youtubePlayer.value,
+    fadeConfig: fadeConfig.value
+  })
+
+  // Try to get player state if available
+  if (youtubePlayer.value && typeof youtubePlayer.value.getPlayerState === 'function') {
+    try {
+      console.log('🎵 YouTube Player State:', youtubePlayer.value.getPlayerState())
+      console.log('🎵 YouTube Player Volume:', youtubePlayer.value.getVolume())
+    } catch (error) {
+      console.log('🎵 Error getting player state:', error)
+    }
+  }
+
+  return {
+    isReady: isYouTubePlayerReady(),
+    hasAPI: isYouTubeAPIReady.value,
+    hasElement: !!playerElement,
+    hasPlayer: !!youtubePlayer.value,
+    musicState: musicState.value
+  }
+}
+
+// Force reinitialize YouTube player
+async function forceReinitializePlayer() {
+  console.log('🎵 Force reinitializing YouTube player...')
+
+  // Reset state
+  youtubePlayer.value = null
+  isYouTubeAPIReady.value = false
+  currentVideoId.value = ''
+
+  // Remove existing script
+  const existingScript = document.getElementById('youtube-api-script')
+  if (existingScript) {
+    existingScript.remove()
+  }
+
+  // Wait a moment
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  // Reinitialize
+  await initializeYouTubePlayer()
+
+  console.log('🎵 Force reinitialization complete')
+}
+
+async function switchTrackWithFade(newVideoId: string) {
+  console.log('🎵 Switching to track:', newVideoId)
+
+  // Validate video ID format
+  if (!newVideoId || typeof newVideoId !== 'string' || newVideoId.length < 10) {
+    console.error('🎵 Invalid video ID:', newVideoId)
+    return
+  }
+
+  // YouTube video IDs are 11 characters long and contain only alphanumeric characters, hyphens, and underscores
+  const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/
+  if (!videoIdPattern.test(newVideoId)) {
+    console.error('🎵 Video ID format invalid:', newVideoId)
+    return
+  }
+
+  if (!isYouTubePlayerReady()) {
+    console.log('🎵 Player not ready, using instant switch')
+    currentVideoId.value = newVideoId
+    if (isYouTubePlayerReady()) {
+      try {
+        youtubePlayer.value.loadVideoById(newVideoId)
+        console.log('🎵 Video loaded successfully')
+      } catch (error) {
+        console.error('🎵 Error loading video:', error)
+      }
+    }
+    return
+  }
+
+  const currentVolume = musicState.value.volume
+  console.log('🎵 Starting smooth track transition with volume:', currentVolume)
+
+  try {
+    // Store current player state
+    const wasPlaying = youtubePlayer.value.getPlayerState() === 1 // PLAYING = 1
+
+    // Create a temporary second player for crossfading
+    const tempPlayerDiv = document.createElement('div')
+    tempPlayerDiv.id = 'youtube-player-temp'
+    tempPlayerDiv.style.display = 'none'
+    document.body.appendChild(tempPlayerDiv)
+
+    const tempPlayer = new window.YT.Player('youtube-player-temp', {
+      height: '1',
+      width: '1',
+      videoId: newVideoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        modestbranding: 1,
+        playsinline: 1,
+        rel: 0
+      },
+      events: {
+        onReady: async (event) => {
+          console.log('🎵 Temp player ready for crossfade')
+
+          // Start new track at 0 volume
+          event.target.setVolume(0)
+          if (wasPlaying) {
+            event.target.playVideo()
+          }
+
+          // Crossfade: fade out current, fade in new simultaneously
+          const fadeDuration = fadeConfig.value.trackTransition
+          const promises = []
+
+          // Fade out current track
+          if (currentVideoId.value) {
+            promises.push(fadeVolume(currentVolume, 0, fadeDuration))
+          }
+
+          // Fade in new track on temp player
+          promises.push(new Promise(async (resolve) => {
+            await new Promise(r => setTimeout(r, 50)) // Slight delay for smoother transition
+            await fadeVolumeForPlayer(event.target, 0, currentVolume, fadeDuration)
+            resolve(true)
+          }))
+
+          // Wait for both fades to complete
+          await Promise.all(promises)
+
+          // Switch to new player
+          currentVideoId.value = newVideoId
+          youtubePlayer.value.stopVideo()
+
+          // Replace main player with new video
+          youtubePlayer.value.loadVideoById(newVideoId)
+          youtubePlayer.value.setVolume(currentVolume)
+
+          if (wasPlaying) {
+            // Small delay to ensure video is loaded
+            setTimeout(() => {
+              if (isYouTubePlayerReady()) {
+                youtubePlayer.value.playVideo()
+              }
+            }, 100)
+          }
+
+          // Cleanup temp player
+          setTimeout(() => {
+            event.target.destroy()
+            if (tempPlayerDiv.parentNode) {
+              tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
+            }
+          }, 500)
+
+          console.log('🎵 Crossfade transition completed')
+        },
+        onError: (event) => {
+          console.error('🎵 Temp player error:', event.data)
+          // Fallback to instant switch
+          currentVideoId.value = newVideoId
+          youtubePlayer.value.loadVideoById(newVideoId)
+          youtubePlayer.value.setVolume(currentVolume)
+
+          // Cleanup
+          if (tempPlayerDiv.parentNode) {
+            tempPlayerDiv.parentNode.removeChild(tempPlayerDiv)
+          }
+        }
+      }
+    })
+
+  } catch (error) {
+    console.error('🎵 Error during crossfade transition:', error)
+    // Fallback to instant switch
+    currentVideoId.value = newVideoId
+    youtubePlayer.value.loadVideoById(newVideoId)
+    youtubePlayer.value.setVolume(currentVolume)
+  }
+}
+
+// Helper function for fading volume on a specific player
+function fadeVolumeForPlayer(player: any, fromVolume: number, toVolume: number, duration: number = 1000): Promise<void> {
+  return new Promise((resolve) => {
+    if (!player || typeof player.setVolume !== 'function') {
+      resolve()
+      return
+    }
+
+    const startTime = Date.now()
+    const volumeRange = toVolume - fromVolume
+
+    const fadeStep = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      // Use easeInOut curve for smoother transition
+      const easedProgress = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2
+
+      const currentVolume = Math.round(fromVolume + (volumeRange * easedProgress))
+
+      try {
+        player.setVolume(currentVolume)
+      } catch (e) {
+        console.error('🎵 Error setting volume during fade:', e)
+      }
+
+      if (progress >= 1) {
+        resolve()
+      } else {
+        requestAnimationFrame(fadeStep)
+      }
+    }
+
+    fadeStep()
+  })
+}
+
+function syncPlayerWithMusicState() {
+  if (!isYouTubePlayerReady() || !musicState.value.currentTrack) {
+    console.log('🎵 Skipping sync - player not ready or no current track')
+    return
+  }
+
+  console.log('🎵 Syncing player with music state:', {
+    track: musicState.value.currentTrack.title,
+    isPlaying: musicState.value.isPlaying,
+    volume: musicState.value.volume,
+    url: musicState.value.currentTrack.url
+  })
+
+  const videoId = getYouTubeVideoId(musicState.value.currentTrack.url)
+  if (!videoId) {
+    console.error('🎵 Invalid YouTube URL:', musicState.value.currentTrack.url)
+    console.error('🎵 Current track data:', musicState.value.currentTrack)
+    return
+  }
+
+  console.log('🎵 Extracted video ID:', videoId)
+
+  // Load video with fade transition if different from current
+  if (currentVideoId.value !== videoId) {
+    console.log('🎵 Loading new video:', videoId)
+    switchTrackWithFade(videoId)
+  }
+
+  // Sync play/pause state
+  try {
+    if (musicState.value.isPlaying) {
+      console.log('🎵 Starting playback')
+      youtubePlayer.value.playVideo()
+    } else {
+      console.log('🎵 Pausing playback')
+      youtubePlayer.value.pauseVideo()
+    }
+
+    // Sync volume with smooth transition if not already fading
+    if (!fadeTransition.value.isActive) {
+      console.log('🎵 Setting volume to:', musicState.value.volume)
+      youtubePlayer.value.setVolume(musicState.value.volume)
+    }
+  } catch (error) {
+    console.error('🎵 Error syncing player state:', error)
+  }
+}
+
+// Watch for changes in music state to sync with player
+watch(() => musicState.value.currentTrack, (newTrack) => {
+  if (newTrack && isYouTubePlayerReady()) {
+    syncPlayerWithMusicState()
+  } else if (!newTrack && isYouTubePlayerReady()) {
+    youtubePlayer.value.stopVideo()
+    currentVideoId.value = null
+  }
+}, { deep: true })
+
+watch(() => musicState.value.isPlaying, async (isPlaying, wasPlaying) => {
+  if (!isYouTubePlayerReady()) return
+
+  if (fadeConfig.value.enabled) {
+    if (isPlaying && !wasPlaying) {
+      // Starting playback - fade in
+      youtubePlayer.value.playVideo()
+
+      // Add small fade in effect
+      const currentVolume = musicState.value.volume
+      await fadeVolume(Math.max(0, currentVolume - 20), currentVolume, fadeConfig.value.playPause)
+    } else if (!isPlaying && wasPlaying) {
+      // Pausing playback - fade out then pause
+      const currentVolume = musicState.value.volume
+      await fadeVolume(currentVolume, Math.max(0, currentVolume - 15), fadeConfig.value.playPause * 0.75)
+      youtubePlayer.value.pauseVideo()
+
+      // Restore volume for when playback resumes
+      setTimeout(() => {
+        if (isYouTubePlayerReady()) {
+          youtubePlayer.value.setVolume(currentVolume)
+        }
+      }, 100)
+    }
+  } else {
+    // No fade effects - direct play/pause
+    if (isPlaying) {
+      youtubePlayer.value.playVideo()
+    } else {
+      youtubePlayer.value.pauseVideo()
+    }
+  }
+})
+
+watch(() => musicState.value.volume, (newVolume, oldVolume) => {
+  if (isYouTubePlayerReady() && !fadeTransition.value.isActive && fadeConfig.value.enabled) {
+    // Use smooth transition for volume changes if the change is significant
+    const volumeDifference = Math.abs(newVolume - (oldVolume || 0))
+
+    if (volumeDifference > 10) {
+      // Large volume change - use fade transition
+      fadeVolume(oldVolume || 0, newVolume, fadeConfig.value.volumeChange)
+    } else {
+      // Small volume change - set directly
+      youtubePlayer.value.setVolume(newVolume)
+    }
+  } else if (isYouTubePlayerReady() && !fadeTransition.value.isActive) {
+    // Fades disabled - set volume directly
+    youtubePlayer.value.setVolume(newVolume)
+  }
+})
+
 // Invite System
 const showInviteModal = ref(false)
 const onlineUsers = ref<any[]>([])
@@ -5710,262 +6932,7 @@ const sendInviteToUser = async (targetUser: any) => {
   }
 }
 
-// Music system state
-const currentMusicTrack = ref<{ title: string; url: string } | null>(null)
-const isMusicPlaying = ref(false)
-
-// Helper function to convert YouTube URL to embed URL with autoplay
-function getYouTubeEmbedUrl(url: string): string {
-  const videoId = extractYouTubeVideoId(url)
-  if (!videoId) {
-    console.error('🎵 Cannot create embed URL - no video ID extracted from:', url)
-    return ''
-  }
-  
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0&enablejsapi=1`
-  console.log('🎵 Generated embed URL:', embedUrl)
-  return embedUrl
-}
-
-function extractYouTubeVideoId(url: string): string | null {
-  console.log('🎵 Extracting video ID from URL:', url)
-  
-  // Handle different YouTube URL formats
-  const patterns = [
-    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
-    /^([a-zA-Z0-9_-]{11})$/, // Just the video ID
-    /watch\?v=([a-zA-Z0-9_-]{11})/, // Partial YouTube URL like "watch?v=VIDEO_ID"
-    /embed\/([a-zA-Z0-9_-]{11})/ // Embed format
-  ]
-  
-  for (const pattern of patterns) {
-    const match = url.match(pattern)
-    if (match && match[1]) {
-      console.log('🎵 Extracted video ID:', match[1])
-      return match[1]
-    }
-  }
-  
-  console.warn('🎵 Failed to extract video ID from:', url)
-  return null
-}
-
-// Function to update the YouTube player
-function updateMusicPlayer(track: { title: string; url: string } | null, isPlaying: boolean) {
-  console.log('🎵 updateMusicPlayer called:', { track: track?.title, isPlaying, url: track?.url })
-  
-  currentMusicTrack.value = track
-  isMusicPlaying.value = isPlaying
-  
-  if (!track) {
-    console.log('🎵 No track provided, stopping music')
-    return
-  }
-  
-  // Give the DOM time to update, then update the iframe
-  setTimeout(() => {
-    const iframeId = `youtube-player-${currentRoom.value?.code}`
-    console.log('🎵 Looking for iframe with ID:', iframeId)
-    
-    const iframe = document.getElementById(iframeId) as HTMLIFrameElement
-    if (iframe && track) {
-      const embedUrl = getYouTubeEmbedUrl(track.url)
-      if (embedUrl) {
-        console.log('🎵 Setting iframe src to:', embedUrl)
-        iframe.src = embedUrl
-        
-        // Force the iframe to reload by setting and resetting the src
-        setTimeout(() => {
-          if (iframe.src !== embedUrl) {
-            iframe.src = embedUrl
-          }
-        }, 50)
-      } else {
-        console.error('🎵 Failed to generate embed URL for track:', track)
-      }
-    } else if (!iframe) {
-      console.error('🎵 YouTube iframe not found with ID:', iframeId)
-    }
-  }, 100)
-}
-
-// Debug function for testing lobby music
-async function debugRoomState() {
-  if (!currentRoom.value) return
-  
-  try {
-    const response = await $fetch(`/api/debug/room-state?roomCode=${currentRoom.value.code}`) as any
-    console.log('🐛 DEBUG: Room State:', response)
-    
-    if (response.success && response.roomInfo.musicState) {
-      console.log('🎵 Music State:', response.roomInfo.musicState)
-      console.log('🎵 Playlist tracks:', response.roomInfo.musicState.playlist)
-    }
-  } catch (error) {
-    console.error('🐛 Failed to get room state:', error)
-  }
-}
-
-// Make it available for manual testing
-if (typeof window !== 'undefined') {
-  (window as any).debugRoomState = debugRoomState
-}
-
-// Manual music control functions (existing)
-async function setupDefaultMusicTracks() {
-  if (!currentRoom.value || userRole.value !== 'DM') {
-    console.warn('Cannot setup music: no room or not DM')
-    return
-  }
-
-  isSettingUpMusic.value = true
-  
-  try {
-    console.log('🎵 Setting up default music tracks for room:', currentRoom.value.code)
-    
-    const response = await $fetch('/api/music/setup-default-tracks', {
-      method: 'POST',
-      body: { roomCode: currentRoom.value.code }
-    }) as any
-
-    if (response.success) {
-      const toast = useToast()
-      toast.add({
-        title: t('musicSetupComplete'),
-        description: t('defaultTracksAdded'),
-        color: 'green'
-      })
-      console.log('✅ Default music tracks setup complete')
-    }
-  } catch (error: any) {
-    console.error('❌ Failed to setup music tracks:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to setup music tracks',
-      color: 'red'
-    })
-  } finally {
-    isSettingUpMusic.value = false
-  }
-}
-
-async function activateTenseMusic() {
-  if (!currentRoom.value || userRole.value !== 'DM') {
-    console.warn('Cannot play music: no room or not DM')
-    return
-  }
-
-  isActivatingTense.value = true
-  
-  try {
-    console.log('🎵 Playing lobby music for room:', currentRoom.value.code)
-    
-    // Try to play lobby music (first available track)
-    const response = await $fetch('/api/music/trigger-lobby', {
-      method: 'POST',
-      body: { roomCode: currentRoom.value.code }
-    }) as any
-
-    if (response.success) {
-      const toast = useToast()
-      toast.add({
-        title: 'Music Playing',
-        description: 'Music has started playing',
-        color: 'green'
-      })
-      console.log('✅ Music started')
-    }
-  } catch (error: any) {
-    console.error('❌ Failed to play music:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to play music',
-      color: 'red'
-    })
-  } finally {
-    isActivatingTense.value = false
-  }
-}
-
-async function triggerLobbyMusicManually() {
-  if (!currentRoom.value) {
-    console.warn('Cannot trigger lobby music: no room')
-    return
-  }
-
-  isTestingLobby.value = true
-  
-  try {
-    console.log('🎵 Manually triggering lobby music for room:', currentRoom.value.code)
-    
-    const response = await $fetch('/api/music/trigger-lobby', {
-      method: 'POST',
-      body: { roomCode: currentRoom.value.code }
-    }) as any
-
-    if (response.success) {
-      const toast = useToast()
-      toast.add({
-        title: 'Lobby Music Test',
-        description: 'Lobby music manually triggered',
-        color: 'blue'
-      })
-      console.log('✅ Lobby music manually triggered')
-    }
-  } catch (error: any) {
-    console.error('❌ Failed to trigger lobby music:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to trigger lobby music',
-      color: 'red'
-    })
-  } finally {
-    isTestingLobby.value = false
-  }
-}
-
-async function triggerBattleMusicManually() {
-  if (!currentRoom.value) {
-    console.warn('Cannot trigger battle music: no room')
-    return
-  }
-
-  isTestingBattle.value = true
-  
-  try {
-    console.log('🎵 Manually triggering battle music for room:', currentRoom.value.code)
-    
-    const response = await $fetch('/api/music/trigger-battle', {
-      method: 'POST',
-      body: { roomCode: currentRoom.value.code }
-    }) as any
-
-    if (response.success) {
-      const toast = useToast()
-      toast.add({
-        title: 'Battle Music Test',
-        description: 'Battle music manually triggered',
-        color: 'red'
-      })
-      console.log('✅ Battle music manually triggered')
-    }
-  } catch (error: any) {
-    console.error('❌ Failed to trigger battle music:', error)
-    const toast = useToast()
-    toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to trigger battle music',
-      color: 'red'
-    })
-  } finally {
-    isTestingBattle.value = false
-  }
-}
-
-// Initialize with SSE connection
+// Initialize with Socket.IO connection
 onMounted(async () => {
   console.log('🎲 Dice room component mounted')
 
@@ -6024,7 +6991,14 @@ const updateUrlForRoom = (roomCode: string) => {
 }
 
 onUnmounted(() => {
-  disconnectSSE()
+  // Clean up fade transition
+  if (fadeTransition.value.intervalId) {
+    cancelAnimationFrame(fadeTransition.value.intervalId)
+    fadeTransition.value.intervalId = null
+    fadeTransition.value.isActive = false
+  }
+
+  disconnectSocket()
 })
 
 // SEO

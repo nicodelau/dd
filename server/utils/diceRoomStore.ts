@@ -1,5 +1,6 @@
 // In-memory store for dice room state with room code support
-// This manages multiple rooms, users, dice rolls, and SSE connections
+// This manages multiple rooms, users, dice rolls, and Socket.IO connections
+import type { Server as SocketIOServer, Socket } from 'socket.io'
 import prisma from '~/server/utils/prisma'
 
 export interface DiceRoll {
@@ -130,13 +131,19 @@ export interface DiceRoom {
   createdBy: string // userId of the creator (typically the first DM)
   users: Map<string, DiceUser>
   rollHistory: DiceRoll[]
-  sseConnections: Map<string, { response: any; userId: string; roomCode: string }>
+  socketConnections: Map<string, { socket: Socket; userId: string; roomCode: string }>
   battleState?: BattleState // Battle mode state
   musicState?: MusicState // DJ music system state
 }
 
 class DiceRoomStore {
   private rooms: Map<string, DiceRoom> = new Map()
+  private io: SocketIOServer | null = null
+
+  setIO(io: SocketIOServer): void {
+    this.io = io
+    console.log('🔌 Socket.IO server registered in diceRoomStore')
+  }
 
   // Load room from DB if not in memory
   async ensureRoomLoaded(roomCode: string): Promise<DiceRoom | null> {
@@ -203,7 +210,7 @@ class DiceRoomStore {
         createdBy: dbRoom.createdBy,
         users: new Map(),
         rollHistory: history,
-        sseConnections: new Map()
+        socketConnections: new Map()
       }
 
       // Populate users
@@ -353,7 +360,7 @@ class DiceRoomStore {
       createdBy: creatorUserId,
       users: new Map(),
       rollHistory: [],
-      sseConnections: new Map()
+      socketConnections: new Map()
     }
 
     // Persist to DB (optional in fallback mode)
@@ -395,7 +402,7 @@ class DiceRoomStore {
         createdBy: 'system',
         users: new Map(),
         rollHistory: [],
-        sseConnections: new Map()
+        socketConnections: new Map()
       }
       this.rooms.set(defaultRoomCode, room)
     }
@@ -409,9 +416,10 @@ class DiceRoomStore {
   deleteRoom(roomCode: string): boolean {
     if (this.rooms.has(roomCode)) {
       const room = this.rooms.get(roomCode)!
-      // Close all SSE connections
-      for (const [connectionId] of room.sseConnections) {
-        this.removeSSEConnection(connectionId, roomCode)
+      // Close all socket connections
+      for (const [connectionId, connection] of room.socketConnections) {
+        connection.socket.disconnect()
+        room.socketConnections.delete(connectionId)
       }
       this.rooms.delete(roomCode)
       console.log(`🎲 Deleted room: ${roomCode}`)
@@ -620,16 +628,15 @@ class DiceRoomStore {
     const user = room.users.get(userId)
     if (user) {
       room.users.delete(userId)
-
-      // Remove user's SSE connections
-      const connectionsToRemove: string[] = []
-      for (const [connectionId, connection] of room.sseConnections) {
+      
+      // Remove user's socket connections
+      for (const [connectionId, connection] of room.socketConnections) {
         if (connection.userId === userId) {
-          connectionsToRemove.push(connectionId)
+          connection.socket.disconnect()
+          room.socketConnections.delete(connectionId)
         }
       }
-      connectionsToRemove.forEach(id => this.removeSSEConnection(id, roomCode))
-
+      
       this.broadcastUserCount(roomCode)
       console.log(`🎲 User left room ${roomCode}: ${user.name} (${userId})`)
       return true
@@ -857,14 +864,14 @@ class DiceRoomStore {
     }
   }
 
-  // SSE connection management
-  addSSEConnection(connectionId: string, response: any, userId: string, roomCode: string = 'default'): void {
+  // Socket connection management
+  addSocketConnection(connectionId: string, socket: Socket, userId: string, roomCode: string = 'default'): void {
     const room = roomCode === 'default' ? this.getOrCreateDefaultRoom() : this.getRoom(roomCode)
     if (!room) {
       throw new Error(`Room ${roomCode} does not exist`)
     }
 
-    room.sseConnections.set(connectionId, { response, userId, roomCode })
+    room.socketConnections.set(connectionId, { socket, userId, roomCode })
 
     // Send initial data to new connection
     this.sendToConnection(connectionId, 'users:count', { count: this.getUserCount(roomCode) }, roomCode)
@@ -900,22 +907,22 @@ class DiceRoomStore {
       }
     }
 
-    console.log(`🎲 SSE connection added to room ${roomCode}: ${connectionId} for user ${userId}`)
+    console.log(`🔌 Socket connection added to room ${roomCode}: ${connectionId} for user ${userId}`)
   }
 
-  removeSSEConnection(connectionId: string, roomCode?: string): void {
+  removeSocketConnection(connectionId: string, roomCode?: string): void {
     if (roomCode) {
       const room = this.getRoom(roomCode)
-      if (room?.sseConnections.has(connectionId)) {
-        room.sseConnections.delete(connectionId)
-        console.log(`🎲 SSE connection removed from room ${roomCode}: ${connectionId}`)
+      if (room?.socketConnections.has(connectionId)) {
+        room.socketConnections.delete(connectionId)
+        console.log(`🔌 Socket connection removed from room ${roomCode}: ${connectionId}`)
       }
     } else {
       // Remove from all rooms if roomCode not specified
       for (const room of this.rooms.values()) {
-        if (room.sseConnections.has(connectionId)) {
-          room.sseConnections.delete(connectionId)
-          console.log(`🎲 SSE connection removed: ${connectionId}`)
+        if (room.socketConnections.has(connectionId)) {
+          room.socketConnections.delete(connectionId)
+          console.log(`🔌 Socket connection removed: ${connectionId}`)
           break
         }
       }
@@ -927,36 +934,21 @@ class DiceRoomStore {
     const room = this.getRoom(roomCode)
     if (!room) return
 
-    const connection = room.sseConnections.get(connectionId)
-    if (connection?.response) {
+    const connection = room.socketConnections.get(connectionId)
+    if (connection?.socket?.connected) {
       try {
-        const sseData = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
-        connection.response.write(sseData)
+        connection.socket.emit(event, data)
       } catch (error) {
-        console.error(`🎲 Error sending to connection ${connectionId}:`, error)
-        this.removeSSEConnection(connectionId, roomCode)
+        console.error(`🔌 Error sending to connection ${connectionId}:`, error)
+        this.removeSocketConnection(connectionId, roomCode)
       }
     }
   }
 
   private broadcastEvent(event: string, data: any, roomCode: string): void {
-    const room = this.getRoom(roomCode)
-    if (!room) return
-
-    const deadConnections: string[] = []
-
-    for (const [connectionId, connection] of room.sseConnections) {
-      try {
-        const sseData = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
-        connection.response.write(sseData)
-      } catch (error) {
-        console.error(`🎲 Error broadcasting to ${connectionId}:`, error)
-        deadConnections.push(connectionId)
-      }
+    if (this.io) {
+      this.io.to(`room:${roomCode}`).emit(event, data)
     }
-
-    // Clean up dead connections
-    deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
   }
 
   private broadcastRoll(roll: DiceRoll, roomCode: string): void {
@@ -964,12 +956,12 @@ class DiceRoomStore {
     if (!room) return
 
     // Send roll to all connections except the sender
-    for (const [connectionId, connection] of room.sseConnections) {
-      if (connection.userId !== roll.userId) {
-        this.sendToConnection(connectionId, 'dice:roll', {
+    for (const [connectionId, connection] of room.socketConnections) {
+      if (connection.userId !== roll.userId && connection.socket.connected) {
+        connection.socket.emit('dice:roll', {
           ...roll,
           isOwn: false
-        }, roomCode)
+        })
       }
     }
   }
@@ -1478,27 +1470,26 @@ class DiceRoomStore {
     // Increased timeout to 3 hours for more persistent sessions
     const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000)
 
-    for (const [roomCode, room] of this.rooms) {
-      const deadConnections: string[] = []
+     for (const [roomCode, room] of this.rooms) {
+       // Remove disconnected sockets
+       for (const [connectionId, connection] of room.socketConnections) {
+         if (!connection.socket.connected) {
+           room.socketConnections.delete(connectionId)
+         }
+       }
 
-      // Remove connections that have errors
-      for (const [connectionId, connection] of room.sseConnections) {
-        try {
-          // Send ping to test connection
-          connection.response.write(`event: ping\ndata: ${now.toISOString()}\n\n`)
-        } catch (error) {
-          deadConnections.push(connectionId)
-        }
-      }
+        // Remove users who haven't been seen in 3 hours
+        // AND who don't have an active connection
+        const removedUsers: string[] = []
 
-      deadConnections.forEach(id => this.removeSSEConnection(id, roomCode))
+        for (const [userId, user] of room.users) {
+          const hasActiveConnection = Array.from(room.socketConnections.values()).some(conn => conn.userId === userId)
 
-      // Remove users who haven't been seen in 3 hours (increased from 1 hour)
-      // AND who don't have an active connection
-      const removedUsers: string[] = []
-
-      for (const [userId, user] of room.users) {
-        const hasActiveConnection = Array.from(room.sseConnections.values()).some(conn => conn.userId === userId)
+          if (!hasActiveConnection && user.lastSeen < threeHoursAgo) {
+           this.removeUser(userId, roomCode)
+           removedUsers.push(user.name)
+         }
+       }
 
         if (!hasActiveConnection && user.lastSeen < threeHoursAgo) {
           this.removeUser(userId, roomCode)
@@ -1506,17 +1497,12 @@ class DiceRoomStore {
         }
       }
 
-      // Log timeout activity
-      if (removedUsers.length > 0) {
-        console.log(`🎲 Auto-removed ${removedUsers.length} inactive users from room ${roomCode}: ${removedUsers.join(', ')}`)
-      }
-
-      // Remove empty rooms (except default)
-      if (roomCode !== 'default' && room.users.size === 0 && room.sseConnections.size === 0) {
-        this.deleteRoom(roomCode)
-      }
-    }
-  }
+       // Remove empty rooms (except default)
+       if (roomCode !== 'default' && room.users.size === 0 && room.socketConnections.size === 0) {
+         this.deleteRoom(roomCode)
+       }
+     }
+   }
 
   // Get room statistics
   getStats(roomCode: string = 'default') {
@@ -1528,7 +1514,7 @@ class DiceRoomStore {
       roomName: room.name,
       userCount: room.users.size,
       rollCount: room.rollHistory.length,
-      connectionCount: room.sseConnections.size,
+      connectionCount: room.socketConnections.size,
       users: Array.from(room.users.values()).map(u => ({
         id: u.id,
         name: u.name,
@@ -1550,7 +1536,7 @@ class DiceRoomStore {
         createdBy: room.createdBy,
         userCount: room.users.size,
         rollCount: room.rollHistory.length,
-        connectionCount: room.sseConnections.size
+        connectionCount: room.socketConnections.size
       })
     }
     return rooms
@@ -1563,7 +1549,7 @@ class DiceRoomStore {
     const IDLE_THRESHOLD = 15 * 60 * 1000 // 15 minutes
 
     for (const [roomCode, room] of this.rooms) {
-      for (const [connectionId, connection] of room.sseConnections) {
+      for (const [connectionId, connection] of room.socketConnections) {
         const user = room.users.get(connection.userId)
         if (user && !connectedUsers.has(user.id)) {
           const isIdle = (now - user.lastSeen.getTime()) > IDLE_THRESHOLD
@@ -1582,21 +1568,20 @@ class DiceRoomStore {
   }
 
   sendInvite(senderId: string, senderName: string, targetUserId: string, targetRoomCode: string): boolean {
-    // Find target user's connection in any room
-    let targetConnection: { response: any; userId: string; roomCode: string } | null = null
+    // Find target user's socket connection in any room
+    let targetSocket: Socket | null = null
 
-    // Search all rooms for the user
     for (const room of this.rooms.values()) {
-      for (const conn of room.sseConnections.values()) {
-        if (conn.userId === targetUserId) {
-          targetConnection = conn
-          break
+        for (const conn of room.socketConnections.values()) {
+            if (conn.userId === targetUserId && conn.socket.connected) {
+                targetSocket = conn.socket
+                break
+            }
         }
-      }
-      if (targetConnection) break
+        if (targetSocket) break
     }
 
-    if (!targetConnection) {
+    if (!targetSocket) {
       return false
     }
 
@@ -1608,8 +1593,7 @@ class DiceRoomStore {
         timestamp: new Date()
       }
 
-      const sseData = `event: room:invite\ndata: ${JSON.stringify(inviteData)}\n\n`
-      targetConnection.response.write(sseData)
+      targetSocket.emit('room:invite', inviteData)
       console.log(`📨 Invite sent from ${senderName} to user ${targetUserId} for room ${targetRoomCode}`)
       return true
     } catch (error) {
