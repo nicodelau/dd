@@ -1470,26 +1470,20 @@ class DiceRoomStore {
     // Increased timeout to 3 hours for more persistent sessions
     const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000)
 
-     for (const [roomCode, room] of this.rooms) {
-       // Remove disconnected sockets
-       for (const [connectionId, connection] of room.socketConnections) {
-         if (!connection.socket.connected) {
-           room.socketConnections.delete(connectionId)
-         }
-       }
+    for (const [roomCode, room] of this.rooms) {
+      // Remove disconnected sockets
+      for (const [connectionId, connection] of room.socketConnections) {
+        if (!connection.socket.connected) {
+          room.socketConnections.delete(connectionId)
+        }
+      }
 
-        // Remove users who haven't been seen in 3 hours
-        // AND who don't have an active connection
-        const removedUsers: string[] = []
+      // Remove users who haven't been seen in 3 hours
+      // AND who don't have an active connection
+      const removedUsers: string[] = []
 
-        for (const [userId, user] of room.users) {
-          const hasActiveConnection = Array.from(room.socketConnections.values()).some(conn => conn.userId === userId)
-
-          if (!hasActiveConnection && user.lastSeen < threeHoursAgo) {
-           this.removeUser(userId, roomCode)
-           removedUsers.push(user.name)
-         }
-       }
+      for (const [userId, user] of room.users) {
+        const hasActiveConnection = Array.from(room.socketConnections.values()).some(conn => conn.userId === userId)
 
         if (!hasActiveConnection && user.lastSeen < threeHoursAgo) {
           this.removeUser(userId, roomCode)
@@ -1497,12 +1491,12 @@ class DiceRoomStore {
         }
       }
 
-       // Remove empty rooms (except default)
-       if (roomCode !== 'default' && room.users.size === 0 && room.socketConnections.size === 0) {
-         this.deleteRoom(roomCode)
-       }
-     }
-   }
+      // Remove empty rooms (except default)
+      if (roomCode !== 'default' && room.users.size === 0 && room.socketConnections.size === 0) {
+        this.deleteRoom(roomCode)
+      }
+    }
+  }
 
   // Get room statistics
   getStats(roomCode: string = 'default') {

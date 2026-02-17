@@ -48,6 +48,7 @@ export const useSocketIO = () => {
     socket.on('connect', () => {
       connectionState.value.status = 'connected'
       connectionState.value.reconnectAttempts = 0
+      connectionState.value.connectionId = socket!.id
       connectionState.value.lastError = null
       console.log('🔌 Socket.IO connected:', socket!.id)
     })

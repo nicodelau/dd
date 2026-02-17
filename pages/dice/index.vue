@@ -2192,11 +2192,11 @@
     </div>
 
     <!-- Music Status Display (visible to all users) -->
-    <div v-if="currentMusicTrack" class="fixed bottom-4 right-4 bg-black/80 text-white p-3 rounded-lg shadow-lg z-40">
+    <div v-if="musicState.currentTrack" class="fixed bottom-4 right-4 bg-black/80 text-white p-3 rounded-lg shadow-lg z-40">
       <div class="flex items-center space-x-2">
         <UIcon name="i-heroicons-musical-note" class="w-4 h-4" />
-        <span class="text-sm">{{ currentMusicTrack.title }}</span>
-        <UBadge v-if="isMusicPlaying" color="green" variant="soft" size="xs">Playing</UBadge>
+        <span class="text-sm">{{ musicState.currentTrack.title }}</span>
+        <UBadge v-if="musicState.isPlaying" color="green" variant="soft" size="xs">Playing</UBadge>
         <UBadge v-else color="gray" variant="soft" size="xs">Paused</UBadge>
       </div>
     </div>
@@ -2313,6 +2313,15 @@ const { t, toggleLanguage, language } = useTranslations()
 
 // Get authenticated user
 const user = useState < any > ('user')
+const route = useRoute()
+const routeRoomCode = computed(() => {
+  try {
+    return route?.params?.roomCode || props.roomCode
+  } catch (error) {
+    console.warn('Failed to get route params:', error)
+    return props.roomCode
+  }
+})
 
 // Room management state (moved before heartbeat to avoid forward reference)
 const currentRoom = ref < { name: string; code: string; isOwner: boolean } | null > (null)
@@ -2473,6 +2482,19 @@ const isSettingUpMusic = ref(false)
 const isActivatingTense = ref(false)
 const isTestingLobby = ref(false)
 const isTestingBattle = ref(false)
+const musicState = ref({
+  isPlaying: false,
+  isPaused: false,
+  currentTrack: null as any,
+  volume: 50,
+  position: 0,
+  playlist: [] as any[],
+  soundEffects: {
+    soundEffectsVolume: 75,
+    playableTrackIds: new Set<string>(),
+    lastSoundEffectPlayed: null as Date | null
+  }
+})
 
 // Player Image Display state
 const showImageDisplayModal = ref(false)
@@ -4205,9 +4227,6 @@ function initializeSocket(roomCode?: string) {
       console.log('🎲 Heartbeat started for room:', roomCode)
     }
 
-    // Send join request via HTTP
-    joinRoom(roomCode)
-
     // Register Socket.IO event listeners
     socketOn('connected', (data: any) => {
       console.log('🔌 Socket.IO connected with ID:', data.connectionId)
@@ -4785,10 +4804,9 @@ function initializeSocket(roomCode?: string) {
       }
     })
 
-    eventSource.value.addEventListener('music:default_tracks_added', (event) => {
-      const data = JSON.parse(event.data)
+    socketOn('music:default_tracks_added', (data: any) => {
       console.log('🎵 Default tracks added:', data.tracks)
-      
+
       const toast = useToast()
       toast.add({
         title: 'Music System Ready',
@@ -4894,11 +4912,7 @@ async function joinRoom(roomCode?: string) {
 
       // Sync complete room state (including battle state) after successful join
       await syncCompleteRoomState(roomCode)
-      
-      // Ensure we have a fresh SSE connection to the joined room
-      disconnectSSE() // Close any existing connection
-      await initializeSSE(roomCode) // Connect to the new room
-      
+
       console.log('🎲 Room state updated:', {
         currentRoom: currentRoom.value,
         isInRoom: isInRoom.value
@@ -6950,26 +6964,37 @@ onMounted(async () => {
     originalConsoleError.apply(console, args)
   }
 
-  // Check for room code in route params (for /dice/:roomCode) or props
-  const route = useRoute()
-  const routeRoomCode = computed(() => {
-    try {
-      return route?.params?.roomCode || props.roomCode
-    } catch (error) {
-      console.warn('Failed to get route params:', error)
-      return props.roomCode
-    }
-  })
-
   // Load user characters and auto-detect role
   await loadUserCharacters()
 
-  // Auto-join room if there's a room code in the URL and we're not already in a room
+  // Auto-join room if there's a room code in the URL/props and we're not already in a room
   if (routeRoomCode.value && routeRoomCode.value !== 'default' && !isInRoom.value) {
     console.log('🎲 Auto-joining room from URL:', routeRoomCode.value)
     isAutoJoining.value = true
     try {
-      await joinRoom(routeRoomCode.value)
+      const roomCode = routeRoomCode.value as string
+      // Join room via HTTP
+      const response = await $fetch<any>('/api/dice/rooms/join', {
+        method: 'POST',
+        body: {
+          userId: userId.value,
+          userName: userName.value,
+          roomCode,
+          role: userRole.value
+        }
+      })
+
+      if (response.success) {
+        currentRoom.value = {
+          name: response.room.name,
+          code: response.room.code,
+          isOwner: false
+        }
+        isInRoom.value = true
+
+        // Connect socket and sync state
+        await reconnectWithRoom(roomCode)
+      }
     } catch (error) {
       console.error('❌ Failed to auto-join room:', error)
     } finally {
