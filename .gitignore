@@ -29,3 +29,9 @@ prisma/generated
 
 # Uploaded files (temporary)
 public/uploads/
+
+# Superpowers brainstorm artifacts
+.superpowers/
+
+# Git worktrees
+.worktrees/
