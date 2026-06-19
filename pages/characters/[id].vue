@@ -81,11 +81,34 @@
       </div>
       
       <!-- Character Content -->
-      <div v-else-if="character" class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div v-else-if="character">
+        <!-- Mobile Navigation Tabs (visible only on mobile) -->
+        <div class="lg:hidden flex overflow-x-auto whitespace-nowrap gap-2 pb-3 mb-6 border-b border-gray-250 dark:border-gray-700 scrollbar-none sticky top-16 bg-gray-50 dark:bg-gray-900 z-10 pt-2">
+          <UButton
+            v-for="tab in [
+              { id: 'general', label: t('basicInfo'), icon: 'i-heroicons-user' },
+              { id: 'attributes', label: t('abilityScores'), icon: 'i-heroicons-sparkles' },
+              { id: 'combat', label: t('attacks'), icon: 'i-heroicons-shield-check' },
+              { id: 'inventory', label: t('inventory'), icon: 'i-heroicons-briefcase' },
+              { id: 'currency', label: t('currency'), icon: 'i-heroicons-banknotes' }
+            ]"
+            :key="tab.id"
+            :color="activeMobileTab === tab.id ? 'primary' : 'gray'"
+            :variant="activeMobileTab === tab.id ? 'solid' : 'ghost'"
+            size="sm"
+            class="rounded-full flex-shrink-0"
+            @click="activeMobileTab = tab.id"
+            :icon="tab.icon"
+          >
+            {{ tab.label }}
+          </UButton>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Left Sidebar - Portrait, Inventory & Currency -->
-        <div class="space-y-6">
+        <div class="space-y-6" :class="{ 'hidden lg:block': !['general', 'currency', 'inventory'].includes(activeMobileTab) }">
           <!-- Character Portrait -->
-          <UCard>
+          <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'general' }">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t('characterPortrait') }}
@@ -130,7 +153,7 @@
           </UCard>
 
           <!-- Currency -->
-          <UCard>
+          <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'currency' }">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t('currency') }}
@@ -206,7 +229,7 @@
           </UCard>
 
           <!-- Inventory -->
-          <UCard>
+          <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'inventory' }">
             <template #header>
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -225,27 +248,92 @@
               </div>
             </template>
 
-             <div v-if="editMode ? (!editInventory || editInventory.length === 0) : (!character.inventory || character.inventory.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
-               {{ t('noItems') }}
-             </div>
+            <!-- Filters & Sorting (Read-only mode) -->
+            <div v-if="!editMode && character.inventory && character.inventory.length > 0" class="flex flex-col sm:flex-row gap-2 mb-4 pb-4 border-b border-gray-150 dark:border-gray-800">
+              <div class="flex-1 flex items-center gap-2">
+                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filtrar:</span>
+                <USelect
+                  v-model="inventoryFilterTier"
+                  :options="[
+                    { value: 'all', label: 'Todos los Tiers' },
+                    { value: 'gris', label: getTierClasses('gris').name },
+                    { value: 'azul', label: getTierClasses('azul').name },
+                    { value: 'verde', label: getTierClasses('verde').name },
+                    { value: 'violeta', label: getTierClasses('violeta').name },
+                    { value: 'naranja', label: getTierClasses('naranja').name },
+                    { value: 'rojo', label: getTierClasses('rojo').name }
+                  ]"
+                  size="xs"
+                  class="w-36"
+                />
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ordenar:</span>
+                <USelect
+                  v-model="inventorySortBy"
+                  :options="[
+                    { value: 'tier', label: 'Por Tier (Mejor a peor)' },
+                    { value: 'newest', label: 'Más nuevo primero' },
+                    { value: 'oldest', label: 'Más viejo primero' }
+                  ]"
+                  size="xs"
+                  class="w-48"
+                />
+              </div>
+            </div>
 
-             <div v-else class="space-y-3">
-               <div
-                 v-for="(item, index) in editMode ? editInventory : character.inventory"
-                 :key="item.id || index"
-                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-               >
+            <div v-if="editMode ? (!editInventory || editInventory.length === 0) : (!displayInventory || displayInventory.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
+              {{ t('noItems') }}
+            </div>
+
+            <div v-else class="space-y-3">
+              <div
+                v-for="(item, index) in editMode ? editInventory : displayInventory"
+                :key="item.id || index"
+                class="border rounded-lg p-3 relative overflow-hidden transition-all duration-300"
+                :class="editMode ? 'border-gray-200 dark:border-gray-700' : [getTierClasses(item.tier).card, getTierClasses(item.tier).glow]"
+              >
+                <!-- Diagonal Tier Banner -->
+                <div 
+                  v-if="!editMode && item.tier && item.tier !== 'gris'" 
+                  class="absolute top-0 right-0 overflow-hidden w-16 h-16 pointer-events-none z-10"
+                >
+                  <div 
+                    class="absolute transform rotate-45 text-[9px] font-bold text-center py-0.5 w-[90px] -right-[26px] top-[12px] shadow-sm uppercase tracking-wider text-white select-none"
+                    :class="getTierBannerBg(item.tier)"
+                  >
+                    {{ t('newTierBanner') }}
+                  </div>
+                </div>
+
                 <div class="grid grid-cols-1 gap-3">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      {{ t('itemName') }}
-                    </label>
-                    <UInput
-                      v-if="editMode"
-                      v-model="editInventory[index].name"
-                      :placeholder="t('itemName')"
-                    />
-                    <p v-else class="text-gray-900 dark:text-white font-medium">{{ item.name }}</p>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {{ t('itemName') }}
+                      </label>
+                      <UInput
+                        v-if="editMode"
+                        v-model="editInventory[index].name"
+                        :placeholder="t('itemName')"
+                      />
+                      <div v-else class="flex items-center space-x-2">
+                        <p class="text-gray-900 dark:text-white font-medium" :class="getTierClasses(item.tier).text">{{ item.name }}</p>
+                        <UBadge v-if="item.tier" :color="getTierClasses(item.tier).badgeColor" size="xs" variant="soft">
+                          {{ getTierClasses(item.tier).name }}
+                        </UBadge>
+                      </div>
+                    </div>
+                    <div v-if="editMode">
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {{ t('tier') }}
+                      </label>
+                      <USelect
+                        v-model="editInventory[index].tier"
+                        :options="tierOptions"
+                        size="sm"
+                      />
+                    </div>
                   </div>
 
                   <div class="grid grid-cols-2 gap-2">
@@ -317,7 +405,7 @@
           </UCard>
 
           <!-- Character Notes -->
-          <UCard>
+          <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'general' }">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t('notes') }}
@@ -338,9 +426,57 @@
         </div>
 
         <!-- Center Column - Character Info -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-6" :class="{ 'hidden lg:block': !['general', 'attributes', 'combat'].includes(activeMobileTab) }">
+          <!-- Ability Scores Card -->
+           <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'attributes' }">
+             <template #header>
+               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                 {{ t('abilityScores') }}
+               </h3>
+             </template>
+             
+             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+               <div 
+                 v-for="stat in [
+                   { key: 'str', ability: 'strength', bg: 'from-red-500/5 to-orange-500/5 dark:from-red-500/10 dark:to-orange-500/10 border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400' },
+                   { key: 'dex', ability: 'dexterity', bg: 'from-blue-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:to-indigo-500/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400' },
+                   { key: 'con', ability: 'constitution', bg: 'from-orange-500/5 to-amber-500/5 dark:from-orange-500/10 dark:to-amber-500/10 border-orange-200 dark:border-orange-500/20 text-orange-600 dark:text-orange-400' },
+                   { key: 'int', ability: 'intelligence', bg: 'from-purple-500/5 to-pink-500/5 dark:from-purple-500/10 dark:to-pink-500/10 border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-400' },
+                   { key: 'wis', ability: 'wisdom', bg: 'from-emerald-500/5 to-teal-500/5 dark:from-emerald-500/10 dark:to-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400' },
+                   { key: 'cha', ability: 'charisma', bg: 'from-pink-500/5 to-rose-500/5 dark:from-pink-500/10 dark:to-rose-500/10 border-pink-200 dark:border-pink-500/20 text-pink-600 dark:text-pink-400' }
+                 ]" 
+                 :key="stat.key" 
+                 class="relative group flex flex-col items-center justify-between p-3 rounded-xl border bg-gradient-to-b dark:bg-zinc-950/40 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg" 
+                 :class="stat.bg"
+               >
+                 <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                   {{ t(stat.key) }}
+                 </span>
+                 
+                 <div class="my-2 text-center w-full flex flex-col items-center">
+                   <template v-if="editMode">
+                     <UInput
+                       v-model.number="editForm[stat.ability]"
+                       type="number"
+                       min="1"
+                       max="30"
+                       class="text-center w-20"
+                     />
+                   </template>
+                   <template v-else>
+                     <span class="text-3xl font-extrabold text-gray-900 dark:text-white">
+                       {{ getFormattedBonus(getAbilityModifier(character[stat.ability] || 10)) }}
+                     </span>
+                     <span class="mt-1.5 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700/50 font-semibold">
+                       {{ character[stat.ability] || 10 }}
+                     </span>
+                   </template>
+                 </div>
+               </div>
+             </div>
+           </UCard>
           <!-- Basic Info Card -->
-          <UCard>
+          <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'general' }">
             <template #header>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t('basicInfo') }}
@@ -456,153 +592,9 @@
                 />
                 <p v-else class="text-gray-900 dark:text-white">{{ character.alignment || t('notSet') }}</p>
               </div>
-            </div>
-          </UCard>
-          
-           <!-- Combat Stats Card -->
-           <UCard>
-             <template #header>
-               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                 {{ t('combatStats') }}
-               </h3>
-             </template>
-
-             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   {{ t('armorClass') }}
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.armorClass"
-                   type="number"
-                   min="1"
-                 />
-                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.armorClass || 10 }}</p>
-               </div>
-
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   {{ t('speed') }}
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.speed"
-                   type="number"
-                   min="0"
-                 />
-                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.speed || 30 }} ft</p>
-               </div>
-
-               <div>
-                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   {{ t('maxHp') }}
-                 </label>
-                 <UInput
-                   v-if="editMode"
-                   v-model.number="editForm.maxHp"
-                   type="number"
-                   min="1"
-                 />
-                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxHp || 0 }}</p>
-               </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {{ t('currentHp') }}
-                  </label>
-                  <div v-if="editMode" class="space-y-2">
-                    <UInput
-                      v-model.number="editForm.currentHp"
-                      type="number"
-                      min="0"
-                      :max="character.maxHp"
-                    />
-                  </div>
-                  <div v-else class="space-y-2">
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp || 0 }}</p>
-                    <!-- Quick HP adjustment for DMs -->
-                    <div v-if="canEdit" class="flex items-center space-x-2">
-                      <UInput
-                        v-model.number="hpAdjustment"
-                        type="number"
-                        placeholder="±HP"
-                        class="w-20 text-sm"
-                        @keyup.enter="adjustHp"
-                      />
-                      <UButton
-                        size="sm"
-                        variant="outline"
-                        @click="adjustHp"
-                        :disabled="!hpAdjustment || hpAdjustment === 0"
-                      >
-                        {{ t('adjust') }}
-                      </UButton>
-                    </div>
-                  </div>
-                </div>
-             </div>
-
-             <!-- Proficiency Checkboxes -->
-             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-               <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">
-                 {{ t('proficiencies') }}
-               </h4>
-
-               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <!-- Saving Throws Proficiency -->
-                 <div>
-                   <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                     {{ t('savingThrows') }}
-                   </h5>
-                   <div class="space-y-2">
-                     <div v-for="ability in ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']" :key="ability" class="flex items-center space-x-2">
-                       <UCheckbox
-                         v-if="editMode"
-                         v-model="savingThrowProficient[ability]"
-                         size="sm"
-                       />
-                       <span class="text-sm text-gray-600 dark:text-gray-400">{{ t(ability) }}</span>
-                     </div>
-                   </div>
-                 </div>
-
-
-               </div>
-             </div>
             
-            <!-- Health Bar -->
-            <div class="mt-6">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('health') }}</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ Math.round(((character.currentHp || 0) / (character.maxHp || 1)) * 100) }}%
-                </span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-3">
-                <div 
-                  class="h-3 rounded-full transition-all duration-300"
-                  :class="{
-                    'bg-green-500': ((character.currentHp || 0) / (character.maxHp || 1)) > 0.6,
-                    'bg-yellow-500': ((character.currentHp || 0) / (character.maxHp || 1)) > 0.3 && ((character.currentHp || 0) / (character.maxHp || 1)) <= 0.6,
-                    'bg-red-500': ((character.currentHp || 0) / (character.maxHp || 1)) <= 0.3
-                  }"
-                  :style="`width: ${Math.max(0, ((character.currentHp || 0) / (character.maxHp || 1)) * 100)}%`"
-                ></div>
-              </div>
-            </div>
-          </UCard>
-          
-          <!-- Physical Characteristics Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ t('physicalCharacteristics') }}
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
-              <div>
+
+<div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {{ t('age') }}
                 </label>
@@ -678,8 +670,105 @@
             </div>
           </UCard>
           
+           <!-- Combat Stats Card -->
+           <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'combat' }">
+             <template #header>
+               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                 {{ t('combatStats') }}
+               </h3>
+             </template>
+
+             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   {{ t('armorClass') }}
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.armorClass"
+                   type="number"
+                   min="1"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.armorClass || 10 }}</p>
+               </div>
+
+
+
+               <div>
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   {{ t('maxHp') }}
+                 </label>
+                 <UInput
+                   v-if="editMode"
+                   v-model.number="editForm.maxHp"
+                   type="number"
+                   min="1"
+                 />
+                 <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxHp || 0 }}</p>
+               </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {{ t('currentHp') }}
+                  </label>
+                  <div v-if="editMode" class="space-y-2">
+                    <UInput
+                      v-model.number="editForm.currentHp"
+                      type="number"
+                      min="0"
+                      :max="character.maxHp"
+                    />
+                  </div>
+                  <div v-else class="space-y-2">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.currentHp || 0 }}</p>
+                    <!-- Quick HP adjustment for DMs -->
+                    <div v-if="canEdit" class="flex items-center space-x-2">
+                      <UInput
+                        v-model.number="hpAdjustment"
+                        type="number"
+                        placeholder="±HP"
+                        class="w-20 text-sm"
+                        @keyup.enter="adjustHp"
+                      />
+                      <UButton
+                        size="sm"
+                        variant="outline"
+                        @click="adjustHp"
+                        :disabled="!hpAdjustment || hpAdjustment === 0"
+                      >
+                        {{ t('adjust') }}
+                      </UButton>
+                    </div>
+                  </div>
+                </div>
+             </div>
+
+<!-- Health Bar -->
+            <div class="mt-6">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('health') }}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ Math.round(((character.currentHp || 0) / (character.maxHp || 1)) * 100) }}%
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  class="h-3 rounded-full transition-all duration-300"
+                  :class="{
+                    'bg-green-500': ((character.currentHp || 0) / (character.maxHp || 1)) > 0.6,
+                    'bg-yellow-500': ((character.currentHp || 0) / (character.maxHp || 1)) > 0.3 && ((character.currentHp || 0) / (character.maxHp || 1)) <= 0.6,
+                    'bg-red-500': ((character.currentHp || 0) / (character.maxHp || 1)) <= 0.3
+                  }"
+                  :style="`width: ${Math.max(0, ((character.currentHp || 0) / (character.maxHp || 1)) * 100)}%`"
+                ></div>
+              </div>
+            </div>
+          </UCard>
+          
+
+          
            <!-- Combat Actions Card -->
-           <UCard>
+           <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'combat' }">
              <template #header>
                <div class="flex items-center justify-between">
                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -867,253 +956,392 @@
              </div>
            </UCard>
           
-          <!-- Ability Scores Card -->
-          <UCard>
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ t('abilityScores') }}
-              </h3>
-            </template>
-            
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('str') }}
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.strength"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.strength || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.strength || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.strength || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('dex') }}
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.dexterity"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.dexterity || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.dexterity || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.dexterity || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('con') }}
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.constitution"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.constitution || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.constitution || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.constitution || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('int') }}
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.intelligence"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.intelligence || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.intelligence || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.intelligence || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('wis') }}
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.wisdom"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.wisdom || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.wisdom || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.wisdom || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-              
-              <div class="text-center">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {{ t('cha') }}
-                </label>
-                <UInput
-                  v-if="editMode"
-                  v-model.number="editForm.charisma"
-                  type="number"
-                  min="1"
-                  max="30"
-                  class="text-center"
-                />
-                <div v-else class="space-y-1">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.charisma || 10 }}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ Math.floor(((character.charisma || 10) - 10) / 2) >= 0 ? '+' : '' }}{{ Math.floor(((character.charisma || 10) - 10) / 2) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </UCard>
+
            
            <!-- Attacks Card -->
-           <UCard>
-             <template #header>
-               <div class="flex items-center justify-between">
-                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                   {{ t('attacks') }}
-                 </h3>
-                 <UButton
-                   v-if="editMode && canEdit"
-                   color="primary"
-                   variant="soft"
-                   size="sm"
-                   icon="i-heroicons-plus"
-                   @click="addAttack"
-                 >
-                   {{ t('addAttack') }}
-                 </UButton>
-               </div>
-             </template>
+           <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'combat' }">
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {{ t('attacks') }}
+                  </h3>
+                  <UButton
+                    v-if="editMode && canEdit"
+                    color="primary"
+                    variant="soft"
+                    size="sm"
+                    icon="i-heroicons-plus"
+                    @click="addAttack"
+                  >
+                    {{ t('addAttack') }}
+                  </UButton>
+                </div>
+              </template>
 
-              <div v-if="editMode ? (!editAttacks || editAttacks.length === 0) : (!character.attacks || character.attacks.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                {{ t('noAttacks') }}
+              <!-- Filters & Sorting (Read-only mode) -->
+              <div v-if="!editMode && character.attacks && character.attacks.filter(a => a.type !== 'skill').length > 0" class="flex flex-col sm:flex-row gap-2 mb-4 pb-4 border-b border-gray-150 dark:border-gray-800">
+                <div class="flex-1 flex items-center gap-2">
+                  <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filtrar:</span>
+                  <USelect
+                    v-model="attacksFilterTier"
+                    :options="[
+                      { value: 'all', label: 'Todos los Tiers' },
+                      { value: 'gris', label: getTierClasses('gris').name },
+                      { value: 'azul', label: getTierClasses('azul').name },
+                      { value: 'verde', label: getTierClasses('verde').name },
+                      { value: 'violeta', label: getTierClasses('violeta').name },
+                      { value: 'naranja', label: getTierClasses('naranja').name },
+                      { value: 'rojo', label: getTierClasses('rojo').name }
+                    ]"
+                    size="xs"
+                    class="w-36"
+                  />
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ordenar:</span>
+                  <USelect
+                    v-model="attacksSortBy"
+                    :options="[
+                      { value: 'tier', label: 'Por Tier (Mejor a peor)' },
+                      { value: 'newest', label: 'Más nuevo primero' },
+                      { value: 'oldest', label: 'Más viejo primero' }
+                    ]"
+                    size="xs"
+                    class="w-48"
+                  />
+                </div>
               </div>
 
-              <div v-else class="space-y-4">
-                <div
-                  v-for="(attack, index) in editMode ? editAttacks : character.attacks"
-                  :key="attack.id || index"
-                  class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                >
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                   <div>
-                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       {{ t('name') }}
-                     </label>
-                     <UInput
-                       v-if="editMode"
-                       v-model="editAttacks[index].name"
-                       :placeholder="t('attackName')"
-                     />
-                     <p v-else class="text-gray-900 dark:text-white">{{ attack.name }}</p>
-                   </div>
+               <div v-if="editMode ? (!editAttacks || editAttacks.filter(a => a.type !== 'skill').length === 0) : (!displayAttacks || displayAttacks.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                 {{ t('noAttacks') }}
+               </div>
 
-                   <div>
-                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       {{ t('attackBonus') }}
-                     </label>
-                     <UInput
-                       v-if="editMode"
-                       v-model.number="editAttacks[index].attackBonus"
-                       type="number"
-                       placeholder="+0"
-                     />
-                     <p v-else class="text-gray-900 dark:text-white">
-                       {{ attack.attackBonus !== undefined ? (attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus : 'N/A' }}
-                     </p>
-                   </div>
-
-                   <div>
-                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       {{ t('damage') }}
-                     </label>
-                     <UInput
-                       v-if="editMode"
-                       v-model="editAttacks[index].damage"
-                       placeholder="1d8+3"
-                     />
-                     <p v-else class="text-gray-900 dark:text-white">{{ attack.damage || 'N/A' }}</p>
-                   </div>
-
-                   <div>
-                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                       {{ t('rangeProperties') }}
-                     </label>
-                     <UInput
-                       v-if="editMode"
-                       v-model="editAttacks[index].rangeText"
-                       placeholder="5 ft"
-                     />
-                     <p v-else class="text-gray-900 dark:text-white">{{ attack.rangeText || 'N/A' }}</p>
-                   </div>
-                 </div>
-
-                 <div class="mt-4">
-                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                     {{ t('description') }}
-                   </label>
-                   <UTextarea
-                     v-if="editMode"
-                     v-model="editAttacks[index].notes"
-                     :placeholder="t('attackDescription')"
-                     :rows="2"
-                   />
-                   <p v-else class="text-gray-900 dark:text-white">{{ attack.notes || t('noDescription') }}</p>
-                 </div>
-
-                 <div v-if="editMode" class="mt-4 flex justify-end">
-                   <UButton
-                     color="red"
-                     variant="ghost"
-                     size="sm"
-                     icon="i-heroicons-trash"
-                     @click="removeAttack(index)"
+               <div v-else class="space-y-4">
+                 <template v-for="(attack, index) in editMode ? editAttacks : displayAttacks" :key="attack.id || index">
+                   <div
+                     v-if="attack.type !== 'skill'"
+                     class="border rounded-lg p-4 relative overflow-hidden transition-all duration-300"
+                     :class="editMode ? 'border-gray-200 dark:border-gray-700' : [getTierClasses(attack.tier).card, getTierClasses(attack.tier).glow]"
                    >
-                     {{ t('remove') }}
+                     <!-- Diagonal Tier Banner -->
+                     <div 
+                       v-if="!editMode && attack.tier && attack.tier !== 'gris'" 
+                       class="absolute top-0 right-0 overflow-hidden w-16 h-16 pointer-events-none z-10"
+                     >
+                       <div 
+                         class="absolute transform rotate-45 text-[9px] font-bold text-center py-0.5 w-[90px] -right-[26px] top-[12px] shadow-sm uppercase tracking-wider text-white select-none"
+                         :class="getTierBannerBg(attack.tier)"
+                       >
+                         {{ t('newTierBanner') }}
+                       </div>
+                     </div>
+
+                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                       <div class="lg:col-span-2 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                         <div class="flex-1">
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             {{ t('name') }}
+                           </label>
+                           <UInput
+                             v-if="editMode"
+                             v-model="editAttacks[index].name"
+                             :placeholder="t('attackName')"
+                           />
+                           <p v-else class="font-bold text-gray-900 dark:text-white" :class="getTierClasses(attack.tier).text">
+                             {{ attack.name }}
+                           </p>
+                         </div>
+
+                         <div v-if="editMode" class="w-full md:w-32">
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             {{ t('tier') }}
+                           </label>
+                           <USelect
+                             v-model="editAttacks[index].tier"
+                             :options="tierOptions"
+                             size="sm"
+                           />
+                         </div>
+                         <div v-else-if="attack.tier" class="self-start md:self-center mt-1 md:mt-5">
+                           <UBadge :color="getTierClasses(attack.tier).badgeColor" size="xs" variant="soft">
+                             {{ getTierClasses(attack.tier).name }}
+                           </UBadge>
+                         </div>
+                       </div>
+
+                       <div>
+                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                           {{ t('attackBonus') }}
+                         </label>
+                         <UInput
+                           v-if="editMode"
+                           v-model.number="editAttacks[index].attackBonus"
+                           type="number"
+                           placeholder="+0"
+                         />
+                         <p v-else class="text-gray-900 dark:text-white font-medium text-sm mt-1">
+                           {{ attack.attackBonus !== undefined ? (attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus : 'N/A' }}
+                         </p>
+                       </div>
+
+                       <div class="grid grid-cols-2 gap-2">
+                         <div>
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             {{ t('damage') }}
+                           </label>
+                           <UInput
+                             v-if="editMode"
+                             v-model="editAttacks[index].damage"
+                             placeholder="1d8+3"
+                           />
+                           <p v-else class="text-gray-900 dark:text-white font-medium text-sm mt-1">{{ attack.damage || 'N/A' }}</p>
+                         </div>
+
+                         <div>
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             {{ t('rangeProperties') }}
+                           </label>
+                           <UInput
+                             v-if="editMode"
+                             v-model="editAttacks[index].rangeText"
+                             placeholder="5 ft"
+                           />
+                           <p v-else class="text-gray-900 dark:text-white text-sm mt-1">{{ attack.rangeText || 'N/A' }}</p>
+                         </div>
+                       </div>
+                     </div>
+
+                     <div class="mt-4">
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                         {{ t('description') }}
+                       </label>
+                       <UTextarea
+                         v-if="editMode"
+                         v-model="editAttacks[index].notes"
+                         :placeholder="t('attackDescription')"
+                         :rows="2"
+                       />
+                       <p v-else class="text-gray-700 dark:text-gray-300 text-sm border-t border-gray-100 dark:border-gray-800/40 pt-1.5 mt-1 italic">
+                         {{ attack.notes || t('noDescription') }}
+                       </p>
+                     </div>
+
+                     <div v-if="editMode" class="mt-4 flex justify-between items-center border-t border-gray-100 dark:border-gray-800 pt-3">
+                       <div class="flex items-center space-x-2">
+                         <span class="text-xs text-gray-500">{{ t('entryType') }}:</span>
+                         <USelect
+                           v-model="editAttacks[index].type"
+                           :options="[
+                             { value: 'attack', label: t('attackType') },
+                             { value: 'skill', label: t('skillType') }
+                           ]"
+                           size="sm"
+                         />
+                       </div>
+                       <UButton
+                         color="red"
+                         variant="ghost"
+                         size="sm"
+                         icon="i-heroicons-trash"
+                         @click="removeAttack(index)"
+                       >
+                         {{ t('remove') }}
+                       </UButton>
+                     </div>
+                   </div>
+                 </template>
+               </div>
+             </UCard>
+
+             <!-- Custom Skills Card -->
+             <UCard class="mt-6" :class="{ 'hidden lg:block': activeMobileTab !== 'combat' }">
+               <template #header>
+                 <div class="flex items-center justify-between">
+                   <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                     {{ t('skillsLabel') }}
+                   </h3>
+                   <UButton
+                     v-if="editMode && canEdit"
+                     color="primary"
+                     variant="soft"
+                     size="sm"
+                     icon="i-heroicons-plus"
+                     @click="addSkill"
+                   >
+                     {{ t('addSkill') }}
                    </UButton>
                  </div>
+               </template>
+
+              <!-- Filters & Sorting (Read-only mode) -->
+              <div v-if="!editMode && character.attacks && character.attacks.filter(a => a.type === 'skill').length > 0" class="flex flex-col sm:flex-row gap-2 mb-4 pb-4 border-b border-gray-150 dark:border-gray-800">
+                <div class="flex-1 flex items-center gap-2">
+                  <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filtrar:</span>
+                  <USelect
+                    v-model="skillsFilterTier"
+                    :options="[
+                      { value: 'all', label: 'Todos los Tiers' },
+                      { value: 'gris', label: getTierClasses('gris').name },
+                      { value: 'azul', label: getTierClasses('azul').name },
+                      { value: 'verde', label: getTierClasses('verde').name },
+                      { value: 'violeta', label: getTierClasses('violeta').name },
+                      { value: 'naranja', label: getTierClasses('naranja').name },
+                      { value: 'rojo', label: getTierClasses('rojo').name }
+                    ]"
+                    size="xs"
+                    class="w-36"
+                  />
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ordenar:</span>
+                  <USelect
+                    v-model="skillsSortBy"
+                    :options="[
+                      { value: 'tier', label: 'Por Tier (Mejor a peor)' },
+                      { value: 'newest', label: 'Más nuevo primero' },
+                      { value: 'oldest', label: 'Más viejo primero' }
+                    ]"
+                    size="xs"
+                    class="w-48"
+                  />
+                </div>
+              </div>
+
+               <div v-if="editMode ? (!editAttacks || editAttacks.filter(a => a.type === 'skill').length === 0) : (!displaySkills || displaySkills.length === 0)" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                 {{ t('noSkills') }}
                </div>
-             </div>
-            </UCard>
+
+               <div v-else class="space-y-4">
+                 <template v-for="(ability, index) in editMode ? editAttacks : displaySkills" :key="ability.id || index">
+                   <div
+                     v-if="ability.type === 'skill'"
+                     class="border rounded-lg p-4 relative overflow-hidden transition-all duration-300"
+                     :class="editMode ? 'border-gray-200 dark:border-gray-700' : [getTierClasses(ability.tier).card, getTierClasses(ability.tier).glow]"
+                   >
+                     <!-- Diagonal Tier Banner -->
+                     <div 
+                       v-if="!editMode && ability.tier && ability.tier !== 'gris'" 
+                       class="absolute top-0 right-0 overflow-hidden w-16 h-16 pointer-events-none z-10"
+                     >
+                       <div 
+                         class="absolute transform rotate-45 text-[9px] font-bold text-center py-0.5 w-[90px] -right-[26px] top-[12px] shadow-sm uppercase tracking-wider text-white select-none"
+                         :class="getTierBannerBg(ability.tier)"
+                       >
+                         {{ t('newTierBanner') }}
+                       </div>
+                     </div>
+
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 md:col-span-2">
+                         <div class="flex-1">
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             {{ t('skillName') }}
+                           </label>
+                           <UInput
+                             v-slot="{}"
+                             v-if="editMode"
+                             v-model="editAttacks[index].name"
+                             :placeholder="t('skillName')"
+                           />
+                           <p v-else class="font-bold text-gray-900 dark:text-white" :class="getTierClasses(ability.tier).text">
+                             {{ ability.name }}
+                           </p>
+                         </div>
+
+                         <div v-if="editMode" class="w-full md:w-32">
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             {{ t('tier') }}
+                           </label>
+                           <USelect
+                             v-model="editAttacks[index].tier"
+                             :options="tierOptions"
+                             size="sm"
+                           />
+                         </div>
+                         <div v-else-if="ability.tier" class="self-start md:self-center mt-1 md:mt-5">
+                           <UBadge :color="getTierClasses(ability.tier).badgeColor" size="xs" variant="soft">
+                             {{ getTierClasses(ability.tier).name }}
+                           </UBadge>
+                         </div>
+                       </div>
+
+                       <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div>
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             Effect/Damage
+                           </label>
+                           <UInput
+                             v-slot="{}"
+                             v-if="editMode"
+                             v-model="editAttacks[index].damage"
+                             placeholder="e.g. 8d6 Fire, or 3d8 Healing"
+                           />
+                           <p v-else class="text-gray-900 dark:text-white text-sm mt-1 font-semibold">{{ ability.damage || 'N/A' }}</p>
+                         </div>
+
+                         <div>
+                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                             Range/Properties
+                           </label>
+                           <UInput
+                             v-if="editMode"
+                             v-model="editAttacks[index].rangeText"
+                             placeholder="e.g. 150 ft, Self"
+                           />
+                           <p v-else class="text-gray-900 dark:text-white text-sm mt-1">{{ ability.rangeText || 'N/A' }}</p>
+                         </div>
+                       </div>
+                     </div>
+
+                     <div class="mt-4">
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                         {{ t('description') }}
+                       </label>
+                       <UTextarea
+                         v-if="editMode"
+                         v-model="editAttacks[index].notes"
+                         :placeholder="t('skillDescriptionPlaceholder')"
+                         :rows="2"
+                       />
+                       <p v-else class="text-gray-700 dark:text-gray-300 text-sm border-t border-gray-150 dark:border-gray-800/40 pt-1.5 mt-1 italic">
+                         {{ ability.notes || t('noNotes') }}
+                       </p>
+                     </div>
+
+                     <div v-if="editMode" class="mt-4 flex justify-between items-center border-t border-gray-100 dark:border-gray-800 pt-3">
+                       <div class="flex items-center space-x-2">
+                         <span class="text-xs text-gray-500">{{ t('entryType') }}:</span>
+                         <USelect
+                           v-model="editAttacks[index].type"
+                           :options="[
+                             { value: 'attack', label: t('attackType') },
+                             { value: 'skill', label: t('skillType') }
+                           ]"
+                           size="sm"
+                         />
+                       </div>
+                       <UButton
+                         color="red"
+                         variant="ghost"
+                         size="sm"
+                         icon="i-heroicons-trash"
+                         @click="removeAttack(index)"
+                       >
+                         {{ t('remove') }}
+                       </UButton>
+                     </div>
+                   </div>
+                 </template>
+               </div>
+             </UCard>
           </div>
          
          <!-- Right Sidebar - Skills & Saving Throws -->
-          <div class="space-y-6">
+          <div class="space-y-6" :class="{ 'hidden lg:block': !['general', 'attributes'].includes(activeMobileTab) }">
+
+
             <!-- Saving Throws -->
-            <UCard>
+            <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'attributes' }">
               <template #header>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                   Saving Throws
@@ -1206,16 +1434,15 @@
                 </div>
               </div>
             </UCard>
-
             <!-- Skills -->
-            <UCard>
+            <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'attributes' }">
               <template #header>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                   {{ t('skills') }}
                 </h3>
               </template>
 
-              <div class="space-y-2 max-h-96 overflow-y-auto">
+              <div class="space-y-2">
                 <div v-for="skill in standardSkills" :key="skill.name" class="flex items-center justify-between">
                   <div class="flex items-center space-x-2">
                     <UCheckbox
@@ -1233,7 +1460,7 @@
             </UCard>
 
             <!-- Quick Stats -->
-            <UCard>
+            <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'general' }">
               <template #header>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                   {{ t('quickStats') }}
@@ -1268,15 +1495,24 @@
                 
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('inspiration') }}</span>
-                  <span class="font-medium text-gray-900 dark:text-white">
-                    {{ character.inspiration ? t('yes') : t('no') }}
-                  </span>
+                  <div v-if="editMode" class="flex items-center space-x-2">
+                    <UInput
+                      v-model.number="editForm.inspiration"
+                      type="number"
+                      min="0"
+                      max="20"
+                      class="w-16 text-center"
+                      :placeholder="character.inspiration || 0"
+                    />
+                  </div>
+                  <span v-else class="font-medium text-gray-900 dark:text-white">{{ character.inspiration || 0 }}</span>
                 </div>
               </div>
             </UCard>
           </div>
       </div>
-    </main>
+    </div>
+  </main>
   </div>
 </template>
 
@@ -1301,6 +1537,7 @@ const canEdit = computed(() => {
 
 // Reactive state
 const character = ref<CharacterDTO | null>(null)
+const activeMobileTab = ref('general')
 const editMode = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
@@ -1308,14 +1545,187 @@ const error = ref<string | null>(null)
 const imageLoadError = ref(false)
 const hpAdjustment = ref<number | null>(null)
 
+// Sorting and Filtering reactive variables
+const inventoryFilterTier = ref('all')
+const inventorySortBy = ref('tier')
+const attacksFilterTier = ref('all')
+const attacksSortBy = ref('tier')
+const skillsFilterTier = ref('all')
+const skillsSortBy = ref('tier')
+
 // Form data
 const editForm = ref<Partial<CharacterDTO>>({})
 const characterNotes = ref('')
 
 // Attacks and inventory data
-const editAttacks = ref<Array<{name: string, attackBonus?: number, damage?: string, rangeText?: string, notes?: string}>>([])
-const editInventory = ref<Array<{name: string, quantity: number, weight?: number, equipped: boolean, notes?: string}>>([])
+const editAttacks = ref<Array<{name: string, attackBonus?: number, damage?: string, rangeText?: string, notes?: string, type?: string, tier?: string}>>([])
+const editInventory = ref<Array<{name: string, quantity: number, weight?: number, equipped: boolean, notes?: string, tier?: string}>>([])
 const editCombatActions = ref<Array<{name: string, type: string, currentUses: number, maxUses: number, description?: string}>>([])
+
+// Tier definitions and style maps
+const tierOptions = computed(() => [
+  { value: 'gris', label: t('gris') || 'Común' },
+  { value: 'azul', label: t('azul') || 'Poco común' },
+  { value: 'verde', label: t('verde') || 'Raro' },
+  { value: 'violeta', label: t('violeta') || 'Ultrararo' },
+  { value: 'naranja', label: t('naranja') || 'Épico' },
+  { value: 'rojo', label: t('rojo') || 'Legendario' }
+])
+
+const getTierClasses = (tier?: string) => {
+  switch (tier?.toLowerCase()) {
+    case 'azul':
+      return {
+        card: 'border-l-4 border-l-blue-500 bg-blue-50/5 dark:bg-blue-950/10 border-blue-200 dark:border-blue-900/50',
+        text: 'text-blue-600 dark:text-blue-400 font-semibold',
+        badge: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+        badgeColor: 'blue',
+        name: t('tierRefinado') || 'Poco Común',
+        glow: 'shadow-[0_0_10px_rgba(59,130,246,0.15)]'
+      }
+    case 'verde':
+      return {
+        card: 'border-l-4 border-l-emerald-500 bg-emerald-50/5 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/50',
+        text: 'text-emerald-600 dark:text-emerald-400 font-semibold',
+        badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+        badgeColor: 'green',
+        name: t('tierMagico') || 'Mágico',
+        glow: 'shadow-[0_0_10px_rgba(16,185,129,0.15)]'
+      }
+    case 'violeta':
+      return {
+        card: 'border-l-4 border-l-purple-500 bg-purple-50/5 dark:bg-purple-950/10 border-purple-200 dark:border-purple-900/50',
+        text: 'text-purple-600 dark:text-purple-400 font-semibold',
+        badge: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+        badgeColor: 'purple',
+        name: t('tierMistico') || 'Ultrararo',
+        glow: 'shadow-[0_0_15px_rgba(168,85,247,0.25)]'
+      }
+    case 'naranja':
+      return {
+        card: 'border-l-4 border-l-orange-500 bg-orange-50/5 dark:bg-orange-950/10 border-orange-200 dark:border-orange-900/50',
+        text: 'text-orange-600 dark:text-orange-400 font-bold',
+        badge: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+        badgeColor: 'orange',
+        name: t('tierLegendario') || 'Épico',
+        glow: 'shadow-[0_0_20px_rgba(249,115,22,0.35)]'
+      }
+    case 'rojo':
+    case 'rojo sangre':
+      return {
+        card: 'border-l-4 border-l-red-650 bg-red-50/5 dark:bg-red-950/15 border-red-300 dark:border-red-900/50',
+        text: 'text-red-600 dark:text-red-500 font-extrabold tracking-wide uppercase font-serif animate-pulse',
+        badge: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-400 border border-red-500/30',
+        badgeColor: 'red',
+        name: t('tierDivino') || 'Legendario',
+        glow: 'shadow-[0_0_25px_rgba(220,38,38,0.5)] border border-red-500/50'
+      }
+    case 'gris':
+    default:
+      return {
+        card: 'border-l-4 border-l-zinc-400 bg-zinc-50/5 dark:bg-zinc-900/10 border-zinc-200 dark:border-zinc-800',
+        text: 'text-zinc-700 dark:text-zinc-300',
+        badge: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300',
+        badgeColor: 'gray',
+        name: t('tierComun') || 'Común',
+        glow: ''
+      }
+  }
+}
+
+const getTierBannerBg = (tier?: string) => {
+  switch (tier?.toLowerCase()) {
+    case 'azul': return 'bg-blue-600'
+    case 'verde': return 'bg-emerald-600'
+    case 'violeta': return 'bg-purple-600'
+    case 'naranja': return 'bg-orange-500'
+    case 'rojo':
+    case 'rojo sangre': return 'bg-red-600 animate-pulse'
+    default: return 'bg-gray-500'
+  }
+}
+
+const getTierPriority = (tier?: string) => {
+  switch (tier?.toLowerCase()) {
+    case 'rojo':
+    case 'rojo sangre': return 5
+    case 'naranja': return 4
+    case 'violeta': return 3
+    case 'verde': return 2
+    case 'azul': return 1
+    case 'gris':
+    default: return 0
+  }
+}
+
+const displayInventory = computed(() => {
+  if (!character.value?.inventory) return []
+  let items = [...character.value.inventory]
+  if (inventoryFilterTier.value !== 'all') {
+    items = items.filter(item => (item.tier || 'gris').toLowerCase() === inventoryFilterTier.value.toLowerCase())
+  }
+  items.sort((a, b) => {
+    if (inventorySortBy.value === 'tier') {
+      return getTierPriority(b.tier) - getTierPriority(a.tier)
+    } else if (inventorySortBy.value === 'newest') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    } else if (inventorySortBy.value === 'oldest') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateA - dateB
+    }
+    return 0
+  })
+  return items
+})
+
+const displayAttacks = computed(() => {
+  if (!character.value?.attacks) return []
+  let list = character.value.attacks.filter(a => a.type !== 'skill')
+  if (attacksFilterTier.value !== 'all') {
+    list = list.filter(a => (a.tier || 'gris').toLowerCase() === attacksFilterTier.value.toLowerCase())
+  }
+  list.sort((a, b) => {
+    if (attacksSortBy.value === 'tier') {
+      return getTierPriority(b.tier) - getTierPriority(a.tier)
+    } else if (attacksSortBy.value === 'newest') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    } else if (attacksSortBy.value === 'oldest') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateA - dateB
+    }
+    return 0
+  })
+  return list
+})
+
+const displaySkills = computed(() => {
+  if (!character.value?.attacks) return []
+  let list = character.value.attacks.filter(a => a.type === 'skill')
+  if (skillsFilterTier.value !== 'all') {
+    list = list.filter(a => (a.tier || 'gris').toLowerCase() === skillsFilterTier.value.toLowerCase())
+  }
+  list.sort((a, b) => {
+    if (skillsSortBy.value === 'tier') {
+      return getTierPriority(b.tier) - getTierPriority(a.tier)
+    } else if (skillsSortBy.value === 'newest') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    } else if (skillsSortBy.value === 'oldest') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateA - dateB
+    }
+    return 0
+  })
+  return list
+})
 
 // Proficiency checkboxes
 const savingThrowProficient = ref({
@@ -1464,7 +1874,21 @@ function addAttack() {
     attackBonus: undefined,
     damage: '',
     rangeText: '',
-    notes: ''
+    notes: '',
+    type: 'attack',
+    tier: 'gris'
+  })
+}
+
+function addSkill() {
+  editAttacks.value.push({
+    name: '',
+    attackBonus: undefined,
+    damage: '',
+    rangeText: '',
+    notes: '',
+    type: 'skill',
+    tier: 'gris'
   })
 }
 
@@ -1478,7 +1902,8 @@ function addInventoryItem() {
     quantity: 1,
     weight: undefined,
     equipped: false,
-    notes: ''
+    notes: '',
+    tier: 'gris'
   })
 }
 

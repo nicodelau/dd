@@ -391,7 +391,10 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               attackBonus: attack.attackBonus,
               damageDice: attack.damage, // Map damage to damageDice
               range: attack.rangeText, // Map rangeText to range
-              description: attack.notes // Map notes to description
+              description: attack.notes, // Map notes to description
+              type: attack.type || 'attack',
+              tier: attack.tier || 'gris',
+              createdAt: attack.createdAt ? new Date(attack.createdAt) : undefined
             }))
           })
         }
@@ -413,7 +416,9 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               description: item.notes, // Map notes to description
               quantity: item.quantity,
               weight: item.weight,
-              equipped: item.equipped
+              equipped: item.equipped,
+              tier: item.tier || 'gris',
+              createdAt: item.createdAt ? new Date(item.createdAt) : undefined
             }))
           })
         }
@@ -549,7 +554,9 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         quantity: item.quantity,
         weight: item.weight,
         equipped: item.equipped,
-        notes: item.description // Map description back to notes
+        notes: item.description, // Map description back to notes
+        tier: item.tier || 'gris',
+        createdAt: item.createdAt ? item.createdAt.toISOString() : undefined
       })) || [],
       // Attacks
       attacks: prismaCharacter.attacks?.map((attack: any) => ({
@@ -559,7 +566,10 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         attackBonus: attack.attackBonus,
         damage: attack.damageDice, // Map damageDice back to damage
         rangeText: attack.range, // Map range back to rangeText
-        notes: attack.description // Map description back to notes
+        notes: attack.description, // Map description back to notes
+        type: attack.type || 'attack',
+        tier: attack.tier || 'gris',
+        createdAt: attack.createdAt ? attack.createdAt.toISOString() : undefined
       })) || [],
       // Combat Actions
       combatActions: prismaCharacter.combatActions?.map((action: any) => ({

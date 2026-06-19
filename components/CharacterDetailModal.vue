@@ -98,11 +98,23 @@
               <h4 class="font-semibold text-white text-white">{{ t('abilityScores') }}</h4>
             </template>
 
-            <div class="grid grid-cols-3 md:grid-cols-6 gap-4">
-              <div class="text-center" v-for="(ability, key) in abilities" :key="key">
-                <span class="text-xs text-zinc-400 uppercase">{{ key }}</span>
-                <div class="text-lg font-bold">{{ character[ability] || 10 }}</div>
-                <div class="text-sm text-gray-600">{{ formatModifier(getAbilityModifier(character[ability] || 10)) }}
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+              <div v-for="stat in [
+                { key: 'str', ability: 'strength', bg: 'from-red-500/10 to-orange-500/10 border-red-500/20 text-red-400' },
+                { key: 'dex', ability: 'dexterity', bg: 'from-blue-500/10 to-indigo-500/10 border-blue-500/20 text-blue-400' },
+                { key: 'con', ability: 'constitution', bg: 'from-orange-500/10 to-amber-500/10 border-orange-500/20 text-orange-400' },
+                { key: 'int', ability: 'intelligence', bg: 'from-purple-500/10 to-pink-500/10 border-purple-500/20 text-purple-400' },
+                { key: 'wis', ability: 'wisdom', bg: 'from-emerald-500/10 to-teal-500/10 border-emerald-500/20 text-emerald-400' },
+                { key: 'cha', ability: 'charisma', bg: 'from-pink-500/10 to-rose-500/10 border-pink-500/20 text-pink-400' }
+              ]" :key="stat.key" class="relative group flex flex-col items-center justify-between p-2 rounded-xl border bg-gradient-to-b dark:bg-zinc-950/40 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-lg" :class="stat.bg">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-white transition-colors">{{ t(stat.key) }}</span>
+                <div class="my-1 text-center flex flex-col items-center">
+                  <span class="text-2xl font-extrabold text-white">
+                    {{ formatModifier(getAbilityModifier(character[stat.ability] || 10)) }}
+                  </span>
+                  <span class="mt-0.5 px-1.5 py-0.5 text-[10px] rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700/50">
+                    {{ character[stat.ability] || 10 }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -115,9 +127,9 @@
             </template>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-              <div v-for="(ability, key) in abilities" :key="key" class="flex items-center justify-between">
-                <span class="text-sm capitalize">{{ key }}</span>
-                <span class="font-medium">{{ formatModifier(getSavingThrowModifier(ability)) }}</span>
+              <div v-for="(ability, key) in abilities" :key="key" class="flex items-center justify-between bg-zinc-900/30 p-2 rounded border border-zinc-800">
+                <span class="text-sm capitalize font-medium text-zinc-300">{{ key }}</span>
+                <span class="font-bold text-white">{{ formatModifier(getSavingThrowModifier(ability)) }}</span>
               </div>
             </div>
           </UCard>
@@ -128,40 +140,69 @@
               <h4 class="font-semibold text-white text-white">Skills</h4>
             </template>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-1">
-              <div v-for="skill in skills" :key="skill.name" class="flex items-center justify-between">
-                <span class="text-sm">{{ skill.label }}</span>
-                <span class="font-medium">{{ formatModifier(getSkillModifier(skill.name, skill.ability)) }}</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              <div v-for="skill in skills" :key="skill.name" class="flex items-center justify-between bg-zinc-900/30 p-2 rounded border border-zinc-800/60">
+                <span class="text-sm text-zinc-300">{{ skill.label }}</span>
+                <span class="font-bold text-white">{{ formatModifier(getSkillModifier(skill.name, skill.ability)) }}</span>
               </div>
             </div>
           </UCard>
 
           <!-- Attacks -->
-          <UCard v-if="character.attacks && character.attacks.length > 0">
+          <UCard v-if="character.attacks && character.attacks.filter(a => a.type !== 'skill').length > 0">
             <template #header>
-              <h4 class="font-semibold text-white text-white">Attacks</h4>
+              <h4 class="font-semibold text-white text-white">{{ t('attacks') }}</h4>
             </template>
 
             <div class="space-y-3">
-              <div v-for="attack in character.attacks" :key="attack.id"
-                class="border border-gray-200 dark:border-gray-700 rounded p-3">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div v-for="attack in character.attacks.filter(a => a.type !== 'skill')" :key="attack.id"
+                class="border rounded-lg p-3 relative overflow-hidden"
+                :class="[getTierClasses(attack.tier).card, getTierClasses(attack.tier).glow]">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-bold" :class="getTierClasses(attack.tier).text">{{ attack.name }}</span>
+                  <UBadge :color="getTierClasses(attack.tier).badgeColor" size="xs" variant="soft">
+                    {{ t(attack.tier || 'gris') }}
+                  </UBadge>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm mt-1">
                   <div>
-                    <span class="text-zinc-400 text-sm">Name:</span>
-                    <p class="font-medium">{{ attack.name }}</p>
+                    <span class="text-zinc-500 text-xs uppercase block">{{ t('attackBonus') }}</span>
+                    <span class="font-bold text-zinc-200">{{ formatModifier(attack.attackBonus) }}</span>
                   </div>
                   <div>
-                    <span class="text-zinc-400 text-sm">Attack Bonus:</span>
-                    <p class="font-medium">{{ formatModifier(attack.attackBonus) }}</p>
-                  </div>
-                  <div>
-                    <span class="text-zinc-400 text-sm">Damage:</span>
-                    <p class="font-medium">{{ attack.damage || 'N/A' }}</p>
+                    <span class="text-zinc-500 text-xs uppercase block">{{ t('damage') }}</span>
+                    <span class="font-bold text-zinc-200">{{ attack.damage || 'N/A' }}</span>
                   </div>
                 </div>
-                <div v-if="attack.notes" class="mt-2">
-                  <span class="text-zinc-400 text-sm">Notes:</span>
-                  <p class="text-sm">{{ attack.notes }}</p>
+                <div v-if="attack.notes" class="mt-2 pt-2 border-t border-zinc-800/40 text-xs text-zinc-400">
+                  {{ attack.notes }}
+                </div>
+              </div>
+            </div>
+          </UCard>
+
+          <!-- Custom Skills & Abilities -->
+          <UCard v-if="character.attacks && character.attacks.filter(a => a.type === 'skill').length > 0">
+            <template #header>
+              <h4 class="font-semibold text-white text-white">{{ t('skillsLabel') }}</h4>
+            </template>
+
+            <div class="space-y-3">
+              <div v-for="ability in character.attacks.filter(a => a.type === 'skill')" :key="ability.id"
+                class="border rounded-lg p-3 relative overflow-hidden"
+                :class="[getTierClasses(ability.tier).card, getTierClasses(ability.tier).glow]">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-bold" :class="getTierClasses(ability.tier).text">{{ ability.name }}</span>
+                  <UBadge :color="getTierClasses(ability.tier).badgeColor" size="xs" variant="soft">
+                    {{ t(ability.tier || 'gris') }}
+                  </UBadge>
+                </div>
+                <div v-if="ability.damage" class="text-xs text-zinc-300 mt-1">
+                  <span class="text-zinc-500 uppercase font-medium">Effect/Damage: </span>
+                  <span class="font-bold">{{ ability.damage }}</span>
+                </div>
+                <div v-if="ability.notes" class="mt-2 pt-2 border-t border-zinc-800/40 text-xs text-zinc-400">
+                  {{ ability.notes }}
                 </div>
               </div>
             </div>
@@ -256,11 +297,20 @@
 
             <div class="space-y-2 max-h-60 overflow-y-auto">
               <div v-for="item in character.inventory" :key="item.id"
-                class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+                class="flex items-center justify-between border rounded-lg p-2.5 relative overflow-hidden"
+                :class="[getTierClasses(item.tier).card, getTierClasses(item.tier).glow]">
                 <div class="flex-1">
-                  <p class="font-medium text-sm">{{ item.name }}</p>
-                  <p class="text-xs text-zinc-400">{{ item.quantity }} × {{ item.weight || 0 }} lbs</p>
-                  <UBadge v-if="item.equipped" color="green" variant="soft" size="xs" class="mt-1">{{ t('equipped') }}</UBadge>
+                  <div class="flex items-center justify-between mb-1">
+                    <p class="font-bold text-sm" :class="getTierClasses(item.tier).text">{{ item.name }}</p>
+                    <UBadge :color="getTierClasses(item.tier).badgeColor" size="xs" variant="soft">
+                      {{ t(item.tier || 'gris') }}
+                    </UBadge>
+                  </div>
+                  <div class="flex items-center justify-between text-xs text-zinc-450 mt-1">
+                    <span>{{ item.quantity }} × {{ item.weight || 0 }} lbs</span>
+                    <UBadge v-if="item.equipped" color="green" variant="soft" size="xs">{{ t('equipped') }}</UBadge>
+                  </div>
+                  <p v-if="item.notes" class="text-xs text-zinc-400 mt-1.5 italic pt-1 border-t border-zinc-800/20">{{ item.notes }}</p>
                 </div>
               </div>
             </div>
@@ -339,6 +389,8 @@ interface Character {
     damage?: string
     rangeText?: string
     notes?: string
+    type?: string
+    tier?: string
   }>
   inventory?: Array<{
     id?: number
@@ -347,6 +399,7 @@ interface Character {
     weight?: number
     equipped: boolean
     notes?: string
+    tier?: string
   }>
   savingThrows?: Array<{
     ability: string
@@ -484,6 +537,61 @@ const calculateTotalWealth = () => {
   // 1 platinum = 100 gold, 1 gold = 100 silver, 1 silver = 100 copper
   const total = (platinum * 100) + gold + (silver * 0.01) + (copper * 0.0001)
   return total.toFixed(2)
+}
+
+const getTierClasses = (tier?: string) => {
+  switch (tier?.toLowerCase()) {
+    case 'azul':
+      return {
+        card: 'border-l-4 border-l-blue-500 bg-blue-50/5 dark:bg-blue-950/10 border-blue-200 dark:border-blue-900/50',
+        text: 'text-blue-600 dark:text-blue-400 font-semibold',
+        badge: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+        badgeColor: 'blue',
+        glow: 'shadow-[0_0_10px_rgba(59,130,246,0.15)]'
+      }
+    case 'verde':
+      return {
+        card: 'border-l-4 border-l-emerald-500 bg-emerald-50/5 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/50',
+        text: 'text-emerald-600 dark:text-emerald-400 font-semibold',
+        badge: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+        badgeColor: 'green',
+        glow: 'shadow-[0_0_10px_rgba(16,185,129,0.15)]'
+      }
+    case 'violeta':
+      return {
+        card: 'border-l-4 border-l-purple-500 bg-purple-50/5 dark:bg-purple-950/10 border-purple-200 dark:border-purple-900/50',
+        text: 'text-purple-600 dark:text-purple-400 font-semibold',
+        badge: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+        badgeColor: 'purple',
+        glow: 'shadow-[0_0_15px_rgba(168,85,247,0.25)]'
+      }
+    case 'naranja':
+      return {
+        card: 'border-l-4 border-l-orange-500 bg-orange-50/5 dark:bg-orange-950/10 border-orange-200 dark:border-orange-900/50',
+        text: 'text-orange-600 dark:text-orange-400 font-bold',
+        badge: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+        badgeColor: 'orange',
+        glow: 'shadow-[0_0_20px_rgba(249,115,22,0.35)]'
+      }
+    case 'rojo':
+    case 'rojo sangre':
+      return {
+        card: 'border-l-4 border-l-red-650 bg-red-50/5 dark:bg-red-950/15 border-red-300 dark:border-red-900/50',
+        text: 'text-red-600 dark:text-red-500 font-extrabold tracking-wide uppercase font-serif animate-pulse',
+        badge: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-400 border border-red-500/30',
+        badgeColor: 'red',
+        glow: 'shadow-[0_0_25px_rgba(220,38,38,0.5)] border border-red-500/50'
+      }
+    case 'gris':
+    default:
+      return {
+        card: 'border-l-4 border-l-zinc-400 bg-zinc-50/5 dark:bg-zinc-900/10 border-zinc-200 dark:border-zinc-805',
+        text: 'text-zinc-700 dark:text-zinc-300',
+        badge: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300',
+        badgeColor: 'gray',
+        glow: ''
+      }
+  }
 }
 
 const close = () => {

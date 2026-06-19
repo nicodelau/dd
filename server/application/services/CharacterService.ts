@@ -32,7 +32,7 @@ export class CharacterService {
       ...dto,
       classLevel: dto.classLevel ?? 1,
       experience: dto.experience ?? 0,
-      inspiration: dto.inspiration ?? false,
+      inspiration: dto.inspiration ?? 0,
       proficiencyBonus: dto.proficiencyBonus ?? 2,
       maxHp: dto.maxHp ?? 0,
       currentHp: dto.currentHp ?? 0,

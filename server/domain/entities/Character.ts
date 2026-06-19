@@ -25,7 +25,7 @@ export interface Character {
   ancestry?: string
   
   // Combat Stats
-  inspiration: boolean
+  inspiration: number
   passivePerception?: number
   proficiencyBonus: number
   speed?: number
@@ -170,7 +170,7 @@ export class CharacterEntity {
     return this.data.hair
   }
 
-  get inspiration(): boolean {
+  get inspiration(): number {
     return this.data.inspiration
   }
 

@@ -37,7 +37,7 @@ export interface CharacterDTO {
   eyes?: string
   skin?: string
   hair?: string
-  inspiration: boolean
+  inspiration: number
   passivePerception?: number
   proficiencyBonus: number
   speed?: number
@@ -137,7 +137,7 @@ export interface CreateCharacterDTO {
   eyes?: string
   skin?: string
   hair?: string
-  inspiration?: boolean
+  inspiration?: number
   passivePerception?: number
   proficiencyBonus?: number
   speed?: number
@@ -190,7 +190,7 @@ export interface UpdateCharacterDTO {
   eyes?: string
   skin?: string
   hair?: string
-  inspiration?: boolean
+  inspiration?: number
   passivePerception?: number
   proficiencyBonus?: number
   speed?: number

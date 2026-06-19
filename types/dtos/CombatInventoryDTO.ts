@@ -6,6 +6,8 @@ export interface InventoryItemDTO {
   weight?: number
   equipped: boolean
   notes?: string
+  tier?: string
+  createdAt?: string
 }
 
 export interface CreateInventoryItemDTO {
@@ -15,6 +17,7 @@ export interface CreateInventoryItemDTO {
   weight?: number
   equipped?: boolean
   notes?: string
+  tier?: string
 }
 
 export interface UpdateInventoryItemDTO {
@@ -23,6 +26,7 @@ export interface UpdateInventoryItemDTO {
   weight?: number
   equipped?: boolean
   notes?: string
+  tier?: string
 }
 
 export interface AttackDTO {
@@ -35,6 +39,9 @@ export interface AttackDTO {
   rangeText?: string
   properties?: string
   notes?: string
+  type?: string
+  tier?: string
+  createdAt?: string
 }
 
 export interface CreateAttackDTO {
@@ -46,6 +53,8 @@ export interface CreateAttackDTO {
   rangeText?: string
   properties?: string
   notes?: string
+  type?: string
+  tier?: string
 }
 
 export interface UpdateAttackDTO {
@@ -56,6 +65,8 @@ export interface UpdateAttackDTO {
   rangeText?: string
   properties?: string
   notes?: string
+  type?: string
+  tier?: string
 }
 
 export interface FeatureDTO {
