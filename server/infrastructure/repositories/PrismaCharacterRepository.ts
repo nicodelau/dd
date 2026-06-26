@@ -2,6 +2,24 @@ import { PrismaClient } from '~/prisma/generated/client'
 import type { ICharacterRepository } from '../../domain/repositories'
 import type { Character } from '../../domain/entities/Character'
 
+function parseOptionalInt(value: any): number | null {
+  if (value === undefined || value === null || value === '') return null
+  const parsed = parseInt(value)
+  return isNaN(parsed) ? null : parsed
+}
+
+function parseIntOrDefault(value: any, defaultValue: number): number {
+  if (value === undefined || value === null || value === '') return defaultValue
+  const parsed = parseInt(value)
+  return isNaN(parsed) ? defaultValue : parsed
+}
+
+function parseOptionalFloat(value: any): number | null {
+  if (value === undefined || value === null || value === '') return null
+  const parsed = parseFloat(value)
+  return isNaN(parsed) ? null : parsed
+}
+
 export class PrismaCharacterRepository implements ICharacterRepository {
   constructor(private prisma: PrismaClient) {}
 
@@ -250,45 +268,45 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         ...(characterData.race && { race: characterData.race }),
         ...(characterData.subrace && { subrace: characterData.subrace }),
         ...(characterData.className && { class: characterData.className }),
-        ...(characterData.classLevel && { level: characterData.classLevel }),
+        ...(characterData.classLevel !== undefined && { level: parseIntOrDefault(characterData.classLevel, 1) }),
         ...(characterData.background && { background: characterData.background }),
         ...(characterData.alignment && { alignment: characterData.alignment }),
         ...(characterData.ancestry && { ancestry: characterData.ancestry }),
-        ...(characterData.currentHp !== undefined && { hitPoints: characterData.currentHp }),
-        ...(characterData.maxHp !== undefined && { maxHitPoints: characterData.maxHp }),
-        ...(characterData.tempHp !== undefined && { tempHitPoints: characterData.tempHp }),
-        ...(characterData.armorClass !== undefined && { armorClass: characterData.armorClass }),
-        ...(characterData.proficiencyBonus !== undefined && { proficiencyBonus: characterData.proficiencyBonus }),
-        ...(characterData.speed !== undefined && { speed: characterData.speed }),
-        ...(characterData.experience !== undefined && { experiencePoints: characterData.experience }),
-        ...(characterData.inspiration !== undefined && { inspiration: characterData.inspiration }),
-        ...(characterData.deathSaveSuccesses !== undefined && { deathSaveSuccesses: characterData.deathSaveSuccesses }),
-        ...(characterData.deathSaveFailures !== undefined && { deathSaveFailures: characterData.deathSaveFailures }),
-        ...(characterData.initiative !== undefined && { initiative: characterData.initiative }),
-        ...(characterData.passivePerception !== undefined && { passivePerception: characterData.passivePerception }),
+        ...(characterData.currentHp !== undefined && { hitPoints: parseIntOrDefault(characterData.currentHp, 0) }),
+        ...(characterData.maxHp !== undefined && { maxHitPoints: parseIntOrDefault(characterData.maxHp, 0) }),
+        ...(characterData.tempHp !== undefined && { tempHitPoints: parseIntOrDefault(characterData.tempHp, 0) }),
+        ...(characterData.armorClass !== undefined && { armorClass: parseIntOrDefault(characterData.armorClass, 10) }),
+        ...(characterData.proficiencyBonus !== undefined && { proficiencyBonus: parseIntOrDefault(characterData.proficiencyBonus, 2) }),
+        ...(characterData.speed !== undefined && { speed: parseIntOrDefault(characterData.speed, 30) }),
+        ...(characterData.experience !== undefined && { experiencePoints: parseIntOrDefault(characterData.experience, 0) }),
+        ...(characterData.inspiration !== undefined && { inspiration: parseIntOrDefault(characterData.inspiration, 0) }),
+        ...(characterData.deathSaveSuccesses !== undefined && { deathSaveSuccesses: parseIntOrDefault(characterData.deathSaveSuccesses, 0) }),
+        ...(characterData.deathSaveFailures !== undefined && { deathSaveFailures: parseIntOrDefault(characterData.deathSaveFailures, 0) }),
+        ...(characterData.initiative !== undefined && { initiative: parseIntOrDefault(characterData.initiative, 0) }),
+        ...(characterData.passivePerception !== undefined && { passivePerception: parseIntOrDefault(characterData.passivePerception, 10) }),
         ...(characterData.languages !== undefined && { languages: characterData.languages }),
         // Ability Scores
-        ...(characterData.strength !== undefined && { strength: characterData.strength }),
-        ...(characterData.dexterity !== undefined && { dexterity: characterData.dexterity }),
-        ...(characterData.constitution !== undefined && { constitution: characterData.constitution }),
-        ...(characterData.intelligence !== undefined && { intelligence: characterData.intelligence }),
-        ...(characterData.wisdom !== undefined && { wisdom: characterData.wisdom }),
-        ...(characterData.charisma !== undefined && { charisma: characterData.charisma }),
+        ...(characterData.strength !== undefined && { strength: parseIntOrDefault(characterData.strength, 10) }),
+        ...(characterData.dexterity !== undefined && { dexterity: parseIntOrDefault(characterData.dexterity, 10) }),
+        ...(characterData.constitution !== undefined && { constitution: parseIntOrDefault(characterData.constitution, 10) }),
+        ...(characterData.intelligence !== undefined && { intelligence: parseIntOrDefault(characterData.intelligence, 10) }),
+        ...(characterData.wisdom !== undefined && { wisdom: parseIntOrDefault(characterData.wisdom, 10) }),
+        ...(characterData.charisma !== undefined && { charisma: parseIntOrDefault(characterData.charisma, 10) }),
         // Avatar/Character Image
         ...(characterData.avatar !== undefined && { avatar: characterData.avatar }),
         // Physical Characteristics
-        ...(characterData.age !== undefined && { age: characterData.age }),
+        ...(characterData.age !== undefined && { age: parseOptionalInt(characterData.age) }),
         ...(characterData.height && { height: characterData.height }),
         ...(characterData.weight && { weight: characterData.weight }),
         ...(characterData.eyes && { eyes: characterData.eyes }),
         ...(characterData.skin && { skin: characterData.skin }),
         ...(characterData.hair && { hair: characterData.hair }),
         // Currency fields
-        ...((characterData as any).copperCoins !== undefined && { copperCoins: (characterData as any).copperCoins }),
-        ...((characterData as any).silverCoins !== undefined && { silverCoins: (characterData as any).silverCoins }),
-        ...((characterData as any).electrumCoins !== undefined && { electrumCoins: (characterData as any).electrumCoins }),
-        ...((characterData as any).goldCoins !== undefined && { goldCoins: (characterData as any).goldCoins }),
-        ...((characterData as any).platinumCoins !== undefined && { platinumCoins: (characterData as any).platinumCoins }),
+        ...((characterData as any).copperCoins !== undefined && { copperCoins: parseIntOrDefault((characterData as any).copperCoins, 0) }),
+        ...((characterData as any).silverCoins !== undefined && { silverCoins: parseIntOrDefault((characterData as any).silverCoins, 0) }),
+        ...((characterData as any).electrumCoins !== undefined && { electrumCoins: parseIntOrDefault((characterData as any).electrumCoins, 0) }),
+        ...((characterData as any).goldCoins !== undefined && { goldCoins: parseIntOrDefault((characterData as any).goldCoins, 0) }),
+        ...((characterData as any).platinumCoins !== undefined && { platinumCoins: parseIntOrDefault((characterData as any).platinumCoins, 0) }),
         // Inventory
         ...((characterData as any).backpack !== undefined && { backpack: (characterData as any).backpack }),
         // User assignment fields
@@ -388,7 +406,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
             data: typedCharacterData.attacks.map((attack: any) => ({
               characterId: id,
               name: attack.name,
-              attackBonus: attack.attackBonus,
+              attackBonus: parseOptionalInt(attack.attackBonus),
               damageDice: attack.damage, // Map damage to damageDice
               range: attack.rangeText, // Map rangeText to range
               description: attack.notes, // Map notes to description
@@ -414,8 +432,8 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               characterId: id,
               name: item.name,
               description: item.notes, // Map notes to description
-              quantity: item.quantity,
-              weight: item.weight,
+              quantity: parseIntOrDefault(item.quantity, 1),
+              weight: parseOptionalFloat(item.weight),
               equipped: item.equipped,
               tier: item.tier || 'gris',
               createdAt: item.createdAt ? new Date(item.createdAt) : undefined
@@ -438,8 +456,8 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               characterId: id,
               name: action.name,
               type: action.type,
-              currentUses: action.currentUses,
-              maxUses: action.maxUses,
+              currentUses: parseIntOrDefault(action.currentUses, 0),
+              maxUses: parseIntOrDefault(action.maxUses, 0),
               description: action.description
             }))
           })
@@ -483,7 +501,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
       return updatedCharacter ? this.mapPrismaToEntity(updatedCharacter) : null
     } catch (error) {
       console.error('Error updating character:', error)
-      return null
+      throw error
     }
   }
 
@@ -549,7 +567,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
       backpack: prismaCharacter.backpack,
       inventory: prismaCharacter.inventory?.map((item: any) => ({
         id: item.id,
-        characterId: parseInt(prismaCharacter.id),
+        characterId: prismaCharacter.id as any,
         name: item.name,
         quantity: item.quantity,
         weight: item.weight,
@@ -561,7 +579,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
       // Attacks
       attacks: prismaCharacter.attacks?.map((attack: any) => ({
         id: attack.id,
-        characterId: parseInt(prismaCharacter.id),
+        characterId: prismaCharacter.id as any,
         name: attack.name,
         attackBonus: attack.attackBonus,
         damage: attack.damageDice, // Map damageDice back to damage
