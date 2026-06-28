@@ -249,8 +249,8 @@
             </template>
 
             <!-- Filters & Sorting (Read-only mode) -->
-            <div v-if="!editMode && character.inventory && character.inventory.length > 0" class="flex flex-col sm:flex-row gap-2 mb-4 pb-4 border-b border-gray-150 dark:border-gray-800">
-              <div class="flex-1 flex items-center gap-2">
+            <div v-if="!editMode && character.inventory && character.inventory.length > 0" class="flex flex-col sm:flex-row lg:flex-col xl:flex-col gap-2 mb-4 pb-4 border-b border-gray-150 dark:border-gray-800">
+              <div class="flex-1 flex items-center gap-2 justify-between lg:w-full">
                 <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Filtrar:</span>
                 <USelect
                   v-model="inventoryFilterTier"
@@ -264,10 +264,10 @@
                     { value: 'rojo', label: getTierClasses('rojo').name }
                   ]"
                   size="xs"
-                  class="w-36"
+                  class="w-36 sm:w-36 lg:w-full lg:max-w-[180px]"
                 />
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 justify-between lg:w-full">
                 <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ordenar:</span>
                 <USelect
                   v-model="inventorySortBy"
@@ -277,7 +277,7 @@
                     { value: 'oldest', label: 'Más viejo primero' }
                   ]"
                   size="xs"
-                  class="w-48"
+                  class="w-48 sm:w-48 lg:w-full lg:max-w-[180px]"
                 />
               </div>
             </div>
@@ -307,8 +307,8 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-3">
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="md:col-span-2">
+                  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-1 gap-3">
+                    <div class="md:col-span-2 lg:col-span-1">
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         {{ t('itemName') }}
                       </label>
