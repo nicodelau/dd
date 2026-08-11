@@ -43,6 +43,7 @@ export interface AttackDTO {
   tier?: string
   isMagic?: boolean
   magicCost?: number
+  usedCount?: number
   createdAt?: string
 }
 
@@ -59,6 +60,7 @@ export interface CreateAttackDTO {
   tier?: string
   isMagic?: boolean
   magicCost?: number
+  usedCount?: number
 }
 
 export interface UpdateAttackDTO {
@@ -73,6 +75,7 @@ export interface UpdateAttackDTO {
   tier?: string
   isMagic?: boolean
   magicCost?: number
+  usedCount?: number
 }
 
 export interface FeatureDTO {

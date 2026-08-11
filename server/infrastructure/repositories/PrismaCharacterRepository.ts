@@ -418,6 +418,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               tier: attack.tier || 'gris',
               isMagic: !!attack.isMagic,
               magicCost: parseIntOrDefault(attack.magicCost, 0),
+              usedCount: parseIntOrDefault(attack.usedCount, 0),
               createdAt: attack.createdAt ? new Date(attack.createdAt) : undefined
             }))
           })
@@ -595,6 +596,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         tier: attack.tier || 'gris',
         isMagic: !!attack.isMagic,
         magicCost: attack.magicCost || 0,
+        usedCount: attack.usedCount || 0,
         createdAt: attack.createdAt ? attack.createdAt.toISOString() : undefined
       })) || [],
       // Combat Actions

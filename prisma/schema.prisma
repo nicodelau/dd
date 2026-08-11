@@ -203,6 +203,7 @@ model Attack {
   tier          String?   @default("gris")
   isMagic       Boolean   @default(false)
   magicCost     Int       @default(0)
+  usedCount     Int       @default(0)
   character     Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("attacks")
