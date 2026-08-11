@@ -566,6 +566,41 @@
                 </div>
                 <p v-else class="text-gray-900 dark:text-white">{{ (character.className || t('unknown')) }} {{ character.classLevel || 1 }}</p>
               </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2 tracking-wide">
+                  Habilidades Mágicas
+                </label>
+                <div v-if="editMode" class="flex items-center space-x-3 py-1">
+                  <UToggle
+                    v-model="editForm.isWizard"
+                    color="cyan"
+                  />
+                  <span class="text-sm font-medium text-gray-700 dark:text-zinc-300">
+                    {{ editForm.isWizard ? 'Magia Habilitada' : 'Magia Deshabilitada' }}
+                  </span>
+                </div>
+                <div v-else class="flex items-center py-1">
+                  <UBadge 
+                    v-if="character?.notes?.isWizard"
+                    color="cyan" 
+                    variant="soft" 
+                    size="sm"
+                    class="font-bold tracking-wide shadow-[0_0_10px_rgba(6,182,212,0.15)] animate-pulse"
+                  >
+                    ✨ Magia Activa
+                  </UBadge>
+                  <UBadge 
+                    v-else
+                    color="gray" 
+                    variant="soft" 
+                    size="sm"
+                    class="opacity-60"
+                  >
+                    Sin Magia
+                  </UBadge>
+                </div>
+              </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -957,7 +992,304 @@
            </UCard>
           
 
-           
+            <!-- PANEL DE HABILIDADES MÁGICAS (WIZARD SPECIALTY FEATURE) -->
+            <UCard
+              v-if="editMode ? editForm.isWizard : character?.notes?.isWizard"
+              class="border border-cyan-200 dark:border-cyan-800/40 shadow-[0_0_15px_rgba(6,182,212,0.05)]"
+              :class="{ 'hidden lg:block': activeMobileTab !== 'combat' }"
+            >
+              <template #header>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 class="text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent dark:from-cyan-400 dark:to-blue-400 flex items-center gap-2">
+                      <UIcon name="i-heroicons-sparkles" class="text-cyan-500 animate-pulse" />
+                      Habilidades Mágicas / Conjuros
+                    </h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Gestiona tus habilidades mágicas consumiendo puntos de tu reserva de maná/energía.
+                    </p>
+                  </div>
+                  
+                  <!-- Magic Points Pool display -->
+                  <div class="flex items-center gap-2 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 dark:from-cyan-950/40 dark:to-blue-950/40 border border-cyan-200/50 dark:border-cyan-800/30 rounded-xl px-4 py-2">
+                    <span class="text-xs font-semibold text-cyan-600 dark:text-cyan-400">Puntos Mágicos:</span>
+                    <div v-if="editMode" class="flex items-center gap-1">
+                      <UInput
+                        v-model.number="editForm.magicLimit"
+                        type="number"
+                        min="0"
+                        class="w-20 text-center"
+                        size="xs"
+                      />
+                    </div>
+                    <div v-else class="flex items-center gap-2">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-lg font-extrabold text-cyan-600 dark:text-cyan-400">
+                          {{ getRemainingMagicPoints(character) }}
+                        </span>
+                        <span class="text-xs text-gray-400">/</span>
+                        <span class="text-sm font-semibold text-gray-600 dark:text-zinc-300">
+                          {{ character?.notes?.magicLimit || 100 }}
+                        </span>
+                      </div>
+                      <UButton
+                        color="cyan"
+                        variant="ghost"
+                        size="xs"
+                        icon="i-heroicons-arrow-path"
+                        class="p-1"
+                        title="Restablecer Puntos Mágicos"
+                        @click="resetMagicPoints"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Warning / Empty state -->
+              <div
+                v-if="editMode ? (!editForm.magicAbilities || editForm.magicAbilities.length === 0) : (!character?.notes?.magicAbilities || character.notes.magicAbilities.length === 0) && displayMagicAttacks.length === 0 && displayMagicSkills.length === 0"
+                class="text-center py-8 text-gray-500 dark:text-gray-400"
+              >
+                No tienes habilidades mágicas configuradas.
+                <div v-if="editMode" class="mt-4">
+                  <UButton
+                    color="cyan"
+                    variant="soft"
+                    size="sm"
+                    icon="i-heroicons-plus"
+                    @click="addMagicAbility"
+                  >
+                    Agregar Habilidad Mágica
+                  </UButton>
+                </div>
+              </div>
+
+              <!-- List of magic abilities -->
+              <div v-if="editMode ? true : (character?.notes?.magicAbilities?.length > 0 || displayMagicAttacks.length > 0 || displayMagicSkills.length > 0)" class="space-y-4">
+                <div class="flex justify-between items-center pb-2 border-b border-gray-150 dark:border-gray-800/60">
+                  <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Lista de Habilidades Mágicas</span>
+                  <UButton
+                    v-if="editMode"
+                    color="cyan"
+                    variant="ghost"
+                    size="xs"
+                    icon="i-heroicons-plus"
+                    @click="addMagicAbility"
+                  >
+                    Añadir habilidad
+                  </UButton>
+                </div>
+
+                <div
+                  v-if="editMode ? (editForm.magicAbilities && editForm.magicAbilities.length > 0) : (character?.notes?.magicAbilities && character.notes.magicAbilities.length > 0)"
+                  v-for="(magicAbility, index) in editMode ? editForm.magicAbilities : character.notes.magicAbilities"
+                  :key="index"
+                  class="relative border rounded-xl p-4 transition-all duration-300 overflow-hidden bg-gradient-to-r dark:bg-zinc-950/30"
+                  :class="editMode ? 'border-gray-200 dark:border-gray-800' : [getTierClasses(magicAbility.tier).card, getTierClasses(magicAbility.tier).glow]"
+                >
+                  <!-- Diagonal Tier Banner -->
+                  <div 
+                    v-if="!editMode && magicAbility.tier && magicAbility.tier !== 'gris'" 
+                    class="absolute top-0 right-0 overflow-hidden w-16 h-16 pointer-events-none z-10"
+                  >
+                    <div 
+                      class="absolute transform rotate-45 text-[9px] font-bold text-center py-0.5 w-[90px] -right-[26px] top-[12px] shadow-sm uppercase tracking-wider text-white select-none"
+                      :class="getTierBannerBg(magicAbility.tier)"
+                    >
+                      Mágico
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Title / Name -->
+                    <div class="md:col-span-2">
+                      <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                        Nombre de la Habilidad
+                      </label>
+                      <UInput
+                        v-if="editMode"
+                        v-model="editForm.magicAbilities[index].name"
+                        placeholder="Ej. Tormenta de Ceniza"
+                        size="sm"
+                      />
+                      <p v-else class="font-bold text-gray-900 dark:text-white" :class="getTierClasses(magicAbility.tier).text">
+                        {{ magicAbility.name || 'Habilidad Mágica Sin Nombre' }}
+                      </p>
+                    </div>
+
+                    <!-- Tier Selection -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                        Tier
+                      </label>
+                      <USelect
+                        v-if="editMode"
+                        v-model="editForm.magicAbilities[index].tier"
+                        :options="tierOptions"
+                        size="sm"
+                      />
+                      <div v-else-if="magicAbility.tier" class="mt-1">
+                        <UBadge :color="getTierClasses(magicAbility.tier).badgeColor" size="xs" variant="soft">
+                          {{ getTierClasses(magicAbility.tier).name }}
+                        </UBadge>
+                      </div>
+                    </div>
+
+                    <!-- Cost in points -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                        Consumo de Maná
+                      </label>
+                      <div class="flex items-center gap-1.5">
+                        <UInput
+                          v-if="editMode"
+                          v-model.number="editForm.magicAbilities[index].cost"
+                          type="number"
+                          min="0"
+                          size="sm"
+                          class="w-20"
+                        />
+                        <span v-else class="font-bold text-cyan-600 dark:text-cyan-400 text-sm mt-1">
+                          {{ magicAbility.cost ?? 0 }} MP
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Description -->
+                  <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/40">
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                      Descripción del Efecto / Nota
+                    </label>
+                    <UTextarea
+                      v-if="editMode"
+                      v-model="editForm.magicAbilities[index].notes"
+                      placeholder="Indica qué hace esta habilidad mágica al activarse..."
+                      :rows="2"
+                      size="sm"
+                    />
+                    <p v-else class="text-gray-700 dark:text-gray-300 text-sm italic">
+                      {{ magicAbility.notes || 'Sin descripción' }}
+                    </p>
+                  </div>
+
+                  <!-- Use / Activate Buttons in Read Mode, Trash in Edit Mode -->
+                  <div class="mt-3 flex justify-between items-center border-t border-gray-100 dark:border-gray-800/40 pt-3">
+                    <div class="flex items-center gap-2">
+                      <span v-if="!editMode" class="text-xs text-gray-400">
+                        {{ getFormattedBonus(getAbilityModifier(character.intelligence || 10)) }} check
+                      </span>
+                    </div>
+
+                    <!-- Activate button to consume points directly -->
+                    <div v-if="!editMode">
+                      <UButton
+                        color="cyan"
+                        variant="solid"
+                        size="xs"
+                        icon="i-heroicons-bolt"
+                        :disabled="!canUseAbility(magicAbility)"
+                        @click="useMagicAbility(magicAbility)"
+                      >
+                        Usar Habilidad ({{ magicAbility.cost ?? 0 }})
+                      </UButton>
+                    </div>
+
+                    <UButton
+                      v-if="editMode"
+                      color="red"
+                      variant="ghost"
+                      size="xs"
+                      icon="i-heroicons-trash"
+                      @click="removeMagicAbility(index)"
+                    >
+                      {{ t('remove') || 'Eliminar' }}
+                    </UButton>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN: ATAQUES Y CONJUROS MÁGICOS ASIGNADOS (Read mode only) -->
+                <div v-if="!editMode && (displayMagicAttacks.length > 0 || displayMagicSkills.length > 0)" class="mt-6 pt-6 border-t border-cyan-200/40 dark:border-cyan-800/30 space-y-4">
+                  <span class="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider block">Ataques y Habilidades Mágicas del Personaje</span>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Attacks/Spells list -->
+                    <div 
+                      v-for="attack in displayMagicAttacks" 
+                      :key="attack.id"
+                      class="border border-cyan-200/50 dark:border-cyan-800/30 bg-cyan-50/5 dark:bg-cyan-950/10 rounded-xl p-3 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="font-bold text-sm text-gray-900 dark:text-white">{{ attack.name }}</span>
+                          <UBadge :color="getTierClasses(attack.tier).badgeColor" size="xs" variant="soft">
+                            {{ getTierClasses(attack.tier).name }}
+                          </UBadge>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                          Daño: <span class="font-semibold text-gray-800 dark:text-zinc-200">{{ attack.damage || 'N/A' }}</span>
+                          | Rango: <span class="text-gray-800 dark:text-zinc-200">{{ attack.rangeText || 'N/A' }}</span>
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 italic line-clamp-2">{{ attack.notes || 'Sin descripción' }}</p>
+                      </div>
+
+                      <div class="mt-3 pt-2 border-t border-cyan-200/30 dark:border-cyan-800/20 flex justify-between items-center">
+                        <span class="text-xs font-bold text-cyan-600 dark:text-cyan-400">{{ attack.magicCost || 0 }} MP</span>
+                        <UButton
+                          color="cyan"
+                          variant="solid"
+                          size="xs"
+                          icon="i-heroicons-bolt"
+                          :disabled="!canUseAbility({ cost: attack.magicCost })"
+                          @click="useAttackMagicPoints(attack)"
+                        >
+                          Lanzar Magia
+                        </UButton>
+                      </div>
+                    </div>
+
+                    <!-- Skills list -->
+                    <div 
+                      v-for="ability in displayMagicSkills" 
+                      :key="ability.id"
+                      class="border border-cyan-200/50 dark:border-cyan-800/30 bg-cyan-50/5 dark:bg-cyan-950/10 rounded-xl p-3 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="font-bold text-sm text-gray-900 dark:text-white">{{ ability.name }}</span>
+                          <UBadge :color="getTierClasses(ability.tier).badgeColor" size="xs" variant="soft">
+                            {{ getTierClasses(ability.tier).name }}
+                          </UBadge>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                          Efecto/Daño: <span class="font-semibold text-gray-800 dark:text-zinc-200">{{ ability.damage || 'N/A' }}</span>
+                          | Rango: <span class="text-gray-800 dark:text-zinc-200">{{ ability.rangeText || 'N/A' }}</span>
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 italic line-clamp-2">{{ ability.notes || 'Sin descripción' }}</p>
+                      </div>
+
+                      <div class="mt-3 pt-2 border-t border-cyan-200/30 dark:border-cyan-800/20 flex justify-between items-center">
+                        <span class="text-xs font-bold text-cyan-600 dark:text-cyan-400">{{ ability.magicCost || 0 }} MP</span>
+                        <UButton
+                          color="cyan"
+                          variant="solid"
+                          size="xs"
+                          icon="i-heroicons-bolt"
+                          :disabled="!canUseAbility({ cost: ability.magicCost })"
+                          @click="useAttackMagicPoints(ability)"
+                        >
+                          Lanzar Magia
+                        </UButton>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </UCard>
+
+            
            <!-- Attacks Card -->
            <UCard :class="{ 'hidden lg:block': activeMobileTab !== 'combat' }">
               <template #header>
@@ -1138,6 +1470,11 @@
                            size="sm"
                          />
                        </div>
+                       <div class="flex items-center gap-2">
+                         <UCheckbox v-model="editAttacks[index].isMagic" size="sm" />
+                         <span class="text-xs text-gray-500">¿Es Mágico?</span>
+                         <UInput v-if="editAttacks[index].isMagic" v-model.number="editAttacks[index].magicCost" type="number" min="0" size="xs" class="w-16" />
+                       </div>
                        <UButton
                          color="red"
                          variant="ghost"
@@ -1146,6 +1483,23 @@
                          @click="removeAttack(index)"
                        >
                          {{ t('remove') }}
+                       </UButton>
+                     </div>
+                     <div v-else-if="attack.isMagic" class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/40 flex justify-between items-center">
+                       <div class="flex items-center gap-2">
+                         <UBadge color="cyan" variant="soft" size="xs">Mágico</UBadge>
+                         <span class="text-xs text-cyan-650 dark:text-cyan-400 font-semibold">{{ attack.magicCost || 0 }} MP</span>
+                       </div>
+                       <UButton
+                         v-if="character?.notes?.isWizard"
+                         color="cyan"
+                         variant="solid"
+                         size="xs"
+                         icon="i-heroicons-bolt"
+                         :disabled="!canUseAbility({ cost: attack.magicCost })"
+                         @click="useAttackMagicPoints(attack)"
+                       >
+                         Lanzar Magia
                        </UButton>
                      </div>
                    </div>
@@ -1320,6 +1674,11 @@
                            size="sm"
                          />
                        </div>
+                       <div class="flex items-center gap-2">
+                         <UCheckbox v-model="editAttacks[index].isMagic" size="sm" />
+                         <span class="text-xs text-gray-500">¿Es Mágico?</span>
+                         <UInput v-if="editAttacks[index].isMagic" v-model.number="editAttacks[index].magicCost" type="number" min="0" size="xs" class="w-16" />
+                       </div>
                        <UButton
                          color="red"
                          variant="ghost"
@@ -1328,6 +1687,23 @@
                          @click="removeAttack(index)"
                        >
                          {{ t('remove') }}
+                       </UButton>
+                     </div>
+                     <div v-else-if="ability.isMagic" class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/40 flex justify-between items-center">
+                       <div class="flex items-center gap-2">
+                         <UBadge color="cyan" variant="soft" size="xs">Mágico</UBadge>
+                         <span class="text-xs text-cyan-650 dark:text-cyan-400 font-semibold">{{ ability.magicCost || 0 }} MP</span>
+                       </div>
+                       <UButton
+                         v-if="character?.notes?.isWizard"
+                         color="cyan"
+                         variant="solid"
+                         size="xs"
+                         icon="i-heroicons-bolt"
+                         :disabled="!canUseAbility({ cost: ability.magicCost })"
+                         @click="useAttackMagicPoints(ability)"
+                       >
+                         Lanzar Magia
                        </UButton>
                      </div>
                    </div>
@@ -1558,7 +1934,7 @@ const editForm = ref<Partial<CharacterDTO>>({})
 const characterNotes = ref('')
 
 // Attacks and inventory data
-const editAttacks = ref<Array<{name: string, attackBonus?: number, damage?: string, rangeText?: string, notes?: string, type?: string, tier?: string}>>([])
+const editAttacks = ref<Array<{name: string, attackBonus?: number, damage?: string, rangeText?: string, notes?: string, type?: string, tier?: string, isMagic?: boolean, magicCost?: number}>>([])
 const editInventory = ref<Array<{name: string, quantity: number, weight?: number, equipped: boolean, notes?: string, tier?: string}>>([])
 const editCombatActions = ref<Array<{name: string, type: string, currentUses: number, maxUses: number, description?: string}>>([])
 
@@ -1683,7 +2059,7 @@ const displayInventory = computed(() => {
 
 const displayAttacks = computed(() => {
   if (!character.value?.attacks) return []
-  let list = character.value.attacks.filter(a => a.type !== 'skill')
+  let list = character.value.attacks.filter(a => a.type !== 'skill' && !a.isMagic)
   if (attacksFilterTier.value !== 'all') {
     list = list.filter(a => (a.tier || 'gris').toLowerCase() === attacksFilterTier.value.toLowerCase())
   }
@@ -1706,7 +2082,7 @@ const displayAttacks = computed(() => {
 
 const displaySkills = computed(() => {
   if (!character.value?.attacks) return []
-  let list = character.value.attacks.filter(a => a.type === 'skill')
+  let list = character.value.attacks.filter(a => a.type === 'skill' && !a.isMagic)
   if (skillsFilterTier.value !== 'all') {
     list = list.filter(a => (a.tier || 'gris').toLowerCase() === skillsFilterTier.value.toLowerCase())
   }
@@ -1725,6 +2101,16 @@ const displaySkills = computed(() => {
     return 0
   })
   return list
+})
+
+const displayMagicAttacks = computed(() => {
+  if (!character.value?.attacks) return []
+  return character.value.attacks.filter(a => a.type !== 'skill' && a.isMagic)
+})
+
+const displayMagicSkills = computed(() => {
+  if (!character.value?.attacks) return []
+  return character.value.attacks.filter(a => a.type === 'skill' && a.isMagic)
 })
 
 // Proficiency checkboxes
@@ -1892,6 +2278,140 @@ function addSkill() {
   })
 }
 
+// Magic abilities management methods
+function addMagicAbility() {
+  if (!editForm.value.magicAbilities) {
+    editForm.value.magicAbilities = []
+  }
+  editForm.value.magicAbilities.push({
+    name: '',
+    tier: 'gris',
+    cost: 5,
+    notes: ''
+  })
+}
+
+function removeMagicAbility(index: number) {
+  editForm.value.magicAbilities?.splice(index, 1)
+}
+
+function getRemainingMagicPoints(char: any) {
+  if (!char?.notes) return 100
+  const limit = char.notes.magicLimit !== undefined ? Number(char.notes.magicLimit) : 100
+  
+  // Calculate consumed points by used abilities
+  const abilities = char.notes.magicAbilities || []
+  const consumedAbilities = abilities.reduce((acc: number, abi: any) => {
+    return acc + (abi.usedCount ? (abi.usedCount * (abi.cost || 0)) : 0)
+  }, 0)
+
+  // Calculate consumed points by used attacks / skills
+  const attacks = char.attacks || []
+  const consumedAttacks = attacks.reduce((acc: number, att: any) => {
+    if (att.isMagic && att.usedCount) {
+      return acc + (att.usedCount * (att.magicCost || 0))
+    }
+    return acc
+  }, 0)
+  
+  return Math.max(0, limit - (consumedAbilities + consumedAttacks))
+}
+
+function canUseAbility(ability: any) {
+  if (!character.value) return false
+  const remaining = getRemainingMagicPoints(character.value)
+  return remaining >= (ability.cost || 0)
+}
+
+async function useAttackMagicPoints(attack: any) {
+  if (!character.value) return
+  if (!canUseAbility({ cost: attack.magicCost })) return
+
+  // Clone attacks array and increment usedCount for targeted attack
+  const updatedAttacks = character.value.attacks ? JSON.parse(JSON.stringify(character.value.attacks)) : []
+  const target = updatedAttacks.find((a: any) => a.id === attack.id || (a.name === attack.name && a.type === attack.type))
+  if (target) {
+    target.usedCount = (target.usedCount || 0) + 1
+  }
+
+  try {
+    const response = await $fetch<{success: boolean, data: CharacterDTO}>(`/api/characters/${characterId}`, {
+      method: 'PUT',
+      body: { attacks: updatedAttacks }
+    })
+    
+    if (response.success) {
+      character.value = response.data
+      editForm.value = { ...response.data }
+    }
+  } catch (err: any) {
+    console.error('Error consuming magic points for attack:', err)
+  }
+}
+
+async function useMagicAbility(ability: any) {
+  if (!character.value) return
+  if (!canUseAbility(ability)) return
+  
+  // Clone notes to update cleanly
+  const updatedNotes = character.value.notes ? JSON.parse(JSON.stringify(character.value.notes)) : {}
+  if (!updatedNotes.magicAbilities) updatedNotes.magicAbilities = []
+  
+  // Find ability and increment its used count
+  const targetAbility = updatedNotes.magicAbilities.find((a: any) => a.name === ability.name)
+  if (targetAbility) {
+    targetAbility.usedCount = (targetAbility.usedCount || 0) + 1
+  }
+  
+  try {
+    const response = await $fetch<{success: boolean, data: CharacterDTO}>(`/api/characters/${characterId}`, {
+      method: 'PUT',
+      body: { notes: updatedNotes }
+    })
+    
+    if (response.success) {
+      character.value = response.data
+      editForm.value = { ...response.data }
+    }
+  } catch (err: any) {
+    console.error('Error consuming magic points:', err)
+  }
+}
+
+async function resetMagicPoints() {
+  if (!character.value) return
+  
+  // Clone notes to update cleanly
+  const updatedNotes = character.value.notes ? JSON.parse(JSON.stringify(character.value.notes)) : {}
+  if (Array.isArray(updatedNotes.magicAbilities)) {
+    updatedNotes.magicAbilities.forEach((ability: any) => {
+      ability.usedCount = 0
+    })
+  }
+
+  const updatedAttacks = character.value.attacks ? JSON.parse(JSON.stringify(character.value.attacks)) : []
+  updatedAttacks.forEach((att: any) => {
+    att.usedCount = 0
+  })
+  
+  try {
+    const response = await $fetch<{success: boolean, data: CharacterDTO}>(`/api/characters/${characterId}`, {
+      method: 'PUT',
+      body: { 
+        notes: updatedNotes,
+        attacks: updatedAttacks
+      }
+    })
+    
+    if (response.success) {
+      character.value = response.data
+      editForm.value = { ...response.data }
+    }
+  } catch (err: any) {
+    console.error('Error resetting magic points:', err)
+  }
+}
+
 function removeAttack(index: number) {
   editAttacks.value.splice(index, 1)
 }
@@ -1974,7 +2494,24 @@ async function loadCharacter() {
     if (response.success) {
       character.value = response.data
       editForm.value = { ...response.data }
-      characterNotes.value = typeof response.data.notes === 'string' ? response.data.notes : ''
+      const rawNotes = response.data.notes
+      let notesObj: Record<string, any> = {}
+      if (rawNotes && typeof rawNotes === 'object') {
+        characterNotes.value = rawNotes.text || ''
+        notesObj = rawNotes
+      } else {
+        characterNotes.value = typeof rawNotes === 'string' ? rawNotes : ''
+        try {
+          notesObj = rawNotes ? JSON.parse(rawNotes) : {}
+        } catch (e) {
+          notesObj = {}
+        }
+      }
+      
+      // Load magic variables
+      editForm.value.isWizard = !!notesObj.isWizard
+      editForm.value.magicLimit = notesObj.magicLimit !== undefined ? Number(notesObj.magicLimit) : 100
+      editForm.value.magicAbilities = Array.isArray(notesObj.magicAbilities) ? notesObj.magicAbilities : []
       imageLoadError.value = false
 
       // Initialize attacks
@@ -2038,11 +2575,18 @@ async function saveCharacter() {
       })
 
     // Exclude system fields that shouldn't be updated by users
-    const { id, userId, ownerId, user, owner, createdAt, updatedAt, ...updateFields } = editForm.value
+    const { id, userId, ownerId, user, owner, createdAt, updatedAt, isWizard, magicLimit, magicAbilities, ...updateFields } = editForm.value
+
+    // Pack magic variables inside structured notes
+    const currentNotesObj = character.value.notes && typeof character.value.notes === 'object' ? { ...character.value.notes } : {}
+    currentNotesObj.text = characterNotes.value
+    currentNotesObj.isWizard = !!isWizard
+    currentNotesObj.magicLimit = magicLimit !== undefined ? Number(magicLimit) : 100
+    currentNotesObj.magicAbilities = Array.isArray(magicAbilities) ? magicAbilities : []
 
     const updateData = {
       ...updateFields,
-      notes: characterNotes.value,
+      notes: currentNotesObj,
       attacks: editAttacks.value,
       inventory: editInventory.value,
       combatActions: editCombatActions.value,
@@ -2074,6 +2618,11 @@ async function saveCharacter() {
 watch(editMode, (newValue) => {
   if (newValue && character.value) {
     editForm.value = { ...character.value }
+    const notesObj = character.value.notes || {}
+    editForm.value.isWizard = !!notesObj.isWizard
+    editForm.value.magicLimit = notesObj.magicLimit !== undefined ? Number(notesObj.magicLimit) : 100
+    editForm.value.magicAbilities = Array.isArray(notesObj.magicAbilities) ? JSON.parse(JSON.stringify(notesObj.magicAbilities)) : []
+
     editAttacks.value = character.value.attacks ? [...character.value.attacks] : []
     editInventory.value = character.value.inventory ? [...character.value.inventory] : []
     editCombatActions.value = character.value.combatActions ? [...character.value.combatActions] : []

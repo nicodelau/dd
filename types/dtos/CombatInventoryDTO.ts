@@ -41,6 +41,8 @@ export interface AttackDTO {
   notes?: string
   type?: string
   tier?: string
+  isMagic?: boolean
+  magicCost?: number
   createdAt?: string
 }
 
@@ -55,6 +57,8 @@ export interface CreateAttackDTO {
   notes?: string
   type?: string
   tier?: string
+  isMagic?: boolean
+  magicCost?: number
 }
 
 export interface UpdateAttackDTO {
@@ -67,6 +71,8 @@ export interface UpdateAttackDTO {
   notes?: string
   type?: string
   tier?: string
+  isMagic?: boolean
+  magicCost?: number
 }
 
 export interface FeatureDTO {

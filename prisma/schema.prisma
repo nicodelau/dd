@@ -201,6 +201,8 @@ model Attack {
   sourceSkillId String?
   type          String?   @default("attack")
   tier          String?   @default("gris")
+  isMagic       Boolean   @default(false)
+  magicCost     Int       @default(0)
   character     Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("attacks")
