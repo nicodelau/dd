@@ -618,27 +618,47 @@
                         :style="{ width: `${Math.max(0, Math.min(100, ((activeCharacter.stamina !== undefined ? activeCharacter.stamina : 100) / (activeCharacter.maxStamina || 100)) * 100))}%` }">
                       </div>
                     </div>
-                    <div class="flex space-x-2 mt-2">
-                      <UButton
-                        color="orange"
-                        variant="soft"
-                        size="xs"
-                        icon="i-heroicons-arrow-path"
-                        class="flex-1 justify-center animate-fade-in"
-                        @click="handleUpdateStamina(activeCharacter.maxStamina !== undefined ? activeCharacter.maxStamina : 100)"
-                      >
-                        {{ t('refillStamina') }}
-                      </UButton>
-                      <UButton
-                        color="red"
-                        variant="soft"
-                        size="xs"
-                        icon="i-heroicons-minus"
-                        class="flex-1 justify-center animate-fade-in"
-                        @click="handleUpdateStamina(Math.max(0, (activeCharacter.stamina !== undefined ? activeCharacter.stamina : 100) - 5))"
-                      >
-                        {{ t('subtractStamina') }}
-                      </UButton>
+                    <div class="flex flex-col gap-2 mt-2">
+                      <div class="flex items-center space-x-2">
+                        <UInput
+                          v-model.number="staminaAdjustment"
+                          type="number"
+                          placeholder="±Estamina"
+                          size="xs"
+                          class="w-24 text-sm"
+                          @keyup.enter="handleUpdateStaminaByAmount"
+                        />
+                        <UButton
+                          size="xs"
+                          variant="outline"
+                          @click="handleUpdateStaminaByAmount"
+                          :disabled="!staminaAdjustment || staminaAdjustment === 0"
+                        >
+                          {{ t('adjust') || 'Ajustar' }}
+                        </UButton>
+                      </div>
+                      <div class="flex space-x-2">
+                        <UButton
+                          color="orange"
+                          variant="soft"
+                          size="xs"
+                          icon="i-heroicons-arrow-path"
+                          class="flex-1 justify-center animate-fade-in"
+                          @click="handleUpdateStamina(activeCharacter.maxStamina !== undefined ? activeCharacter.maxStamina : 100)"
+                        >
+                          {{ t('refillStamina') }}
+                        </UButton>
+                        <UButton
+                          color="red"
+                          variant="soft"
+                          size="xs"
+                          icon="i-heroicons-minus"
+                          class="flex-1 justify-center animate-fade-in"
+                          @click="handleUpdateStamina(Math.max(0, (activeCharacter.stamina !== undefined ? activeCharacter.stamina : 100) - 5))"
+                        >
+                          {{ t('subtractStamina') }}
+                        </UButton>
+                      </div>
                     </div>
                   </div>
 
@@ -2401,6 +2421,7 @@ const isSidebarOpen = computed(() => isLeftSidebarOpen.value || isRightSidebarOp
 const userCharacters = ref < any[] > ([])
 const activeCharacterId = ref < string | null > (null)
 const isRefreshingUserData = ref(false)
+const staminaAdjustment = ref<number | null>(null)
 
 // Player stats (for current user if they're a player)
 const playerStats = ref < PlayerStats | null > (null)
@@ -2999,6 +3020,40 @@ async function handleUpdateStamina(newStamina: number) {
     }
   } catch (error) {
     console.error('❌ Failed to update stamina:', error)
+    // Revert on failure
+    if (characterIndex !== -1) {
+      userCharacters.value[characterIndex].stamina = originalStamina
+    }
+  }
+}
+
+async function handleUpdateStaminaByAmount() {
+  if (!activeCharacter.value || !staminaAdjustment.value || staminaAdjustment.value === 0) return
+
+  const characterId = activeCharacter.value.id
+  const current = activeCharacter.value.stamina !== undefined ? activeCharacter.value.stamina : 100
+  const max = activeCharacter.value.maxStamina !== undefined ? activeCharacter.value.maxStamina : 100
+  const newStamina = Math.max(0, Math.min(max, current + staminaAdjustment.value))
+  const originalStamina = current
+
+  // Optimistic update
+  const characterIndex = userCharacters.value.findIndex(c => c.id === characterId)
+  if (characterIndex !== -1) {
+    userCharacters.value[characterIndex].stamina = newStamina
+  }
+
+  try {
+    const response = await $fetch<{ success: boolean, data: any }>(`/api/characters/${characterId}`, {
+      method: 'PATCH',
+      body: { stamina: newStamina }
+    })
+
+    if (!response.success) {
+      throw new Error('Server update failed')
+    }
+    staminaAdjustment.value = null
+  } catch (error) {
+    console.error('❌ Failed to update stamina by amount:', error)
     // Revert on failure
     if (characterIndex !== -1) {
       userCharacters.value[characterIndex].stamina = originalStamina

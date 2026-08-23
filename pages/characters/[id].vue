@@ -777,31 +777,27 @@
                   </div>
                 </div>
 
-                <div>
+                <div v-if="editMode">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ t('maxStamina') || 'Estamina Máx.' }}
                   </label>
                   <UInput
-                    v-if="editMode"
                     v-model.number="editForm.maxStamina"
                     type="number"
                     min="1"
                   />
-                  <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxStamina !== undefined ? character.maxStamina : 100 }}</p>
                 </div>
 
-                <div>
+                <div v-if="editMode">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {{ t('stamina') }}
                   </label>
                   <UInput
-                    v-if="editMode"
                     v-model.number="editForm.stamina"
                     type="number"
                     min="0"
                     :max="character.maxStamina || 100"
                   />
-                  <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.stamina !== undefined ? character.stamina : 100 }}</p>
                 </div>
              </div>
 
@@ -841,26 +837,45 @@
                 ></div>
               </div>
               
-              <!-- Quick Stamina adjustment buttons (not in editMode) -->
-              <div v-if="!editMode && canEdit" class="flex space-x-2">
-                <UButton
-                  size="sm"
-                  color="orange"
-                  variant="soft"
-                  icon="i-heroicons-arrow-path"
-                  @click="adjustStamina(character.maxStamina !== undefined ? character.maxStamina : 100)"
-                >
-                  {{ t('refillStamina') }}
-                </UButton>
-                <UButton
-                  size="sm"
-                  color="red"
-                  variant="soft"
-                  icon="i-heroicons-minus"
-                  @click="adjustStamina(Math.max(0, (character.stamina !== undefined ? character.stamina : 100) - 5))"
-                >
-                  {{ t('subtractStamina') }}
-                </UButton>
+              <!-- Quick Stamina adjustment input and buttons (not in editMode) -->
+              <div v-if="!editMode && canEdit" class="space-y-3">
+                <div class="flex items-center space-x-2">
+                  <UInput
+                    v-model.number="staminaAdjustment"
+                    type="number"
+                    placeholder="±Estamina"
+                    class="w-24 text-sm"
+                    @keyup.enter="adjustStaminaByAmount"
+                  />
+                  <UButton
+                    size="sm"
+                    variant="outline"
+                    @click="adjustStaminaByAmount"
+                    :disabled="!staminaAdjustment || staminaAdjustment === 0"
+                  >
+                    {{ t('adjust') || 'Ajustar' }}
+                  </UButton>
+                </div>
+                <div class="flex space-x-2">
+                  <UButton
+                    size="sm"
+                    color="orange"
+                    variant="soft"
+                    icon="i-heroicons-arrow-path"
+                    @click="adjustStamina(character.maxStamina !== undefined ? character.maxStamina : 100)"
+                  >
+                    {{ t('refillStamina') }}
+                  </UButton>
+                  <UButton
+                    size="sm"
+                    color="red"
+                    variant="soft"
+                    icon="i-heroicons-minus"
+                    @click="adjustStamina(Math.max(0, (character.stamina !== undefined ? character.stamina : 100) - 5))"
+                  >
+                    {{ t('subtractStamina') }}
+                  </UButton>
+                </div>
               </div>
             </div>
           </UCard>
@@ -1985,6 +2000,7 @@ const isSaving = ref(false)
 const error = ref<string | null>(null)
 const imageLoadError = ref(false)
 const hpAdjustment = ref<number | null>(null)
+const staminaAdjustment = ref<number | null>(null)
 
 // Sorting and Filtering reactive variables
 const inventoryFilterTier = ref('all')
@@ -2544,6 +2560,28 @@ async function adjustStamina(newStamina: number) {
     await loadCharacter()
   } catch (err: any) {
     console.error('Error adjusting stamina:', err)
+  }
+}
+
+async function adjustStaminaByAmount() {
+  if (!character.value || !staminaAdjustment.value || staminaAdjustment.value === 0) return
+
+  try {
+    const current = character.value.stamina !== undefined ? character.value.stamina : 100
+    const max = character.value.maxStamina !== undefined ? character.value.maxStamina : 100
+    const newStamina = Math.max(0, Math.min(max, current + staminaAdjustment.value))
+
+    // Direct update of character's stamina using PATCH
+    await $fetch(`/api/characters/${character.value.id}`, {
+      method: 'PATCH',
+      body: { stamina: newStamina }
+    })
+
+    // Reload character data to reflect changes
+    await loadCharacter()
+    staminaAdjustment.value = null
+  } catch (err: any) {
+    console.error('Error adjusting stamina by amount:', err)
   }
 }
 
