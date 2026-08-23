@@ -206,6 +206,41 @@ export const useCharacter = (userId: string) => {
   }
 
   /**
+   * Update character stamina
+   */
+  const updateCharacterStamina = async (stamina: number) => {
+    if (!activeCharacter.value) {
+      console.warn('No active character to update stamina for')
+      return false
+    }
+
+    try {
+      // Update the local character data immediately for responsive UI
+      const characterIndex = userCharacters.value.findIndex(c => c.id === activeCharacter.value!.id)
+      if (characterIndex !== -1) {
+        userCharacters.value[characterIndex] = {
+          ...userCharacters.value[characterIndex],
+          stamina: stamina
+        }
+      }
+
+      // Send update to server
+      const response = await $fetch(`/api/characters/${activeCharacter.value.id}`, {
+        method: 'PATCH',
+        body: { stamina }
+      })
+
+      console.log('✅ Stamina updated successfully')
+      return true
+    } catch (error) {
+      console.error('❌ Failed to update stamina:', error)
+      // Revert optimistic update on error
+      await loadUserCharacters()
+      return false
+    }
+  }
+
+  /**
    * Calculate ability modifier
    */
   const calculateModifier = (abilityScore: number): number => {
@@ -550,6 +585,7 @@ export const useCharacter = (userId: string) => {
     setActiveCharacter,
     resetStats,
     updateCharacterCurrency,
+    updateCharacterStamina,
 
     // Calculations
     calculateModifier,

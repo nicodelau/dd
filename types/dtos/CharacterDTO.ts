@@ -46,6 +46,8 @@ export interface CharacterDTO {
   maxHp: number
   currentHp: number
   tempHp: number
+  stamina: number
+  maxStamina: number
   hitDice?: string
   deathSaveSuccesses: number
   deathSaveFailures: number
@@ -146,6 +148,8 @@ export interface CreateCharacterDTO {
   maxHp?: number
   currentHp?: number
   tempHp?: number
+  stamina?: number
+  maxStamina?: number
   hitDice?: string
   deathSaveSuccesses?: number
   deathSaveFailures?: number
@@ -199,6 +203,8 @@ export interface UpdateCharacterDTO {
   maxHp?: number
   currentHp?: number
   tempHp?: number
+  stamina?: number
+  maxStamina?: number
   hitDice?: string
   deathSaveSuccesses?: number
   deathSaveFailures?: number

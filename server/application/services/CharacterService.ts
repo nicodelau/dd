@@ -134,6 +134,8 @@ export class CharacterService {
       maxHp: character.maxHp,
       currentHp: character.currentHp,
       tempHp: character.tempHp,
+      stamina: character.stamina,
+      maxStamina: character.maxStamina,
       hitDice: character.hitDice,
       deathSaveSuccesses: character.deathSaveSuccesses,
       deathSaveFailures: character.deathSaveFailures,

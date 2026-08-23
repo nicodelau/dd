@@ -86,6 +86,7 @@ export default defineEventHandler(async (event) => {
         } as ApiResponse<typeof mappedCharacter>
         
        case 'PUT':
+       case 'PATCH':
          // Allow character owners, DMs and Admins to modify characters
          if (user.role !== 'DM' && user.role !== 'ADMIN' && character.userId !== user.id) {
            throw createError({

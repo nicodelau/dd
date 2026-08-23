@@ -605,6 +605,43 @@
                     </div>
                   </div>
 
+                  <!-- Stamina Bar -->
+                  <div class="mt-3 p-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded">
+                    <div class="flex justify-between items-center text-sm mb-1">
+                      <span class="text-orange-700 dark:text-orange-300 font-medium">{{ t('stamina') }}</span>
+                      <span class="font-mono text-orange-900 dark:text-orange-100">
+                        {{ activeCharacter.stamina !== undefined ? activeCharacter.stamina : 100 }} / {{ activeCharacter.maxStamina !== undefined ? activeCharacter.maxStamina : 100 }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-orange-200 dark:bg-orange-900 rounded-full h-2">
+                      <div class="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                        :style="{ width: `${Math.max(0, Math.min(100, ((activeCharacter.stamina !== undefined ? activeCharacter.stamina : 100) / (activeCharacter.maxStamina || 100)) * 100))}%` }">
+                      </div>
+                    </div>
+                    <div class="flex space-x-2 mt-2">
+                      <UButton
+                        color="orange"
+                        variant="soft"
+                        size="xs"
+                        icon="i-heroicons-arrow-path"
+                        class="flex-1 justify-center animate-fade-in"
+                        @click="handleUpdateStamina(activeCharacter.maxStamina !== undefined ? activeCharacter.maxStamina : 100)"
+                      >
+                        {{ t('refillStamina') }}
+                      </UButton>
+                      <UButton
+                        color="red"
+                        variant="soft"
+                        size="xs"
+                        icon="i-heroicons-minus"
+                        class="flex-1 justify-center animate-fade-in"
+                        @click="handleUpdateStamina(Math.max(0, (activeCharacter.stamina !== undefined ? activeCharacter.stamina : 100) - 5))"
+                      >
+                        {{ t('subtractStamina') }}
+                      </UButton>
+                    </div>
+                  </div>
+
                   <!-- Combat Stats -->
                   <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
                     <h6 class="text-sm font-medium text-white text-white mb-3">{{ t('combatStats') }}</h6>
@@ -2936,6 +2973,36 @@ async function saveCurrencyChanges() {
     }
   } catch (error) {
     console.error('❌ Error saving currency:', error)
+  }
+}
+
+async function handleUpdateStamina(newStamina: number) {
+  if (!activeCharacter.value) return
+
+  const characterId = activeCharacter.value.id
+  const originalStamina = activeCharacter.value.stamina !== undefined ? activeCharacter.value.stamina : 100
+
+  // Optimistic update
+  const characterIndex = userCharacters.value.findIndex(c => c.id === characterId)
+  if (characterIndex !== -1) {
+    userCharacters.value[characterIndex].stamina = newStamina
+  }
+
+  try {
+    const response = await $fetch<{ success: boolean, data: any }>(`/api/characters/${characterId}`, {
+      method: 'PATCH',
+      body: { stamina: newStamina }
+    })
+
+    if (!response.success) {
+      throw new Error('Server update failed')
+    }
+  } catch (error) {
+    console.error('❌ Failed to update stamina:', error)
+    // Revert on failure
+    if (characterIndex !== -1) {
+      userCharacters.value[characterIndex].stamina = originalStamina
+    }
   }
 }
 

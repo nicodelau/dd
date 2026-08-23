@@ -26,12 +26,12 @@ model User {
   characters           Character[]
   dice_rolls           DiceRoll[]
   dice_rooms           DiceRoom[]
+  messagesReceived     DirectMessage[]       @relation("MessageReceiver")
+  messagesSent         DirectMessage[]       @relation("MessageSender")
+  friendshipsReceived  Friendship[]          @relation("FriendshipReceiver")
+  friendshipsInitiated Friendship[]          @relation("FriendshipInitiator")
   music_tracks         music_tracks[]
   roomParticipations   RoomParticipant[]
-  friendshipsInitiated Friendship[]          @relation("FriendshipInitiator")
-  friendshipsReceived  Friendship[]          @relation("FriendshipReceiver")
-  messagesSent         DirectMessage[]       @relation("MessageSender")
-  messagesReceived     DirectMessage[]       @relation("MessageReceiver")
 
   @@map("users")
 }
@@ -50,6 +50,8 @@ model Character {
   hitPoints           Int                   @default(0)
   maxHitPoints        Int                   @default(0)
   tempHitPoints       Int                   @default(0)
+  stamina             Int                   @default(100)
+  maxStamina          Int                   @default(100)
   armorClass          Int                   @default(10)
   proficiencyBonus    Int                   @default(2)
   speed               Int                   @default(30)
@@ -60,7 +62,6 @@ model Character {
   wisdom              Int                   @default(10)
   charisma            Int                   @default(10)
   experiencePoints    Int                   @default(0)
-  inspiration         Int                   @default(0)
   personality         String?
   ideals              String?
   bonds               String?
@@ -88,6 +89,7 @@ model Character {
   skin                String?
   subrace             String?
   weight              String?
+  inspiration         Int                   @default(0)
   attacks             Attack[]
   battle_participants battle_participants[]
   cantrips            Cantrip[]
@@ -173,7 +175,6 @@ model SpellSlot {
 
 model InventoryItem {
   id          String    @id @default(cuid())
-  createdAt   DateTime  @default(now())
   characterId String
   name        String
   description String?
@@ -182,6 +183,7 @@ model InventoryItem {
   value       Float?
   equipped    Boolean   @default(false)
   tier        String?   @default("gris")
+  createdAt   DateTime  @default(now())
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("inventory_items")
@@ -189,7 +191,6 @@ model InventoryItem {
 
 model Attack {
   id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now())
   characterId   String
   name          String
   attackBonus   Int?
@@ -199,8 +200,12 @@ model Attack {
   range         String?
   description   String?
   sourceSkillId String?
-  type          String?   @default("attack")
   tier          String?   @default("gris")
+  type          String?   @default("attack")
+  createdAt     DateTime  @default(now())
+  isMagic       Boolean   @default(false)
+  magicCost     Int       @default(0)
+  usedCount     Int       @default(0)
   character     Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@map("attacks")
@@ -342,6 +347,35 @@ model music_tracks {
   dice_rooms    DiceRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
+model Friendship {
+  id        String           @id @default(cuid())
+  userId    String
+  friendId  String
+  status    FriendshipStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  friend    User             @relation("FriendshipReceiver", fields: [friendId], references: [id], onDelete: Cascade)
+  user      User             @relation("FriendshipInitiator", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+model DirectMessage {
+  id             String   @id @default(cuid())
+  senderId       String
+  receiverId     String
+  content        String
+  isInvite       Boolean  @default(false)
+  inviteRoomCode String?
+  createdAt      DateTime @default(now())
+  read           Boolean  @default(false)
+  receiver       User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender         User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("direct_messages")
+}
+
 enum UserRole {
   PLAYER
   DM
@@ -359,35 +393,6 @@ enum AbilityType {
   BONUS_ACTION
   REACTION
   PASSIVE
-}
-
-model Friendship {
-  id        String           @id @default(cuid())
-  userId    String
-  friendId  String
-  status    FriendshipStatus @default(PENDING)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  user      User             @relation("FriendshipInitiator", fields: [userId], references: [id], onDelete: Cascade)
-  friend    User             @relation("FriendshipReceiver", fields: [friendId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, friendId])
-  @@map("friendships")
-}
-
-model DirectMessage {
-  id             String   @id @default(cuid())
-  senderId       String
-  receiverId     String
-  content        String
-  isInvite       Boolean  @default(false)
-  inviteRoomCode String?
-  createdAt      DateTime @default(now())
-  read           Boolean  @default(false)
-  sender         User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver       User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@map("direct_messages")
 }
 
 enum FriendshipStatus {

@@ -34,6 +34,8 @@ export interface Character {
   maxHp: number
   currentHp: number
   tempHp: number
+  stamina: number
+  maxStamina: number
   hitDice?: string
   deathSaveSuccesses: number
   deathSaveFailures: number
@@ -258,6 +260,14 @@ export class CharacterEntity {
 
   get tempHp(): number {
     return this.data.tempHp
+  }
+
+  get stamina(): number {
+    return this.data.stamina
+  }
+
+  get maxStamina(): number {
+    return this.data.maxStamina
   }
 
   get hitDice(): string | undefined {
