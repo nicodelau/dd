@@ -315,7 +315,11 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         ...((characterData as any).backpack !== undefined && { backpack: (characterData as any).backpack }),
         // User assignment fields
         ...((characterData as any).userId !== undefined && { userId: (characterData as any).userId }),
-        ...((characterData as any).ownerId !== undefined && { ownerId: (characterData as any).ownerId })
+        ...((characterData as any).ownerId !== undefined && { ownerId: (characterData as any).ownerId }),
+        // Notes JSON serialization support
+        ...(characterData.notes !== undefined && { 
+          notes: typeof characterData.notes === 'string' ? characterData.notes : JSON.stringify(characterData.notes || {})
+        })
       }
 
       // Update the character
@@ -416,6 +420,9 @@ export class PrismaCharacterRepository implements ICharacterRepository {
               description: attack.notes, // Map notes to description
               type: attack.type || 'attack',
               tier: attack.tier || 'gris',
+              isMagic: !!attack.isMagic,
+              magicCost: parseIntOrDefault(attack.magicCost, 0),
+              usedCount: parseIntOrDefault(attack.usedCount, 0),
               createdAt: attack.createdAt ? new Date(attack.createdAt) : undefined
             }))
           })
@@ -593,6 +600,9 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         notes: attack.description, // Map description back to notes
         type: attack.type || 'attack',
         tier: attack.tier || 'gris',
+        isMagic: !!attack.isMagic,
+        magicCost: attack.magicCost || 0,
+        usedCount: attack.usedCount || 0,
         createdAt: attack.createdAt ? attack.createdAt.toISOString() : undefined
       })) || [],
       // Combat Actions
@@ -607,7 +617,13 @@ export class PrismaCharacterRepository implements ICharacterRepository {
       // Skills and Saving Throws
       skills: prismaCharacter.skills || [],
       savingThrows: prismaCharacter.savingThrows || [],
-      notes: {},
+      notes: (() => {
+        try {
+          return prismaCharacter.notes ? JSON.parse(prismaCharacter.notes) : {}
+        } catch (e) {
+          return { text: prismaCharacter.notes || '' }
+        }
+      })(),
       createdAt: prismaCharacter.createdAt,
       updatedAt: prismaCharacter.updatedAt,
       // New user assignment fields
