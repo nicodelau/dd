@@ -776,6 +776,33 @@
                     </div>
                   </div>
                 </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {{ t('maxStamina') || 'Estamina Máx.' }}
+                  </label>
+                  <UInput
+                    v-if="editMode"
+                    v-model.number="editForm.maxStamina"
+                    type="number"
+                    min="1"
+                  />
+                  <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.maxStamina !== undefined ? character.maxStamina : 100 }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {{ t('stamina') }}
+                  </label>
+                  <UInput
+                    v-if="editMode"
+                    v-model.number="editForm.stamina"
+                    type="number"
+                    min="0"
+                    :max="character.maxStamina || 100"
+                  />
+                  <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">{{ character.stamina !== undefined ? character.stamina : 100 }}</p>
+                </div>
              </div>
 
 <!-- Health Bar -->
@@ -796,6 +823,44 @@
                   }"
                   :style="`width: ${Math.max(0, ((character.currentHp || 0) / (character.maxHp || 1)) * 100)}%`"
                 ></div>
+              </div>
+            </div>
+
+            <!-- Stamina Bar -->
+            <div class="mt-6">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('stamina') }}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ Math.round(((character.stamina !== undefined ? character.stamina : 100) / (character.maxStamina || 100)) * 100) }}%
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-zinc-800 rounded-full h-3 mb-3">
+                <div 
+                  class="h-3 rounded-full bg-orange-500 transition-all duration-300"
+                  :style="`width: ${Math.max(0, Math.min(100, ((character.stamina !== undefined ? character.stamina : 100) / (character.maxStamina || 100)) * 100))}%`"
+                ></div>
+              </div>
+              
+              <!-- Quick Stamina adjustment buttons (not in editMode) -->
+              <div v-if="!editMode && canEdit" class="flex space-x-2">
+                <UButton
+                  size="sm"
+                  color="orange"
+                  variant="soft"
+                  icon="i-heroicons-arrow-path"
+                  @click="adjustStamina(character.maxStamina !== undefined ? character.maxStamina : 100)"
+                >
+                  {{ t('refillStamina') }}
+                </UButton>
+                <UButton
+                  size="sm"
+                  color="red"
+                  variant="soft"
+                  icon="i-heroicons-minus"
+                  @click="adjustStamina(Math.max(0, (character.stamina !== undefined ? character.stamina : 100) - 5))"
+                >
+                  {{ t('subtractStamina') }}
+                </UButton>
               </div>
             </div>
           </UCard>
@@ -2462,6 +2527,23 @@ async function adjustHp() {
     hpAdjustment.value = null
   } catch (err: any) {
     console.error('Error adjusting HP:', err)
+  }
+}
+
+async function adjustStamina(newStamina: number) {
+  if (!character.value) return
+
+  try {
+    // Direct update of character's stamina using PATCH
+    await $fetch(`/api/characters/${character.value.id}`, {
+      method: 'PATCH',
+      body: { stamina: newStamina }
+    })
+
+    // Reload character data to reflect changes
+    await loadCharacter()
+  } catch (err: any) {
+    console.error('Error adjusting stamina:', err)
   }
 }
 
