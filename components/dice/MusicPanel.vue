@@ -156,8 +156,7 @@ const emit = defineEmits<{
 }>()
 
 // Use the music composable
-const connection = useConnectionManager()
-const music = useMusic(props.roomCode, connection)
+const music = useMusic(props.roomCode)
 
 // Modal state
 const isOpen = computed({

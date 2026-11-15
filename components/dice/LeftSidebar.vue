@@ -1,11 +1,11 @@
 <template>
   <!-- Left Sidebar - Character Info -->
   <div
-    class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-zinc-900 bg-zinc-900 shadow-lg border-r border-zinc-800 border-zinc-800 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
+    class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-zinc-900 shadow-lg border-r border-zinc-800 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
     :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
   >
     <!-- Left Sidebar Header -->
-    <div class="sticky top-0 bg-zinc-900 bg-zinc-900 border-b border-zinc-800 border-zinc-800 p-4">
+    <div class="sticky top-0 bg-zinc-900 border-b border-zinc-800 p-4">
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
           <UIcon :name="userRole === 'DM' ? 'i-heroicons-users' : 'i-heroicons-user'" class="w-5 h-5 text-red-500" />
@@ -45,19 +45,19 @@
               </div>
             </div>
 
-            <h5 class="text-lg font-semibold text-white text-white">
+            <h5 class="text-lg font-semibold text-white">
               {{ activeCharacter.characterName || t('unknownCharacter') }}
             </h5>
-            <p class="text-sm text-zinc-400 text-zinc-400">
+            <p class="text-sm text-zinc-400">
               {{ t('level') }} {{ activeCharacter.classLevel || 1 }} {{ activeCharacter.className || t('class') }}
             </p>
-            <p class="text-xs text-zinc-400 text-zinc-400">
+            <p class="text-xs text-zinc-400">
               {{ (activeCharacter.race || t('unknown')) }}
             </p>
           </div>
 
           <!-- Currency -->
-          <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+          <div class="bg-zinc-900 rounded-lg p-4">
             <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
               <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4 text-yellow-500" />
               {{ t('currency') }}
@@ -84,10 +84,10 @@
                 <span class="font-mono">{{ activeCharacter.platinumCoins || 0 }} pp</span>
               </div>
             </div>
-            <div class="mt-2 pt-2 border-t border-zinc-800 border-zinc-800">
+            <div class="mt-2 pt-2 border-t border-zinc-800">
               <div class="flex justify-between items-center text-sm">
                 <span class="font-medium text-gray-700 dark:text-gray-300">{{ t('totalValue') }}:</span>
-                <span class="font-bold text-white text-white">
+                <span class="font-bold text-white">
                   {{ totalWealth }} gp
                 </span>
               </div>
@@ -95,7 +95,7 @@
           </div>
 
           <!-- Inventory -->
-          <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+          <div class="bg-zinc-900 rounded-lg p-4">
             <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
               <UIcon name="i-heroicons-briefcase" class="w-4 h-4 text-zinc-400" />
               {{ t('inventory') }}
@@ -107,29 +107,29 @@
               <div 
                 v-for="item in activeCharacter.inventory" 
                 :key="item.id"
-                class="border border-zinc-800 border-zinc-800 rounded p-2"
+                class="border border-zinc-800 rounded p-2"
               >
                 <div class="flex justify-between items-start">
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-white text-white truncate">{{ item.name }}</p>
-                    <div class="flex items-center space-x-2 text-xs text-zinc-400 text-zinc-400">
+                    <p class="text-sm font-medium text-white truncate">{{ item.name }}</p>
+                    <div class="flex items-center space-x-2 text-xs text-zinc-400">
                       <span>{{ t('quantity') }}: {{ item.quantity || 1 }}</span>
                       <span v-if="item.weight">• {{ item.weight }} lbs</span>
                     </div>
                   </div>
                 </div>
-                <p v-if="item.notes" class="text-xs text-zinc-400 text-zinc-400 mt-1 truncate">
+                <p v-if="item.notes" class="text-xs text-zinc-400 mt-1 truncate">
                   {{ item.notes }}
                 </p>
               </div>
             </div>
-            <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
+            <div v-else class="text-center py-4 text-zinc-400 text-sm">
               {{ t('noItems') }}
             </div>
           </div>
 
           <!-- Notes -->
-          <div v-if="activeCharacter.notes" class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
+          <div v-if="activeCharacter.notes" class="bg-zinc-900 rounded-lg p-4">
             <h6 class="text-sm font-medium text-white mb-3 flex items-center gap-2">
               <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-zinc-400" />
               {{ t('notes') }}
@@ -166,7 +166,7 @@
       <div v-else>
         <div class="mb-4">
           <div class="flex items-center justify-between">
-            <h4 class="font-medium text-white text-white">{{ t('playersHealth') }}</h4>
+            <h4 class="font-medium text-white">{{ t('playersHealth') }}</h4>
             <UButton 
               v-if="!isOfflineMode && canRefreshPlayers" 
               color="gray" 
@@ -184,13 +184,13 @@
           <div 
             v-for="player in allPlayers" 
             :key="player.userId"
-            class="bg-zinc-950 bg-zinc-900 border border-zinc-800 border-zinc-800 rounded-lg p-4"
+            class="bg-zinc-900 border border-zinc-800 rounded-lg p-4"
           >
             <!-- Player Name and Level -->
             <div class="flex items-center justify-between mb-3">
               <div>
-                <h5 class="text-sm font-medium text-white text-white">{{ player.name }}</h5>
-                <p class="text-xs text-zinc-400 text-zinc-400">{{ t('level') }} {{ player.stats.level }}</p>
+                <h5 class="text-sm font-medium text-white">{{ player.name }}</h5>
+                <p class="text-xs text-zinc-400">{{ t('level') }} {{ player.stats.level }}</p>
               </div>
               <div class="flex items-center space-x-1">
                 <UButton 
@@ -244,18 +244,18 @@
             <!-- Quick Stats Grid -->
             <div class="grid grid-cols-3 gap-2 mt-3">
               <div class="text-center">
-                <div class="text-xs text-zinc-400 text-zinc-400">{{ t('init') }}</div>
-                <div class="text-sm font-mono text-white text-white">
+                <div class="text-xs text-zinc-400">{{ t('init') }}</div>
+                <div class="text-sm font-mono text-white">
                   {{ player.stats.initiative >= 0 ? '+' : '' }}{{ player.stats.initiative }}
                 </div>
               </div>
               <div class="text-center">
-                <div class="text-xs text-zinc-400 text-zinc-400">{{ t('speed') }}</div>
-                <div class="text-sm font-mono text-white text-white">{{ player.stats.speed }} ft</div>
+                <div class="text-xs text-zinc-400">{{ t('speed') }}</div>
+                <div class="text-sm font-mono text-white">{{ player.stats.speed }} ft</div>
               </div>
               <div class="text-center">
-                <div class="text-xs text-zinc-400 text-zinc-400">{{ t('prof') }}</div>
-                <div class="text-sm font-mono text-white text-white">+{{ player.stats.proficiencyBonus }}</div>
+                <div class="text-xs text-zinc-400">{{ t('prof') }}</div>
+                <div class="text-sm font-mono text-white">+{{ player.stats.proficiencyBonus }}</div>
               </div>
             </div>
           </div>
@@ -263,8 +263,8 @@
 
         <div v-else class="text-center py-8">
           <div class="text-4xl mb-4">👥</div>
-          <h4 class="font-medium text-white text-white mb-2">{{ t('noPlayersConnected') }}</h4>
-          <p class="text-sm text-zinc-400 text-zinc-400">
+          <h4 class="font-medium text-white mb-2">{{ t('noPlayersConnected') }}</h4>
+          <p class="text-sm text-zinc-400">
             {{ isOfflineMode ? t('playerHealthOffline') : t('playersWillAppear') }}
           </p>
         </div>

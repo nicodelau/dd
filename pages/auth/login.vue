@@ -42,13 +42,10 @@
         </div>
       </div>
       
-      <!-- Decorative elements -->
-      <div class="absolute top-10 right-10 w-32 h-32 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-xl"></div>
-      <div class="absolute bottom-10 left-10 w-40 h-40 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"></div>
     </div>
     
     <!-- Right side - Login form -->
-    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-zinc-900 bg-zinc-900">
+    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-zinc-900 border-l border-zinc-800">
       <div class="mx-auto w-full max-w-sm lg:w-96">
         <!-- Mobile hero header -->
         <div class="lg:hidden mb-8 text-center">
@@ -57,14 +54,14 @@
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-white text-white">{{ t('welcomeBack') }}</h2>
+          <h2 class="text-2xl font-bold text-white">{{ t('welcomeBack') }}</h2>
         </div>
         
         <div class="hidden lg:block">
-          <h2 class="text-3xl font-bold text-white text-white">
+          <h2 class="text-3xl font-bold text-white">
             {{ t('signInTitle') }}
           </h2>
-          <p class="mt-2 text-sm text-zinc-400 text-zinc-400">
+          <p class="mt-2 text-sm text-zinc-400">
             {{ t('or') }}
             <NuxtLink to="/auth/register" class="font-medium text-red-500 hover:text-red-400 transition-colors">
               {{ t('createAccount') }}
@@ -76,7 +73,7 @@
           <form class="space-y-6" @submit.prevent="handleLogin">
             <div class="space-y-4">
               <div>
-                <label for="email" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
+                <label for="email" class="block text-sm font-medium text-zinc-300 mb-2">
                   {{ t('emailAddress') }}
                 </label>
                 <UInput
@@ -93,7 +90,7 @@
               </div>
 
               <div>
-                <label for="password" class="block text-sm font-medium text-zinc-300 text-zinc-300 mb-2">
+                <label for="password" class="block text-sm font-medium text-zinc-300 mb-2">
                   {{ t('password') }}
                 </label>
                 <UInput
@@ -132,7 +129,7 @@
                 :ui="{ 
                   color: { 
                     primary: { 
-                      solid: 'bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200' 
+                      solid: 'bg-red-600 hover:bg-red-500 text-white font-medium transition-colors' 
                     } 
                   } 
                 }"
@@ -158,7 +155,7 @@
 
           <!-- Mobile register link -->
           <div class="lg:hidden mt-6 text-center">
-            <p class="text-sm text-zinc-400 text-zinc-400">
+            <p class="text-sm text-zinc-400">
               {{ t('dontHaveAccount') }}
               <NuxtLink to="/auth/register" class="font-medium text-red-500 hover:text-red-400 transition-colors">
                 {{ t('signUpHere') }}

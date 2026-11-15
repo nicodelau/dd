@@ -1,46 +1,50 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-3">
-      <h4 class="text-sm font-medium text-white text-white">{{ t('rollInitiativeForParticipants') }}</h4>
-      <div class="text-xs text-zinc-400">
+    <div class="flex items-center justify-between mb-2.5">
+      <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{{ t('rollInitiativeForParticipants') }}</h4>
+      <div class="text-[11px] text-zinc-400 font-mono">
         {{ participantsWithInitiative.length }} / {{ totalParticipants }} {{ t('rolled') }}
       </div>
     </div>
 
-    <div v-if="participants && participants.length > 0" class="space-y-2">
+    <div v-if="participants && participants.length > 0" class="space-y-1.5">
       <div 
         v-for="participant in participants" 
         :key="participant.id"
-        class="flex items-center justify-between p-3 rounded-lg border"
+        class="flex items-center justify-between p-2.5 rounded border transition-colors"
         :class="participant.initiativeRoll > 0 
-          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-          : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'"
+          ? 'bg-zinc-950/90 border-emerald-900/50' 
+          : 'bg-zinc-950/60 border-zinc-800'"
       >
-        <div class="flex items-center space-x-3">
-          <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="sm">
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <UBadge 
+            :color="participant.type === 'player' ? 'blue' : 'red'" 
+            variant="subtle" 
+            size="xs"
+          >
             {{ t(participant.type) }}
           </UBadge>
-          <div>
-            <div class="font-medium text-white">{{ participant.name }}</div>
-            <div class="text-xs text-zinc-400">
+          <div class="min-w-0">
+            <div class="text-xs font-medium text-zinc-200 truncate">{{ participant.name }}</div>
+            <div class="text-[10px] text-zinc-500 font-mono">
               {{ t('initiativeModifier') }}: {{ participant.initiative >= 0 ? '+' : '' }}{{ participant.initiative }}
             </div>
           </div>
         </div>
         
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 shrink-0">
           <div v-if="participant.initiativeRoll > 0" class="text-right">
-            <div class="text-lg font-bold text-green-600 dark:text-green-400">
+            <div class="text-sm font-bold text-emerald-400 font-mono">
               {{ participant.initiativeRoll }}
             </div>
-            <div class="text-xs text-zinc-400">
+            <div class="text-[10px] text-zinc-500">
               {{ t('rolled') }}
             </div>
           </div>
           <UButton 
             v-if="participant.initiativeRoll === 0"
-            color="blue" 
-            size="sm" 
+            color="white" 
+            size="2xs" 
             @click="$emit('rollIndividualInitiative', { participantId: participant.id, type: participant.type })"
             :loading="isRollingIndividualInitiative === participant.id"
             icon="i-heroicons-cube"
@@ -50,8 +54,8 @@
           <UButton 
             v-else
             color="gray" 
-            variant="outline"
-            size="sm" 
+            variant="ghost" 
+            size="2xs" 
             @click="$emit('rollIndividualInitiative', { participantId: participant.id, type: participant.type })"
             :loading="isRollingIndividualInitiative === participant.id"
             icon="i-heroicons-arrow-path"
@@ -65,24 +69,22 @@
     <!-- All Initiative Rolled - Start Combat -->
     <div 
       v-if="allInitiativeRolled" 
-      class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-4"
+      class="bg-zinc-950/90 border border-emerald-900/60 rounded p-3 mt-3 text-center"
     >
-      <div class="text-center">
-        <div class="text-green-900 dark:text-green-100 font-medium mb-2">
-          {{ t('allInitiativeRolled') }}
-        </div>
-        <p class="text-sm text-green-700 dark:text-green-300 mb-3">
-          {{ t('allInitiativeRolledDesc') }}
-        </p>
-        <UButton 
-          color="green" 
-          size="sm" 
-          @click="$emit('startCombatPhase')" 
-          icon="i-heroicons-play"
-        >
-          {{ t('startCombat') }}
-        </UButton>
+      <div class="text-emerald-400 text-xs font-medium mb-1">
+        {{ t('allInitiativeRolled') }}
       </div>
+      <p class="text-xs text-zinc-400 mb-2">
+        {{ t('allInitiativeRolledDesc') }}
+      </p>
+      <UButton 
+        color="emerald" 
+        size="xs" 
+        @click="$emit('startCombatPhase')" 
+        icon="i-heroicons-play"
+      >
+        {{ t('startCombat') }}
+      </UButton>
     </div>
   </div>
 </template>

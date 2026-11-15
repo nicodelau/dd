@@ -98,11 +98,11 @@
             :class="index === battleState.currentTurnIndex ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-zinc-950 border border-zinc-800'">
             <div class="flex items-center space-x-2">
               <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                :class="index === battleState.currentTurnIndex ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
+                :class="index === battleState.currentTurnIndex ? 'bg-emerald-500 text-black' : 'bg-zinc-800 text-white'">
                 {{ index + 1 }}
               </div>
               <span class="font-medium"
-                :class="index === battleState.currentTurnIndex ? 'text-green-900 dark:text-green-100' : 'text-white'">
+                :class="index === battleState.currentTurnIndex ? 'text-emerald-400 font-semibold' : 'text-zinc-200'">
                 {{ participant.name }}
               </span>
               <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="xs">

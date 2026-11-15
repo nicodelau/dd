@@ -310,22 +310,21 @@
 
         <div class="space-y-4">
           <UFormGroup :label="t('uploadImage')" :help="t('selectImageHelp')">
-            <input type="file" accept="image/*" @change="handleImageUpload" class="block w-full text-sm text-gray-400
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-purple-50 file:text-purple-700
-              hover:file:bg-purple-100
-              dark:file:bg-purple-900/20 dark:file:text-purple-300
+            <input type="file" accept="image/*" @change="handleImageUpload" class="block w-full text-xs text-zinc-400
+              file:mr-3 file:py-1.5 file:px-3
+              file:rounded file:border-0
+              file:text-xs file:font-semibold
+              file:bg-zinc-800 file:text-zinc-200
+              hover:file:bg-zinc-700
             "/>
           </UFormGroup>
 
           <div class="relative">
             <div class="absolute inset-0 flex items-center" aria-hidden="true">
-              <div class="w-full border-t border-gray-700"></div>
+              <div class="w-full border-t border-zinc-800"></div>
             </div>
             <div class="relative flex justify-center">
-              <span class="bg-zinc-900 px-2 text-sm text-gray-500">{{ t('or') }}</span>
+              <span class="bg-zinc-900 px-2 text-xs text-zinc-500 font-mono">{{ t('or') }}</span>
             </div>
           </div>
 
@@ -337,16 +336,16 @@
             <UInput v-model="dmImageCaption" :placeholder="t('imageCaptionPlaceholder')" />
           </UFormGroup>
 
-          <div v-if="dmImageUrl" class="mt-4">
-            <p class="text-sm text-gray-400 mb-2">{{ t('preview') }}:</p>
-            <img :src="dmImageUrl" class="w-full h-48 object-contain rounded bg-black/50" />
+          <div v-if="dmImageUrl" class="mt-3">
+            <p class="text-xs text-zinc-400 mb-1.5">{{ t('preview') }}:</p>
+            <img :src="dmImageUrl" class="w-full h-44 object-contain rounded bg-zinc-950 border border-zinc-800" />
           </div>
         </div>
 
         <template #footer>
           <div class="flex justify-end space-x-2">
-            <UButton color="gray" variant="ghost" @click="closeDmImageModal">{{ t('cancel') }}</UButton>
-            <UButton color="purple" :loading="isSendingImage" @click="handleSendDmImage">{{ t('showToPlayers') }}</UButton>
+            <UButton color="gray" variant="ghost" size="xs" @click="closeDmImageModal">{{ t('cancel') }}</UButton>
+            <UButton color="white" size="xs" :loading="isSendingImage" @click="handleSendDmImage">{{ t('showToPlayers') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -401,37 +400,37 @@ interface NewEnemy {
 
 interface Props {
   // Modal visibility states
-  showInviteModal: boolean
-  showCreateRoom: boolean
-  showRollRequestModal: boolean
-  isEditingPlayer: boolean
-  showRollRequestNotification: boolean
-  showAddEnemyModal: boolean
-  showSpecialAbilitiesModal: boolean
-  showCharacterDetailModal: boolean
-  showDmImageModal: boolean
-  showImageDisplayModal: boolean
+  showInviteModal?: boolean
+  showCreateRoom?: boolean
+  showRollRequestModal?: boolean
+  isEditingPlayer?: boolean
+  showRollRequestNotification?: boolean
+  showAddEnemyModal?: boolean
+  showSpecialAbilitiesModal?: boolean
+  showCharacterDetailModal?: boolean
+  showDmImageModal?: boolean
+  showImageDisplayModal?: boolean
   
   // Modal data
-  isLoadingOnlineUsers: boolean
-  onlineUsers: OnlineUser[]
-  selectedPlayerForRequest: Player | null
-  diceTypes: DiceType[]
-  requestedDiceType: string
-  rollRequestMessage: string
-  rollRequestModifier: number
-  editingPlayer: Player | null
-  editingPlayerStats: any
-  pendingRollRequest: PendingRollRequest | null
-  newEnemy: NewEnemy
-  currentPlayerName: string
-  currentPlayerAbilities: any[]
-  selectedCharacterForDetail: any
-  dmImageUrl: string
-  dmImageCaption: string
-  isSendingImage: boolean
-  displayedImageUrl: string
-  displayedImageCaption: string
+  isLoadingOnlineUsers?: boolean
+  onlineUsers?: OnlineUser[]
+  selectedPlayerForRequest?: Player | null
+  diceTypes?: DiceType[]
+  requestedDiceType?: string
+  rollRequestMessage?: string
+  rollRequestModifier?: number
+  editingPlayer?: Player | null
+  editingPlayerStats?: any
+  pendingRollRequest?: PendingRollRequest | null
+  newEnemy?: NewEnemy
+  currentPlayerName?: string
+  currentPlayerAbilities?: any[]
+  selectedCharacterForDetail?: any
+  dmImageUrl?: string
+  dmImageCaption?: string
+  isSendingImage?: boolean
+  displayedImageUrl?: string
+  displayedImageCaption?: string
 }
 
 interface Emits {
@@ -463,18 +462,58 @@ interface Emits {
   (e: 'savePlayerStats'): void
   (e: 'acceptRollRequest'): void
   (e: 'declineRollRequest'): void
-  (e: 'addEnemy'): void
+  (e: 'addEnemy', enemy?: NewEnemy): void
   (e: 'rollAbility', ability: any): void
   (e: 'useAbility', ability: any): void
   (e: 'imageUpload', event: Event): void
-  (e: 'sendDmImage'): void
+  (e: 'sendDmImage', payload?: { imageUrl: string; caption?: string }): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  showInviteModal: false,
+  showCreateRoom: false,
+  showRollRequestModal: false,
+  isEditingPlayer: false,
+  showRollRequestNotification: false,
+  showAddEnemyModal: false,
+  showSpecialAbilitiesModal: false,
+  showCharacterDetailModal: false,
+  showDmImageModal: false,
+  showImageDisplayModal: false,
+  isLoadingOnlineUsers: false,
+  onlineUsers: () => [],
+  selectedPlayerForRequest: null,
+  diceTypes: () => [],
+  requestedDiceType: 'd20',
+  rollRequestMessage: '',
+  rollRequestModifier: 0,
+  editingPlayer: null,
+  editingPlayerStats: null,
+  pendingRollRequest: null,
+  newEnemy: undefined,
+  currentPlayerName: '',
+  currentPlayerAbilities: () => [],
+  selectedCharacterForDetail: null,
+  dmImageUrl: undefined,
+  dmImageCaption: undefined,
+  isSendingImage: false,
+  displayedImageUrl: '',
+  displayedImageCaption: ''
+})
 const emit = defineEmits<Emits>()
 
 // Translations
 const { t } = useTranslations()
+
+// Local fallback state
+const localDmImageUrl = ref('')
+const localDmImageCaption = ref('')
+const localNewEnemy = ref<NewEnemy>({
+  name: '',
+  hitPoints: 10,
+  armorClass: 10,
+  initiative: 0
+})
 
 // Computed properties for v-model sync
 const showInviteModal = computed({
@@ -548,18 +587,27 @@ const editingPlayerStats = computed({
 })
 
 const newEnemy = computed({
-  get: () => props.newEnemy,
-  set: (value) => emit('update:newEnemy', value)
+  get: () => props.newEnemy || localNewEnemy.value,
+  set: (value) => {
+    localNewEnemy.value = value
+    emit('update:newEnemy', value)
+  }
 })
 
 const dmImageUrl = computed({
-  get: () => props.dmImageUrl,
-  set: (value) => emit('update:dmImageUrl', value)
+  get: () => props.dmImageUrl !== undefined ? props.dmImageUrl : localDmImageUrl.value,
+  set: (value) => {
+    localDmImageUrl.value = value
+    emit('update:dmImageUrl', value)
+  }
 })
 
 const dmImageCaption = computed({
-  get: () => props.dmImageCaption,
-  set: (value) => emit('update:dmImageCaption', value)
+  get: () => props.dmImageCaption !== undefined ? props.dmImageCaption : localDmImageCaption.value,
+  set: (value) => {
+    localDmImageCaption.value = value
+    emit('update:dmImageCaption', value)
+  }
 })
 
 // Event handlers
@@ -616,7 +664,9 @@ function handleDeclineRollRequest() {
 }
 
 function handleAddEnemy() {
-  emit('addEnemy')
+  emit('addEnemy', newEnemy.value)
+  localNewEnemy.value = { name: '', hitPoints: 10, armorClass: 10, initiative: 0 }
+  closeAddEnemyModal()
 }
 
 function handleRollAbility(ability: any) {
@@ -628,10 +678,25 @@ function handleUseAbility(ability: any) {
 }
 
 function handleImageUpload(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      dmImageUrl.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
   emit('imageUpload', event)
 }
 
 function handleSendDmImage() {
-  emit('sendDmImage')
+  emit('sendDmImage', {
+    imageUrl: dmImageUrl.value,
+    caption: dmImageCaption.value
+  })
+  localDmImageUrl.value = ''
+  localDmImageCaption.value = ''
+  closeDmImageModal()
 }
 </script>

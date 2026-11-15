@@ -1,19 +1,20 @@
 <template>
-  <!-- Right Sidebar - Ability Scores -->
+  <!-- Right Sidebar - Ability Scores & Combat Inspector -->
   <div
-    class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-zinc-900 bg-zinc-900 shadow-lg border-l border-zinc-800 border-zinc-800 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
+    class="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 max-w-full bg-zinc-950 shadow-2xl border-l border-zinc-800 transform transition-all duration-300 ease-in-out z-50 overflow-y-auto"
     :class="isOpen ? 'translate-x-0' : 'translate-x-full'"
   >
     <!-- Right Sidebar Header -->
-    <div class="sticky top-0 bg-zinc-900 bg-zinc-900 border-b border-zinc-800 border-zinc-800 p-4">
+    <div class="sticky top-0 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 p-3.5 z-10">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-white text-white">
-          {{ userRole === 'DM' ? t('requestDices') : t('abilityScores') }}
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-100 flex items-center gap-2">
+          <UIcon :name="userRole === 'DM' ? 'i-heroicons-users' : 'i-heroicons-bolt'" class="w-4 h-4 text-amber-500" />
+          {{ userRole === 'DM' ? t('playerManagement') : t('abilityScores') }}
         </h3>
         <UButton 
           color="gray" 
           variant="ghost" 
-          size="sm" 
+          size="2xs" 
           @click="$emit('close')"
           icon="i-heroicons-x-mark" 
         />
@@ -21,112 +22,99 @@
     </div>
 
     <!-- Right Sidebar Content -->
-    <div class="p-4 space-y-6">
-      <!-- Ability Scores & Skills (only for Players) -->
+    <div class="p-3.5 space-y-4">
+      <!-- Player Panel: Ability Scores & Skills -->
       <div v-if="userRole === 'Player'">
-        <div v-if="activeCharacter" class="space-y-6">
-          <!-- Ability Scores - Compact Version -->
-          <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-            <h6 class="text-sm font-medium text-white text-white mb-3">{{ t('abilityScores') }}</h6>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div class="flex justify-between items-center p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                <span class="text-red-700 dark:text-red-300 font-medium">{{ t('str') }}</span>
-                <span class="font-mono text-red-900 dark:text-red-100">
-                  {{ activeCharacter.strength || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.strength || 10)) }})
-                </span>
-              </div>
-              <div class="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                <span class="text-green-700 dark:text-green-300 font-medium">{{ t('dex') }}</span>
-                <span class="font-mono text-green-900 dark:text-green-100">
-                  {{ activeCharacter.dexterity || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.dexterity || 10)) }})
-                </span>
-              </div>
-              <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
-                <span class="text-orange-700 dark:text-orange-300 font-medium">{{ t('con') }}</span>
-                <span class="font-mono text-orange-900 dark:text-orange-100">
-                  {{ activeCharacter.constitution || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.constitution || 10)) }})
-                </span>
-              </div>
-              <div class="flex justify-between items-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                <span class="text-purple-700 dark:text-purple-300 font-medium">{{ t('int') }}</span>
-                <span class="font-mono text-purple-900 dark:text-purple-100">
-                  {{ activeCharacter.intelligence || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.intelligence || 10)) }})
-                </span>
-              </div>
-              <div class="flex justify-between items-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                <span class="text-blue-700 dark:text-blue-300 font-medium">{{ t('wis') }}</span>
-                <span class="font-mono text-blue-900 dark:text-blue-100">
-                  {{ activeCharacter.wisdom || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.wisdom || 10)) }})
-                </span>
-              </div>
-              <div class="flex justify-between items-center p-2 bg-pink-50 dark:bg-pink-900/20 rounded">
-                <span class="text-pink-700 dark:text-pink-300 font-medium">{{ t('cha') }}</span>
-                <span class="font-mono text-pink-900 dark:text-pink-100">
-                  {{ activeCharacter.charisma || 10 }} ({{ formatModifier(calculateModifier(activeCharacter.charisma || 10)) }})
+        <div v-if="activeCharacter" class="space-y-4">
+          <!-- Ability Scores - Compact Grid -->
+          <div class="bg-zinc-900/60 border border-zinc-800 rounded p-3">
+            <h6 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+              <span>{{ t('abilityScores') }}</span>
+              <span class="text-[10px] text-zinc-500 normal-case font-normal">Click para tirar</span>
+            </h6>
+            <div class="grid grid-cols-2 gap-1.5 text-xs">
+              <div 
+                v-for="ability in abilityList"
+                :key="ability"
+                class="flex justify-between items-center p-2 bg-zinc-950/80 border border-zinc-800 rounded cursor-pointer hover:bg-zinc-800/60 hover:border-zinc-700 transition-colors"
+                @click="$emit('rollStat', getAbilityLabel(ability), calculateModifier(activeCharacter[ability] || 10))"
+              >
+                <span class="text-zinc-400 font-medium font-mono text-[11px]">{{ getAbilityAbbr(ability) }}</span>
+                <span class="font-mono text-zinc-100 font-semibold text-xs">
+                  {{ activeCharacter[ability] || 10 }}
+                  <span class="text-zinc-400 text-[11px] font-normal font-mono">
+                    ({{ formatModifier(calculateModifier(activeCharacter[ability] || 10)) }})
+                  </span>
                 </span>
               </div>
             </div>
           </div>
 
-          <!-- Health Bar -->
-          <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded">
-            <div class="flex justify-between items-center text-sm mb-1">
-              <span class="text-red-700 dark:text-red-300 font-medium">{{ t('hitPoints') }}</span>
-              <span class="font-mono text-red-900 dark:text-red-100">
+          <!-- Health Status -->
+          <div class="p-2.5 bg-zinc-900/60 border border-zinc-800 rounded">
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="text-zinc-400 font-medium">{{ t('hitPoints') }}</span>
+              <span class="font-mono text-zinc-100 font-semibold">
                 {{ activeCharacter.currentHp || 0 }} / {{ activeCharacter.maxHp || 0 }}
               </span>
             </div>
-            <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-2">
+            <div class="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
               <div 
-                class="bg-red-500 h-2 rounded-full transition-all duration-300"
+                class="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
                 :style="{ width: `${healthPercentage}%` }"
-              >
-              </div>
+              />
             </div>
           </div>
 
           <!-- Combat Stats -->
-          <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-            <h6 class="text-sm font-medium text-white text-white mb-3">{{ t('combatStats') }}</h6>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div class="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                <span class="text-blue-700 dark:text-blue-300">{{ t('ac') }}</span>
-                <span class="font-mono text-blue-900 dark:text-blue-100">{{ activeCharacter.armorClass || 10 }}</span>
+          <div class="bg-zinc-900/60 border border-zinc-800 rounded p-3">
+            <h6 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2.5">{{ t('combatStats') }}</h6>
+            <div class="grid grid-cols-2 gap-1.5 text-xs font-mono">
+              <div class="flex justify-between p-2 bg-zinc-950/80 border border-zinc-800 rounded">
+                <span class="text-zinc-400">{{ t('ac') }}</span>
+                <span class="text-zinc-100 font-semibold">{{ activeCharacter.armorClass || 10 }}</span>
               </div>
-              <div class="flex justify-between p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
-                <span class="text-orange-700 dark:text-orange-300">{{ t('initiative') }}</span>
-                <span class="font-mono text-orange-900 dark:text-orange-100">{{ formatModifier(activeCharacter.initiative || 0) }}</span>
+              <div 
+                class="flex justify-between p-2 bg-zinc-950/80 border border-zinc-800 rounded cursor-pointer hover:bg-zinc-800/60 transition-colors"
+                @click="$emit('rollStat', t('initiative'), activeCharacter.initiative || 0)"
+              >
+                <span class="text-zinc-400">{{ t('initiative') }}</span>
+                <span class="text-zinc-100 font-semibold">{{ formatModifier(activeCharacter.initiative || 0) }}</span>
               </div>
-              <div class="flex justify-between p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                <span class="text-yellow-700 dark:text-yellow-300">{{ t('speed') }}</span>
-                <span class="font-mono text-yellow-900 dark:text-yellow-100">{{ activeCharacter.speed || 30 }} ft</span>
+              <div class="flex justify-between p-2 bg-zinc-950/80 border border-zinc-800 rounded">
+                <span class="text-zinc-400">{{ t('speed') }}</span>
+                <span class="text-zinc-100 font-semibold">{{ activeCharacter.speed || 30 }} ft</span>
               </div>
-              <div class="flex justify-between p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                <span class="text-purple-700 dark:text-purple-300">{{ t('prof') }}</span>
-                <span class="font-mono text-purple-900 dark:text-purple-100">+{{ activeCharacter.proficiencyBonus || 2 }}</span>
+              <div class="flex justify-between p-2 bg-zinc-950/80 border border-zinc-800 rounded">
+                <span class="text-zinc-400">{{ t('prof') }}</span>
+                <span class="text-zinc-100 font-semibold">+{{ activeCharacter.proficiencyBonus || 2 }}</span>
               </div>
             </div>
           </div>
 
           <!-- Saving Throws -->
-          <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-            <h6 class="text-sm font-medium text-white text-white mb-3">{{ t('savingThrows') }}</h6>
-            <div class="space-y-2">
+          <div class="bg-zinc-900/60 border border-zinc-800 rounded p-3">
+            <h6 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>{{ t('savingThrows') }}</span>
+              <span class="text-[10px] text-zinc-500 normal-case font-normal">Click para salvar</span>
+            </h6>
+            <div class="space-y-1">
               <div
                 v-for="ability in abilityList"
                 :key="ability"
-                class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2"
+                class="flex items-center justify-between bg-zinc-950/80 border border-zinc-800 rounded p-2 cursor-pointer hover:bg-zinc-800/60 hover:border-zinc-700 transition-colors"
+                @click="$emit('rollSave', getAbilityLabel(ability), calculateSavingThrowModifier(ability))"
               >
                 <div class="flex items-center space-x-2">
-                  <span class="text-sm font-medium text-white text-white capitalize">{{ getAbilityAbbr(ability) }}</span>
+                  <span class="text-xs font-medium text-zinc-200 uppercase font-mono">{{ getAbilityAbbr(ability) }}</span>
                   <span 
                     v-if="getSavingThrowProficiency(ability)"
-                    class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded"
+                    class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800/50 px-1 py-0.2 rounded font-mono"
                   >
                     {{ t('prof') }}
                   </span>
                 </div>
-                <span class="text-sm font-mono text-gray-600 text-zinc-400">
+                <span class="text-xs font-mono font-semibold text-zinc-200">
                   {{ formatModifier(calculateSavingThrowModifier(ability)) }}
                 </span>
               </div>
@@ -134,42 +122,44 @@
           </div>
 
           <!-- Skills -->
-          <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-            <div class="flex items-center justify-between mb-3">
-              <h6 class="text-sm font-medium text-white text-white">{{ t('skills') }}</h6>
+          <div class="bg-zinc-900/60 border border-zinc-800 rounded p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h6 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{{ t('skills') }}</h6>
+              <span class="text-[10px] text-zinc-500 font-normal">Click para tirar</span>
             </div>
-            <div class="mb-3">
+            <div class="mb-2">
               <UInput 
                 v-model="skillSearchQuery" 
                 icon="i-heroicons-magnifying-glass" 
                 :placeholder="t('searchSkills')" 
-                size="xs" 
+                size="2xs" 
                 color="gray" 
                 variant="outline" 
               />
             </div>
-            <div class="space-y-1 max-h-64 overflow-y-auto">
+            <div class="space-y-1 max-h-56 overflow-y-auto pr-1">
               <div 
                 v-for="skill in filteredSkills" 
                 :key="skill.name"
-                class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded p-2"
+                class="flex items-center justify-between bg-zinc-950/80 border border-zinc-800 rounded p-2 cursor-pointer hover:bg-zinc-800/60 hover:border-zinc-700 transition-colors"
+                @click="$emit('rollSkill', skill.name, calculateSkillModifier(skill))"
               >
-                <div class="flex items-center space-x-2 flex-1 min-w-0">
-                  <span class="text-sm font-medium text-white text-white truncate">{{ skill.name }}</span>
+                <div class="flex items-center space-x-1.5 flex-1 min-w-0 pr-1">
+                  <span class="text-xs font-medium text-zinc-200 truncate">{{ skill.name }}</span>
                   <span 
                     v-if="skill.proficient"
-                    class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1 py-0.5 rounded flex-shrink-0"
+                    class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800/50 px-1 py-0.2 rounded font-mono shrink-0"
                   >
                     {{ t('prof') }}
                   </span>
                   <span 
                     v-if="skill.expertise"
-                    class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1 py-0.5 rounded flex-shrink-0"
+                    class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800/50 px-1 py-0.2 rounded font-mono shrink-0"
                   >
                     {{ t('exp') }}
                   </span>
                 </div>
-                <span class="text-xs font-mono text-gray-600 text-zinc-400 ml-2">
+                <span class="text-xs font-mono font-semibold text-zinc-200 shrink-0">
                   {{ formatModifier(calculateSkillModifier(skill)) }}
                 </span>
               </div>
@@ -177,10 +167,10 @@
           </div>
 
           <!-- Attacks -->
-          <div class="bg-zinc-950 bg-zinc-900 rounded-lg p-4">
-            <div class="flex items-center justify-between mb-3">
-              <h6 class="text-sm font-medium text-white text-white flex items-center gap-2">
-                <UIcon name="i-heroicons-bolt" class="w-4 h-4 text-red-500" />
+          <div class="bg-zinc-900/60 border border-zinc-800 rounded p-3">
+            <div class="flex items-center justify-between mb-2.5">
+              <h6 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <UIcon name="i-heroicons-bolt" class="w-3.5 h-3.5 text-amber-500" />
                 {{ t('attacks') }}
               </h6>
             </div>
@@ -189,16 +179,16 @@
               <div 
                 v-for="attack in activeCharacter.attacks" 
                 :key="attack.id || attack.name"
-                class="bg-gray-100 dark:bg-gray-700 rounded p-3"
+                class="bg-zinc-950/80 border border-zinc-800 rounded p-2.5 space-y-1.5"
               >
-                <div class="flex items-center justify-between mb-2">
-                  <h5 class="font-medium text-white text-white text-sm">
+                <div class="flex items-center justify-between gap-2">
+                  <h5 class="font-medium text-zinc-200 text-xs truncate">
                     {{ attack.name || t('unnamedAttack') }}
                   </h5>
-                  <div class="flex items-center space-x-1">
+                  <div class="flex items-center space-x-1 shrink-0">
                     <UButton 
-                      color="blue" 
-                      size="xs" 
+                      color="white" 
+                      size="2xs" 
                       @click="$emit('rollAttack', attack)" 
                       :loading="isRollingAttack"
                       icon="i-heroicons-cube"
@@ -208,7 +198,8 @@
                     <UButton 
                       v-if="attack.damage" 
                       color="red" 
-                      size="xs" 
+                      variant="ghost"
+                      size="2xs" 
                       @click="$emit('rollDamage', attack)"
                       :loading="isRollingAttack" 
                       icon="i-heroicons-fire"
@@ -217,94 +208,76 @@
                     </UButton>
                   </div>
                 </div>
-                <div class="text-xs text-gray-600 text-zinc-400 space-y-1">
+                <div class="text-[11px] text-zinc-400 font-mono space-y-0.5">
                   <div v-if="attack.attackBonus !== undefined" class="flex justify-between">
-                    <span class="font-medium">{{ t('attackBonus') }}:</span>
-                    <span class="font-mono">{{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}</span>
+                    <span>{{ t('attackBonus') }}:</span>
+                    <span class="text-zinc-200">{{ attack.attackBonus >= 0 ? '+' : '' }}{{ attack.attackBonus }}</span>
                   </div>
                   <div v-if="attack.damage" class="flex justify-between">
-                    <span class="font-medium">{{ t('damage') }}:</span> 
-                    <span class="font-mono">{{ attack.damage }}</span>
-                  </div>
-                  <div v-if="attack.damageType" class="flex justify-between">
-                    <span class="font-medium">{{ t('damageType') }}:</span> 
-                    <span>{{ attack.damageType }}</span>
-                  </div>
-                  <div v-if="attack.rangeText" class="flex justify-between">
-                    <span class="font-medium">{{ t('range') }}:</span> 
-                    <span>{{ attack.rangeText }}</span>
-                  </div>
-                  <div v-if="attack.properties" class="flex justify-between">
-                    <span class="font-medium">{{ t('properties') }}:</span> 
-                    <span>{{ attack.properties }}</span>
-                  </div>
-                  <div v-if="attack.notes" class="text-xs mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                    {{ attack.notes }}
+                    <span>{{ t('damage') }}:</span> 
+                    <span class="text-zinc-200">{{ attack.damage }}</span>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div v-else class="text-center py-4 text-zinc-400 text-zinc-400 text-sm">
-              <UIcon name="i-heroicons-bolt-slash" class="w-6 h-6 mx-auto mb-2 text-zinc-600" />
+            <div v-else class="text-center py-4 text-zinc-500 text-xs">
+              <UIcon name="i-heroicons-bolt-slash" class="w-5 h-5 mx-auto mb-1 text-zinc-600" />
               {{ t('noAttacksConfigured') }}
             </div>
           </div>
         </div>
 
         <div v-else class="text-center py-8">
-          <div class="text-4xl mb-4 flex justify-center">
-            <UIcon name="i-heroicons-user" class="w-12 h-12 text-zinc-600" />
+          <div class="text-2xl mb-2 flex justify-center opacity-40">
+            <UIcon name="i-heroicons-user" class="w-8 h-8 text-zinc-600" />
           </div>
-          <p class="text-zinc-400 text-zinc-400">
+          <p class="text-zinc-400 text-xs">
             {{ t('selectCharacter') }}
           </p>
         </div>
       </div>
 
       <!-- DM Player Management (only for DMs) -->
-      <div v-else>
-        <div class="mb-4">
-          <div class="flex items-center justify-between">
-            <h4 class="font-medium text-white text-white">{{ t('playerManagement') }}</h4>
-            <UButton 
-              v-if="canRefreshPlayers" 
-              color="blue" 
-              variant="outline" 
-              size="xs"
-              @click="$emit('refreshPlayers')" 
-              icon="i-heroicons-arrow-path"
-            >
-              {{ t('refresh') }}
-            </UButton>
-          </div>
+      <div v-else class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{{ t('playerManagement') }}</h4>
+          <UButton 
+            color="gray" 
+            variant="ghost" 
+            size="2xs"
+            @click="$emit('refreshPlayers')" 
+            icon="i-heroicons-arrow-path"
+          >
+            {{ t('refresh') }}
+          </UButton>
         </div>
 
-        <div v-if="allPlayers.length > 0" class="space-y-3">
+        <div v-if="playerList.length > 0" class="space-y-2">
           <div 
-            v-for="player in allPlayers" 
+            v-for="player in playerList" 
             :key="player.userId"
-            class="border border-zinc-800 border-zinc-800 rounded-lg p-3"
+            class="bg-zinc-950/80 border border-zinc-800 rounded p-2.5"
           >
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center space-x-2">
-                <span class="font-medium text-white text-white">{{ player.name }}</span>
-                <span class="text-xs text-zinc-400 text-zinc-400">({{ player.userId }})</span>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="min-w-0 pr-2">
+                <span class="text-xs font-medium text-zinc-200 truncate block">{{ player.name }}</span>
               </div>
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center space-x-1 shrink-0">
                 <UButton 
-                  color="green" 
-                  variant="outline" 
-                  size="xs" 
+                  color="emerald" 
+                  variant="ghost" 
+                  size="2xs" 
                   @click="$emit('requestRoll', player)"
                   icon="i-heroicons-cube"
                 >
                   {{ t('requestRoll') }}
                 </UButton>
                 <UButton 
-                  color="blue" 
-                  variant="outline" 
-                  size="xs" 
+                  v-if="canEditStats"
+                  color="gray" 
+                  variant="ghost" 
+                  size="2xs" 
                   @click="$emit('editPlayerStats', player)"
                   icon="i-heroicons-pencil"
                 >
@@ -313,16 +286,20 @@
               </div>
             </div>
 
-            <div class="text-xs text-zinc-400 text-zinc-400 space-y-1">
-              <div>{{ t('str') }}: {{ player.stats.abilities.strength }} | {{ t('dex') }}: {{ player.stats.abilities.dexterity }} | {{ t('con') }}: {{ player.stats.abilities.constitution }}</div>
-              <div>{{ t('int') }}: {{ player.stats.abilities.intelligence }} | {{ t('wis') }}: {{ player.stats.abilities.wisdom }} | {{ t('cha') }}: {{ player.stats.abilities.charisma }}</div>
+            <div v-if="player.stats?.abilities" class="text-[10px] text-zinc-500 font-mono grid grid-cols-3 gap-1">
+              <div>STR {{ player.stats.abilities.strength }}</div>
+              <div>DEX {{ player.stats.abilities.dexterity }}</div>
+              <div>CON {{ player.stats.abilities.constitution }}</div>
+              <div>INT {{ player.stats.abilities.intelligence }}</div>
+              <div>WIS {{ player.stats.abilities.wisdom }}</div>
+              <div>CHA {{ player.stats.abilities.charisma }}</div>
             </div>
           </div>
         </div>
 
-        <div v-else class="text-center py-8">
-          <div class="text-4xl mb-4">👥</div>
-          <p class="text-zinc-400 text-zinc-400">
+        <div v-else class="text-center py-6 border border-dashed border-zinc-800 rounded bg-zinc-950/40">
+          <div class="text-lg mb-1 opacity-50">👥</div>
+          <p class="text-zinc-500 text-xs">
             {{ isOfflineMode ? t('playerManagementOffline') : t('noPlayersConnected') }}
           </p>
         </div>
@@ -334,55 +311,84 @@
 <script setup lang="ts">
 import type { PlayerStats } from '~/types/dice'
 import { useTranslations } from '~/composables/useTranslations'
+import { getAbilityModifier, getFormattedBonus, standardSkills } from '~/utils/characterConstants'
 
 interface Props {
-  isOpen: boolean
-  userRole: string
-  activeCharacter: any | null // TODO: Type this properly based on your character type
-  allPlayers: PlayerStats[]
-  isOfflineMode: boolean
-  currentRoom: any | null // TODO: Type this properly based on your room type
-  isRollingAttack: boolean
-  skillSearchQuery: string
-  filteredSkills: any[] // TODO: Type this properly based on your skill type
+  isOpen?: boolean
+  userRole?: string
+  activeCharacter?: any | null
+  allPlayers?: PlayerStats[]
+  allPlayersStats?: any[]
+  playerStats?: any
+  isOfflineMode?: boolean
+  currentRoom?: any | null
+  isRollingAttack?: boolean
+  canEditStats?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isOpen: false,
+  userRole: 'Player',
+  activeCharacter: null,
+  allPlayers: () => [],
+  allPlayersStats: () => [],
+  playerStats: null,
+  isOfflineMode: false,
+  currentRoom: null,
+  isRollingAttack: false,
+  canEditStats: false
+})
 
 const emit = defineEmits<{
   close: []
+  rollStat: [statName: string, modifier: number]
+  rollSkill: [skillName: string, modifier: number]
+  rollSave: [ability: string, modifier: number]
   rollAttack: [attack: any]
   rollDamage: [attack: any]
-  requestRoll: [player: PlayerStats]
-  editPlayerStats: [player: PlayerStats]
+  requestRoll: [player: any]
+  editPlayerStats: [player: any]
   refreshPlayers: []
 }>()
 
 const { t } = useTranslations()
 
-// Computed properties
+// Local search filter state
+const skillSearchQuery = ref('')
+
+const playerList = computed(() => {
+  return props.allPlayersStats?.length ? props.allPlayersStats : props.allPlayers
+})
+
 const healthPercentage = computed(() => {
   if (!props.activeCharacter || !props.activeCharacter.maxHp) return 0
   return Math.max(0, (props.activeCharacter.currentHp || 0) / props.activeCharacter.maxHp * 100)
 })
 
-const canRefreshPlayers = computed(() => {
-  return props.currentRoom && props.currentRoom.code !== 'default'
-})
-
 const abilityList = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
 
-// Helper functions - these should ideally come from composables
 const calculateModifier = (score: number): number => {
-  return Math.floor((score - 10) / 2)
+  return getAbilityModifier(score)
 }
 
 const formatModifier = (modifier: number): string => {
-  return modifier >= 0 ? `+${modifier}` : `${modifier}`
+  return getFormattedBonus(modifier)
+}
+
+const getAbilityLabel = (ability: string): string => {
+  const map: Record<string, string> = {
+    strength: t('strength'),
+    dexterity: t('dexterity'),
+    constitution: t('constitution'),
+    intelligence: t('intelligence'),
+    wisdom: t('wisdom'),
+    charisma: t('charisma')
+  }
+  return map[ability] || ability
 }
 
 const getAbilityAbbr = (ability: string): string => {
-  const abbreviations: { [key: string]: string } = {
+  const abbreviations: Record<string, string> = {
     strength: t('str'),
     dexterity: t('dex'),
     constitution: t('con'),
@@ -393,20 +399,36 @@ const getAbilityAbbr = (ability: string): string => {
   return abbreviations[ability] || ability.substring(0, 3).toUpperCase()
 }
 
-// Placeholder functions - these should be imported from useCharacter composable
 const getSavingThrowProficiency = (ability: string): boolean => {
-  // TODO: Implement proper saving throw proficiency logic
-  return false
+  if (!props.activeCharacter?.savingThrows) return false
+  const st = props.activeCharacter.savingThrows.find(
+    (s: any) => s.ability?.toLowerCase() === ability.toLowerCase()
+  )
+  return !!st?.proficient
 }
 
 const calculateSavingThrowModifier = (ability: string): number => {
-  // TODO: Implement proper saving throw modifier calculation
   const abilityScore = (props.activeCharacter as any)?.[ability] || 10
-  return calculateModifier(abilityScore)
+  const mod = calculateModifier(abilityScore)
+  const isProf = getSavingThrowProficiency(ability)
+  const profBonus = props.activeCharacter?.proficiencyBonus || 2
+  return mod + (isProf ? profBonus : 0)
 }
 
 const calculateSkillModifier = (skill: any): number => {
-  // TODO: Implement proper skill modifier calculation
-  return 0
+  const abilityName = skill.ability || standardSkills.find(s => s.name.toLowerCase() === skill.name?.toLowerCase())?.ability || 'strength'
+  const abilityScore = (props.activeCharacter as any)?.[abilityName] || 10
+  const mod = calculateModifier(abilityScore)
+  const profBonus = props.activeCharacter?.proficiencyBonus || 2
+  if (skill.expertise) return mod + (2 * profBonus)
+  if (skill.proficient) return mod + profBonus
+  return mod
 }
+
+const filteredSkills = computed(() => {
+  const skills = props.activeCharacter?.skills || []
+  if (!skillSearchQuery.value.trim()) return skills
+  const query = skillSearchQuery.value.toLowerCase()
+  return skills.filter((s: any) => s.name?.toLowerCase().includes(query))
+})
 </script>

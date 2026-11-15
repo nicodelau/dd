@@ -53,6 +53,65 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
     // Register socket connection in store (sends initial state)
     diceRoomStore.addSocketConnection(connectionId, socket, userId, roomCode)
 
+    // Handle incoming client dice roll
+    socket.on('dice:roll', async (data: any, ack?: (res: any) => void) => {
+      try {
+        const rollData = {
+          userName: safeUserName,
+          userId,
+          description: data.description || '',
+          total: data.total || 0,
+          details: data.details || [],
+          diceRolled: data.diceRolled || [],
+          diceResults: data.diceResults || [],
+          modifier: data.modifier || 0,
+          rollType: data.rollType || 'normal',
+          isCritical: !!data.isCritical,
+          criticalType: data.criticalType,
+          isOwn: false
+        }
+        const savedRoll = diceRoomStore.addRoll(rollData, roomCode)
+        if (ack) ack({ success: true, roll: savedRoll })
+      } catch (err: any) {
+        console.error('Socket dice:roll error:', err)
+        if (ack) ack({ success: false, error: err.message })
+      }
+    })
+
+    // Handle clear history (DM only)
+    socket.on('dice:clear_history', (_data: any, ack?: (res: any) => void) => {
+      try {
+        if (safeRole !== 'DM') {
+          if (ack) ack({ success: false, error: 'Only DM can clear roll history' })
+          return
+        }
+        diceRoomStore.clearRollHistory(roomCode)
+        if (ack) ack({ success: true })
+      } catch (err: any) {
+        if (ack) ack({ success: false, error: err.message })
+      }
+    })
+
+    // Handle roll requests (DM requests a roll from players)
+    socket.on('dice:request', (data: any) => {
+      if (safeRole !== 'DM') return
+      io.to(`room:${roomCode}`).emit('dice:request', {
+        ...data,
+        dmUserId: userId,
+        dmName: safeUserName
+      })
+    })
+
+    // Handle DM image sharing
+    socket.on('dm:show_image', (data: any) => {
+      if (safeRole !== 'DM') return
+      io.to(`room:${roomCode}`).emit('dm:show_image', {
+        imageUrl: data.imageUrl,
+        caption: data.caption || '',
+        dmUserId: userId
+      })
+    })
+
     // Handle disconnect
     socket.on('disconnect', (reason) => {
       console.log(`🔌 Socket disconnected: ${connectionId} (reason: ${reason})`)

@@ -4,11 +4,16 @@
  */
 
 import type { BattleState, Enemy, BattleParticipant } from '~/types/dice'
+import { useSocketIO } from './useSocketIO'
+import { useTranslations } from './useTranslations'
 
-export const useBattle = (roomCode: string, connection: ReturnType<typeof useConnectionManager>) => {
+export const useBattle = (roomCodeParam: string | Ref<string> | ComputedRef<string>, socketParam?: ReturnType<typeof useSocketIO>) => {
+  const socket = socketParam || useSocketIO()
   const user = useState('user')
   const { t } = useTranslations()
   const toast = useToast()
+  
+  const getRoomCode = () => toValue(roomCodeParam) || 'default'
   
   // Battle state
   const battleMode = ref<BattleState | null>(null)
@@ -70,13 +75,14 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Start battle mode
    */
   const startBattle = async () => {
-    if (!roomCode || roomCode === 'default') return
+    const code = getRoomCode()
+    if (!code) return
 
     isBattleLoading.value = true
     try {
       const response = await $fetch('/api/battle/start', {
         method: 'POST',
-        body: { roomCode }
+        body: { roomCode: code }
       })
 
       if (response.success) {
@@ -108,13 +114,14 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * End battle mode
    */
   const endBattle = async () => {
-    if (!roomCode || roomCode === 'default') return
+    const code = getRoomCode()
+    if (!code) return
 
     isBattleLoading.value = true
     try {
       const response = await $fetch('/api/battle/end', {
         method: 'POST',
-        body: { roomCode }
+        body: { roomCode: code }
       })
 
       if (response.success && response.ended) {
@@ -142,13 +149,14 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Add enemy to battle
    */
   const addEnemy = async () => {
-    if (!newEnemy.value.name || !newEnemy.value.hitPoints || !roomCode) return
+    const code = getRoomCode()
+    if (!newEnemy.value.name || !newEnemy.value.hitPoints || !code) return
 
     try {
       const response = await $fetch('/api/battle/enemy/add', {
         method: 'POST',
         body: {
-          roomCode,
+          roomCode: code,
           name: newEnemy.value.name,
           hitPoints: newEnemy.value.hitPoints,
           armorClass: newEnemy.value.armorClass,
@@ -186,12 +194,13 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Remove enemy from battle
    */
   const removeEnemy = async (enemyId: string) => {
-    if (!roomCode) return
+    const code = getRoomCode()
+    if (!code) return
 
     try {
       const response = await $fetch('/api/battle/enemy/remove', {
         method: 'POST',
-        body: { roomCode, enemyId }
+        body: { roomCode: code, enemyId }
       })
 
       if (response.success) {
@@ -220,14 +229,15 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Deal damage to enemy
    */
   const dealDamageToEnemy = async (enemy: Enemy) => {
+    const code = getRoomCode()
     const damage = prompt(`How much damage to deal to ${enemy.name}?`)
-    if (!damage || isNaN(parseInt(damage)) || !roomCode) return
+    if (!damage || isNaN(parseInt(damage)) || !code) return
 
     try {
       const response = await $fetch('/api/battle/damage', {
         method: 'POST',
         body: {
-          roomCode,
+          roomCode: code,
           targetId: enemy.id,
           damage: parseInt(damage)
         }
@@ -254,12 +264,13 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Roll initiative for all participants
    */
   const rollInitiative = async () => {
-    if (!roomCode) return
+    const code = getRoomCode()
+    if (!code) return
 
     try {
       const response = await $fetch('/api/battle/initiative', {
         method: 'POST',
-        body: { roomCode }
+        body: { roomCode: code }
       })
 
       if (response.success) {
@@ -283,7 +294,8 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Roll individual initiative for a specific participant
    */
   const rollIndividualInitiative = async (participantId: string, participantType: 'player' | 'enemy') => {
-    if (!roomCode || isRollingIndividualInitiative.value) return
+    const code = getRoomCode()
+    if (!code || isRollingIndividualInitiative.value) return
 
     isRollingIndividualInitiative.value = participantId
     
@@ -291,7 +303,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
       const response = await $fetch('/api/battle/roll-individual-initiative', {
         method: 'POST',
         body: {
-          roomCode,
+          roomCode: code,
           participantId,
           participantType
         }
@@ -320,12 +332,13 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Start combat phase after initiative is rolled
    */
   const startCombatPhase = async () => {
-    if (!roomCode) return
+    const code = getRoomCode()
+    if (!code) return
 
     try {
       const response = await $fetch('/api/battle/start-combat', {
         method: 'POST',
-        body: { roomCode }
+        body: { roomCode: code }
       })
 
       if (response.success) {
@@ -345,12 +358,13 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Advance to next turn
    */
   const nextTurn = async () => {
-    if (!roomCode) return
+    const code = getRoomCode()
+    if (!code) return
 
     try {
       const response = await $fetch('/api/battle/next-turn', {
         method: 'POST',
-        body: { roomCode }
+        body: { roomCode: code }
       })
 
       if (response.success) {
@@ -373,14 +387,86 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
   }
 
   /**
+   * Go back to previous turn
+   */
+  const previousTurn = async () => {
+    const code = getRoomCode()
+    if (!code) return
+
+    try {
+      const response = await $fetch('/api/battle/previous-turn', {
+        method: 'POST',
+        body: { roomCode: code }
+      })
+
+      if (response.success) {
+        toast.add({
+          title: t('previousTurn'),
+          description: `It's now ${response.currentTurn?.name || 'the previous participant'}'s turn`,
+          color: 'green'
+        })
+      }
+    } catch (error) {
+      console.error('Failed to move to previous turn:', error)
+    }
+  }
+
+  /**
+   * Damage participant in combat
+   */
+  const damageParticipant = async (data: { participant: BattleParticipant; damage: number }) => {
+    const code = getRoomCode()
+    if (!code || !data?.participant) return
+
+    try {
+      await $fetch('/api/battle/damage', {
+        method: 'POST',
+        body: {
+          roomCode: code,
+          targetId: data.participant.id,
+          damage: data.damage
+        }
+      })
+    } catch (error) {
+      console.error('Failed to deal damage:', error)
+    }
+  }
+
+  /**
+   * Heal participant in combat
+   */
+  const healParticipant = async (data: { participant: BattleParticipant; healing: number }) => {
+    const code = getRoomCode()
+    if (!code || !data?.participant) return
+
+    try {
+      await $fetch('/api/battle/damage', {
+        method: 'POST',
+        body: {
+          roomCode: code,
+          targetId: data.participant.id,
+          damage: -data.healing
+        }
+      })
+    } catch (error) {
+      console.error('Failed to heal participant:', error)
+    }
+  }
+
+  const nextRound = async () => {
+    await nextTurn()
+  }
+
+  /**
    * Load available players for battle
    */
   const loadBattlePlayers = async () => {
-    if (!roomCode) return
+    const code = getRoomCode()
+    if (!code) return
 
     isBattlePlayersLoading.value = true
     try {
-      const response = await $fetch(`/api/battle/players?roomCode=${roomCode}`)
+      const response = await $fetch(`/api/battle/players?roomCode=${code}`)
 
       if (response.success) {
         selectedPlayers.value = response.data.selectedPlayers
@@ -398,12 +484,13 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Add player to battle
    */
   const addPlayerToBattle = async (playerId: string) => {
-    if (!roomCode) return
+    const code = getRoomCode()
+    if (!code) return
 
     try {
       const response = await $fetch('/api/battle/player/select', {
         method: 'POST',
-        body: { roomCode, playerId }
+        body: { roomCode: code, playerId }
       })
 
       if (response.success) {
@@ -429,12 +516,13 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    * Remove player from battle
    */
   const removePlayerFromBattle = async (playerId: string) => {
-    if (!roomCode) return
+    const code = getRoomCode()
+    if (!code) return
 
     try {
       const response = await $fetch('/api/battle/player/deselect', {
         method: 'POST',
-        body: { roomCode, playerId }
+        body: { roomCode: code, playerId }
       })
 
       if (response.success) {
@@ -484,7 +572,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
    */
   const setupBattleEventHandlers = () => {
     // Battle setup started
-    connection.on('battle:setup_started', (data) => {
+    socket.on('battle:setup_started', (data) => {
       battleMode.value = data.battleState
       console.log('⚔️ Battle setup started by DM:', data)
 
@@ -498,7 +586,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Battle started
-    connection.on('battle:started', (data) => {
+    socket.on('battle:started', (data) => {
       battleMode.value = data.battleState
       console.log('⚔️ Battle mode started by DM:', data)
 
@@ -510,7 +598,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Battle ended
-    connection.on('battle:ended', (data) => {
+    socket.on('battle:ended', (data) => {
       battleMode.value = null
       console.log('⚔️ Battle mode ended by DM:', data)
 
@@ -522,7 +610,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Enemy added
-    connection.on('battle:enemy_added', (data) => {
+    socket.on('battle:enemy_added', (data) => {
       if (battleMode.value && battleMode.value.enemies) {
         battleMode.value.enemies[data.enemy.id] = data.enemy
       }
@@ -538,7 +626,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Enemy removed
-    connection.on('battle:enemy_removed', (data) => {
+    socket.on('battle:enemy_removed', (data) => {
       if (battleMode.value && battleMode.value.enemies) {
         delete battleMode.value.enemies[data.enemyId]
       }
@@ -554,7 +642,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Initiative rolled
-    connection.on('battle:initiative_rolled', (data) => {
+    socket.on('battle:initiative_rolled', (data) => {
       if (battleMode.value) {
         battleMode.value.participants = data.participants
         battleMode.value.phase = 'combat'
@@ -573,7 +661,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Individual initiative rolled
-    connection.on('battle:individual_initiative_rolled', (data) => {
+    socket.on('battle:individual_initiative_rolled', (data) => {
       console.log('🎲 Individual initiative rolled:', data)
       
       if (battleMode.value && battleMode.value.participants) {
@@ -589,7 +677,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Turn changed
-    connection.on('battle:next_turn', (data) => {
+    socket.on('battle:next_turn', (data) => {
       if (battleMode.value) {
         battleMode.value.currentTurnIndex = data.currentTurnIndex
         if (data.round) {
@@ -609,7 +697,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Damage applied
-    connection.on('battle:damage_applied', (data) => {
+    socket.on('battle:damage_applied', (data) => {
       console.log('💥 Damage dealt:', data)
 
       if (battleMode.value && battleMode.value.enemies) {
@@ -628,19 +716,19 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Player added to battle
-    connection.on('battle:player_added', (data) => {
+    socket.on('battle:player_added', (data) => {
       console.log('👥 Player added to battle:', data)
       loadBattlePlayers()
     })
 
     // Player removed from battle
-    connection.on('battle:player_removed', (data) => {
+    socket.on('battle:player_removed', (data) => {
       console.log('👥 Player removed from battle:', data)
       loadBattlePlayers()
     })
 
     // Combat started
-    connection.on('battle:combat_started', (data) => {
+    socket.on('battle:combat_started', (data) => {
       if (battleMode.value) {
         battleMode.value.phase = 'combat'
         battleMode.value.isActive = true
@@ -655,7 +743,7 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     })
 
     // Initiative phase started
-    connection.on('battle:initiative_phase_started', (data) => {
+    socket.on('battle:initiative_phase_started', (data) => {
       if (battleMode.value) {
         battleMode.value.phase = 'rolling_initiative'
       }
@@ -705,6 +793,10 @@ export const useBattle = (roomCode: string, connection: ReturnType<typeof useCon
     rollIndividualInitiative,
     startCombatPhase,
     nextTurn,
+    previousTurn,
+    nextRound,
+    damageParticipant,
+    healParticipant,
     loadBattlePlayers,
     addPlayerToBattle,
     removePlayerFromBattle,

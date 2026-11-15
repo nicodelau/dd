@@ -1,64 +1,67 @@
 <template>
-  <div class="space-y-4">
+  <div class="space-y-3">
     <!-- Combat Status -->
-    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-      <div class="text-center">
-        <h4 class="text-lg font-bold text-red-900 dark:text-red-100 mb-2">
-          {{ t('combatInProgress') }}
-        </h4>
-        <div class="text-sm text-red-700 dark:text-red-300">
-          {{ t('round') }} {{ round }} | {{ t('turn') }}: {{ currentParticipantName }}
-        </div>
+    <div class="bg-zinc-950/80 border border-red-900/40 rounded p-3 text-center">
+      <h4 class="text-sm font-semibold text-red-400 mb-0.5">
+        {{ t('combatInProgress') }}
+      </h4>
+      <div class="text-xs text-zinc-400 font-mono">
+        {{ t('round') }} {{ round }} · {{ t('turn') }}: <span class="text-zinc-200 font-semibold">{{ currentParticipantName }}</span>
       </div>
     </div>
 
     <!-- Initiative Order -->
     <div>
-      <h4 class="text-sm font-medium text-white text-white mb-3">{{ t('initiativeOrder') }}</h4>
-      <div class="space-y-2">
+      <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">{{ t('initiativeOrder') }}</h4>
+      <div class="space-y-1.5">
         <div 
           v-for="(participant, index) in initiativeOrder" 
           :key="participant.id"
-          class="flex items-center justify-between p-3 rounded-lg border"
+          class="flex items-center justify-between p-2.5 rounded border transition-colors"
           :class="index === currentTurnIndex 
-            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
-            : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'"
+            ? 'bg-zinc-800/90 border-amber-500/60 shadow-sm' 
+            : 'bg-zinc-900/60 border-zinc-800'"
         >
-          <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+          <div class="flex items-center space-x-2.5 min-w-0">
+            <div 
+              class="w-6 h-6 rounded flex items-center justify-center text-xs font-mono font-bold shrink-0"
               :class="index === currentTurnIndex 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-zinc-500 text-white'"
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+                : 'bg-zinc-800 text-zinc-400'"
             >
               {{ index + 1 }}
             </div>
-            <UBadge :color="participant.type === 'player' ? 'blue' : 'red'" variant="soft" size="sm">
+            <UBadge 
+              :color="participant.type === 'player' ? 'blue' : 'red'" 
+              variant="subtle" 
+              size="xs"
+            >
               {{ t(participant.type) }}
             </UBadge>
-            <div>
-              <div class="font-medium text-white">{{ participant.name }}</div>
-              <div class="text-xs text-zinc-400">
+            <div class="min-w-0 truncate">
+              <div class="text-xs font-medium text-zinc-200 truncate">{{ participant.name }}</div>
+              <div class="text-[10px] text-zinc-500 font-mono">
                 {{ t('initiative') }}: {{ participant.initiativeRoll }}
               </div>
             </div>
           </div>
           
           <!-- Participant Actions -->
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1.5 shrink-0">
             <UButton 
               v-if="participant.type === 'enemy'"
               color="red" 
-              variant="outline"
-              size="xs" 
+              variant="ghost"
+              size="2xs" 
               @click="$emit('damageParticipant', { participant, damage: 10 })"
               icon="i-heroicons-heart"
             >
               {{ t('damage') }}
             </UButton>
             <UButton 
-              color="green" 
-              variant="outline"
-              size="xs" 
+              color="emerald" 
+              variant="ghost"
+              size="2xs" 
               @click="$emit('healParticipant', { participant, healing: 5 })"
               icon="i-heroicons-plus"
             >
@@ -70,21 +73,21 @@
     </div>
 
     <!-- Turn Controls -->
-    <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded p-2.5">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <UButton 
             color="gray" 
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="xs"
             @click="$emit('previousTurn')" 
             icon="i-heroicons-chevron-left"
           >
             {{ t('previousTurn') }}
           </UButton>
           <UButton 
-            color="blue"
-            size="sm"
+            color="white"
+            size="xs"
             @click="$emit('nextTurn')" 
             icon="i-heroicons-chevron-right"
           >
@@ -93,9 +96,9 @@
         </div>
         
         <UButton 
-          color="purple" 
-          variant="outline"
-          size="sm"
+          color="gray" 
+          variant="ghost"
+          size="xs"
           @click="$emit('nextRound')" 
           icon="i-heroicons-arrow-path"
         >

@@ -134,6 +134,7 @@ export interface DiceRoom {
   socketConnections: Map<string, { socket: Socket; userId: string; roomCode: string }>
   battleState?: BattleState // Battle mode state
   musicState?: MusicState // DJ music system state
+  isPersistedInDb?: boolean
 }
 
 class DiceRoomStore {
@@ -176,7 +177,19 @@ class DiceRoomStore {
 
       if (!dbRoom) {
         if (roomCode === 'default') {
-          return this.createRoom('default', 'Default Room', 'system')
+          let creatorId = 'system'
+          try {
+            const adminUser = await prisma.user.findFirst({
+              where: { role: { in: ['DM', 'ADMIN'] } },
+              select: { id: true }
+            }) || await prisma.user.findFirst({ select: { id: true } })
+            if (adminUser) {
+              creatorId = adminUser.id
+            }
+          } catch (e) {
+            console.error('Failed to find user for default room:', e)
+          }
+          return this.createRoom('default', 'Default Room', creatorId)
         }
         return null
       }
@@ -210,14 +223,15 @@ class DiceRoomStore {
         createdBy: dbRoom.createdBy,
         users: new Map(),
         rollHistory: history,
-        socketConnections: new Map()
+        socketConnections: new Map(),
+        isPersistedInDb: true
       }
 
       // Populate users
       for (const p of dbRoom.room_participants) {
         let stats: PlayerStats | undefined
         if (p.role === 'Player') {
-          stats = this.createDefaultStats()
+          stats = await this.loadPlayerStatsFromDb(p.userId)
         }
 
         room.users.set(p.userId, {
@@ -351,21 +365,11 @@ class DiceRoomStore {
     }
 
     const roomId = `room_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-
-    const room: DiceRoom = {
-      id: roomId,
-      code: roomCode,
-      name: roomName,
-      createdAt: new Date(),
-      createdBy: creatorUserId,
-      users: new Map(),
-      rollHistory: [],
-      socketConnections: new Map()
-    }
+    let isPersistedInDb = false
 
     // Persist to DB (optional in fallback mode)
     try {
-      if (prisma.diceRoom) {
+      if (prisma.diceRoom && creatorUserId && creatorUserId !== 'system') {
         await prisma.diceRoom.create({
           data: {
             id: roomId,
@@ -375,14 +379,27 @@ class DiceRoomStore {
             updatedAt: new Date()
           }
         })
+        isPersistedInDb = true
       }
     } catch (e) {
       console.error('Failed to create room in DB, continuing with in-memory only:', e)
       // Don't throw error - allow room to exist in memory
     }
 
+    const room: DiceRoom = {
+      id: roomId,
+      code: roomCode,
+      name: roomName,
+      createdAt: new Date(),
+      createdBy: creatorUserId,
+      users: new Map(),
+      rollHistory: [],
+      socketConnections: new Map(),
+      isPersistedInDb
+    }
+
     this.rooms.set(roomCode, room)
-    console.log(`🎲 Created new room: ${roomCode} (${roomName}) by ${creatorUserId}`)
+    console.log(`🎲 Created new room: ${roomCode} (${roomName}) by ${creatorUserId} (persisted: ${isPersistedInDb})`)
     return room
   }
 
@@ -402,7 +419,8 @@ class DiceRoomStore {
         createdBy: 'system',
         users: new Map(),
         rollHistory: [],
-        socketConnections: new Map()
+        socketConnections: new Map(),
+        isPersistedInDb: false
       }
       this.rooms.set(defaultRoomCode, room)
     }
@@ -449,7 +467,7 @@ class DiceRoomStore {
         user.role = role
         // If switching to Player, ensure stats exist
         if (role === 'Player' && !user.stats) {
-          user.stats = this.createDefaultStats()
+          user.stats = await this.loadPlayerStatsFromDb(userId)
         } else if (role === 'DM') {
           // If switching to DM, remove stats
           user.stats = undefined
@@ -460,6 +478,7 @@ class DiceRoomStore {
       console.log(`🎲 User reconnected to room ${roomCode}: ${user.name} (${userId}) as ${role}`)
     } else {
       // New user
+      const stats = role === 'Player' ? await this.loadPlayerStatsFromDb(userId) : undefined
       user = {
         id: userId,
         name: name || `User${Date.now()}`,
@@ -467,7 +486,7 @@ class DiceRoomStore {
         joinedAt: new Date(),
         lastSeen: new Date(),
         roomCode,
-        stats: role === 'Player' ? this.createDefaultStats() : undefined
+        stats
       }
 
       room.users.set(userId, user)
@@ -518,7 +537,7 @@ class DiceRoomStore {
 
     // Persist to DB
     try {
-      if (!userId.startsWith('user_')) {
+      if (room.isPersistedInDb && !userId.startsWith('user_')) {
         await prisma.roomParticipant.upsert({
           where: {
             roomId_userId: {
@@ -563,6 +582,42 @@ class DiceRoomStore {
     return user
   }
 
+  async loadPlayerStatsFromDb(userId: string): Promise<PlayerStats> {
+    try {
+      if (!userId || userId.startsWith('guest_') || userId.startsWith('user_')) {
+        return this.createDefaultStats()
+      }
+      const char = await prisma.character.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' }
+      })
+      if (char) {
+        return {
+          hitPoints: {
+            current: char.hitPoints !== undefined ? char.hitPoints : (char.maxHitPoints || 10),
+            max: char.maxHitPoints || 10
+          },
+          armorClass: char.armorClass || 10,
+          abilities: {
+            strength: char.strength || 10,
+            dexterity: char.dexterity || 10,
+            constitution: char.constitution || 10,
+            intelligence: char.intelligence || 10,
+            wisdom: char.wisdom || 10,
+            charisma: char.charisma || 10
+          },
+          level: char.level || 1,
+          proficiencyBonus: char.proficiencyBonus || 2,
+          initiative: char.initiative || 0,
+          speed: char.speed || 30
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load character stats for user:', userId, err)
+    }
+    return this.createDefaultStats()
+  }
+
   private createDefaultStats(): PlayerStats {
     return {
       hitPoints: { current: 10, max: 10 },
@@ -595,7 +650,7 @@ class DiceRoomStore {
       if (role && role !== user.role) {
         user.role = role
         if (role === 'Player' && !user.stats) {
-          user.stats = this.createDefaultStats()
+          user.stats = await this.loadPlayerStatsFromDb(userId)
         } else if (role === 'DM') {
           user.stats = undefined
         }
@@ -605,7 +660,7 @@ class DiceRoomStore {
 
       // Persist
       try {
-        if (!userId.startsWith('user_')) {
+        if (room.isPersistedInDb && !userId.startsWith('user_')) {
           await prisma.roomParticipant.update({
             where: { roomId_userId: { roomId: room.id, userId } },
             data: { role, lastSeen: new Date() }
@@ -816,24 +871,26 @@ class DiceRoomStore {
     }
 
     // Persist to DB (fire-and-forget)
-    prisma.diceRoll.create({
-      data: {
-        roomId: room.id,
-        userId: roll.userId,
-        total: completeRoll.total,
-        description: completeRoll.description,
+    if (room.isPersistedInDb && !roll.userId.startsWith('user_')) {
+      prisma.diceRoll.create({
         data: {
-          details: completeRoll.details,
-          diceRolled: completeRoll.diceRolled,
-          diceResults: completeRoll.diceResults,
-          modifier: completeRoll.modifier,
-          rollType: completeRoll.rollType,
-          isCritical: completeRoll.isCritical,
-          criticalType: completeRoll.criticalType
-        },
-        timestamp: completeRoll.timestamp
-      }
-    }).catch(e => console.error('Failed to save roll to DB', e))
+          roomId: room.id,
+          userId: roll.userId,
+          total: completeRoll.total,
+          description: completeRoll.description,
+          data: {
+            details: completeRoll.details,
+            diceRolled: completeRoll.diceRolled,
+            diceResults: completeRoll.diceResults,
+            modifier: completeRoll.modifier,
+            rollType: completeRoll.rollType,
+            isCritical: completeRoll.isCritical,
+            criticalType: completeRoll.criticalType
+          },
+          timestamp: completeRoll.timestamp
+        }
+      }).catch(e => console.error('Failed to save roll to DB', e))
+    }
 
     // Broadcast to all connected users in the room
     this.broadcastRoll(completeRoll, roomCode)
@@ -1028,21 +1085,23 @@ class DiceRoomStore {
     room.battleState = battleState
 
     // Persist to DB (fire-and-forget)
-    const battleId = `battle_${Date.now()}`
-    prisma.battle_sessions.upsert({
-      where: { roomId: room.id },
-      update: { isActive: false, round: 0, phase: 'setup' },
-      create: {
-        id: battleId,
-        roomId: room.id,
-        isActive: false,
-        round: 0,
-        phase: 'setup'
-      }
-    }).then(async (session) => {
-      // Clear old participants if any (new battle started)
-      await prisma.battle_participants.deleteMany({ where: { battleId: session.id } })
-    }).catch(e => console.error('Failed to persist battle start', e))
+    if (room.isPersistedInDb) {
+      const battleId = `battle_${Date.now()}`
+      prisma.battle_sessions.upsert({
+        where: { roomId: room.id },
+        update: { isActive: false, round: 0, phase: 'setup' },
+        create: {
+          id: battleId,
+          roomId: room.id,
+          isActive: false,
+          round: 0,
+          phase: 'setup'
+        }
+      }).then(async (session) => {
+        // Clear old participants if any (new battle started)
+        await prisma.battle_participants.deleteMany({ where: { battleId: session.id } })
+      }).catch(e => console.error('Failed to persist battle start', e))
+    }
 
     // Broadcast battle setup started so all players know battle mode is being configured
     this.broadcastEvent('battle:setup_started', { battleState }, roomCode)
@@ -1221,6 +1280,46 @@ class DiceRoomStore {
     if (room.battleState.currentTurnIndex >= room.battleState.participants.length) {
       room.battleState.currentTurnIndex = 0
       room.battleState.round++
+    }
+
+    const currentParticipant = room.battleState.participants[room.battleState.currentTurnIndex]
+
+    if (!currentParticipant) {
+      throw new Error(`No participant found at index ${room.battleState.currentTurnIndex}`)
+    }
+
+    this.broadcastEvent('battle:turn_changed', {
+      currentParticipant,
+      round: room.battleState.round,
+      currentTurnIndex: room.battleState.currentTurnIndex
+    }, roomCode)
+
+    return { currentParticipant, round: room.battleState.round }
+  }
+
+  previousTurn(dmUserId: string, roomCode: string): { currentParticipant: BattleParticipant; round: number } {
+    const room = this.getRoom(roomCode)
+    if (!room || !room.battleState || !room.battleState.isActive) {
+      throw new Error('Battle not active')
+    }
+
+    if (!this.isDM(dmUserId, roomCode)) {
+      throw new Error('Only DMs can move turns')
+    }
+
+    if (!room.battleState.participants || room.battleState.participants.length === 0) {
+      throw new Error('No participants in battle')
+    }
+
+    room.battleState.currentTurnIndex--
+
+    if (room.battleState.currentTurnIndex < 0) {
+      if (room.battleState.round > 1) {
+        room.battleState.round--
+        room.battleState.currentTurnIndex = room.battleState.participants.length - 1
+      } else {
+        room.battleState.currentTurnIndex = 0
+      }
     }
 
     const currentParticipant = room.battleState.participants[room.battleState.currentTurnIndex]

@@ -223,7 +223,19 @@ export class PrismaCharacterRepository implements ICharacterRepository {
       notes: typeof characterData.notes === 'string' ? characterData.notes : JSON.stringify(characterData.notes || {}),
       // User assignment fields
       userId: (characterData as any).userId || null,
-      ownerId: (characterData as any).ownerId || null
+      ownerId: (characterData as any).ownerId || null,
+      ...((characterData as any).skills && Array.isArray((characterData as any).skills) && (characterData as any).skills.length > 0 && {
+        skills: {
+          create: (characterData as any).skills.map((s: any) => ({
+            name: s.name,
+            ability: s.ability || 'strength',
+            category: s.category || 'OTRO',
+            proficient: Boolean(s.proficient),
+            expertise: Boolean(s.expertise),
+            description: s.description || ''
+          }))
+        }
+      })
     }
 
     const character = await this.prisma.character.create({
@@ -322,191 +334,155 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         })
       }
 
-      // Update the character
-      const character = await this.prisma.character.update({
-        where: { id },
-        data: updateData,
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true
-            }
-          },
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              email: true
-            }
-          },
-          savingThrows: true,
-          skills: true,
-          spells: {
-            include: {
-              spell: true
-            }
-          },
-          spellSlots: true,
-          inventory: true,
-          attacks: true,
-          features: true,
-          cantrips: true,
-          combatActions: true
-        }
-      })
-
-      // Handle related entities updates
-      const typedCharacterData = characterData as any
-
-      // Update saving throws if provided
-      if (typedCharacterData.savingThrows) {
-        // Delete existing saving throws
-        await this.prisma.savingThrow.deleteMany({
-          where: { characterId: id }
+      // Execute all updates inside an atomic database transaction
+      const updatedCharacter = await this.prisma.$transaction(async (tx) => {
+        // Update character root fields
+        await tx.character.update({
+          where: { id },
+          data: updateData
         })
 
-        // Create new saving throws
-        if (typedCharacterData.savingThrows.length > 0) {
-          await this.prisma.savingThrow.createMany({
-            data: typedCharacterData.savingThrows.map((st: any) => ({
-              characterId: id,
-              ability: st.ability,
-              proficient: st.proficient
-            }))
-          })
-        }
-      }
+        // Handle related entities updates safely
+        const typedCharacterData = characterData as any
 
-      // Update skills if provided
-      if (typedCharacterData.skills) {
-        // Delete existing skills
-        await this.prisma.skill.deleteMany({
-          where: { characterId: id }
+        // Update saving throws if explicitly provided as an array
+        if (Array.isArray(typedCharacterData.savingThrows)) {
+          await tx.savingThrow.deleteMany({
+            where: { characterId: id }
+          })
+
+          if (typedCharacterData.savingThrows.length > 0) {
+            await tx.savingThrow.createMany({
+              data: typedCharacterData.savingThrows.map((st: any) => ({
+                characterId: id,
+                ability: st.ability,
+                proficient: !!st.proficient
+              }))
+            })
+          }
+        }
+
+        // Update skills if explicitly provided as an array
+        if (Array.isArray(typedCharacterData.skills)) {
+          await tx.skill.deleteMany({
+            where: { characterId: id }
+          })
+
+          if (typedCharacterData.skills.length > 0) {
+            await tx.skill.createMany({
+              data: typedCharacterData.skills.map((skill: any) => ({
+                characterId: id,
+                name: skill.name,
+                ability: skill.ability,
+                proficient: !!skill.proficient,
+                expertise: !!skill.expertise,
+                category: skill.category || 'OTRO'
+              }))
+            })
+          }
+        }
+
+        // Update attacks if explicitly provided as an array
+        if (Array.isArray(typedCharacterData.attacks)) {
+          await tx.attack.deleteMany({
+            where: { characterId: id }
+          })
+
+          if (typedCharacterData.attacks.length > 0) {
+            await tx.attack.createMany({
+              data: typedCharacterData.attacks.map((attack: any) => ({
+                characterId: id,
+                name: attack.name,
+                attackBonus: parseOptionalInt(attack.attackBonus),
+                damageDice: attack.damage, // Map damage to damageDice
+                range: attack.rangeText, // Map rangeText to range
+                description: attack.notes, // Map notes to description
+                type: attack.type || 'attack',
+                tier: attack.tier || 'gris',
+                isMagic: !!attack.isMagic,
+                magicCost: parseIntOrDefault(attack.magicCost, 0),
+                usedCount: parseIntOrDefault(attack.usedCount, 0),
+                createdAt: attack.createdAt ? new Date(attack.createdAt) : undefined
+              }))
+            })
+          }
+        }
+
+        // Update inventory if explicitly provided as an array
+        if (Array.isArray(typedCharacterData.inventory)) {
+          await tx.inventoryItem.deleteMany({
+            where: { characterId: id }
+          })
+
+          if (typedCharacterData.inventory.length > 0) {
+            await tx.inventoryItem.createMany({
+              data: typedCharacterData.inventory.map((item: any) => ({
+                characterId: id,
+                name: item.name,
+                description: item.notes, // Map notes to description
+                quantity: parseIntOrDefault(item.quantity, 1),
+                weight: parseOptionalFloat(item.weight),
+                equipped: !!item.equipped,
+                tier: item.tier || 'gris',
+                createdAt: item.createdAt ? new Date(item.createdAt) : undefined
+              }))
+            })
+          }
+        }
+
+        // Update combat actions if explicitly provided as an array
+        if (Array.isArray(typedCharacterData.combatActions)) {
+          await tx.combatAction.deleteMany({
+            where: { characterId: id }
+          })
+
+          if (typedCharacterData.combatActions.length > 0) {
+            await tx.combatAction.createMany({
+              data: typedCharacterData.combatActions.map((action: any) => ({
+                characterId: id,
+                name: action.name,
+                type: action.type,
+                currentUses: parseIntOrDefault(action.currentUses, 0),
+                maxUses: parseIntOrDefault(action.maxUses, 0),
+                description: action.description
+              }))
+            })
+          }
+        }
+
+        // Fetch the updated character with all relations inside the transaction
+        return await tx.character.findUnique({
+          where: { id },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                email: true
+              }
+            },
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                email: true
+              }
+            },
+            savingThrows: true,
+            skills: true,
+            spells: {
+              include: {
+                spell: true
+              }
+            },
+            spellSlots: true,
+            inventory: true,
+            attacks: true,
+            features: true,
+            cantrips: true,
+            combatActions: true
+          }
         })
-
-        // Create new skills
-        if (typedCharacterData.skills.length > 0) {
-          await this.prisma.skill.createMany({
-            data: typedCharacterData.skills.map((skill: any) => ({
-              characterId: id,
-              name: skill.name,
-              ability: skill.ability,
-              proficient: skill.proficient,
-              expertise: skill.expertise || false,
-              category: skill.category || 'OTRO'
-            }))
-          })
-        }
-      }
-
-      // Update attacks if provided
-      if (typedCharacterData.attacks) {
-        // Delete existing attacks
-        await this.prisma.attack.deleteMany({
-          where: { characterId: id }
-        })
-
-        // Create new attacks
-        if (typedCharacterData.attacks.length > 0) {
-          await this.prisma.attack.createMany({
-            data: typedCharacterData.attacks.map((attack: any) => ({
-              characterId: id,
-              name: attack.name,
-              attackBonus: parseOptionalInt(attack.attackBonus),
-              damageDice: attack.damage, // Map damage to damageDice
-              range: attack.rangeText, // Map rangeText to range
-              description: attack.notes, // Map notes to description
-              type: attack.type || 'attack',
-              tier: attack.tier || 'gris',
-              isMagic: !!attack.isMagic,
-              magicCost: parseIntOrDefault(attack.magicCost, 0),
-              usedCount: parseIntOrDefault(attack.usedCount, 0),
-              createdAt: attack.createdAt ? new Date(attack.createdAt) : undefined
-            }))
-          })
-        }
-      }
-
-      // Update inventory if provided
-      if (typedCharacterData.inventory) {
-        // Delete existing inventory
-        await this.prisma.inventoryItem.deleteMany({
-          where: { characterId: id }
-        })
-
-        // Create new inventory items
-        if (typedCharacterData.inventory.length > 0) {
-          await this.prisma.inventoryItem.createMany({
-            data: typedCharacterData.inventory.map((item: any) => ({
-              characterId: id,
-              name: item.name,
-              description: item.notes, // Map notes to description
-              quantity: parseIntOrDefault(item.quantity, 1),
-              weight: parseOptionalFloat(item.weight),
-              equipped: item.equipped,
-              tier: item.tier || 'gris',
-              createdAt: item.createdAt ? new Date(item.createdAt) : undefined
-            }))
-          })
-        }
-      }
-
-      // Update combat actions if provided (assuming there's a combatAction table)
-      if (typedCharacterData.combatActions) {
-        // Delete existing combat actions
-        await this.prisma.combatAction.deleteMany({
-          where: { characterId: id }
-        })
-
-        // Create new combat actions
-        if (typedCharacterData.combatActions.length > 0) {
-          await this.prisma.combatAction.createMany({
-            data: typedCharacterData.combatActions.map((action: any) => ({
-              characterId: id,
-              name: action.name,
-              type: action.type,
-              currentUses: parseIntOrDefault(action.currentUses, 0),
-              maxUses: parseIntOrDefault(action.maxUses, 0),
-              description: action.description
-            }))
-          })
-        }
-      }
-
-      // Fetch the updated character with all relations
-      const updatedCharacter = await this.prisma.character.findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true
-            }
-          },
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              email: true
-            }
-          },
-          savingThrows: true,
-          skills: true,
-          spells: {
-            include: {
-              spell: true
-            }
-          },
-          spellSlots: true,
-          inventory: true,
-          attacks: true,
-          features: true,
-          cantrips: true,
-          combatActions: true
-        }
       })
 
       return updatedCharacter ? this.mapPrismaToEntity(updatedCharacter) : null

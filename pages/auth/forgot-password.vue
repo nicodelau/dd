@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex">
     <!-- Left side - Hero section with D&D theme -->
-    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div class="hidden lg:flex lg:w-1/2 bg-zinc-950 relative overflow-hidden">
       <!-- Background pattern -->
       <div class="absolute inset-0 opacity-10">
         <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=0 0 60 60 xmlns=http://www.w3.org/2000/svg%3E%3Cg fill=none fill-rule=evenodd%3E%3Cg fill=%23ffffff fill-opacity=0.1%3E%3Cpath d=M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"></div>
@@ -11,7 +11,7 @@
       <div class="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
         <div class="mb-8">
           <!-- D&D Logo/Icon -->
-          <div class="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl flex items-center justify-center mb-6 shadow-2xl">
+          <div class="w-16 h-16 bg-red-700 rounded-xl flex items-center justify-center mb-6 shadow-2xl">
             <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
@@ -21,50 +21,46 @@
             {{ t('recoverAccess') }}
           </h1>
           
-          <p class="text-xl text-slate-300 leading-relaxed mb-8">
+          <p class="text-xl text-zinc-400 leading-relaxed mb-8">
             {{ t('recoverDescription') }}
           </p>
           
           <div class="space-y-4">
             <div class="flex items-center space-x-3">
-              <div class="w-2 h-2 bg-emerald-400 rounded-full"></div>
-              <span class="text-slate-300">{{ t('enterEmailStep') }}</span>
+              <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+              <span class="text-zinc-400">{{ t('enterEmailStep') }}</span>
             </div>
             <div class="flex items-center space-x-3">
-              <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span class="text-slate-300">{{ t('checkEmailStep') }}</span>
+              <div class="w-2 h-2 bg-sky-500 rounded-full"></div>
+              <span class="text-zinc-400">{{ t('checkEmailStep') }}</span>
             </div>
             <div class="flex items-center space-x-3">
-              <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <span class="text-slate-300">{{ t('createPasswordStep') }}</span>
+              <div class="w-2 h-2 bg-zinc-500 rounded-full"></div>
+              <span class="text-zinc-400">{{ t('createPasswordStep') }}</span>
             </div>
           </div>
         </div>
       </div>
-      
-      <!-- Decorative elements -->
-      <div class="absolute top-10 right-10 w-32 h-32 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-xl"></div>
-      <div class="absolute bottom-10 left-10 w-40 h-40 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"></div>
     </div>
     
     <!-- Right side - Reset form -->
-    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white dark:bg-gray-900">
+    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-zinc-900 border-l border-zinc-800">
       <div class="mx-auto w-full max-w-sm lg:w-96">
         <!-- Mobile hero header -->
         <div class="lg:hidden mb-8 text-center">
-          <div class="w-12 h-12 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div class="w-12 h-12 bg-red-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('resetPassword') }}</h2>
+          <h2 class="text-2xl font-bold text-white">{{ t('resetPassword') }}</h2>
         </div>
         
         <div class="hidden lg:block">
-          <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+          <h2 class="text-3xl font-bold text-white">
             {{ t('forgotPasswordTitle') }}
           </h2>
-          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p class="mt-2 text-sm text-zinc-400">
             {{ t('forgotPasswordDesc') }}
           </p>
         </div>
@@ -73,7 +69,7 @@
           <div v-if="!submitted">
             <form class="space-y-6" @submit.prevent="handleForgotPassword">
               <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="email" class="block text-sm font-medium text-zinc-300 mb-2">
                   {{ t('emailAddress') }}
                 </label>
                 <UInput
@@ -100,7 +96,7 @@
                   :ui="{ 
                     color: { 
                       primary: { 
-                        solid: 'bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200' 
+                        solid: 'bg-red-600 hover:bg-red-500 text-white font-medium transition-colors' 
                       } 
                     } 
                   }"

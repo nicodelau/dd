@@ -1,22 +1,30 @@
 <template>
-  <UCard v-if="userRole === 'DM' && currentRoom && currentRoom.code !== 'default'">
+  <UCard 
+    v-if="userRole === 'DM' && currentRoom"
+    :ui="{
+      background: 'bg-zinc-900/90',
+      ring: '',
+      divide: 'divide-y divide-zinc-800'
+    }"
+  >
     <template #header>
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-white text-white">
-          ⚔️ {{ t('battleMode') }}
+        <h3 class="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+          <span>⚔️</span> {{ t('battleMode') }}
         </h3>
         <div class="flex items-center space-x-2">
           <UBadge 
             v-if="isInBattle" 
             :color="getBattlePhaseColor(battleMode?.phase)" 
-            variant="soft"
+            variant="subtle"
+            size="xs"
           >
             {{ getBattlePhaseLabel(battleMode?.phase) }}
           </UBadge>
           <UButton 
             v-if="!isInBattle" 
             color="red" 
-            size="sm" 
+            size="xs" 
             @click="$emit('startBattle')"
             :loading="isBattleLoading" 
             icon="i-heroicons-play"
@@ -26,7 +34,7 @@
           <UButton 
             v-else 
             color="gray" 
-            size="sm" 
+            size="xs" 
             @click="$emit('endBattle')" 
             :loading="isBattleLoading"
             icon="i-heroicons-stop"
@@ -38,22 +46,31 @@
     </template>
 
     <!-- No Battle State -->
-    <div v-if="!isInBattle" class="text-center py-8">
-      <div class="text-4xl mb-4">⚔️</div>
-      <h4 class="font-medium text-white text-white mb-2">{{ t('readyForBattle') }}</h4>
-      <p class="text-sm text-zinc-400 text-zinc-400 mb-4">
+    <div v-if="!isInBattle" class="text-center py-6">
+      <div class="text-2xl mb-2 opacity-50">⚔️</div>
+      <h4 class="text-sm font-medium text-zinc-200 mb-1">{{ t('readyForBattle') }}</h4>
+      <p class="text-xs text-zinc-500 mb-3 max-w-sm mx-auto">
         {{ t('readyForBattleDesc') }}
       </p>
+      <UButton
+        color="red"
+        size="xs"
+        @click="$emit('startBattle')"
+        :loading="isBattleLoading"
+        icon="i-heroicons-play"
+      >
+        {{ t('startBattleSetup') }}
+      </UButton>
     </div>
 
     <!-- Battle Setup Phase -->
     <div v-else-if="battleMode?.phase === 'setup'" class="space-y-4">
-      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <div class="flex items-start space-x-3">
-          <UIcon name="i-heroicons-information-circle" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+      <div class="bg-zinc-950/70 border border-zinc-800 rounded p-3">
+        <div class="flex items-start space-x-2.5">
+          <UIcon name="i-heroicons-information-circle" class="h-4 w-4 text-zinc-400 mt-0.5 shrink-0" />
           <div>
-            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">{{ t('battleSetupPhase') }}</h4>
-            <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+            <h4 class="text-xs font-semibold text-zinc-200">{{ t('battleSetupPhase') }}</h4>
+            <p class="text-xs text-zinc-400 mt-0.5">
               {{ t('battleSetupDesc') }}
             </p>
           </div>
@@ -80,16 +97,16 @@
       <!-- Ready to Roll Initiative -->
       <div
         v-if="canStartBattle"
-        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
+        class="bg-zinc-950/80 border border-emerald-900/50 rounded p-3"
       >
         <div class="text-center">
-          <div class="text-green-900 dark:text-green-100 font-medium mb-2">
+          <div class="text-emerald-400 text-xs font-medium mb-1">
             {{ t('readyToStartCombat') }}
           </div>
-          <p class="text-sm text-green-700 dark:text-green-300 mb-3">
+          <p class="text-xs text-zinc-400 mb-2.5">
             {{ selectedPlayers.length }} {{ t('combatReadyDesc') }}
           </p>
-          <UButton color="green" size="sm" @click="$emit('rollInitiative')" icon="i-heroicons-play">
+          <UButton color="emerald" size="xs" @click="$emit('rollInitiative')" icon="i-heroicons-play">
             {{ t('rollInitiativeAndStart') }}
           </UButton>
         </div>
@@ -104,12 +121,12 @@
 
     <!-- Initiative Rolling Phase -->
     <div v-else-if="battleMode?.phase === 'rolling_initiative'" class="space-y-4">
-      <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
-        <div class="flex items-start space-x-3">
-          <UIcon name="i-heroicons-cube" class="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+      <div class="bg-zinc-950/70 border border-amber-900/40 rounded p-3">
+        <div class="flex items-start space-x-2.5">
+          <UIcon name="i-heroicons-cube" class="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
           <div>
-            <h4 class="text-sm font-medium text-orange-900 dark:text-orange-100">{{ t('initiativeRollingPhase') }}</h4>
-            <p class="text-sm text-orange-700 dark:text-orange-300 mt-1">
+            <h4 class="text-xs font-semibold text-amber-300">{{ t('initiativeRollingPhase') }}</h4>
+            <p class="text-xs text-zinc-400 mt-0.5">
               {{ t('initiativeRollingDesc') }}
             </p>
           </div>

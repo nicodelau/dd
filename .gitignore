@@ -33,5 +33,8 @@ public/uploads/
 # Superpowers brainstorm artifacts
 .superpowers/
 
+# Local assistant & skills
+.claude/
+
 # Git worktrees
 .worktrees/

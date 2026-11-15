@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-zinc-900 bg-zinc-900 shadow-sm border-b border-zinc-800 border-zinc-800">
+  <header class="bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800 sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <!-- Left Side: Back Button and Room Info -->
@@ -14,30 +14,30 @@
             {{ t('backToDashboard') }}
           </UButton>
 
-          <div class="h-6 border-l border-gray-300 dark:border-gray-600"></div>
+          <div class="h-5 border-l border-zinc-800"></div>
 
           <div>
-            <h1 class="text-2xl font-bold text-white flex items-center">
-              <UIcon name="i-heroicons-cube" class="w-8 h-8 text-red-500 mr-2" />
+            <h1 class="text-lg sm:text-xl font-bold text-zinc-50 flex items-center">
+              <UIcon name="i-heroicons-cube" class="w-6 h-6 text-rose-500 mr-2" />
               {{ t('collaborativeDiceRoom') }}
             </h1>
             <div v-if="roomInfo" class="flex items-center space-x-2">
-              <span class="text-sm text-zinc-400 text-zinc-400">
+              <span class="text-xs text-zinc-400">
                 {{ t('room') }}: {{ roomInfo.name }}
               </span>
               <div class="flex items-center space-x-1">
-                <span class="text-sm font-mono bg-gray-100 bg-zinc-900 px-2 py-1 rounded">
+                <span class="text-xs font-mono font-semibold bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-zinc-200">
                   {{ roomInfo.code }}
                 </span>
                 <UButton 
                   v-if="roomInfo.code !== 'default'" 
                   color="gray" 
                   variant="ghost" 
-                  size="xs"
+                  size="2xs"
                   icon="i-heroicons-link" 
                   @click="$emit('copyRoomCode')"
                 >
-                  Share Link
+                  Share
                 </UButton>
               </div>
             </div>
@@ -48,8 +48,8 @@
         <div class="flex items-center space-x-3">
           <!-- Language Toggle -->
           <UButton 
-            color="primary" 
-            variant="solid" 
+            color="gray" 
+            variant="ghost" 
             size="xs" 
             icon="i-heroicons-language" 
             @click="$emit('toggleLanguage')"
@@ -57,18 +57,18 @@
             {{ language === 'en' ? 'ES' : 'EN' }}
           </UButton>
 
-          <!-- Connection Status -->
+          <!-- Connection Status Indicator -->
           <div class="flex items-center space-x-2">
-            <div class="h-3 w-3 rounded-full"
+            <div class="h-2 w-2 rounded-full"
               :class="connectionStatusColor"></div>
-            <span class="text-sm text-gray-600 dark:text-gray-300">
+            <span class="text-xs font-mono text-zinc-400">
               {{ connectionStatusText }}
             </span>
             <UButton 
               v-if="!isConnected || isOfflineMode" 
-              color="yellow" 
+              color="amber" 
               variant="ghost" 
-              size="xs"
+              size="2xs"
               :icon="isOfflineModePreference ? 'i-heroicons-wifi' : 'i-heroicons-wifi-slash'"
               @click="$emit('toggleOfflineMode')"
             >
@@ -77,9 +77,9 @@
           </div>
 
           <!-- User Count -->
-          <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-            <UIcon name="i-heroicons-users" class="h-4 w-4" />
-            <span>{{ connectedUsers }} {{ isOfflineMode ? `(${t('offline')})` : t('online') }}</span>
+          <div class="flex items-center space-x-1.5 text-xs font-mono text-zinc-400 border-l border-zinc-800 pl-3">
+            <UIcon name="i-heroicons-users" class="h-4 w-4 text-zinc-500" />
+            <span class="tabular-nums">{{ connectedUsers }} {{ isOfflineMode ? `(${t('offline')})` : t('online') }}</span>
           </div>
         </div>
       </div>

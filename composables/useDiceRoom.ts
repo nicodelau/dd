@@ -1,14 +1,16 @@
 /**
  * Core dice room state and management composable
- * Handles room creation, joining, leaving, connection state, and roll history
+ * Handles room creation, joining, leaving, connection state, and roll history via Socket.IO
  */
 
 import type { DiceRoll, RoomInfo } from '~/types/dice'
+import { useSocketIO } from './useSocketIO'
+import { useTranslations } from './useTranslations'
 
 export const useDiceRoom = () => {
   const user = useState('user')
   const { t } = useTranslations()
-  const connection = useConnectionManager()
+  const socketIO = useSocketIO()
   
   // Room state
   const currentRoom = ref<RoomInfo | null>(null)
@@ -22,7 +24,7 @@ export const useDiceRoom = () => {
   const userId = computed(() => (user.value as any)?.id || `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`)
   
   // Connection state
-  const isConnected = computed(() => connection.connectionState.value.status === 'connected')
+  const isConnected = computed(() => socketIO.connectionState.value.status === 'connected')
   const isOfflineMode = ref(false)
   const isOfflineModePreference = ref(false)
   const connectedUsers = ref(1)
@@ -32,7 +34,7 @@ export const useDiceRoom = () => {
   
   // Computed properties
   const shouldShowDiceInterface = computed(() => {
-    return isConnected.value && currentRoom.value && currentRoom.value.code !== 'default'
+    return (isConnected.value || isOfflineMode.value) && currentRoom.value && currentRoom.value.code !== 'default'
   })
   
   const roomCodeForHeartbeat = computed(() => currentRoom.value?.code || '')
@@ -54,7 +56,7 @@ export const useDiceRoom = () => {
       userRole.value = characters.length > 0 ? 'Player' : 'DM'
     } catch (error) {
       console.error('Failed to load user characters:', error)
-      userRole.value = 'Player' // Default to player on error
+      userRole.value = 'Player'
     }
   }
 
@@ -84,12 +86,8 @@ export const useDiceRoom = () => {
         }
         isInRoom.value = true
         
-        // Connect to the new room
         await connectToRoom(response.room.code)
-        
-        // Update URL
         await navigateTo(`/dice/${response.room.code}`)
-        
         console.log('✅ Room created:', response.room.code)
       }
     } catch (error) {
@@ -116,9 +114,9 @@ export const useDiceRoom = () => {
         body: {
           userId: userId.value,
           userName: userName.value,
-          roomCode: joinRoomCode.value.trim()
+          roomCode: joinRoomCode.value.trim().toUpperCase()
         }
-      })
+      }) as any
 
       if (response.success) {
         currentRoom.value = {
@@ -128,12 +126,8 @@ export const useDiceRoom = () => {
         }
         isInRoom.value = true
         
-        // Connect to the room
         await connectToRoom(response.room.code)
-        
-        // Update URL
         await navigateTo(`/dice/${response.room.code}`)
-        
         console.log('✅ Joined room:', response.room.code)
       }
     } catch (error) {
@@ -143,7 +137,7 @@ export const useDiceRoom = () => {
   }
 
   /**
-   * Connect to a room via SSE
+   * Connect to a room via Socket.IO
    */
   const connectToRoom = async (roomCode: string) => {
     if (isOfflineModePreference.value) {
@@ -153,17 +147,14 @@ export const useDiceRoom = () => {
     }
 
     try {
-      await connection.connect({
+      socketIO.connect({
         userId: userId.value,
         userName: userName.value,
         role: userRole.value,
         roomCode
       })
 
-      // Set up room-specific event handlers
       setupRoomEventHandlers()
-      
-      // Load initial room state
       await syncRoomState(roomCode)
     } catch (error) {
       console.error('❌ Failed to connect to room:', error)
@@ -172,18 +163,18 @@ export const useDiceRoom = () => {
   }
 
   /**
-   * Set up SSE event handlers for room management
+   * Set up Socket.IO event handlers for room management
    */
   const setupRoomEventHandlers = () => {
     // User count updates
-    connection.on('users:count', (data) => {
+    socketIO.on('users:count', (data: any) => {
       connectedUsers.value = data.count
     })
 
-    // Room state sync
-    connection.on('room:state:sync', (data) => {
-      if (data.rollHistory) {
-        rollHistory.value = data.rollHistory.map((roll: any) => ({
+    // Roll history sync
+    socketIO.on('dice:history', (data: any) => {
+      if (data?.history) {
+        rollHistory.value = data.history.map((roll: any) => ({
           ...roll,
           timestamp: new Date(roll.timestamp),
           isOwn: roll.userId === userId.value
@@ -191,34 +182,30 @@ export const useDiceRoom = () => {
       }
     })
 
-    // Dice roll events
-    connection.on('dice:roll', (data) => {
+    // Dice roll broadcast
+    socketIO.on('dice:roll', (data: any) => {
       const roll: DiceRoll = {
         ...data,
         timestamp: new Date(data.timestamp),
         isOwn: data.userId === userId.value
       }
       
-      // Add to history, avoiding duplicates
       const existingIndex = rollHistory.value.findIndex(r => r.id === roll.id)
       if (existingIndex === -1) {
         rollHistory.value.unshift(roll)
-        // Keep only last 50 rolls for performance
         if (rollHistory.value.length > 50) {
           rollHistory.value = rollHistory.value.slice(0, 50)
         }
       }
     })
 
-    // Room info updates
-    connection.on('room:info', (data) => {
-      if (data.name && currentRoom.value) {
-        currentRoom.value.name = data.name
-      }
+    // Roll history cleared
+    socketIO.on('dice:history:cleared', () => {
+      rollHistory.value = []
     })
 
-    // Connection events
-    connection.on('connected', () => {
+    // Connection established
+    socketIO.on('connected', () => {
       isAutoJoining.value = false
     })
   }
@@ -226,35 +213,29 @@ export const useDiceRoom = () => {
   /**
    * Sync room state from server
    */
-   const syncRoomState = async (roomCode: string) => {
-     try {
-       const response = await $fetch(`/api/dice/rooms/${roomCode}/state?userId=${userId.value}`)
-       
-       // Update roll history
-       if (response.rollHistory) {
-         rollHistory.value = response.rollHistory.map((roll: any) => ({
-           ...roll,
-           timestamp: new Date(roll.timestamp),
-           isOwn: roll.userId === userId.value
-         }))
-       }
-       
-       // Update room info
-       if (response.room && currentRoom.value) {
-         currentRoom.value = {
-           ...currentRoom.value,
-           name: response.room.name
-         }
-       }
-       
-       // Update user count
-       if (response.room) {
-         connectedUsers.value = response.room.userCount
-       }
-     } catch (error) {
-       console.error('Failed to sync room state:', error)
-     }
-   }
+  const syncRoomState = async (roomCode: string) => {
+    try {
+      const response = await $fetch(`/api/dice/rooms/${roomCode}/state?userId=${userId.value}`) as any
+      
+      if (response.rollHistory) {
+        rollHistory.value = response.rollHistory.map((roll: any) => ({
+          ...roll,
+          timestamp: new Date(roll.timestamp),
+          isOwn: roll.userId === userId.value
+        }))
+      }
+      
+      if (response.room && currentRoom.value) {
+        currentRoom.value = {
+          ...currentRoom.value,
+          name: response.room.name
+        }
+        connectedUsers.value = response.room.userCount || 1
+      }
+    } catch (error) {
+      console.error('Failed to sync room state:', error)
+    }
+  }
 
   /**
    * Leave the current room
@@ -262,33 +243,27 @@ export const useDiceRoom = () => {
   const leaveRoom = async () => {
     try {
       if (currentRoom.value) {
-        // Notify server
         await $fetch('/api/dice/leave', {
           method: 'POST',
           body: {
             userId: userId.value,
             roomCode: currentRoom.value.code
           }
-        })
+        }).catch(() => {})
       }
 
-      // Disconnect SSE
-      connection.disconnect()
+      socketIO.disconnect()
       
-      // Reset state
       currentRoom.value = null
       isInRoom.value = false
       isAutoJoining.value = false
       rollHistory.value = []
       connectedUsers.value = 1
       
-      // Navigate to lobby
       await navigateTo('/dice')
-      
       console.log('✅ Left room')
     } catch (error) {
       console.error('❌ Failed to leave room:', error)
-      // Reset state anyway
       currentRoom.value = null
       isInRoom.value = false
       await navigateTo('/dice')
@@ -296,16 +271,21 @@ export const useDiceRoom = () => {
   }
 
   /**
-   * Roll dice
+   * Roll dice via Socket.IO
    */
   const rollDice = async (rollData: {
-    dice: Record<string, number>
+    diceRolled: { type: string; count: number; results: number[] }[]
+    diceResults: { type: string; result: number }[]
+    total: number
     modifier?: number
     rollType?: string
     description?: string
+    details?: (string | number)[]
+    isCritical?: boolean
+    criticalType?: 'success' | 'failure'
   }) => {
     try {
-      const roll = {
+      const rollPayload = {
         userId: userId.value,
         userName: userName.value,
         roomCode: currentRoom.value?.code,
@@ -314,29 +294,28 @@ export const useDiceRoom = () => {
       }
 
       if (isOfflineMode.value) {
-        // Handle offline roll
         const offlineRoll: DiceRoll = {
           id: `offline_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
           userName: userName.value,
           userId: userId.value,
           timestamp: new Date(),
           description: rollData.description || '',
-          total: 0, // Calculate based on dice and modifier
-          details: [],
-          diceRolled: [],
-          diceResults: [],
+          total: rollData.total,
+          details: rollData.details || [],
+          diceRolled: rollData.diceRolled,
+          diceResults: rollData.diceResults,
           modifier: rollData.modifier || 0,
           rollType: rollData.rollType || 'normal',
-          isCritical: false,
+          isCritical: !!rollData.isCritical,
+          criticalType: rollData.criticalType,
           isOwn: true
         }
-        
-        // Add to local history
         rollHistory.value.unshift(offlineRoll)
-      } else {
-        // Queue action if connected, or store for later if disconnected
-        connection.queueAction('dice:roll', roll)
+        return offlineRoll
       }
+
+      // Send via Socket.IO directly for instant low-latency delivery
+      socketIO.emit('dice:roll', rollPayload)
     } catch (error) {
       console.error('❌ Failed to roll dice:', error)
       throw error
@@ -344,20 +323,14 @@ export const useDiceRoom = () => {
   }
 
   /**
-   * Clear roll history
+   * Clear roll history (DM only)
    */
   const clearHistory = async () => {
     try {
       if (!currentRoom.value) return
 
       if (!isOfflineMode.value) {
-        await $fetch('/api/dice/history/clear', {
-          method: 'POST',
-          body: {
-            userId: userId.value,
-            roomCode: currentRoom.value.code
-          }
-        })
+        socketIO.emit('dice:clear_history', { roomCode: currentRoom.value.code })
       }
 
       rollHistory.value = []
@@ -375,13 +348,11 @@ export const useDiceRoom = () => {
     isOfflineModePreference.value = !isOfflineModePreference.value
 
     if (isOfflineModePreference.value) {
-      // Switch to offline mode
-      connection.disconnect()
+      socketIO.disconnect()
       isOfflineMode.value = true
       connectedUsers.value = 1
       console.log('🔄 Switched to offline mode')
     } else {
-      // Switch back to online mode
       isOfflineMode.value = false
       if (currentRoom.value && currentRoom.value.code !== 'default') {
         connectToRoom(currentRoom.value.code)
@@ -395,15 +366,13 @@ export const useDiceRoom = () => {
    */
   const initializeFromRoute = async (routeRoomCode: string) => {
     try {
-      // Load user characters first to detect role
       await loadUserCharacters()
       
       if (routeRoomCode && routeRoomCode !== 'default') {
         isAutoJoining.value = true
         
-        // Try to join the room from the route
         currentRoom.value = {
-          name: 'Loading...',
+          name: `Room ${routeRoomCode}`,
           code: routeRoomCode,
           isOwner: false
         }
@@ -419,18 +388,16 @@ export const useDiceRoom = () => {
     }
   }
 
-  // Cleanup on unmount
   onBeforeUnmount(() => {
-    connection.disconnect()
+    socketIO.disconnect()
   })
 
   return {
-    // State
     currentRoom: readonly(currentRoom),
     isInRoom: readonly(isInRoom),
     isAutoJoining: readonly(isAutoJoining),
     joinRoomCode,
-    userRole: readonly(userRole),
+    userRole,
     userName,
     userId,
     isConnected,
@@ -438,12 +405,8 @@ export const useDiceRoom = () => {
     isOfflineModePreference: readonly(isOfflineModePreference),
     connectedUsers: readonly(connectedUsers),
     rollHistory: readonly(rollHistory),
-    
-    // Computed
     shouldShowDiceInterface,
     roomCodeForHeartbeat,
-    
-    // Actions
     loadUserCharacters,
     createRoom,
     joinExistingRoom,

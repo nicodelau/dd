@@ -172,6 +172,8 @@ export interface CreateCharacterDTO {
   // Inventory
   backpack?: string
   notes?: Record<string, any>
+  // Skills
+  skills?: SkillDTO[]
   // New user assignment fields for creation
   userId?: string | null
   ownerId?: string | null

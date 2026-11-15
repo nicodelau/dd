@@ -3,7 +3,10 @@
  * Handles room music state, controls, and automatic triggers
  */
 
-export const useMusic = (roomCode: string, connection: ReturnType<typeof useConnectionManager>) => {
+import { useSocketIO } from './useSocketIO'
+
+export const useMusic = (roomCode: string, socketParam?: ReturnType<typeof useSocketIO>) => {
+  const socket = socketParam || useSocketIO()
   const user = useState('user')
   const toast = useToast()
   const { t } = useTranslations()
@@ -29,7 +32,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
    * Load current music state from server
    */
   const loadMusicState = async () => {
-    if (!roomCode || roomCode === 'default') return
+    if (!roomCode) return
 
     try {
       const response = await $fetch(`/api/music/state?roomCode=${roomCode}`) as any
@@ -253,13 +256,13 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
    */
   const setupMusicEventHandlers = () => {
     // Music state updates
-    connection.on('music:state_updated', (data) => {
+    socket.on('music:state_updated', (data) => {
       musicState.value = data
       console.log('🎵 Music state updated:', data)
     })
 
     // Track added to playlist
-    connection.on('music:track_added', (data) => {
+    socket.on('music:track_added', (data) => {
       if (musicState.value) {
         musicState.value.playlist = data.playlist
       }
@@ -267,7 +270,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Track removed from playlist
-    connection.on('music:track_removed', (data) => {
+    socket.on('music:track_removed', (data) => {
       if (musicState.value) {
         musicState.value = data
       }
@@ -275,7 +278,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Music started playing
-    connection.on('music:started', (data) => {
+    socket.on('music:started', (data) => {
       if (musicState.value) {
         musicState.value.isPlaying = true
         musicState.value.currentTrack = data.track
@@ -299,7 +302,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Auto-play events (lobby/battle music)
-    connection.on('music:auto_play', (data) => {
+    socket.on('music:auto_play', (data) => {
       if (musicState.value) {
         musicState.value.isPlaying = true
         musicState.value.currentTrack = data.track
@@ -309,7 +312,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Tense music activated
-    connection.on('music:tense_activated', (data) => {
+    socket.on('music:tense_activated', (data) => {
       if (musicState.value) {
         musicState.value.isPlaying = true
         musicState.value.currentTrack = data.track
@@ -325,7 +328,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Default tracks setup complete
-    connection.on('music:default_tracks_added', (data) => {
+    socket.on('music:default_tracks_added', (data) => {
       if (musicState.value) {
         musicState.value.playlist = data.playlist
       }
@@ -334,7 +337,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Music paused
-    connection.on('music:paused', (data) => {
+    socket.on('music:paused', (data) => {
       if (musicState.value) {
         musicState.value.isPlaying = false
       }
@@ -342,7 +345,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Music resumed
-    connection.on('music:resumed', (data) => {
+    socket.on('music:resumed', (data) => {
       if (musicState.value) {
         musicState.value.isPlaying = true
       }
@@ -350,7 +353,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Music stopped
-    connection.on('music:stopped', (data) => {
+    socket.on('music:stopped', (data) => {
       if (musicState.value) {
         musicState.value.isPlaying = false
         musicState.value.currentTrack = undefined
@@ -359,7 +362,7 @@ export const useMusic = (roomCode: string, connection: ReturnType<typeof useConn
     })
 
     // Volume changed
-    connection.on('music:volume_changed', (data) => {
+    socket.on('music:volume_changed', (data) => {
       if (musicState.value) {
         musicState.value.volume = data.volume
       }

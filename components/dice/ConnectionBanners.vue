@@ -3,15 +3,15 @@
     <!-- Offline Mode Banner -->
     <div 
       v-if="isOfflineMode"
-      class="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4"
+      class="mb-4 bg-amber-950/30 border border-amber-800/60 rounded-md p-3"
     >
       <div class="flex items-start space-x-3">
-        <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+        <UIcon name="i-heroicons-exclamation-triangle" class="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
         <div>
-          <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+          <h3 class="text-xs font-semibold text-amber-200">
             {{ t('offlineModeActive') }}
           </h3>
-          <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+          <p class="text-xs text-amber-300/80 mt-0.5">
             {{ t('offlineModeDesc') }}
           </p>
         </div>
@@ -21,17 +21,16 @@
     <!-- Temporary Disconnection Banner -->
     <div 
       v-if="showDisconnectionBanner" 
-      class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6"
+      class="bg-rose-950/30 border border-rose-800/60 rounded-md p-3 mb-4"
     >
-      <div class="flex items-center">
-        <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-orange-600 dark:text-orange-400 mr-3" />
+      <div class="flex items-center space-x-3">
+        <UIcon name="i-heroicons-arrow-path" class="h-4 w-4 text-rose-500 animate-spin shrink-0" />
         <div>
-          <h3 class="text-sm font-medium text-orange-800 dark:text-orange-200">
-            Temporary Connection Issue
+          <h3 class="text-xs font-semibold text-rose-200">
+            Reconnecting to room {{ currentRoomCode }}...
           </h3>
-          <p class="text-sm text-orange-700 dark:text-orange-300 mt-1">
-            Attempting to reconnect to room {{ currentRoomCode }}...
-            {{ reconnectAttempts > 0 ? `(Attempt ${reconnectAttempts})` : '' }}
+          <p class="text-xs text-rose-300/80 mt-0.5">
+            Attempt {{ reconnectAttempts }} &middot; Rolls will sync once restored.
           </p>
         </div>
       </div>
@@ -40,16 +39,16 @@
     <!-- Auto-joining Banner -->
     <div 
       v-if="isAutoJoining" 
-      class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6"
+      class="bg-zinc-900 border border-zinc-800 rounded-md p-3 mb-4"
     >
-      <div class="flex items-center">
-        <UIcon name="i-heroicons-cube" class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 animate-spin" />
+      <div class="flex items-center space-x-3">
+        <UIcon name="i-heroicons-cube" class="h-4 w-4 text-sky-400 animate-spin shrink-0" />
         <div>
-          <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
-            Joining Room
+          <h3 class="text-xs font-semibold text-zinc-100">
+            Joining Room {{ joiningRoomCode }}
           </h3>
-          <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-            Connecting to room {{ joiningRoomCode }}...
+          <p class="text-xs text-zinc-400 mt-0.5">
+            Initializing multiplayer session...
           </p>
         </div>
       </div>

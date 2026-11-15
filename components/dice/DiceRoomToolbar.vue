@@ -1,11 +1,12 @@
 <template>
   <!-- Toolbar (Sidebar Toggles & Room Actions) -->
-  <div class="mb-6 flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3 bg-zinc-900/60 p-2.5 rounded-md border border-zinc-800">
     <!-- Sidebar Toggles -->
     <div class="flex items-center space-x-2">
       <UButton 
-        color="blue" 
-        variant="outline" 
+        color="gray" 
+        :variant="isLeftSidebarOpen ? 'solid' : 'ghost'"
+        size="xs"
         @click="$emit('toggleLeftSidebar')"
         :icon="isLeftSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-user'"
       >
@@ -13,18 +14,22 @@
       </UButton>
       
       <UButton 
-        color="green" 
-        variant="outline" 
+        color="gray" 
+        :variant="isRightSidebarOpen ? 'solid' : 'ghost'"
+        size="xs"
         @click="$emit('toggleRightSidebar')"
         :icon="isRightSidebarOpen ? 'i-heroicons-eye-slash' : 'i-heroicons-chart-bar'"
       >
         {{ isRightSidebarOpen ? t('hide') : t('show') }} {{ rightSidebarLabel }}
       </UButton>
       
+      <div v-if="userRole === 'DM'" class="h-4 border-l border-zinc-800"></div>
+
       <UButton 
         v-if="userRole === 'DM'" 
-        color="purple" 
-        variant="outline" 
+        color="gray" 
+        variant="ghost" 
+        size="xs"
         icon="i-heroicons-photo"
         @click="$emit('showDmImage')"
       >
@@ -33,20 +38,33 @@
 
       <UButton 
         v-if="userRole === 'DM'" 
-        color="amber" 
-        variant="outline" 
+        color="gray" 
+        variant="ghost" 
+        size="xs"
         icon="i-heroicons-musical-note"
         @click="$emit('toggleMusicPanel')"
       >
         {{ t('music') }}
+      </UButton>
+
+      <UButton 
+        v-if="userRole === 'DM'" 
+        color="gray" 
+        :variant="isBattleOpen ? 'solid' : 'ghost'" 
+        size="xs"
+        icon="i-heroicons-shield-exclamation"
+        @click="$emit('toggleBattle')"
+      >
+        {{ t('battleMode') }}
       </UButton>
     </div>
 
     <!-- Room Actions -->
     <div v-if="showRoomActions" class="flex items-center space-x-2">
       <UButton 
-        color="blue" 
-        variant="outline" 
+        color="gray" 
+        variant="ghost" 
+        size="xs"
         icon="i-heroicons-paper-airplane"
         @click="$emit('openInvite')"
       >
@@ -54,8 +72,9 @@
       </UButton>
       
       <UButton 
-        color="red" 
-        variant="outline" 
+        color="rose" 
+        variant="ghost" 
+        size="xs"
         icon="i-heroicons-arrow-right-on-rectangle"
         @click="$emit('leaveRoom')"
       >
@@ -72,15 +91,19 @@ import { useTranslations } from '~/composables/useTranslations'
 interface Props {
   isLeftSidebarOpen: boolean
   isRightSidebarOpen: boolean
+  isBattleOpen?: boolean
   userRole: string
   currentRoom: RoomInfo | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isBattleOpen: false
+})
 
 const emit = defineEmits<{
   toggleLeftSidebar: []
   toggleRightSidebar: []
+  toggleBattle: []
   showDmImage: []
   toggleMusicPanel: []
   openInvite: []
