@@ -425,6 +425,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
           if (typedCharacterData.attacks.length > 0) {
             await tx.attack.createMany({
               data: typedCharacterData.attacks.map((attack: any) => ({
+                ...(attack.id ? { id: attack.id } : {}),
                 characterId: id,
                 name: attack.name,
                 attackBonus: parseOptionalInt(attack.attackBonus),
@@ -452,6 +453,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
           if (typedCharacterData.inventory.length > 0) {
             await tx.inventoryItem.createMany({
               data: typedCharacterData.inventory.map((item: any) => ({
+                ...(item.id ? { id: item.id } : {}),
                 characterId: id,
                 name: item.name,
                 description: item.notes, // Map notes to description
@@ -474,6 +476,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
           if (typedCharacterData.combatActions.length > 0) {
             await tx.combatAction.createMany({
               data: typedCharacterData.combatActions.map((action: any) => ({
+                ...(action.id ? { id: action.id } : {}),
                 characterId: id,
                 name: action.name,
                 type: action.type,

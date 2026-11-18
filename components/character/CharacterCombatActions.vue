@@ -293,6 +293,7 @@
                     :class="getEvaluated(attack).totalDamageFormula !== (attack.damage || '1d4')
                       ? 'bg-amber-950/40 text-amber-200 border-amber-600/60'
                       : 'bg-zinc-800 text-zinc-200 border-zinc-700/60'"
+                    :title="getEvaluated(attack).appliedSources.length > 0 ? getEvaluated(attack).appliedSources.join(', ') : undefined"
                   >
                     {{ getEvaluated(attack).totalDamageFormula }}
                   </span>
@@ -564,6 +565,7 @@
                     :class="getEvaluated(ability).totalDamageFormula !== (ability.damage || '1d4')
                       ? 'bg-amber-950/40 text-amber-200 border-amber-600/60'
                       : 'bg-zinc-800 text-zinc-200 border-zinc-700/60'"
+                    :title="getEvaluated(ability).appliedSources.length > 0 ? getEvaluated(ability).appliedSources.join(', ') : undefined"
                   >
                     {{ getEvaluated(ability).totalDamageFormula }}
                   </span>
@@ -864,11 +866,21 @@ function getAttackFormLabel(val?: string): string {
 }
 
 const equippedItemIds = computed(() => {
-  return new Set((props.character?.inventory || []).filter((i: any) => i.equipped).map((i: any) => i.id || i.name))
+  const inv = props.editMode
+    ? (props.editForm?.inventory || props.character?.inventory || [])
+    : (props.character?.inventory || [])
+  const set = new Set<string>()
+  for (const item of inv) {
+    if (item.equipped) {
+      if (item.id) set.add(item.id)
+      if (item.name) set.add(item.name)
+    }
+  }
+  return set
 })
 
 const activeModifiers = computed(() => {
-  return props.character?.notes?.modifierGraph?.modifiers || []
+  return (props.editMode ? props.editForm?.modifierGraph?.modifiers : props.character?.notes?.modifierGraph?.modifiers) || props.character?.notes?.modifierGraph?.modifiers || []
 })
 
 function getEvaluated(attack: any) {

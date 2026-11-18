@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ModifierEdge, AttackTargetInput } from '../../types/modifiers'
 import {
+  isSourceActive,
   matchesAttackCriteria,
   evaluateAttack,
   evaluateSkill,
@@ -181,6 +182,112 @@ describe('modifierGraph utility (TDD)', () => {
 
       expect(result.extraElementalBonuses).toHaveLength(0)
       expect(result.appliedSources).toHaveLength(0)
+    })
+
+    it('matches equipped item by sourceName when sourceId differs due to database persistence', () => {
+      const ringWithOldId: ModifierEdge = {
+        ...pyraFireRing,
+        sourceId: 'old-cuid-12345',
+        sourceName: 'Anillo Encantado (fire)'
+      }
+      // Equipped set has the newly generated DB ID and item name
+      const equipped = new Set(['new-cuid-99999', 'Anillo Encantado (fire)'])
+      const result = evaluateAttack(fireShuriken, [ringWithOldId], equipped)
+
+      expect(result.extraElementalBonuses).toHaveLength(1)
+      expect(result.extraElementalBonuses[0].value).toBe(1)
+      expect(result.totalDamageFormula).toContain('+1 [fuego]')
+    })
+
+    it('isSourceActive matches item source by sourceId or sourceName case-insensitively', () => {
+      const itemEdge: ModifierEdge = {
+        id: 'edge-test',
+        sourceId: 'cmwm76tgz001707l6mxa9y9j6',
+        sourceName: 'Anillo Encantado (fire)',
+        sourceType: 'item',
+        criteria: { targetCategory: 'attack', matchDamageType: 'fuego' },
+        modifierType: 'extra_elemental',
+        value: 1,
+        damageType: 'fuego',
+        enabled: true
+      }
+
+      // Matches by exact ID
+      expect(isSourceActive(itemEdge, new Set(['cmwm76tgz001707l6mxa9y9j6']))).toBe(true)
+      // Matches by item name even if ID is different
+      expect(isSourceActive(itemEdge, new Set(['Anillo Encantado (fire)']))).toBe(true)
+      // Matches by lowercase name
+      expect(isSourceActive(itemEdge, new Set(['anillo encantado (fire)']))).toBe(true)
+      // Returns false if neither matches
+      expect(isSourceActive(itemEdge, new Set(['Daga de Acero', 'cmwm_other_id']))).toBe(false)
+    })
+
+    it('evaluates Pyra fire attacks correctly with fire ring (+1 to all fire damage, leaves cold untouched)', () => {
+      const fireRing: ModifierEdge = {
+        id: 'edge_1795011004650agdi',
+        sourceId: 'cmwm7oya5001708l7lkqqvgjd',
+        sourceName: 'Anillo Encantado (fire)',
+        sourceType: 'item',
+        criteria: {
+          targetCategory: 'attack',
+          matchDamageType: 'fuego'
+        },
+        modifierType: 'extra_elemental',
+        value: 1,
+        damageType: 'fuego',
+        enabled: true
+      }
+
+      const granizo: AttackTargetInput = {
+        id: 'att-1',
+        name: 'Granizo',
+        damage: '1d10+5',
+        damageType: 'frio',
+        attackBonus: 5
+      }
+
+      const dobleMagia: AttackTargetInput = {
+        id: 'att-2',
+        name: 'Doble magia',
+        damage: '(2d8+8)*2',
+        damageType: 'fuego',
+        attackBonus: 5
+      }
+
+      const explosionIgnea: AttackTargetInput = {
+        id: 'att-3',
+        name: 'Explosion ignea',
+        damage: '4d6+9',
+        damageType: 'fuego',
+        attackBonus: 5
+      }
+
+      const kunaiHielo: AttackTargetInput = {
+        id: 'att-4',
+        name: 'Kunai de Hielo',
+        damage: '3d8+9',
+        damageType: 'frio',
+        attackBonus: 5
+      }
+
+      const shurikenFuego: AttackTargetInput = {
+        id: 'att-5',
+        name: 'Shuriken de Fuego',
+        damage: '4d6+8',
+        damageType: 'fuego',
+        attackBonus: 5
+      }
+
+      const equipped = new Set(['cmwm7oya5001708l7lkqqvgjd', 'Anillo Encantado (fire)'])
+
+      // Cold attacks: untouched
+      expect(evaluateAttack(granizo, [fireRing], equipped).totalDamageFormula).toBe('1d10+5')
+      expect(evaluateAttack(kunaiHielo, [fireRing], equipped).totalDamageFormula).toBe('3d8+9')
+
+      // Fire attacks: receive +1 [fuego]
+      expect(evaluateAttack(dobleMagia, [fireRing], equipped).totalDamageFormula).toBe('(2d8+8)*2+1 [fuego]')
+      expect(evaluateAttack(explosionIgnea, [fireRing], equipped).totalDamageFormula).toBe('4d6+9+1 [fuego]')
+      expect(evaluateAttack(shurikenFuego, [fireRing], equipped).totalDamageFormula).toBe('4d6+8+1 [fuego]')
     })
   })
 

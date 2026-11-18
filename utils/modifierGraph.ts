@@ -7,10 +7,15 @@ import type {
 } from '../types/modifiers'
 
 function normalizeEquippedSet(equippedItemIds: Set<string> | string[]): Set<string> {
-  if (equippedItemIds instanceof Set) {
-    return equippedItemIds
+  const result = new Set<string>()
+  const items = equippedItemIds instanceof Set ? Array.from(equippedItemIds) : (equippedItemIds || [])
+  for (const item of items) {
+    if (typeof item === 'string' && item.trim()) {
+      result.add(item)
+      result.add(item.trim().toLowerCase())
+    }
   }
-  return new Set(equippedItemIds || [])
+  return result
 }
 
 export function isSourceActive(
@@ -23,7 +28,14 @@ export function isSourceActive(
 
   if (edge.sourceType === 'item') {
     const set = normalizeEquippedSet(equippedItemIds)
-    return set.has(edge.sourceId)
+    const matchesId = edge.sourceId
+      ? set.has(edge.sourceId) || set.has(edge.sourceId.trim().toLowerCase())
+      : false
+    const matchesName = edge.sourceName
+      ? set.has(edge.sourceName) || set.has(edge.sourceName.trim().toLowerCase())
+      : false
+
+    return matchesId || matchesName
   }
 
   return true

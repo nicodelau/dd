@@ -239,11 +239,21 @@ watchEffect(() => {
 })
 
 const equippedItemIds = computed(() => {
-  return new Set((props.character?.inventory || []).filter((i: any) => i.equipped).map((i: any) => i.id || i.name))
+  const inv = props.editMode
+    ? (props.editForm?.inventory || props.character?.inventory || [])
+    : (props.character?.inventory || [])
+  const set = new Set<string>()
+  for (const item of inv) {
+    if (item.equipped) {
+      if (item.id) set.add(item.id)
+      if (item.name) set.add(item.name)
+    }
+  }
+  return set
 })
 
 const activeModifiers = computed(() => {
-  return props.character?.notes?.modifierGraph?.modifiers || []
+  return (props.editMode ? props.editForm?.modifierGraph?.modifiers : props.character?.notes?.modifierGraph?.modifiers) || props.character?.notes?.modifierGraph?.modifiers || []
 })
 
 const abilityList = [

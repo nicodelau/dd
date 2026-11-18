@@ -562,7 +562,19 @@ async function saveCharacter() {
     currentNotesObj.magicAbilities = Array.isArray(magicAbilities) ? magicAbilities : []
     currentNotesObj.skillOverrides = skillOverrides && typeof skillOverrides === 'object' ? { ...skillOverrides } : {}
     currentNotesObj.savingThrowOverrides = savingThrowOverrides && typeof savingThrowOverrides === 'object' ? { ...savingThrowOverrides } : {}
-    currentNotesObj.modifierGraph = modifierGraph || currentNotesObj.modifierGraph || { version: 1, modifiers: [] }
+    const activeModGraph = modifierGraph || currentNotesObj.modifierGraph || { version: 1, modifiers: [] }
+    if (activeModGraph && Array.isArray(activeModGraph.modifiers) && Array.isArray(editInventory.value)) {
+      for (const mod of activeModGraph.modifiers) {
+        if (mod.sourceType === 'item' && mod.sourceName) {
+          const matchingItem = editInventory.value.find((i: any) => i.name === mod.sourceName || (i.id && i.id === mod.sourceId))
+          if (matchingItem) {
+            if (matchingItem.id) mod.sourceId = matchingItem.id
+            mod.sourceName = matchingItem.name
+          }
+        }
+      }
+    }
+    currentNotesObj.modifierGraph = activeModGraph
 
     const updateData = {
       ...updateFields,

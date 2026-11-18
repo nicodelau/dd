@@ -461,8 +461,10 @@ const modifiersList = computed(() => {
 })
 
 function getItemModifiers(item: any): ModifierEdge[] {
-  const id = item.id || item.name
-  return modifiersList.value.filter((m: ModifierEdge) => m.sourceId === id || m.sourceName === item.name)
+  return modifiersList.value.filter((m: ModifierEdge) => 
+    (item.id && m.sourceId === item.id) || 
+    (item.name && (m.sourceName === item.name || m.sourceId === item.name))
+  )
 }
 
 function addModifierToItem(item: any) {
