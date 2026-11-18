@@ -493,6 +493,8 @@ async function loadCharacter() {
       editForm.value.isWizard = !!notesObj.isWizard
       editForm.value.magicLimit = notesObj.magicLimit !== undefined ? Number(notesObj.magicLimit) : 100
       editForm.value.magicAbilities = Array.isArray(notesObj.magicAbilities) ? notesObj.magicAbilities : []
+      editForm.value.skillOverrides = notesObj.skillOverrides && typeof notesObj.skillOverrides === 'object' ? { ...notesObj.skillOverrides } : {}
+      editForm.value.savingThrowOverrides = notesObj.savingThrowOverrides && typeof notesObj.savingThrowOverrides === 'object' ? { ...notesObj.savingThrowOverrides } : {}
       imageLoadError.value = false
 
       editAttacks.value = response.data.attacks ? [...response.data.attacks] : []
@@ -544,13 +546,15 @@ async function saveCharacter() {
         }
       })
 
-    const { id, userId, ownerId, user, owner, createdAt, updatedAt, isWizard, magicLimit, magicAbilities, ...updateFields } = editForm.value
+    const { id, userId, ownerId, user, owner, createdAt, updatedAt, isWizard, magicLimit, magicAbilities, skillOverrides, savingThrowOverrides, ...updateFields } = editForm.value
 
     const currentNotesObj = character.value.notes && typeof character.value.notes === 'object' ? { ...character.value.notes } : {}
     currentNotesObj.text = characterNotes.value
     currentNotesObj.isWizard = !!isWizard
     currentNotesObj.magicLimit = magicLimit !== undefined ? Number(magicLimit) : 100
     currentNotesObj.magicAbilities = Array.isArray(magicAbilities) ? magicAbilities : []
+    currentNotesObj.skillOverrides = skillOverrides && typeof skillOverrides === 'object' ? { ...skillOverrides } : {}
+    currentNotesObj.savingThrowOverrides = savingThrowOverrides && typeof savingThrowOverrides === 'object' ? { ...savingThrowOverrides } : {}
 
     const updateData = {
       ...updateFields,
@@ -589,6 +593,8 @@ watch(editMode, (newValue) => {
     editForm.value.isWizard = !!notesObj.isWizard
     editForm.value.magicLimit = notesObj.magicLimit !== undefined ? Number(notesObj.magicLimit) : 100
     editForm.value.magicAbilities = Array.isArray(notesObj.magicAbilities) ? JSON.parse(JSON.stringify(notesObj.magicAbilities)) : []
+    editForm.value.skillOverrides = notesObj.skillOverrides && typeof notesObj.skillOverrides === 'object' ? { ...notesObj.skillOverrides } : {}
+    editForm.value.savingThrowOverrides = notesObj.savingThrowOverrides && typeof notesObj.savingThrowOverrides === 'object' ? { ...notesObj.savingThrowOverrides } : {}
 
     editAttacks.value = character.value.attacks ? [...character.value.attacks] : []
     editInventory.value = character.value.inventory ? [...character.value.inventory] : []

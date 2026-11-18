@@ -253,7 +253,7 @@
                 </template>
                 <template v-else>
                   <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60 tabular-nums">
-                    Bono: {{ attack.attackBonus !== undefined ? (attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus : '+0' }}
+                    Bono: {{ (attack.attackBonus !== undefined && attack.attackBonus !== null) ? ((attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus) : '+0' }}
                   </span>
                   <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700/60 tabular-nums font-bold">
                     {{ attack.damage || '1d4' }}
@@ -520,7 +520,6 @@
           </div>
         </template>
       </div>
-    </div>
     </div>
 
     <!-- Custom Combat Actions & Maneuvers -->

@@ -71,9 +71,26 @@
               ></span>
               <span class="capitalize text-zinc-300">{{ stat.ability }}</span>
             </div>
-            <span class="font-bold tabular-nums text-zinc-100">
-              {{ getFormattedBonus(calculateSavingThrow(stat.ability)) }}
-            </span>
+            <div class="flex items-center gap-1.5">
+              <template v-if="editMode">
+                <UInput
+                  v-model.number="editForm.savingThrowOverrides[stat.ability]"
+                  type="number"
+                  :placeholder="getFormattedBonus(calculateDefaultSavingThrow(stat.ability))"
+                  size="2xs"
+                  class="w-14 text-center font-mono font-bold"
+                />
+              </template>
+              <template v-else>
+                <span
+                  class="font-bold tabular-nums text-xs"
+                  :class="hasSaveOverride(stat.ability) ? 'text-amber-400' : 'text-zinc-100'"
+                  :title="hasSaveOverride(stat.ability) ? 'Modificador personalizado manual' : 'Modificador automático'"
+                >
+                  {{ getFormattedBonus(calculateSavingThrow(stat.ability)) }}
+                </span>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -166,12 +183,29 @@
               class="w-1.5 h-1.5 rounded-full"
               :class="isSkillProficient(skill.name) ? 'bg-sky-400' : 'bg-zinc-700'"
             ></span>
-            <span class="text-zinc-300 text-xs truncate max-w-[120px]">{{ skill.label }}</span>
+            <span class="text-zinc-300 text-xs truncate max-w-[110px]">{{ skill.label }}</span>
             <span class="text-[9px] uppercase text-zinc-500">({{ statAbbr(skill.ability) }})</span>
           </div>
-          <span class="font-bold tabular-nums text-zinc-100 text-xs">
-            {{ getFormattedBonus(calculateSkill(skill.name, skill.ability)) }}
-          </span>
+          <div class="flex items-center gap-1.5">
+            <template v-if="editMode">
+              <UInput
+                v-model.number="editForm.skillOverrides[skill.name]"
+                type="number"
+                :placeholder="getFormattedBonus(calculateDefaultSkill(skill.name, skill.ability))"
+                size="2xs"
+                class="w-14 text-center font-mono font-bold"
+              />
+            </template>
+            <template v-else>
+              <span
+                class="font-bold tabular-nums text-xs"
+                :class="hasSkillOverride(skill.name) ? 'text-amber-400' : 'text-zinc-100'"
+                :title="hasSkillOverride(skill.name) ? 'Modificador personalizado manual' : 'Modificador automático'"
+              >
+                {{ getFormattedBonus(calculateSkill(skill.name, skill.ability)) }}
+              </span>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -179,6 +213,7 @@
 </template>
 
 <script setup lang="ts">
+import { watchEffect } from 'vue'
 import {
   standardSkills,
   getAbilityModifier,
@@ -194,6 +229,13 @@ const props = defineProps<{
   savingThrowProficient: Record<string, boolean>
   skillProficient: Record<string, boolean>
 }>()
+
+watchEffect(() => {
+  if (props.editForm) {
+    if (!props.editForm.skillOverrides) props.editForm.skillOverrides = {}
+    if (!props.editForm.savingThrowOverrides) props.editForm.savingThrowOverrides = {}
+  }
+})
 
 const abilityList = [
   { key: 'str', ability: 'strength' },
@@ -217,11 +259,25 @@ function isSavingThrowProficient(ability: string): boolean {
   ) || false
 }
 
+function hasSaveOverride(ability: string): boolean {
+  const overrides = props.editMode ? props.editForm?.savingThrowOverrides : props.character?.notes?.savingThrowOverrides
+  const val = overrides?.[ability]
+  return val !== undefined && val !== null && val !== ''
+}
+
 function calculateSavingThrow(ability: string): number {
-  const score = props.character?.[ability] || 10
+  if (hasSaveOverride(ability)) {
+    const overrides = props.editMode ? props.editForm?.savingThrowOverrides : props.character?.notes?.savingThrowOverrides
+    return Number(overrides[ability])
+  }
+  return calculateDefaultSavingThrow(ability)
+}
+
+function calculateDefaultSavingThrow(ability: string): number {
+  const score = (props.editMode ? props.editForm?.[ability] : props.character?.[ability]) || 10
   const mod = getAbilityModifier(score)
   const isProf = isSavingThrowProficient(ability)
-  const pb = isProf ? (props.character?.proficiencyBonus || 2) : 0
+  const pb = isProf ? ((props.editMode ? props.editForm?.proficiencyBonus : props.character?.proficiencyBonus) || 2) : 0
   return mod + pb
 }
 
@@ -233,13 +289,27 @@ function isSkillProficient(name: string): boolean {
   return skill?.proficient || false
 }
 
+function hasSkillOverride(name: string): boolean {
+  const overrides = props.editMode ? props.editForm?.skillOverrides : props.character?.notes?.skillOverrides
+  const val = overrides?.[name]
+  return val !== undefined && val !== null && val !== ''
+}
+
 function calculateSkill(name: string, ability: string): number {
-  const score = props.character?.[ability] || 10
+  if (hasSkillOverride(name)) {
+    const overrides = props.editMode ? props.editForm?.skillOverrides : props.character?.notes?.skillOverrides
+    return Number(overrides[name])
+  }
+  return calculateDefaultSkill(name, ability)
+}
+
+function calculateDefaultSkill(name: string, ability: string): number {
+  const score = (props.editMode ? props.editForm?.[ability] : props.character?.[ability]) || 10
   const mod = getAbilityModifier(score)
   const skill = props.character?.skills?.find((s: any) => s.name === name)
   const isProf = props.skillProficient[name] !== undefined ? props.skillProficient[name] : (skill?.proficient || false)
   const hasExpertise = skill?.expertise || false
-  const pb = props.character?.proficiencyBonus || 2
+  const pb = (props.editMode ? props.editForm?.proficiencyBonus : props.character?.proficiencyBonus) || 2
   let total = mod
   if (isProf) {
     total += pb
