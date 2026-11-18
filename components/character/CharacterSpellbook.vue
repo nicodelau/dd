@@ -250,14 +250,14 @@ defineEmits<{
   (e: 'useAttackMagicPoints', attack: any): void
 }>()
 
-const tierOptions = [
-  { value: 'gris', label: 'Común' },
-  { value: 'azul', label: 'Refinado' },
-  { value: 'verde', label: 'Mágico' },
-  { value: 'violeta', label: 'Místico' },
-  { value: 'naranja', label: 'Épico' },
-  { value: 'rojo', label: 'Legendario' }
-]
+const tierOptions = computed(() => [
+  { value: 'gris', label: t('gris') || 'Común' },
+  { value: 'azul', label: t('azul') || 'Poco Común' },
+  { value: 'verde', label: t('verde') || 'Raro' },
+  { value: 'violeta', label: t('violeta') || 'Ultrararo' },
+  { value: 'naranja', label: t('naranja') || 'Épico' },
+  { value: 'rojo', label: t('rojo') || 'Legendario' }
+])
 
 const magicAttacks = computed(() => {
   if (!props.character?.attacks) return []

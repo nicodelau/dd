@@ -15,7 +15,7 @@ export function getTierClasses(tier?: string): TierClassConfig {
         text: 'text-sky-400 font-medium',
         badge: 'bg-sky-900/40 text-sky-300 border border-sky-700/50',
         badgeColor: 'sky',
-        name: 'Refinado',
+        name: 'Poco Común',
         glow: ''
       }
     case 'verde':
@@ -24,7 +24,7 @@ export function getTierClasses(tier?: string): TierClassConfig {
         text: 'text-emerald-400 font-medium',
         badge: 'bg-emerald-900/40 text-emerald-300 border border-emerald-700/50',
         badgeColor: 'emerald',
-        name: 'Mágico',
+        name: 'Raro',
         glow: ''
       }
     case 'violeta':
@@ -33,7 +33,7 @@ export function getTierClasses(tier?: string): TierClassConfig {
         text: 'text-violet-400 font-medium',
         badge: 'bg-violet-900/40 text-violet-300 border border-violet-700/50',
         badgeColor: 'violet',
-        name: 'Místico',
+        name: 'Ultrararo',
         glow: ''
       }
     case 'naranja':
@@ -67,6 +67,15 @@ export function getTierClasses(tier?: string): TierClassConfig {
       }
   }
 }
+
+export const defaultTierOptions = [
+  { value: 'gris', label: 'Común' },
+  { value: 'azul', label: 'Poco Común' },
+  { value: 'verde', label: 'Raro' },
+  { value: 'violeta', label: 'Ultrararo' },
+  { value: 'naranja', label: 'Épico' },
+  { value: 'rojo', label: 'Legendario' }
+]
 
 export function getTierBannerBg(tier?: string): string {
   switch (tier?.toLowerCase()) {

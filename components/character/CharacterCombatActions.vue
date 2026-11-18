@@ -180,144 +180,347 @@
 
       <!-- Attacks List -->
       <div v-else class="space-y-3">
-        <div
-          v-for="(attack, index) in editMode ? editAttacks : filteredAttacks"
-          :key="attack.id || index"
-          class="rounded border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-3"
-          :class="!editMode && attack.tier ? getTierClasses(attack.tier).card : ''"
-        >
-          <!-- Attack Header Row -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="flex-1 flex items-center gap-2">
-              <template v-if="editMode">
-                <UInput
-                  v-model="editAttacks[index].name"
-                  :placeholder="t('attackName')"
-                  size="xs"
-                  class="flex-1 max-w-xs font-semibold"
-                />
-                <USelect
-                  v-model="editAttacks[index].tier"
-                  :options="tierOptions"
-                  size="xs"
-                  class="w-28"
-                />
-              </template>
-              <template v-else>
-                <span class="font-bold text-sm text-zinc-100" :class="getTierClasses(attack.tier).text">
-                  {{ attack.name }}
-                </span>
-                <UBadge
-                  v-if="attack.tier"
-                  :color="getTierClasses(attack.tier).badgeColor"
-                  size="xs"
-                  variant="subtle"
-                  class="font-mono text-[10px]"
-                >
-                  {{ getTierClasses(attack.tier).name }}
-                </UBadge>
-                <UBadge
-                  v-if="attack.isMagic"
-                  color="sky"
-                  size="xs"
-                  variant="subtle"
-                  class="font-mono text-[10px]"
-                >
-                  {{ attack.magicCost || 0 }} MP
-                </UBadge>
-              </template>
-            </div>
+        <template v-for="(attack, index) in (editMode ? editAttacks : filteredAttacks)" :key="attack.id || index">
+          <div
+            v-if="!editMode || attack.type !== 'skill'"
+            class="rounded border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-3"
+            :class="!editMode && attack.tier ? getTierClasses(attack.tier).card : ''"
+          >
+            <!-- Attack Header Row -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex-1 flex items-center gap-2">
+                <template v-if="editMode">
+                  <UInput
+                    v-model="editAttacks[index].name"
+                    :placeholder="t('attackName')"
+                    size="xs"
+                    class="flex-1 max-w-xs font-semibold"
+                  />
+                  <USelect
+                    v-model="editAttacks[index].tier"
+                    :options="tierOptions"
+                    size="xs"
+                    class="w-28"
+                  />
+                </template>
+                <template v-else>
+                  <span class="font-bold text-sm text-zinc-100" :class="getTierClasses(attack.tier).text">
+                    {{ attack.name }}
+                  </span>
+                  <UBadge
+                    v-if="attack.tier"
+                    :color="getTierClasses(attack.tier).badgeColor"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getTierClasses(attack.tier).name }}
+                  </UBadge>
+                  <UBadge
+                    v-if="attack.isMagic"
+                    color="sky"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ attack.magicCost || 0 }} MP
+                  </UBadge>
+                </template>
+              </div>
 
-            <!-- Attack Bonus, Damage, Range Badges -->
-            <div class="flex items-center gap-2 font-mono text-xs">
-              <template v-if="editMode">
-                <UInput
-                  v-model.number="editAttacks[index].attackBonus"
-                  type="number"
-                  placeholder="+Bonus"
-                  size="xs"
-                  class="w-16 text-center"
-                />
-                <UInput
-                  v-model="editAttacks[index].damage"
-                  placeholder="1d8+3"
-                  size="xs"
-                  class="w-24 text-center"
-                />
-                <UInput
-                  v-model="editAttacks[index].rangeText"
-                  placeholder="5 ft"
-                  size="xs"
-                  class="w-20 text-center"
-                />
-              </template>
-              <template v-else>
-                <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60 tabular-nums">
-                  Bono: {{ attack.attackBonus !== undefined ? (attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus : '+0' }}
-                </span>
-                <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700/60 tabular-nums font-bold">
-                  {{ attack.damage || '1d4' }}
-                </span>
-                <span v-if="attack.rangeText" class="text-zinc-400 text-[11px]">
-                  {{ attack.rangeText }}
-                </span>
-              </template>
-            </div>
-          </div>
-
-          <!-- Description / Notes -->
-          <div v-if="editMode || attack.notes" class="text-xs">
-            <UTextarea
-              v-if="editMode"
-              v-model="editAttacks[index].notes"
-              :placeholder="t('attackDescription')"
-              :rows="2"
-              size="xs"
-            />
-            <p v-else class="text-zinc-400 text-xs italic border-t border-zinc-800/60 pt-2 mt-1">
-              {{ attack.notes }}
-            </p>
-          </div>
-
-          <!-- Edit Mode Flags (Magic, Type, Trash) -->
-          <div v-if="editMode" class="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800/60 pt-2 text-xs">
-            <div class="flex items-center gap-3">
-              <USelect
-                v-model="editAttacks[index].type"
-                :options="[
-                  { value: 'attack', label: t('attackType') },
-                  { value: 'skill', label: t('skillType') }
-                ]"
-                size="xs"
-                class="w-28"
-              />
-              <div class="flex items-center gap-1.5 font-mono">
-                <UCheckbox v-model="editAttacks[index].isMagic" size="sm" />
-                <span class="text-zinc-400 text-xs">Mágico</span>
-                <UInput
-                  v-if="editAttacks[index].isMagic"
-                  v-model.number="editAttacks[index].magicCost"
-                  type="number"
-                  min="0"
-                  size="2xs"
-                  placeholder="MP"
-                  class="w-14"
-                />
+              <!-- Attack Bonus, Damage, Range Badges -->
+              <div class="flex items-center gap-2 font-mono text-xs">
+                <template v-if="editMode">
+                  <UInput
+                    v-model.number="editAttacks[index].attackBonus"
+                    type="number"
+                    placeholder="+Bonus"
+                    size="xs"
+                    class="w-16 text-center"
+                  />
+                  <UInput
+                    v-model="editAttacks[index].damage"
+                    placeholder="1d8+3"
+                    size="xs"
+                    class="w-24 text-center"
+                  />
+                  <UInput
+                    v-model="editAttacks[index].rangeText"
+                    placeholder="5 ft"
+                    size="xs"
+                    class="w-20 text-center"
+                  />
+                </template>
+                <template v-else>
+                  <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60 tabular-nums">
+                    Bono: {{ attack.attackBonus !== undefined ? (attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus : '+0' }}
+                  </span>
+                  <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700/60 tabular-nums font-bold">
+                    {{ attack.damage || '1d4' }}
+                  </span>
+                  <span v-if="attack.rangeText" class="text-zinc-400 text-[11px]">
+                    {{ attack.rangeText }}
+                  </span>
+                </template>
               </div>
             </div>
 
-            <UButton
-              color="rose"
-              variant="ghost"
-              size="xs"
-              icon="i-heroicons-trash"
-              @click="$emit('removeAttack', index)"
-            >
-              {{ t('remove') }}
-            </UButton>
+            <!-- Description / Notes -->
+            <div v-if="editMode || attack.notes" class="text-xs">
+              <UTextarea
+                v-if="editMode"
+                v-model="editAttacks[index].notes"
+                :placeholder="t('attackDescription')"
+                :rows="2"
+                size="xs"
+              />
+              <p v-else class="text-zinc-400 text-xs italic border-t border-zinc-800/60 pt-2 mt-1">
+                {{ attack.notes }}
+              </p>
+            </div>
+
+            <!-- Edit Mode Flags (Magic, Type, Trash) -->
+            <div v-if="editMode" class="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800/60 pt-2 text-xs">
+              <div class="flex items-center gap-3">
+                <USelect
+                  v-model="editAttacks[index].type"
+                  :options="[
+                    { value: 'attack', label: t('attackType') },
+                    { value: 'skill', label: t('skillType') }
+                  ]"
+                  size="xs"
+                  class="w-28"
+                />
+                <div class="flex items-center gap-1.5 font-mono">
+                  <UCheckbox v-model="editAttacks[index].isMagic" size="sm" />
+                  <span class="text-zinc-400 text-xs">Mágico</span>
+                  <UInput
+                    v-if="editAttacks[index].isMagic"
+                    v-model.number="editAttacks[index].magicCost"
+                    type="number"
+                    min="0"
+                    size="2xs"
+                    placeholder="MP"
+                    class="w-14"
+                  />
+                </div>
+              </div>
+
+              <UButton
+                color="rose"
+                variant="ghost"
+                size="xs"
+                icon="i-heroicons-trash"
+                @click="$emit('removeAttack', index)"
+              >
+                {{ t('remove') }}
+              </UButton>
+            </div>
+            <!-- Read Mode Magic Button -->
+            <div v-else-if="attack.isMagic && character?.notes?.isWizard" class="flex justify-end border-t border-zinc-800/60 pt-2 font-mono">
+              <UButton
+                color="sky"
+                size="xs"
+                variant="ghost"
+                icon="i-heroicons-bolt"
+                @click="$emit('useAttackMagicPoints', attack)"
+              >
+                Lanzar Magia ({{ attack.magicCost || 0 }} MP)
+              </UButton>
+            </div>
           </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Custom Skills & Abilities Section -->
+    <div class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-5 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-zinc-800 gap-2">
+        <h3 class="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-300">
+          {{ t('skillsLabel') || 'Habilidades' }}
+        </h3>
+        <div class="flex items-center gap-2">
+          <!-- Filters & Sorting (Read Mode) -->
+          <template v-if="!editMode && character.attacks && character.attacks.filter(a => a.type === 'skill').length > 0">
+            <USelect
+              v-model="filterSkillTier"
+              :options="filterTierOptions"
+              size="xs"
+              class="w-32"
+            />
+            <USelect
+              v-model="skillSortBy"
+              :options="sortOptions"
+              size="xs"
+              class="w-40"
+            />
+          </template>
+
+          <UButton
+            v-if="editMode && canEdit"
+            color="red"
+            variant="ghost"
+            size="xs"
+            icon="i-heroicons-plus"
+            @click="$emit('addSkill')"
+          >
+            {{ t('addSkill') || 'Añadir Habilidad' }}
+          </UButton>
         </div>
       </div>
+
+      <!-- Skills Empty State -->
+      <div
+        v-if="editMode ? (!editAttacks || editAttacks.filter(a => a.type === 'skill').length === 0) : (!filteredSkills || filteredSkills.length === 0)"
+        class="text-center py-6 text-xs text-zinc-500 font-mono"
+      >
+        {{ t('noSkills') || 'No hay habilidades configuradas.' }}
+      </div>
+
+      <!-- Skills List -->
+      <div v-else class="space-y-3">
+        <template v-for="(ability, index) in (editMode ? editAttacks : filteredSkills)" :key="ability.id || index">
+          <div
+            v-if="!editMode || ability.type === 'skill'"
+            class="rounded border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-3"
+            :class="!editMode && ability.tier ? getTierClasses(ability.tier).card : ''"
+          >
+            <!-- Skill Header Row -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex-1 flex items-center gap-2">
+                <template v-if="editMode">
+                  <UInput
+                    v-model="editAttacks[index].name"
+                    :placeholder="t('skillName') || 'Nombre de la habilidad'"
+                    size="xs"
+                    class="flex-1 max-w-xs font-semibold"
+                  />
+                  <USelect
+                    v-model="editAttacks[index].tier"
+                    :options="tierOptions"
+                    size="xs"
+                    class="w-28"
+                  />
+                </template>
+                <template v-else>
+                  <span class="font-bold text-sm text-zinc-100" :class="getTierClasses(ability.tier).text">
+                    {{ ability.name }}
+                  </span>
+                  <UBadge
+                    v-if="ability.tier"
+                    :color="getTierClasses(ability.tier).badgeColor"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getTierClasses(ability.tier).name }}
+                  </UBadge>
+                  <UBadge
+                    v-if="ability.isMagic"
+                    color="sky"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ ability.magicCost || 0 }} MP
+                  </UBadge>
+                </template>
+              </div>
+
+              <!-- Effect/Damage & Range Badges / Inputs -->
+              <div class="flex items-center gap-2 font-mono text-xs">
+                <template v-if="editMode">
+                  <UInput
+                    v-model="editAttacks[index].damage"
+                    placeholder="Daño / Efecto (ej. 8d6 Fuego)"
+                    size="xs"
+                    class="w-36 text-center"
+                  />
+                  <UInput
+                    v-model="editAttacks[index].rangeText"
+                    placeholder="Rango (ej. 30 ft)"
+                    size="xs"
+                    class="w-28 text-center"
+                  />
+                </template>
+                <template v-else>
+                  <span v-if="ability.damage" class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700/60 tabular-nums font-bold">
+                    {{ ability.damage }}
+                  </span>
+                  <span v-if="ability.rangeText" class="text-zinc-400 text-[11px]">
+                    {{ ability.rangeText }}
+                  </span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Description / Notes -->
+            <div v-if="editMode || ability.notes" class="text-xs">
+              <UTextarea
+                v-if="editMode"
+                v-model="editAttacks[index].notes"
+                :placeholder="t('skillDescriptionPlaceholder') || 'Descripción del efecto...'"
+                :rows="2"
+                size="xs"
+              />
+              <p v-else class="text-zinc-400 text-xs italic border-t border-zinc-800/60 pt-2 mt-1">
+                {{ ability.notes }}
+              </p>
+            </div>
+
+            <!-- Edit Mode Flags (Magic, Type, Trash) -->
+            <div v-if="editMode" class="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800/60 pt-2 text-xs">
+              <div class="flex items-center gap-3">
+                <USelect
+                  v-model="editAttacks[index].type"
+                  :options="[
+                    { value: 'attack', label: t('attackType') || 'Ataque' },
+                    { value: 'skill', label: t('skillType') || 'Habilidad' }
+                  ]"
+                  size="xs"
+                  class="w-28"
+                />
+                <div class="flex items-center gap-1.5 font-mono">
+                  <UCheckbox v-model="editAttacks[index].isMagic" size="sm" />
+                  <span class="text-zinc-400 text-xs">Mágico</span>
+                  <UInput
+                    v-if="editAttacks[index].isMagic"
+                    v-model.number="editAttacks[index].magicCost"
+                    type="number"
+                    min="0"
+                    size="2xs"
+                    placeholder="MP"
+                    class="w-14"
+                  />
+                </div>
+              </div>
+
+              <UButton
+                color="rose"
+                variant="ghost"
+                size="xs"
+                icon="i-heroicons-trash"
+                @click="$emit('removeAttack', index)"
+              >
+                {{ t('remove') }}
+              </UButton>
+            </div>
+            <!-- Read Mode Magic Button -->
+            <div v-else-if="ability.isMagic && character?.notes?.isWizard" class="flex justify-end border-t border-zinc-800/60 pt-2 font-mono">
+              <UButton
+                color="sky"
+                size="xs"
+                variant="ghost"
+                icon="i-heroicons-bolt"
+                @click="$emit('useAttackMagicPoints', ability)"
+              >
+                Lanzar Magia ({{ ability.magicCost || 0 }} MP)
+              </UButton>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
     </div>
 
     <!-- Custom Combat Actions & Maneuvers -->
@@ -452,21 +655,25 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'addAttack'): void
+  (e: 'addSkill'): void
   (e: 'removeAttack', index: number): void
   (e: 'addCombatAction'): void
   (e: 'removeCombatAction', index: number): void
+  (e: 'useAttackMagicPoints', attack: any): void
 }>()
 
 const filterTier = ref('all')
 const sortBy = ref('tier')
+const filterSkillTier = ref('all')
+const skillSortBy = ref('tier')
 
 const tierOptions = computed(() => [
-  { value: 'gris', label: 'Común' },
-  { value: 'azul', label: 'Refinado' },
-  { value: 'verde', label: 'Mágico' },
-  { value: 'violeta', label: 'Místico' },
-  { value: 'naranja', label: 'Épico' },
-  { value: 'rojo', label: 'Legendario' }
+  { value: 'gris', label: t('gris') || 'Común' },
+  { value: 'azul', label: t('azul') || 'Poco Común' },
+  { value: 'verde', label: t('verde') || 'Raro' },
+  { value: 'violeta', label: t('violeta') || 'Ultrararo' },
+  { value: 'naranja', label: t('naranja') || 'Épico' },
+  { value: 'rojo', label: t('rojo') || 'Legendario' }
 ])
 
 const filterTierOptions = computed(() => [
@@ -482,7 +689,7 @@ const sortOptions = [
 
 const filteredAttacks = computed(() => {
   if (!props.character?.attacks) return []
-  let list = props.character.attacks.filter((a: any) => a.type !== 'skill' && !a.isMagic)
+  let list = props.character.attacks.filter((a: any) => a.type !== 'skill')
   if (filterTier.value !== 'all') {
     list = list.filter((a: any) => (a.tier || 'gris').toLowerCase() === filterTier.value.toLowerCase())
   }
@@ -492,6 +699,24 @@ const filteredAttacks = computed(() => {
     } else if (sortBy.value === 'newest') {
       return (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime())
     } else if (sortBy.value === 'oldest') {
+      return (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime())
+    }
+    return 0
+  })
+})
+
+const filteredSkills = computed(() => {
+  if (!props.character?.attacks) return []
+  let list = props.character.attacks.filter((a: any) => a.type === 'skill')
+  if (filterSkillTier.value !== 'all') {
+    list = list.filter((a: any) => (a.tier || 'gris').toLowerCase() === filterSkillTier.value.toLowerCase())
+  }
+  return list.sort((a: any, b: any) => {
+    if (skillSortBy.value === 'tier') {
+      return getTierPriority(b.tier) - getTierPriority(a.tier)
+    } else if (skillSortBy.value === 'newest') {
+      return (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime())
+    } else if (skillSortBy.value === 'oldest') {
       return (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime())
     }
     return 0

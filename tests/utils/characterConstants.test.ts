@@ -27,12 +27,19 @@ describe('characterConstants utility', () => {
     const common = getTierClasses('gris')
     expect(common.card).toContain('bg-zinc-900/40')
     expect(common.glow).toBe('') // No decorative neon glow
+    expect(common.name).toBe('Común')
 
-    const refined = getTierClasses('azul')
-    expect(refined.text).toContain('text-sky-400')
+    const uncommon = getTierClasses('azul')
+    expect(uncommon.text).toContain('text-sky-400')
+    expect(uncommon.name).toBe('Poco Común')
+
+    expect(getTierClasses('verde').name).toBe('Raro')
+    expect(getTierClasses('violeta').name).toBe('Ultrararo')
+    expect(getTierClasses('naranja').name).toBe('Épico')
 
     const divine = getTierClasses('rojo')
     expect(divine.badgeColor).toBe('rose')
+    expect(divine.name).toBe('Legendario')
   })
 
   it('calculates tier priority for sorting correctly', () => {

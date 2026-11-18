@@ -138,9 +138,11 @@
             :edit-attacks="editAttacks"
             :edit-combat-actions="editCombatActions"
             @add-attack="addAttack"
+            @add-skill="addSkill"
             @remove-attack="removeAttack"
             @add-combat-action="addCombatAction"
             @remove-combat-action="removeCombatAction"
+            @use-attack-magic-points="useAttackMagicPoints"
           />
         </div>
 
@@ -257,6 +259,20 @@ function addAttack() {
     rangeText: '',
     notes: '',
     type: 'attack',
+    tier: 'gris',
+    isMagic: false,
+    magicCost: 0
+  })
+}
+
+function addSkill() {
+  editAttacks.value.push({
+    name: '',
+    attackBonus: undefined,
+    damage: '',
+    rangeText: '',
+    notes: '',
+    type: 'skill',
     tier: 'gris',
     isMagic: false,
     magicCost: 0
