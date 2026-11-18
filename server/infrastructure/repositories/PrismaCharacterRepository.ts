@@ -334,6 +334,43 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         })
       }
 
+      // Handle related entities updates safely
+      const typedCharacterData = characterData as any
+
+      // If attacks have category or form, persist to attackMetadata inside notes
+      if (Array.isArray(typedCharacterData.attacks)) {
+        let notesObj: any = {}
+        try {
+          if (characterData.notes) {
+            notesObj = typeof characterData.notes === 'string' ? JSON.parse(characterData.notes) : { ...characterData.notes }
+          } else if (updateData.notes) {
+            notesObj = typeof updateData.notes === 'string' ? JSON.parse(updateData.notes) : { ...updateData.notes }
+          }
+        } catch (e) {
+          notesObj = {}
+        }
+
+        const existingMeta = notesObj.attackMetadata || {}
+        let hasMetaChanges = false
+
+        for (const att of typedCharacterData.attacks) {
+          const key = att.id || att.name
+          if (key && (att.attackCategory || att.attackForm)) {
+            existingMeta[key] = {
+              ...(existingMeta[key] || {}),
+              ...(att.attackCategory && { attackCategory: att.attackCategory }),
+              ...(att.attackForm && { attackForm: att.attackForm })
+            }
+            hasMetaChanges = true
+          }
+        }
+
+        if (hasMetaChanges) {
+          notesObj.attackMetadata = existingMeta
+          updateData.notes = JSON.stringify(notesObj)
+        }
+      }
+
       // Execute all updates inside an atomic database transaction
       const updatedCharacter = await this.prisma.$transaction(async (tx) => {
         // Update character root fields
@@ -341,9 +378,6 @@ export class PrismaCharacterRepository implements ICharacterRepository {
           where: { id },
           data: updateData
         })
-
-        // Handle related entities updates safely
-        const typedCharacterData = characterData as any
 
         // Update saving throws if explicitly provided as an array
         if (Array.isArray(typedCharacterData.savingThrows)) {
@@ -395,6 +429,7 @@ export class PrismaCharacterRepository implements ICharacterRepository {
                 name: attack.name,
                 attackBonus: parseOptionalInt(attack.attackBonus),
                 damageDice: attack.damage, // Map damage to damageDice
+                damageType: attack.damageType || null,
                 range: attack.rangeText, // Map rangeText to range
                 description: attack.notes, // Map notes to description
                 type: attack.type || 'attack',
@@ -566,21 +601,39 @@ export class PrismaCharacterRepository implements ICharacterRepository {
         createdAt: item.createdAt ? item.createdAt.toISOString() : undefined
       })) || [],
       // Attacks
-      attacks: prismaCharacter.attacks?.map((attack: any) => ({
-        id: attack.id,
-        characterId: prismaCharacter.id as any,
-        name: attack.name,
-        attackBonus: attack.attackBonus,
-        damage: attack.damageDice, // Map damageDice back to damage
-        rangeText: attack.range, // Map range back to rangeText
-        notes: attack.description, // Map description back to notes
-        type: attack.type || 'attack',
-        tier: attack.tier || 'gris',
-        isMagic: !!attack.isMagic,
-        magicCost: attack.magicCost || 0,
-        usedCount: attack.usedCount || 0,
-        createdAt: attack.createdAt ? attack.createdAt.toISOString() : undefined
-      })) || [],
+      attacks: (() => {
+        let attackMeta: Record<string, any> = {}
+        try {
+          if (prismaCharacter.notes) {
+            const parsed = typeof prismaCharacter.notes === 'string' ? JSON.parse(prismaCharacter.notes) : prismaCharacter.notes
+            if (parsed && typeof parsed === 'object' && parsed.attackMetadata) {
+              attackMeta = parsed.attackMetadata
+            }
+          }
+        } catch (e) {}
+
+        return prismaCharacter.attacks?.map((attack: any) => {
+          const meta = attackMeta[attack.id] || attackMeta[attack.name] || {}
+          return {
+            id: attack.id,
+            characterId: prismaCharacter.id as any,
+            name: attack.name,
+            attackBonus: attack.attackBonus,
+            damage: attack.damageDice, // Map damageDice back to damage
+            damageType: attack.damageType,
+            attackCategory: meta.attackCategory || 'arma',
+            attackForm: meta.attackForm || 'melee',
+            rangeText: attack.range, // Map range back to rangeText
+            notes: attack.description, // Map description back to notes
+            type: attack.type || 'attack',
+            tier: attack.tier || 'gris',
+            isMagic: !!attack.isMagic,
+            magicCost: attack.magicCost || 0,
+            usedCount: attack.usedCount || 0,
+            createdAt: attack.createdAt ? attack.createdAt.toISOString() : undefined
+          }
+        }) || []
+      })(),
       // Combat Actions
       combatActions: prismaCharacter.combatActions?.map((action: any) => ({
         id: action.id,

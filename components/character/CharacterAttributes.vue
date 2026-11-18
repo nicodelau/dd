@@ -84,8 +84,8 @@
               <template v-else>
                 <span
                   class="font-bold tabular-nums text-xs"
-                  :class="hasSaveOverride(stat.ability) ? 'text-amber-400' : 'text-zinc-100'"
-                  :title="hasSaveOverride(stat.ability) ? 'Modificador personalizado manual' : 'Modificador automático'"
+                  :class="hasSaveOverride(stat.ability) || getSaveModifiers(stat.ability).modifiers.length > 0 ? 'text-amber-400' : 'text-zinc-100'"
+                  :title="getSaveTooltip(stat.ability)"
                 >
                   {{ getFormattedBonus(calculateSavingThrow(stat.ability)) }}
                 </span>
@@ -199,8 +199,8 @@
             <template v-else>
               <span
                 class="font-bold tabular-nums text-xs"
-                :class="hasSkillOverride(skill.name) ? 'text-amber-400' : 'text-zinc-100'"
-                :title="hasSkillOverride(skill.name) ? 'Modificador personalizado manual' : 'Modificador automático'"
+                :class="hasSkillOverride(skill.name) || getSkillModifiers(skill.name, skill.ability).modifiers.length > 0 ? 'text-amber-400' : 'text-zinc-100'"
+                :title="getSkillTooltip(skill.name, skill.ability)"
               >
                 {{ getFormattedBonus(calculateSkill(skill.name, skill.ability)) }}
               </span>
@@ -213,12 +213,13 @@
 </template>
 
 <script setup lang="ts">
-import { watchEffect } from 'vue'
+import { watchEffect, computed } from 'vue'
 import {
   standardSkills,
   getAbilityModifier,
   getFormattedBonus
 } from '~/utils/characterConstants'
+import { evaluateSkill, evaluateSavingThrow } from '~/utils/modifierGraph'
 
 const { t } = useTranslations()
 
@@ -235,6 +236,14 @@ watchEffect(() => {
     if (!props.editForm.skillOverrides) props.editForm.skillOverrides = {}
     if (!props.editForm.savingThrowOverrides) props.editForm.savingThrowOverrides = {}
   }
+})
+
+const equippedItemIds = computed(() => {
+  return new Set((props.character?.inventory || []).filter((i: any) => i.equipped).map((i: any) => i.id || i.name))
+})
+
+const activeModifiers = computed(() => {
+  return props.character?.notes?.modifierGraph?.modifiers || []
 })
 
 const abilityList = [
@@ -266,11 +275,32 @@ function hasSaveOverride(ability: string): boolean {
 }
 
 function calculateSavingThrow(ability: string): number {
+  let baseVal = calculateDefaultSavingThrow(ability)
   if (hasSaveOverride(ability)) {
     const overrides = props.editMode ? props.editForm?.savingThrowOverrides : props.character?.notes?.savingThrowOverrides
-    return Number(overrides[ability])
+    baseVal = Number(overrides[ability])
   }
-  return calculateDefaultSavingThrow(ability)
+  if (!props.editMode) {
+    const evaluated = evaluateSavingThrow(ability, baseVal, activeModifiers.value, equippedItemIds.value)
+    return evaluated.totalValue
+  }
+  return baseVal
+}
+
+function getSaveModifiers(ability: string) {
+  let baseVal = calculateDefaultSavingThrow(ability)
+  if (hasSaveOverride(ability)) {
+    baseVal = Number(props.character?.notes?.savingThrowOverrides?.[ability])
+  }
+  return evaluateSavingThrow(ability, baseVal, activeModifiers.value, equippedItemIds.value)
+}
+
+function getSaveTooltip(ability: string): string {
+  const mods = getSaveModifiers(ability)
+  if (mods.modifiers.length > 0) {
+    return `Base: ${getFormattedBonus(mods.baseValue)} + ${mods.modifiers.map(m => `${m.sourceName} (+${m.value})`).join(', ')}`
+  }
+  return hasSaveOverride(ability) ? 'Modificador personalizado manual' : 'Modificador automático'
 }
 
 function calculateDefaultSavingThrow(ability: string): number {
@@ -296,11 +326,32 @@ function hasSkillOverride(name: string): boolean {
 }
 
 function calculateSkill(name: string, ability: string): number {
+  let baseVal = calculateDefaultSkill(name, ability)
   if (hasSkillOverride(name)) {
     const overrides = props.editMode ? props.editForm?.skillOverrides : props.character?.notes?.skillOverrides
-    return Number(overrides[name])
+    baseVal = Number(overrides[name])
   }
-  return calculateDefaultSkill(name, ability)
+  if (!props.editMode) {
+    const evaluated = evaluateSkill(name, baseVal, activeModifiers.value, equippedItemIds.value)
+    return evaluated.totalValue
+  }
+  return baseVal
+}
+
+function getSkillModifiers(name: string, ability: string) {
+  let baseVal = calculateDefaultSkill(name, ability)
+  if (hasSkillOverride(name)) {
+    baseVal = Number(props.character?.notes?.skillOverrides?.[name])
+  }
+  return evaluateSkill(name, baseVal, activeModifiers.value, equippedItemIds.value)
+}
+
+function getSkillTooltip(name: string, ability: string): string {
+  const mods = getSkillModifiers(name, ability)
+  if (mods.modifiers.length > 0) {
+    return `Base: ${getFormattedBonus(mods.baseValue)} + ${mods.modifiers.map(m => `${m.sourceName} (+${m.value})`).join(', ')}`
+  }
+  return hasSkillOverride(name) ? 'Modificador personalizado manual' : 'Modificador automático'
 }
 
 function calculateDefaultSkill(name: string, ability: string): number {

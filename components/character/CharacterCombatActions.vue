@@ -188,7 +188,7 @@
           >
             <!-- Attack Header Row -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div class="flex-1 flex items-center gap-2">
+              <div class="flex-1 flex flex-wrap items-center gap-1.5">
                 <template v-if="editMode">
                   <UInput
                     v-model="editAttacks[index].name"
@@ -215,6 +215,33 @@
                     class="font-mono text-[10px]"
                   >
                     {{ getTierClasses(attack.tier).name }}
+                  </UBadge>
+                  <UBadge
+                    v-if="attack.damageType && getDamageTypeConfig(attack.damageType)"
+                    :color="getDamageTypeConfig(attack.damageType)?.badgeColor"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getDamageTypeConfig(attack.damageType)?.label }}
+                  </UBadge>
+                  <UBadge
+                    v-if="attack.attackCategory"
+                    color="gray"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getAttackCategoryLabel(attack.attackCategory) }}
+                  </UBadge>
+                  <UBadge
+                    v-if="attack.attackForm"
+                    color="gray"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getAttackFormLabel(attack.attackForm) }}
                   </UBadge>
                   <UBadge
                     v-if="attack.isMagic"
@@ -252,17 +279,77 @@
                   />
                 </template>
                 <template v-else>
-                  <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60 tabular-nums">
-                    Bono: {{ (attack.attackBonus !== undefined && attack.attackBonus !== null) ? ((attack.attackBonus >= 0 ? '+' : '') + attack.attackBonus) : '+0' }}
+                  <span
+                    class="px-2 py-0.5 rounded border tabular-nums"
+                    :class="getEvaluated(attack).totalAttackBonus !== (attack.attackBonus ?? 0)
+                      ? 'bg-amber-950/40 text-amber-300 border-amber-600/60 font-bold'
+                      : 'bg-zinc-800 text-zinc-300 border-zinc-700/60'"
+                    :title="getEvaluated(attack).toHitModifiers.length > 0 ? getEvaluated(attack).toHitModifiers.map(m => `${m.sourceName}: +${m.value}`).join(', ') : undefined"
+                  >
+                    Bono: {{ (getEvaluated(attack).totalAttackBonus >= 0 ? '+' : '') + getEvaluated(attack).totalAttackBonus }}
                   </span>
-                  <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700/60 tabular-nums font-bold">
-                    {{ attack.damage || '1d4' }}
+                  <span
+                    class="px-2 py-0.5 rounded border tabular-nums font-bold"
+                    :class="getEvaluated(attack).totalDamageFormula !== (attack.damage || '1d4')
+                      ? 'bg-amber-950/40 text-amber-200 border-amber-600/60'
+                      : 'bg-zinc-800 text-zinc-200 border-zinc-700/60'"
+                  >
+                    {{ getEvaluated(attack).totalDamageFormula }}
                   </span>
                   <span v-if="attack.rangeText" class="text-zinc-400 text-[11px]">
                     {{ attack.rangeText }}
                   </span>
                 </template>
               </div>
+            </div>
+
+            <!-- Edit Mode: Damage Type, Attack Category, Attack Form Selects -->
+            <div v-if="editMode" class="flex flex-wrap items-center gap-2 pt-1 pb-1 border-b border-zinc-800/60">
+              <div class="flex items-center gap-1 font-mono text-xs">
+                <span class="text-zinc-500 text-[10px]">Daño:</span>
+                <USelect
+                  v-model="editAttacks[index].damageType"
+                  :options="damageTypeOptions"
+                  size="2xs"
+                  class="w-32"
+                />
+              </div>
+              <div class="flex items-center gap-1 font-mono text-xs">
+                <span class="text-zinc-500 text-[10px]">Tipo:</span>
+                <USelect
+                  v-model="editAttacks[index].attackCategory"
+                  :options="attackCategoryOptions"
+                  size="2xs"
+                  class="w-28"
+                />
+              </div>
+              <div class="flex items-center gap-1 font-mono text-xs">
+                <span class="text-zinc-500 text-[10px]">Forma:</span>
+                <USelect
+                  v-model="editAttacks[index].attackForm"
+                  :options="attackFormOptions"
+                  size="2xs"
+                  class="w-36"
+                />
+              </div>
+            </div>
+
+            <!-- Read Mode: Applied Sources / Modifiers Breakdown -->
+            <div
+              v-else-if="getEvaluated(attack).appliedSources.length > 0"
+              class="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-amber-400/90 pt-1 border-t border-zinc-800/40"
+            >
+              <span class="text-zinc-500 text-[10px] uppercase tracking-wider">Modificadores Activos:</span>
+              <UBadge
+                v-for="source in getEvaluated(attack).appliedSources"
+                :key="source"
+                color="amber"
+                variant="subtle"
+                size="2xs"
+                class="font-mono text-[10px]"
+              >
+                ✨ {{ source }}
+              </UBadge>
             </div>
 
             <!-- Description / Notes -->
@@ -387,7 +474,7 @@
           >
             <!-- Skill Header Row -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div class="flex-1 flex items-center gap-2">
+              <div class="flex-1 flex flex-wrap items-center gap-1.5">
                 <template v-if="editMode">
                   <UInput
                     v-model="editAttacks[index].name"
@@ -414,6 +501,33 @@
                     class="font-mono text-[10px]"
                   >
                     {{ getTierClasses(ability.tier).name }}
+                  </UBadge>
+                  <UBadge
+                    v-if="ability.damageType && getDamageTypeConfig(ability.damageType)"
+                    :color="getDamageTypeConfig(ability.damageType)?.badgeColor"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getDamageTypeConfig(ability.damageType)?.label }}
+                  </UBadge>
+                  <UBadge
+                    v-if="ability.attackCategory"
+                    color="gray"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getAttackCategoryLabel(ability.attackCategory) }}
+                  </UBadge>
+                  <UBadge
+                    v-if="ability.attackForm"
+                    color="gray"
+                    size="xs"
+                    variant="subtle"
+                    class="font-mono text-[10px]"
+                  >
+                    {{ getAttackFormLabel(ability.attackForm) }}
                   </UBadge>
                   <UBadge
                     v-if="ability.isMagic"
@@ -444,14 +558,69 @@
                   />
                 </template>
                 <template v-else>
-                  <span v-if="ability.damage" class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700/60 tabular-nums font-bold">
-                    {{ ability.damage }}
+                  <span
+                    v-if="ability.damage"
+                    class="px-2 py-0.5 rounded border tabular-nums font-bold"
+                    :class="getEvaluated(ability).totalDamageFormula !== (ability.damage || '1d4')
+                      ? 'bg-amber-950/40 text-amber-200 border-amber-600/60'
+                      : 'bg-zinc-800 text-zinc-200 border-zinc-700/60'"
+                  >
+                    {{ getEvaluated(ability).totalDamageFormula }}
                   </span>
                   <span v-if="ability.rangeText" class="text-zinc-400 text-[11px]">
                     {{ ability.rangeText }}
                   </span>
                 </template>
               </div>
+            </div>
+
+            <!-- Edit Mode: Damage Type, Attack Category, Attack Form Selects -->
+            <div v-if="editMode" class="flex flex-wrap items-center gap-2 pt-1 pb-1 border-b border-zinc-800/60">
+              <div class="flex items-center gap-1 font-mono text-xs">
+                <span class="text-zinc-500 text-[10px]">Daño:</span>
+                <USelect
+                  v-model="editAttacks[index].damageType"
+                  :options="damageTypeOptions"
+                  size="2xs"
+                  class="w-32"
+                />
+              </div>
+              <div class="flex items-center gap-1 font-mono text-xs">
+                <span class="text-zinc-500 text-[10px]">Tipo:</span>
+                <USelect
+                  v-model="editAttacks[index].attackCategory"
+                  :options="attackCategoryOptions"
+                  size="2xs"
+                  class="w-28"
+                />
+              </div>
+              <div class="flex items-center gap-1 font-mono text-xs">
+                <span class="text-zinc-500 text-[10px]">Forma:</span>
+                <USelect
+                  v-model="editAttacks[index].attackForm"
+                  :options="attackFormOptions"
+                  size="2xs"
+                  class="w-36"
+                />
+              </div>
+            </div>
+
+            <!-- Read Mode: Applied Sources / Modifiers Breakdown -->
+            <div
+              v-else-if="getEvaluated(ability).appliedSources.length > 0"
+              class="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-amber-400/90 pt-1 border-t border-zinc-800/40"
+            >
+              <span class="text-zinc-500 text-[10px] uppercase tracking-wider">Modificadores Activos:</span>
+              <UBadge
+                v-for="source in getEvaluated(ability).appliedSources"
+                :key="source"
+                color="amber"
+                variant="subtle"
+                size="2xs"
+                class="font-mono text-[10px]"
+              >
+                ✨ {{ source }}
+              </UBadge>
             </div>
 
             <!-- Description / Notes -->
@@ -638,8 +807,13 @@
 import {
   actionTypeOptions,
   getTierClasses,
-  getTierPriority
+  getTierPriority,
+  DAMAGE_TYPES,
+  ATTACK_CATEGORIES,
+  ATTACK_FORMS,
+  getDamageTypeConfig
 } from '~/utils/characterConstants'
+import { evaluateAttack } from '~/utils/modifierGraph'
 
 const { t } = useTranslations()
 
@@ -665,6 +839,41 @@ const filterTier = ref('all')
 const sortBy = ref('tier')
 const filterSkillTier = ref('all')
 const skillSortBy = ref('tier')
+
+const damageTypeOptions = [
+  { value: '', label: 'Sin Tipo de Daño' },
+  ...DAMAGE_TYPES.map(d => ({ value: d.id, label: d.label }))
+]
+
+const attackCategoryOptions = [
+  { value: '', label: 'Sin Categoría' },
+  ...ATTACK_CATEGORIES
+]
+
+const attackFormOptions = [
+  { value: '', label: 'Sin Forma' },
+  ...ATTACK_FORMS
+]
+
+function getAttackCategoryLabel(val?: string): string {
+  return ATTACK_CATEGORIES.find(c => c.value === val)?.label || val || ''
+}
+
+function getAttackFormLabel(val?: string): string {
+  return ATTACK_FORMS.find(f => f.value === val)?.label || val || ''
+}
+
+const equippedItemIds = computed(() => {
+  return new Set((props.character?.inventory || []).filter((i: any) => i.equipped).map((i: any) => i.id || i.name))
+})
+
+const activeModifiers = computed(() => {
+  return props.character?.notes?.modifierGraph?.modifiers || []
+})
+
+function getEvaluated(attack: any) {
+  return evaluateAttack(attack, activeModifiers.value, equippedItemIds.value)
+}
 
 const tierOptions = computed(() => [
   { value: 'gris', label: t('gris') || 'Común' },

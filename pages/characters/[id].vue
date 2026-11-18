@@ -256,6 +256,9 @@ function addAttack() {
     name: '',
     attackBonus: undefined,
     damage: '',
+    damageType: '',
+    attackCategory: 'arma',
+    attackForm: 'melee',
     rangeText: '',
     notes: '',
     type: 'attack',
@@ -270,6 +273,9 @@ function addSkill() {
     name: '',
     attackBonus: undefined,
     damage: '',
+    damageType: '',
+    attackCategory: 'habilidad',
+    attackForm: 'melee',
     rangeText: '',
     notes: '',
     type: 'skill',
@@ -495,6 +501,7 @@ async function loadCharacter() {
       editForm.value.magicAbilities = Array.isArray(notesObj.magicAbilities) ? notesObj.magicAbilities : []
       editForm.value.skillOverrides = notesObj.skillOverrides && typeof notesObj.skillOverrides === 'object' ? { ...notesObj.skillOverrides } : {}
       editForm.value.savingThrowOverrides = notesObj.savingThrowOverrides && typeof notesObj.savingThrowOverrides === 'object' ? { ...notesObj.savingThrowOverrides } : {}
+      editForm.value.modifierGraph = notesObj.modifierGraph && typeof notesObj.modifierGraph === 'object' ? JSON.parse(JSON.stringify(notesObj.modifierGraph)) : { version: 1, modifiers: [] }
       imageLoadError.value = false
 
       editAttacks.value = response.data.attacks ? [...response.data.attacks] : []
@@ -546,7 +553,7 @@ async function saveCharacter() {
         }
       })
 
-    const { id, userId, ownerId, user, owner, createdAt, updatedAt, isWizard, magicLimit, magicAbilities, skillOverrides, savingThrowOverrides, ...updateFields } = editForm.value
+    const { id, userId, ownerId, user, owner, createdAt, updatedAt, isWizard, magicLimit, magicAbilities, skillOverrides, savingThrowOverrides, modifierGraph, ...updateFields } = editForm.value
 
     const currentNotesObj = character.value.notes && typeof character.value.notes === 'object' ? { ...character.value.notes } : {}
     currentNotesObj.text = characterNotes.value
@@ -555,6 +562,7 @@ async function saveCharacter() {
     currentNotesObj.magicAbilities = Array.isArray(magicAbilities) ? magicAbilities : []
     currentNotesObj.skillOverrides = skillOverrides && typeof skillOverrides === 'object' ? { ...skillOverrides } : {}
     currentNotesObj.savingThrowOverrides = savingThrowOverrides && typeof savingThrowOverrides === 'object' ? { ...savingThrowOverrides } : {}
+    currentNotesObj.modifierGraph = modifierGraph || currentNotesObj.modifierGraph || { version: 1, modifiers: [] }
 
     const updateData = {
       ...updateFields,
@@ -595,6 +603,7 @@ watch(editMode, (newValue) => {
     editForm.value.magicAbilities = Array.isArray(notesObj.magicAbilities) ? JSON.parse(JSON.stringify(notesObj.magicAbilities)) : []
     editForm.value.skillOverrides = notesObj.skillOverrides && typeof notesObj.skillOverrides === 'object' ? { ...notesObj.skillOverrides } : {}
     editForm.value.savingThrowOverrides = notesObj.savingThrowOverrides && typeof notesObj.savingThrowOverrides === 'object' ? { ...notesObj.savingThrowOverrides } : {}
+    editForm.value.modifierGraph = notesObj.modifierGraph && typeof notesObj.modifierGraph === 'object' ? JSON.parse(JSON.stringify(notesObj.modifierGraph)) : { version: 1, modifiers: [] }
 
     editAttacks.value = character.value.attacks ? [...character.value.attacks] : []
     editInventory.value = character.value.inventory ? [...character.value.inventory] : []

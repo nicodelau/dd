@@ -5,6 +5,8 @@ export interface Attack {
   attackBonus?: number
   damage?: string
   damageType?: string
+  attackCategory?: string
+  attackForm?: string
   rangeText?: string
   properties?: string
   notes?: string
@@ -35,6 +37,14 @@ export class AttackEntity {
 
   get damageType(): string | undefined {
     return this.data.damageType
+  }
+
+  get attackCategory(): string | undefined {
+    return this.data.attackCategory
+  }
+
+  get attackForm(): string | undefined {
+    return this.data.attackForm
   }
 
   get rangeText(): string | undefined {

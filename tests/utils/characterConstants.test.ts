@@ -4,7 +4,11 @@ import {
   getFormattedBonus,
   getTierClasses,
   getTierPriority,
-  standardSkills
+  standardSkills,
+  DAMAGE_TYPES,
+  ATTACK_CATEGORIES,
+  ATTACK_FORMS,
+  getDamageTypeConfig
 } from '../../utils/characterConstants'
 
 describe('characterConstants utility', () => {
@@ -56,5 +60,22 @@ describe('characterConstants utility', () => {
     expect(athletics?.ability).toBe('strength')
     const stealth = standardSkills.find(s => s.name === 'stealth')
     expect(stealth?.ability).toBe('dexterity')
+  })
+
+  it('defines canonical damage types, attack categories and forms', () => {
+    expect(DAMAGE_TYPES.length).toBeGreaterThanOrEqual(13)
+    const fire = getDamageTypeConfig('fuego')
+    expect(fire).toBeDefined()
+    expect(fire?.label).toBe('Fuego')
+    expect(fire?.badgeColor).toBe('orange')
+
+    const slashing = getDamageTypeConfig('cortante')
+    expect(slashing).toBeDefined()
+    expect(slashing?.category).toBe('fisico')
+
+    expect(ATTACK_CATEGORIES.some(c => c.value === 'arma')).toBe(true)
+    expect(ATTACK_CATEGORIES.some(c => c.value === 'conjuro')).toBe(true)
+    expect(ATTACK_FORMS.some(f => f.value === 'melee')).toBe(true)
+    expect(ATTACK_FORMS.some(f => f.value === 'distancia')).toBe(true)
   })
 })

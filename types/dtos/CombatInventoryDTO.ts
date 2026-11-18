@@ -36,6 +36,8 @@ export interface AttackDTO {
   attackBonus?: number
   damage?: string
   damageType?: string
+  attackCategory?: string
+  attackForm?: string
   rangeText?: string
   properties?: string
   notes?: string
@@ -53,6 +55,8 @@ export interface CreateAttackDTO {
   attackBonus?: number
   damage?: string
   damageType?: string
+  attackCategory?: string
+  attackForm?: string
   rangeText?: string
   properties?: string
   notes?: string
@@ -68,6 +72,8 @@ export interface UpdateAttackDTO {
   attackBonus?: number
   damage?: string
   damageType?: string
+  attackCategory?: string
+  attackForm?: string
   rangeText?: string
   properties?: string
   notes?: string

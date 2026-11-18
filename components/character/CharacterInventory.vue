@@ -241,6 +241,131 @@
             </p>
           </div>
 
+          <!-- Read Mode: Item Modifiers (Effects) -->
+          <div
+            v-if="!editMode && getItemModifiers(item).length > 0"
+            class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-zinc-800/60 font-mono text-xs"
+          >
+            <span class="text-zinc-500 text-[10px] uppercase tracking-wider">Efectos:</span>
+            <UBadge
+              v-for="mod in getItemModifiers(item)"
+              :key="mod.id"
+              :color="item.equipped ? 'emerald' : 'gray'"
+              variant="subtle"
+              size="2xs"
+              class="font-mono text-[10px]"
+              :class="!item.equipped ? 'opacity-50' : ''"
+            >
+              {{ item.equipped ? '✨' : '💤' }} {{ formatModifier(mod) }} {{ !item.equipped ? '(Desequipado)' : '' }}
+            </UBadge>
+          </div>
+
+          <!-- Edit Mode: Modifier Section Toggle & Drawer -->
+          <div v-if="editMode" class="border-t border-zinc-800/60 pt-2 space-y-2">
+            <div class="flex items-center justify-between">
+              <button
+                type="button"
+                class="text-xs text-amber-400 font-mono flex items-center gap-1 hover:underline"
+                @click="toggleItemModSection(item)"
+              >
+                <span>Modificadores de este ítem ({{ getItemModifiers(item).length }})</span>
+                <UIcon :name="expandedMods[item.id || item.name || 'new'] ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" />
+              </button>
+
+              <UButton
+                color="amber"
+                variant="ghost"
+                size="2xs"
+                icon="i-heroicons-plus"
+                @click="addModifierToItem(item)"
+              >
+                Agregar Modificador
+              </UButton>
+            </div>
+
+            <!-- List of Modifiers for this Item -->
+            <div v-if="expandedMods[item.id || item.name || 'new']" class="space-y-2 pt-1">
+              <div
+                v-if="getItemModifiers(item).length === 0"
+                class="text-[11px] text-zinc-500 font-mono italic py-1 text-center"
+              >
+                Este objeto no otorga bonificaciones activas. Pulsa "Agregar Modificador" para crearlas.
+              </div>
+
+              <div
+                v-for="mod in getItemModifiers(item)"
+                :key="mod.id"
+                class="rounded border border-amber-900/40 bg-amber-950/20 p-2.5 space-y-2 text-xs font-mono"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <!-- Type of bonus -->
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-zinc-400 text-[11px]">Tipo:</span>
+                    <USelect v-model="mod.modifierType" :options="modifierTypeOptions" size="2xs" class="w-56" />
+                  </div>
+
+                  <!-- Numeric value or dice formula -->
+                  <div class="flex items-center gap-1.5">
+                    <template v-if="mod.modifierType === 'extra_damage_dice'">
+                      <span class="text-zinc-400 text-[11px]">Dados:</span>
+                      <UInput v-model="mod.diceFormula" placeholder="1d4" size="2xs" class="w-16 text-center" />
+                    </template>
+                    <template v-else>
+                      <span class="text-zinc-400 text-[11px]">Valor:</span>
+                      <UInput v-model.number="mod.value" type="number" placeholder="+1" size="2xs" class="w-14 text-center font-bold" />
+                    </template>
+
+                    <!-- Element / Damage Type (if applicable) -->
+                    <template v-if="mod.modifierType === 'extra_elemental' || mod.modifierType === 'extra_damage_dice'">
+                      <span class="text-zinc-400 text-[11px]">Elemento:</span>
+                      <USelect v-model="mod.damageType" :options="damageTypeOptions" size="2xs" class="w-28" />
+                    </template>
+                  </div>
+
+                  <UButton
+                    color="rose"
+                    variant="ghost"
+                    icon="i-heroicons-trash"
+                    size="2xs"
+                    @click="removeModifier(mod.id)"
+                  />
+                </div>
+
+                <!-- Scope / Criteria Target Selector -->
+                <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-amber-900/30">
+                  <span class="text-zinc-400 text-[11px]">Aplica a:</span>
+                  <USelect
+                    :model-value="getCriteriaScope(mod)"
+                    :options="targetCategoryOptions"
+                    size="2xs"
+                    class="w-44"
+                    @update:model-value="setCriteriaScope(mod, $event)"
+                  />
+
+                  <!-- Secondary dropdown depending on scope -->
+                  <template v-if="getCriteriaScope(mod) === 'damage_type'">
+                    <USelect v-model="mod.criteria.matchDamageType" :options="damageTypeOptions" size="2xs" class="w-32" />
+                  </template>
+                  <template v-else-if="getCriteriaScope(mod) === 'attack_form'">
+                    <USelect v-model="mod.criteria.matchAttackForm" :options="ATTACK_FORMS" size="2xs" class="w-36" />
+                  </template>
+                  <template v-else-if="getCriteriaScope(mod) === 'attack_category'">
+                    <USelect v-model="mod.criteria.matchAttackCategory" :options="ATTACK_CATEGORIES" size="2xs" class="w-32" />
+                  </template>
+                  <template v-else-if="getCriteriaScope(mod) === 'specific_attack'">
+                    <USelect v-model="mod.criteria.targetId" :options="attackOptions" size="2xs" class="w-40" />
+                  </template>
+                  <template v-else-if="getCriteriaScope(mod) === 'skill'">
+                    <USelect v-model="mod.criteria.targetId" :options="skillOptions" size="2xs" class="w-36" />
+                  </template>
+                  <template v-else-if="getCriteriaScope(mod) === 'saving_throw' || getCriteriaScope(mod) === 'ability'">
+                    <USelect v-model="mod.criteria.targetId" :options="savingThrowOptions" size="2xs" class="w-32" />
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Edit Mode Actions -->
           <div v-if="editMode" class="flex items-center justify-between border-t border-zinc-800/60 pt-2 text-xs">
             <UCheckbox
@@ -288,8 +413,13 @@
 <script setup lang="ts">
 import {
   getTierClasses,
-  getTierPriority
+  getTierPriority,
+  DAMAGE_TYPES,
+  ATTACK_CATEGORIES,
+  ATTACK_FORMS,
+  standardSkills
 } from '~/utils/characterConstants'
+import type { ModifierEdge } from '~/types/modifiers'
 
 const { t } = useTranslations()
 
@@ -310,6 +440,158 @@ defineEmits<{
 
 const filterTier = ref('all')
 const sortBy = ref('tier')
+
+const expandedMods = ref<Record<string, boolean>>({})
+
+watchEffect(() => {
+  if (props.editForm && (!props.editForm.modifierGraph || !Array.isArray(props.editForm.modifierGraph.modifiers))) {
+    props.editForm.modifierGraph = { version: 1, modifiers: [] }
+  }
+})
+
+function toggleItemModSection(item: any) {
+  const key = item.id || item.name || 'new'
+  expandedMods.value[key] = !expandedMods.value[key]
+}
+
+const modifiersList = computed(() => {
+  return props.editMode
+    ? (props.editForm?.modifierGraph?.modifiers || [])
+    : (props.character?.notes?.modifierGraph?.modifiers || [])
+})
+
+function getItemModifiers(item: any): ModifierEdge[] {
+  const id = item.id || item.name
+  return modifiersList.value.filter((m: ModifierEdge) => m.sourceId === id || m.sourceName === item.name)
+}
+
+function addModifierToItem(item: any) {
+  if (!props.editForm.modifierGraph) {
+    props.editForm.modifierGraph = { version: 1, modifiers: [] }
+  }
+  const id = item.id || item.name || ('item_' + Date.now())
+  props.editForm.modifierGraph.modifiers.push({
+    id: 'edge_' + Date.now() + Math.random().toString(36).substring(2, 6),
+    sourceId: id,
+    sourceName: item.name || 'Objeto',
+    sourceType: 'item',
+    criteria: {
+      targetCategory: 'attack',
+      matchDamageType: 'fuego'
+    },
+    modifierType: 'extra_elemental',
+    value: 1,
+    damageType: 'fuego',
+    enabled: true
+  })
+  expandedMods.value[id] = true
+}
+
+function removeModifier(modifierId: string) {
+  if (props.editForm?.modifierGraph?.modifiers) {
+    props.editForm.modifierGraph.modifiers = props.editForm.modifierGraph.modifiers.filter(
+      (m: ModifierEdge) => m.id !== modifierId
+    )
+  }
+}
+
+function formatModifier(mod: ModifierEdge): string {
+  let typeStr = ''
+  if (mod.modifierType === 'to_hit') typeStr = `+${mod.value} a Tirada D20`
+  else if (mod.modifierType === 'damage_bonus') typeStr = `+${mod.value} Daño Base`
+  else if (mod.modifierType === 'extra_damage_dice') typeStr = `+${mod.diceFormula || '1d4'}${mod.damageType ? ' [' + mod.damageType + ']' : ''}`
+  else if (mod.modifierType === 'extra_elemental') typeStr = `+${mod.value} Daño ${mod.damageType || 'Elemental'}`
+  else if (mod.modifierType === 'stat_bonus') typeStr = `+${mod.value}`
+
+  let targetStr = ''
+  if (mod.criteria?.matchDamageType) targetStr = ` (Ataques de ${mod.criteria.matchDamageType})`
+  else if (mod.criteria?.matchAttackForm) targetStr = ` (Ataques ${mod.criteria.matchAttackForm})`
+  else if (mod.criteria?.matchAttackCategory) targetStr = ` (Ataques ${mod.criteria.matchAttackCategory})`
+  else if (mod.criteria?.targetId) targetStr = ` (Aplica a ${mod.criteria.targetId})`
+  else if (mod.criteria?.targetCategory === 'attack') targetStr = ` (Todos los ataques)`
+  else if (mod.criteria?.targetCategory) targetStr = ` (${mod.criteria.targetCategory})`
+
+  return `${typeStr}${targetStr}`
+}
+
+const modifierTypeOptions = [
+  { value: 'extra_elemental', label: 'Daño Elemental Extra (+1 Fuego)' },
+  { value: 'to_hit', label: 'Bono a la Tirada D20 (+1, +2)' },
+  { value: 'damage_bonus', label: 'Bono al Daño Base (+1, +3)' },
+  { value: 'extra_damage_dice', label: 'Dados de Daño Extra (1d4, 1d6)' },
+  { value: 'stat_bonus', label: 'Bono a Habilidad / Stat (+1)' }
+]
+
+const targetCategoryOptions = [
+  { value: 'damage_type', label: 'Por Tipo de Daño' },
+  { value: 'attack_form', label: 'Por Forma de Ataque' },
+  { value: 'attack_category', label: 'Por Tipo de Ataque' },
+  { value: 'specific_attack', label: 'Ataque Específico' },
+  { value: 'skill', label: 'Habilidad D&D' },
+  { value: 'saving_throw', label: 'Salvación' },
+  { value: 'ability', label: 'Atributo Base' }
+]
+
+const damageTypeOptions = [
+  ...DAMAGE_TYPES.map(d => ({ value: d.id, label: d.label }))
+]
+
+const attackOptions = computed(() => {
+  const attacks = props.editMode ? (props.editForm?.attacks || []) : (props.character?.attacks || [])
+  return attacks.map((a: any) => ({ value: a.id || a.name, label: a.name }))
+})
+
+const skillOptions = standardSkills.map(s => ({ value: s.name, label: s.label }))
+
+const savingThrowOptions = [
+  { value: 'strength', label: 'Fuerza' },
+  { value: 'dexterity', label: 'Destreza' },
+  { value: 'constitution', label: 'Constitución' },
+  { value: 'intelligence', label: 'Inteligencia' },
+  { value: 'wisdom', label: 'Sabiduría' },
+  { value: 'charisma', label: 'Carisma' }
+]
+
+function getCriteriaScope(mod: ModifierEdge): string {
+  if (mod.criteria?.matchDamageType) return 'damage_type'
+  if (mod.criteria?.matchAttackForm) return 'attack_form'
+  if (mod.criteria?.matchAttackCategory) return 'attack_category'
+  if (mod.criteria?.targetCategory === 'skill') return 'skill'
+  if (mod.criteria?.targetCategory === 'saving_throw') return 'saving_throw'
+  if (mod.criteria?.targetCategory === 'ability') return 'ability'
+  if (mod.criteria?.targetId) return 'specific_attack'
+  return 'damage_type'
+}
+
+function setCriteriaScope(mod: ModifierEdge, scope: string) {
+  mod.criteria.matchDamageType = undefined
+  mod.criteria.matchAttackForm = undefined
+  mod.criteria.matchAttackCategory = undefined
+  mod.criteria.targetId = undefined
+
+  if (scope === 'damage_type') {
+    mod.criteria.targetCategory = 'attack'
+    mod.criteria.matchDamageType = 'fuego'
+  } else if (scope === 'attack_form') {
+    mod.criteria.targetCategory = 'attack'
+    mod.criteria.matchAttackForm = 'melee'
+  } else if (scope === 'attack_category') {
+    mod.criteria.targetCategory = 'attack'
+    mod.criteria.matchAttackCategory = 'arma'
+  } else if (scope === 'specific_attack') {
+    mod.criteria.targetCategory = 'attack'
+    mod.criteria.targetId = attackOptions.value[0]?.value || ''
+  } else if (scope === 'skill') {
+    mod.criteria.targetCategory = 'skill'
+    mod.criteria.targetId = 'athletics'
+  } else if (scope === 'saving_throw') {
+    mod.criteria.targetCategory = 'saving_throw'
+    mod.criteria.targetId = 'dexterity'
+  } else if (scope === 'ability') {
+    mod.criteria.targetCategory = 'ability'
+    mod.criteria.targetId = 'strength'
+  }
+}
 
 const tierOptions = computed(() => [
   { value: 'gris', label: t('gris') || 'Común' },

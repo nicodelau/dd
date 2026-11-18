@@ -184,4 +184,74 @@ describe('PrismaCharacterRepository', () => {
       })
     )
   })
+
+  it('should persist and map damageType, attackCategory, and attackForm for attacks', async () => {
+    const mockCharacterId = 'char-123'
+    const mockUpdatedCharacter = {
+      id: mockCharacterId,
+      name: 'Pyra',
+      savingThrows: [],
+      skills: [],
+      spells: [],
+      spellSlots: [],
+      inventory: [],
+      attacks: [
+        {
+          id: 'att-fire',
+          name: 'Shuriken de Fuego',
+          attackBonus: 5,
+          damageDice: '2d6',
+          damageType: 'fuego',
+          range: '30 ft',
+          description: 'Lanza fuego',
+          type: 'attack',
+          tier: 'azul',
+          isMagic: true,
+          magicCost: 2,
+          usedCount: 0
+        }
+      ],
+      features: [],
+      cantrips: [],
+      combatActions: [],
+      notes: JSON.stringify({
+        attackMetadata: {
+          'att-fire': { attackCategory: 'conjuro', attackForm: 'distancia' }
+        }
+      })
+    }
+
+    mockPrisma.character.update.mockResolvedValue(mockUpdatedCharacter)
+    mockPrisma.character.findUnique.mockResolvedValue(mockUpdatedCharacter)
+
+    const result = await repository.update(mockCharacterId, {
+      attacks: [
+        {
+          id: 'att-fire',
+          name: 'Shuriken de Fuego',
+          attackBonus: 5,
+          damage: '2d6',
+          damageType: 'fuego',
+          attackCategory: 'conjuro',
+          attackForm: 'distancia',
+          rangeText: '30 ft',
+          notes: 'Lanza fuego'
+        }
+      ]
+    } as any)
+
+    expect(mockPrisma.attack.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          name: 'Shuriken de Fuego',
+          damageType: 'fuego',
+          damageDice: '2d6'
+        })
+      ]
+    })
+
+    expect(result?.attacks[0].damageType).toBe('fuego')
+    expect(result?.attacks[0].attackCategory).toBe('conjuro')
+    expect(result?.attacks[0].attackForm).toBe('distancia')
+  })
 })

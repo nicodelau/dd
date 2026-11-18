@@ -186,3 +186,52 @@ export const actionTypeOptions = [
   { label: 'Free Action', value: 'Free Action' },
   { label: 'Special', value: 'Special' }
 ]
+
+export interface DamageTypeDefinition {
+  id: string
+  label: string
+  category: 'elemental' | 'fisico' | 'mistico' | 'especial'
+  color: string
+  badgeBg: string
+  badgeBorder: string
+  badgeColor: string
+  icon?: string
+}
+
+export const DAMAGE_TYPES: DamageTypeDefinition[] = [
+  { id: 'fuego', label: 'Fuego', category: 'elemental', color: 'text-orange-400', badgeBg: 'bg-orange-950/40', badgeBorder: 'border-orange-700/50', badgeColor: 'orange', icon: 'i-heroicons-fire' },
+  { id: 'frio', label: 'Frío', category: 'elemental', color: 'text-sky-400', badgeBg: 'bg-sky-950/40', badgeBorder: 'border-sky-700/50', badgeColor: 'sky', icon: 'i-heroicons-sparkles' },
+  { id: 'relampago', label: 'Relámpago', category: 'elemental', color: 'text-yellow-400', badgeBg: 'bg-yellow-950/40', badgeBorder: 'border-yellow-700/50', badgeColor: 'yellow', icon: 'i-heroicons-bolt' },
+  { id: 'acido', label: 'Ácido', category: 'elemental', color: 'text-lime-400', badgeBg: 'bg-lime-950/40', badgeBorder: 'border-lime-700/50', badgeColor: 'lime', icon: 'i-heroicons-beaker' },
+  { id: 'veneno', label: 'Veneno', category: 'elemental', color: 'text-emerald-400', badgeBg: 'bg-emerald-950/40', badgeBorder: 'border-emerald-700/50', badgeColor: 'emerald', icon: 'i-heroicons-no-symbol' },
+  { id: 'trueno', label: 'Trueno', category: 'elemental', color: 'text-indigo-400', badgeBg: 'bg-indigo-950/40', badgeBorder: 'border-indigo-700/50', badgeColor: 'indigo', icon: 'i-heroicons-speaker-wave' },
+  { id: 'radiante', label: 'Radiante', category: 'mistico', color: 'text-amber-300', badgeBg: 'bg-amber-950/40', badgeBorder: 'border-amber-700/50', badgeColor: 'amber', icon: 'i-heroicons-sun' },
+  { id: 'necrotico', label: 'Necrótico', category: 'mistico', color: 'text-purple-400', badgeBg: 'bg-purple-950/40', badgeBorder: 'border-purple-700/50', badgeColor: 'purple', icon: 'i-heroicons-moon' },
+  { id: 'fuerza', label: 'Fuerza', category: 'mistico', color: 'text-fuchsia-400', badgeBg: 'bg-fuchsia-950/40', badgeBorder: 'border-fuchsia-700/50', badgeColor: 'fuchsia', icon: 'i-heroicons-cube-transparent' },
+  { id: 'psiquico', label: 'Psíquico', category: 'mistico', color: 'text-pink-400', badgeBg: 'bg-pink-950/40', badgeBorder: 'border-pink-700/50', badgeColor: 'pink', icon: 'i-heroicons-eye' },
+  { id: 'cortante', label: 'Cortante', category: 'fisico', color: 'text-zinc-200', badgeBg: 'bg-zinc-800', badgeBorder: 'border-zinc-700/60', badgeColor: 'gray', icon: 'i-heroicons-scissors' },
+  { id: 'perforante', label: 'Perforante', category: 'fisico', color: 'text-zinc-300', badgeBg: 'bg-zinc-800', badgeBorder: 'border-zinc-700/60', badgeColor: 'gray', icon: 'i-heroicons-arrow-trending-up' },
+  { id: 'contundente', label: 'Contundente', category: 'fisico', color: 'text-zinc-400', badgeBg: 'bg-zinc-800', badgeBorder: 'border-zinc-700/60', badgeColor: 'gray', icon: 'i-heroicons-wrench' },
+  { id: 'curacion', label: 'Curación', category: 'especial', color: 'text-teal-400', badgeBg: 'bg-teal-950/40', badgeBorder: 'border-teal-700/50', badgeColor: 'teal', icon: 'i-heroicons-heart' },
+  { id: 'verdadero', label: 'Puro / Verdadero', category: 'especial', color: 'text-zinc-100', badgeBg: 'bg-zinc-700', badgeBorder: 'border-zinc-500', badgeColor: 'white', icon: 'i-heroicons-star' }
+]
+
+export const ATTACK_CATEGORIES = [
+  { value: 'arma', label: 'Arma' },
+  { value: 'conjuro', label: 'Conjuro' },
+  { value: 'habilidad', label: 'Habilidad Especial' },
+  { value: 'desarmado', label: 'Desarmado' }
+]
+
+export const ATTACK_FORMS = [
+  { value: 'melee', label: 'Cuerpo a cuerpo (Melé)' },
+  { value: 'distancia', label: 'A Distancia' },
+  { value: 'area', label: 'En Área' },
+  { value: 'toque', label: 'Al Toque' }
+]
+
+export function getDamageTypeConfig(id?: string): DamageTypeDefinition | undefined {
+  if (!id) return undefined
+  return DAMAGE_TYPES.find(d => d.id.toLowerCase() === id.toLowerCase())
+}
+
